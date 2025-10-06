@@ -34,10 +34,9 @@
 // Contributors: Florian Maurer (florian.maurer@v-nova.com)
 
 #include <cstring>
-
+#include <limits>
 #include "uBaseDecoderYUV.h"
 #include "Misc.hpp"
-
 namespace vnova {
 namespace utility {
 
