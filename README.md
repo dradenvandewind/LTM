@@ -13,12 +13,19 @@ git clone https://github.com/dradenvandewind/LTM.git && \
 cd LTM && \ 
 rm -rf deps/base_avc/JM && \
 rm -rf deps/base_avc/HM && \
-rm -rf deps/base_avc/VTM && \
+rm -rf deps/base_vvc/VTM && \
 rm -rf deps/base_avc/ETM && \
 git submodule update --init --recursive &&
 cd deps/base_avc/JM && \
 git apply ../../../source_patch/JM/patch_to_buid.patch && \
-cd ../../..
+cd ../../.. && \
+cd deps/base_vvc/VTM && \
+git apply ../../../source_patch/VTM/patch_to_buid.patch && \
+cd ../../.. && \
+ git apply ~/source_patch/VTM/patch_to_build_2_.patch
+
+
+
 
 The default build mechanism is CMake, version 3.10 or later, examples of building for:
 
