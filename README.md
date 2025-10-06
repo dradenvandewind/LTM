@@ -4,10 +4,21 @@ LCEVC Test Model
 ## Compilation
 
 To build the LCEVC test model, first download the source from the repository (this will also download the JM and HM test model sources from their respective repositories).
+```
+###git clone --recurse-submodules http://mpegx.int-evry.fr/software/MPEG/LCEVC/LTM.git
+It's a fork of the original project that didn't compile in my environment.	
 
-```
-git clone --recurse-submodules http://mpegx.int-evry.fr/software/MPEG/LCEVC/LTM.git
-```
+
+git clone https://github.com/dradenvandewind/LTM.git && \
+cd LTM && \ 
+rm -rf deps/base_avc/JM && \
+rm -rf deps/base_avc/HM && \
+rm -rf deps/base_avc/VTM && \
+rm -rf deps/base_avc/ETM && \
+git submodule update --init --recursive &&
+cd deps/base_avc/JM && \
+git apply ../../../source_patch/JM/patch_to_buid.patch && \
+cd ../../..
 
 The default build mechanism is CMake, version 3.10 or later, examples of building for:
 
