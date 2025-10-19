@@ -1,0 +1,879 @@
+\doxysection{Dec\+App\+Mem.\+cpp}
+\label{DecAppMem_8cpp_source}\index{deps/base\_vvc/src/DecAppMem.cpp@{deps/base\_vvc/src/DecAppMem.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <fcntl.h>}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}DecAppMem.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/AnnexBread.h"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/NALread.h"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}CommonLib/CodingStatistics.h"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}CommonLib/dtrace\_codingstruct.h"{}}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ initialization\ /\ destroy}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ DecAppMem::DecAppMem(VideoIOYuvMem::Writer\ *writer)}
+\DoxyCodeLine{00060\ \ \ \ \ :\ m\_iPOCLastDisplay(-\/MAX\_INT),\ m\_writer(writer)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ m\_reconFileName=\textcolor{stringliteral}{"{}memory"{}};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_NUM\_LAYER\_IDS;\ i++)}
+\DoxyCodeLine{00065\ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ m\_newCLVS[i]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00067\ \ \ \}}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Public\ member\ functions}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00082\ uint32\_t\ DecAppMem::decode(std::istream\&\ bitstreamFile)}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc;}
+\DoxyCodeLine{00085\ \ \ PicList*\ pcListPic\ =\ NULL;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ InputByteStream\ bytestream(bitstreamFile);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty()\ \&\&\ m\_outputDecodedSEIMessagesFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
+\DoxyCodeLine{00091\ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ m\_seiMessageFileStream.open(m\_outputDecodedSEIMessagesFilename.c\_str(),\ std::ios::out);}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_seiMessageFileStream.is\_open()\ ||\ !m\_seiMessageFileStream.good())}
+\DoxyCodeLine{00094\ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_outputDecodedSEIMessagesFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ decoded\ SEI\ messages"{}});}
+\DoxyCodeLine{00096\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFilename.empty()\ \&\&\ m\_oplFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
+\DoxyCodeLine{00100\ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ m\_oplFileStream.open(m\_oplFilename.c\_str(),\ std::ios::out);}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFileStream.is\_open()\ ||\ !m\_oplFileStream.good())}
+\DoxyCodeLine{00103\ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_oplFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ to\ write\ an\ opl-\/file\ for\ conformance\ testing\ (see\ JVET-\/P2008\ for\ details)"{}});}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ \ \ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \textcolor{comment}{//\ create\ \&\ initialize\ internal\ classes}}
+\DoxyCodeLine{00109\ \ \ xCreateDecLib();}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ m\_iPOCLastDisplay\ +=\ m\_iSkipFrame;\ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ last\ displayed\ POC\ correctly\ for\ skip\ forward.}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \textcolor{comment}{//\ clear\ contents\ of\ colour-\/remap-\/information-\/SEI\ output\ file}}
+\DoxyCodeLine{00114\ \ \ \textcolor{keywordflow}{if}\ (!m\_colourRemapSEIFileName.empty())}
+\DoxyCodeLine{00115\ \ \ \{}
+\DoxyCodeLine{00116\ \ \ \ \ std::ofstream\ ofile(m\_colourRemapSEIFileName.c\_str());}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (!ofile.good()\ ||\ !ofile.is\_open())}
+\DoxyCodeLine{00118\ \ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}\ <<\ m\_colourRemapSEIFileName.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ colour-\/remap-\/information-\/SEI\ video"{}});}
+\DoxyCodeLine{00120\ \ \ \ \ \}}
+\DoxyCodeLine{00121\ \ \ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ main\ decoder\ loop}}
+\DoxyCodeLine{00124\ \ \ \textcolor{keywordtype}{bool}\ loopFiltered[MAX\_VPS\_LAYERS]\ =\ \{\ \textcolor{keyword}{false}\ \};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordtype}{bool}\ bPicSkipped\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{keywordtype}{bool}\ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordtype}{bool}\ firstSliceInAU\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \textcolor{keywordtype}{bool}\ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{auto}\ setOutputPicturePresentInStream\ =\ [\&]()}
+\DoxyCodeLine{00135\ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{if}(\ !outputPicturePresentInBitstream\ )}
+\DoxyCodeLine{00137\ \ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ PicList::iterator\ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!outputPicturePresentInBitstream\ \&\&\ iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ Picture\ *pcPic\ =\ *(iterPic++);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{00151\ \ \ \ \ m\_cDecLib.setHTidExternalSetFlag(m\_mTidExternalSet);}
+\DoxyCodeLine{00152\ \ \ \ \ m\_cDecLib.setTOlsIdxExternalFlag(m\_tOlsIdxTidExternalSet);}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \textcolor{keywordflow}{while}\ (!!bitstreamFile)}
+\DoxyCodeLine{00156\ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ InputNALUnit\ nalu;}
+\DoxyCodeLine{00158\ \ \ \ \ nalu.m\_nalUnitType\ =\ NAL\_UNIT\_INVALID;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ determine\ if\ next\ NAL\ unit\ will\ be\ the\ first\ one\ from\ a\ new\ picture}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewPicture\ =\ m\_cDecLib.isNewPicture(\&bitstreamFile,\ \&bytestream);}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewAccessUnit\ =\ bNewPicture\ \&\&\ m\_cDecLib.isNewAccessUnit(\ bNewPicture,\ \&bitstreamFile,\ \&bytestream\ );}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}(!bNewPicture)}
+\DoxyCodeLine{00164\ \ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ AnnexBStats\ stats\ =\ AnnexBStats();}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{comment}{//\ find\ next\ NAL\ unit\ in\ stream}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ byteStreamNALUnit(bytestream,\ nalu.getBitstream().getFifo(),\ stats);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.getBitstream().getFifo().empty())}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ can\ happen\ if\ the\ following\ occur:}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ empty\ input\ file}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ two\ back-\/to-\/back\ start\_code\_prefixes}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ start\_code\_prefix\ immediately\ followed\ by\ EOF}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ msg(\ ERROR,\ \textcolor{stringliteral}{"{}Warning:\ Attempt\ to\ decode\ an\ empty\ NAL\ unit\(\backslash\)n"{}});}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ NAL\ unit\ header}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ read(nalu);}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flush\ output\ for\ first\ slice\ of\ an\ IDR\ picture}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cDecLib.getFirstSliceInPicture()\ \&\&}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ ||}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP))}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \ \textcolor{comment}{//\ An\ IDR\ picture\ starts\ a\ new\ CLVS}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#if\ !JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ nalu.m\_nuhLayerId);}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ immediately\ preceded\ by\ an\ EOS\ is\ a\ CLVSS}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ !isEosPresentInPu)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ not\ immediately\ precede\ by\ an\ EOS\ is\ not\ a\ CLVSS}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parse\ NAL\ unit\ syntax\ if\ within\ target\ decoding\ layer}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_iMaxTemporalLayer\ <\ 0\ ||\ nalu.m\_temporalId\ <=\ m\_iMaxTemporalLayer\ )\ \&\&\ xIsNaluWithinTargetDecLayerIdSet(\ \&nalu\ )\ )}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ CHECK(nalu.m\_temporalId\ >\ m\_iMaxTemporalLayer,\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ include\ any\ NAL\ unit\ with\ TemporalId\ greater\ than\ HighestTid"{}});}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size())}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(std::find(m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu.m\_nuhLayerId)\ ==\ m\_targetDecLayerIdSet.end(),\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ contain\ any\ other\ layers\ than\ included\ in\ the\ OLS\ with\ OlsIdx"{}});}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bPicSkipped)}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_TRAIL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_STSA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RASL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.isSliceNaluFirstInAU(\textcolor{keyword}{true},\ nalu))}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.decode(nalu,\ m\_iSkipFrame,\ m\_iPOCLastDisplay,\ m\_targetOlsIdx);}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_OPI)}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cDecLib.getHTidExternalSetFlag()\ \&\&\ m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag())}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_iMaxTemporalLayer\ =\ m\_cDecLib.getOPI()-\/>getOpiHtidPlus1()-\/1;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.setHTidOpiSetFlag(m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag());}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_VPS)}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_cDecLib.getVPS()-\/>m\_targetOlsIdx\ );}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_targetOlsIdx\ );}
+\DoxyCodeLine{00242\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetDecLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetLayerIdSet;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetOutputLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetOutputLayerIdSet;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \textcolor{comment}{//\ once\ an\ EOS\ NAL\ unit\ appears\ in\ the\ current\ PU,\ mark\ the\ variable\ isEosPresentInPu\ as\ true}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \textcolor{comment}{//The\ presence\ of\ EOS\ means\ that\ the\ next\ picture\ is\ the\ beginning\ of\ new\ CLVS}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{comment}{//\ within\ the\ current\ PU,\ only\ EOS\ and\ EOB\ are\ allowed\ to\ be\ sent\ after\ an\ EOS\ nal\ unit}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isEosPresentInPu)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ CHECK(nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOS\ \&\&\ nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOB,\ \textcolor{stringliteral}{"{}When\ an\ EOS\ NAL\ unit\ is\ present\ in\ a\ PU,\ it\ shall\ be\ the\ last\ NAL\ unit\ among\ all\ NAL\ units\ within\ the\ PU\ other\ than\ other\ EOS\ NAL\ units\ or\ an\ EOB\ NAL\ unit"{}});}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{if}\ ((bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)\ \&\&\ !m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId)\ \&\&\ !bPicSkipped)}
+\DoxyCodeLine{00266\ \ \ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!loopFiltered[nalu.m\_nuhLayerId]\ ||\ bitstreamFile)}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ m\_cDecLib.executeLoopFilters();}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ m\_cDecLib.finishPicture(poc,\ pcListPic,\ INFO,\ m\_newCLVS[nalu.m\_nuhLayerId]);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ loopFiltered[nalu.m\_nuhLayerId]\ =\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInSequence(\textcolor{keyword}{true},\ nalu.m\_nuhLayerId);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ m\_cDecLib.updateAssociatedIRAP();}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ m\_cDecLib.updatePrevGDRInSameLayer();}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ m\_cDecLib.updatePrevIRAPAndGDRSubpic();}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS\ )\ \&\&}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId))}
+\DoxyCodeLine{00284\ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{true});}
+\DoxyCodeLine{00286\ \ \ \ \ \}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordflow}{if}(\ pcListPic\ )}
+\DoxyCodeLine{00289\ \ \ \ \ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ \&\&\ !m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].isOpen()\ )}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ BitDepths\ \&bitDepths=pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepths();\ \textcolor{comment}{//\ use\ bit\ depths\ of\ first\ reconstructed\ picture.}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_outputBitDepth[channelType]\ ==\ 0\ )}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputBitDepth[channelType]\ =\ bitDepths.recon[channelType];}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_packedYUVMode\ \&\&\ (m\_outputBitDepth[CH\_L]\ !=\ 10\ \&\&\ m\_outputBitDepth[CH\_L]\ !=\ 12))}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ EXIT\ (\textcolor{stringliteral}{"{}Invalid\ output\ bit-\/depth\ for\ packed\ YUV\ output,\ aborting\(\backslash\)n"{}});}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ std::string\ reconFileName\ =\ m\_reconFileName;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_reconFileName.compare(\ \textcolor{stringliteral}{"{}/dev/null"{}}\ )\ \&\&\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ >\ 1\ \&\&\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ pos\ =\ reconFileName.find\_last\_of(\textcolor{charliteral}{'.'});}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ std::string\ layerString\ =\ std::string(\textcolor{stringliteral}{"{}.layer"{}})\ +\ std::to\_string(nalu.m\_nuhLayerId);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ !=\ string::npos)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.insert(pos,\ layerString);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.append(layerString);}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ (\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ ==\ 1\ ||\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )\ )\ ||\ m\_cDecLib.getVPS()\ ==\ \textcolor{keyword}{nullptr}\ )}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].open(\ m\_writer,\ \textcolor{keyword}{true},\ m\_outputBitDepth,\ m\_outputBitDepth,\ bitDepths.recon\ );\ \textcolor{comment}{//\ write\ mode}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{comment}{//\ update\ file\ bitdepth\ shift\ if\ recon\ bitdepth\ changed\ between\ sequences}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ reconBitdepth\ =\ pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepth((ChannelType)channelType);}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ fileBitdepth\ \ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getFileBitdepth(channelType);}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ bitdepthShift\ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getBitdepthShift(channelType);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ fileBitdepth\ +\ bitdepthShift\ !=\ reconBitdepth\ )}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].setBitdepthShift(channelType,\ reconBitdepth\ -\/\ fileBitdepth);}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{false});}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file\ -\/-\/\ for\ additional\ bumping\ as\ defined\ in\ C.5.2.3}}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstSliceInAU)}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size()\ >\ 0)}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getAudIrapOrGdrAuFlag())}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu))}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstPicInCVSAUThatIsNotAU0)}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ NOT\_VALID,\ m\_cDecLib.getNoOutputPriorPicsFlag());}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ xWriteOutput(pcListPic,\ nalu.m\_temporalId);}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{00389\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \}}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_OPI)}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{00396\ \ \ \ \ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00398\ \ \ \ \ \}}
+\DoxyCodeLine{00399\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_12)}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{00402\ \ \ \ \ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00404\ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00406\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
+\DoxyCodeLine{00408\ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ m\_cDecLib.checkSeiInPictureUnit();}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ m\_cDecLib.resetPictureSeiNalus();}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \textcolor{comment}{//\ reset\ the\ EOS\ present\ status\ for\ the\ next\ PU\ check}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00413\ \ \ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{00415\ \ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ m\_cDecLib.checkAPSInPictureUnit();}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ m\_cDecLib.resetPictureUnitNals();}
+\DoxyCodeLine{00418\ \ \ \ \ \}}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewAccessUnit\ ||\ !bitstreamFile)}
+\DoxyCodeLine{00420\ \ \ \ \ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ m\_cDecLib.CheckNoOutputPriorPicFlagsInAccessUnit();}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNoOutputPriorPicFlags();}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ m\_cDecLib.checkLayerIdIncludedInCvss();}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitEos();}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ m\_cDecLib.resetAudIrapOrGdrAuFlag();}
+\DoxyCodeLine{00426\ \ \ \ \ \}}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordflow}{if}(bNewAccessUnit)}
+\DoxyCodeLine{00428\ \ \ \ \ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ m\_cDecLib.checkTidLayerIdInAccessUnit();}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiTids();}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ m\_cDecLib.checkSEIInAccessUnit();}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiPayLoadTypes();}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
+\DoxyCodeLine{00436\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00438\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00439\ \ \ \ \ \}}
+\DoxyCodeLine{00440\ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \textcolor{comment}{//\ May\ need\ to\ check\ again\ one\ more\ time\ as\ in\ case\ one\ the\ bitstream\ has\ only\ one\ picture,\ the\ first\ check\ may\ miss\ it}}
+\DoxyCodeLine{00442\ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{00443\ \ \ CHECK(!outputPicturePresentInBitstream,\ \textcolor{stringliteral}{"{}It\ is\ required\ that\ there\ shall\ be\ at\ least\ one\ picture\ with\ PictureOutputFlag\ equal\ to\ 1\ in\ the\ bitstream"{}})}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ xFlushOutput(\ pcListPic\ );}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \textcolor{comment}{//\ get\ the\ number\ of\ checksum\ errors}}
+\DoxyCodeLine{00448\ \ \ uint32\_t\ nRet\ =\ m\_cDecLib.getNumberOfChecksumErrorsDetected();}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \textcolor{comment}{//\ delete\ buffers}}
+\DoxyCodeLine{00451\ \ \ m\_cDecLib.deletePicBuffer();}
+\DoxyCodeLine{00452\ \ \ \textcolor{comment}{//\ destroy\ internal\ classes}}
+\DoxyCodeLine{00453\ \ \ xDestroyDecLib();}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
+\DoxyCodeLine{00456\ \ \ CodingStatistics::DestroyInstance();}
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ destroyROM();}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \textcolor{keywordflow}{return}\ nRet;}
+\DoxyCodeLine{00462\ \}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \textcolor{keywordtype}{void}\ DecAppMem::writeLineToOutputLog(Picture\ *\ pcPic)}
+\DoxyCodeLine{00467\ \{}
+\DoxyCodeLine{00468\ \ \ \textcolor{keywordflow}{if}\ (m\_oplFileStream.is\_open()\ \&\&\ m\_oplFileStream.good())}
+\DoxyCodeLine{00469\ \ \ \{}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keyword}{const}\ SPS\ *\ \ \ sps\ \ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{00471\ \ \ \ \ ChromaFormat\ \ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{00473\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ leftOffset\ \ \ \ \ \ =\ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ rightOffset\ \ \ \ \ =\ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ topOffset\ \ \ \ \ \ \ =\ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ bottomOffset\ \ \ \ =\ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
+\DoxyCodeLine{00477\ \ \ \ \ PictureHash\ \ \ recon\_digest;}
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keyword}{auto}\ numChar\ =\ calcMD5WithCropping(((\textcolor{keyword}{const}\ Picture\ *)\ pcPic)-\/>getRecoBuf(),\ recon\_digest,\ sps-\/>getBitDepths(),}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ leftOffset,\ rightOffset,\ topOffset,\ bottomOffset);}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedWidth\ \ =\ pcPic-\/>Y().width\ -\/\ leftOffset\ -\/\ rightOffset;}
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedHeight\ =\ pcPic-\/>Y().height\ -\/\ topOffset\ -\/\ bottomOffset;}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(3)\ <<\ pcPic-\/>layerId\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{00485\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(8)\ <<\ pcPic-\/>getPOC()\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)\ <<\ croppedWidth\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ croppedHeight\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ hashToString(recon\_digest,\ numChar)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00487\ \ \ \}}
+\DoxyCodeLine{00488\ \}}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00491\ \textcolor{comment}{//\ Protected\ member\ functions}}
+\DoxyCodeLine{00492\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \textcolor{keywordtype}{void}\ DecAppMem::xCreateDecLib()}
+\DoxyCodeLine{00495\ \{}
+\DoxyCodeLine{00496\ \ \ initROM();}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \textcolor{comment}{//\ create\ decoder\ class}}
+\DoxyCodeLine{00499\ \ \ m\_cDecLib.create();}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \ \ \textcolor{comment}{//\ initialize\ decoder\ class}}
+\DoxyCodeLine{00502\ \ \ m\_cDecLib.init(}
+\DoxyCodeLine{00503\ \#\textcolor{keywordflow}{if}\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}
+\DoxyCodeLine{00504\ \ \ \ \ m\_cacheCfgFile}
+\DoxyCodeLine{00505\ \#endif}
+\DoxyCodeLine{00506\ \ \ );}
+\DoxyCodeLine{00507\ \ \ m\_cDecLib.setDecodedPictureHashSEIEnabled(m\_decodedPictureHashSEIEnabled);}
+\DoxyCodeLine{00508\ }
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty())}
+\DoxyCodeLine{00511\ \ \ \{}
+\DoxyCodeLine{00512\ \ \ \ \ std::ostream\ \&os=m\_seiMessageFileStream.is\_open()\ ?\ m\_seiMessageFileStream\ :\ std::cout;}
+\DoxyCodeLine{00513\ \ \ \ \ m\_cDecLib.setDecodedSEIMessageOutputStream(\&os);}
+\DoxyCodeLine{00514\ \ \ \}}
+\DoxyCodeLine{00515\ \textcolor{preprocessor}{\#if\ JVET\_S0257\_DUMP\_360SEI\_MESSAGE}}
+\DoxyCodeLine{00516\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecoded360SEIMessagesFilename.empty())}
+\DoxyCodeLine{00517\ \ \ \{}
+\DoxyCodeLine{00518\ \ \ \ \ m\_cDecLib.setDecoded360SEIMessageFileName(m\_outputDecoded360SEIMessagesFilename);}
+\DoxyCodeLine{00519\ \ \ \}}
+\DoxyCodeLine{00520\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00521\ \ \ m\_cDecLib.m\_targetSubPicIdx\ =\ this-\/>m\_targetSubPicIdx;}
+\DoxyCodeLine{00522\ \ \ m\_cDecLib.initScalingList();}
+\DoxyCodeLine{00523\ \}}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \textcolor{keywordtype}{void}\ DecAppMem::xDestroyDecLib()}
+\DoxyCodeLine{00526\ \{}
+\DoxyCodeLine{00527\ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{00528\ \ \ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&\ recFile\ :\ m\_cVideoIOYuvReconFile\ )}
+\DoxyCodeLine{00530\ \ \ \ \ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ recFile.second.close();}
+\DoxyCodeLine{00532\ \ \ \ \ \}}
+\DoxyCodeLine{00533\ \ \ \}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \ \ \textcolor{comment}{//\ destroy\ decoder\ class}}
+\DoxyCodeLine{00536\ \ \ m\_cDecLib.destroy();}
+\DoxyCodeLine{00537\ \}}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00543\ \textcolor{keywordtype}{void}\ DecAppMem::xWriteOutput(\ PicList*\ pcListPic,\ uint32\_t\ tId\ )}
+\DoxyCodeLine{00544\ \{}
+\DoxyCodeLine{00545\ \ \ \textcolor{keywordflow}{if}\ (pcListPic-\/>empty())}
+\DoxyCodeLine{00546\ \ \ \{}
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00548\ \ \ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00551\ \ \ \textcolor{keywordtype}{int}\ numPicsNotYetDisplayed\ =\ 0;}
+\DoxyCodeLine{00552\ \ \ \textcolor{keywordtype}{int}\ dpbFullness\ =\ 0;}
+\DoxyCodeLine{00553\ \ \ \textcolor{keyword}{const}\ SPS*\ activeSPS\ =\ (pcListPic-\/>front()-\/>cs-\/>sps);}
+\DoxyCodeLine{00554\ \ \ uint32\_t\ maxNumReorderPicsHighestTid;}
+\DoxyCodeLine{00555\ \ \ uint32\_t\ maxDecPicBufferingHighestTid;}
+\DoxyCodeLine{00556\ \ \ uint32\_t\ maxNrSublayers\ =\ activeSPS-\/>getMaxTLayers();}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \textcolor{keyword}{const}\ VPS*\ referredVPS\ =\ pcListPic-\/>front()-\/>cs-\/>vps;}
+\DoxyCodeLine{00559\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ temporalId\ =\ (\ m\_iMaxTemporalLayer\ ==\ -\/1\ ||\ m\_iMaxTemporalLayer\ >=\ maxNrSublayers\ )\ ?\ maxNrSublayers\ -\/\ 1\ :\ m\_iMaxTemporalLayer;}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \textcolor{keywordflow}{if}(\ referredVPS\ ==\ \textcolor{keyword}{nullptr}\ ||\ referredVPS-\/>m\_numLayersInOls[referredVPS-\/>m\_targetOlsIdx]\ ==\ 1\ )}
+\DoxyCodeLine{00562\ \ \ \{}
+\DoxyCodeLine{00563\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ activeSPS-\/>getMaxNumReorderPics(\ temporalId\ );}
+\DoxyCodeLine{00564\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ activeSPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
+\DoxyCodeLine{00565\ \ \ \}}
+\DoxyCodeLine{00566\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00567\ \ \ \{}
+\DoxyCodeLine{00568\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ referredVPS-\/>getMaxNumReorderPics(\ temporalId\ );}
+\DoxyCodeLine{00569\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ referredVPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
+\DoxyCodeLine{00570\ \ \ \}}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{00573\ \ \ \{}
+\DoxyCodeLine{00574\ \ \ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay)}
+\DoxyCodeLine{00576\ \ \ \ \ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ numPicsNotYetDisplayed++;}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ dpbFullness++;}
+\DoxyCodeLine{00579\ \ \ \ \ \}}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(pcPic-\/>referenced)}
+\DoxyCodeLine{00581\ \ \ \ \ \{}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ dpbFullness++;}
+\DoxyCodeLine{00583\ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00585\ \ \ \}}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \textcolor{keywordflow}{if}\ (numPicsNotYetDisplayed>2)}
+\DoxyCodeLine{00590\ \ \ \{}
+\DoxyCodeLine{00591\ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00592\ \ \ \}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{00595\ \ \ \textcolor{keywordflow}{if}(\ numPicsNotYetDisplayed>2\ \&\&\ pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
+\DoxyCodeLine{00596\ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
+\DoxyCodeLine{00598\ \ \ \ \ endPic-\/-\/;}
+\DoxyCodeLine{00599\ \ \ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
+\DoxyCodeLine{00601\ \ \ \ \ \{}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ Picture*\ pcPicTop\ =\ *(iterPic);}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ Picture*\ pcPicBottom\ =\ *(iterPic);}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid)\ \&\&}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ (!(pcPicTop-\/>getPOC()\%2)\ \&\&\ pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ \&\&}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ (pcPicTop-\/>getPOC()\ ==\ m\_iPOCLastDisplay+1\ ||\ m\_iPOCLastDisplay\ <\ 0))}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed\ =\ numPicsNotYetDisplayed-\/2;}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isTff\ =\ pcPicTop-\/>topField;}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ display\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (display)}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ isTff\ );}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
+\DoxyCodeLine{00637\ }
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00650\ \ \ \ \ \}}
+\DoxyCodeLine{00651\ \ \ \}}
+\DoxyCodeLine{00652\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Frame\ Decoding}}
+\DoxyCodeLine{00653\ \ \ \{}
+\DoxyCodeLine{00654\ \ \ \ \ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{00657\ \ \ \ \ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay\ \&\&}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid))}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed-\/-\/;}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced)}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ dpbFullness-\/-\/;}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ ChromaFormat\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00706\ \ \ \ \ \}}
+\DoxyCodeLine{00707\ \ \ \}}
+\DoxyCodeLine{00708\ \}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00712\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00713\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList\ *pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId,\ \textcolor{keywordtype}{bool}\ noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{00714\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00715\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList*\ pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId\ )}
+\DoxyCodeLine{00716\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00717\ \{}
+\DoxyCodeLine{00718\ \ \ \textcolor{keywordflow}{if}(!pcListPic\ ||\ pcListPic-\/>empty())}
+\DoxyCodeLine{00719\ \ \ \{}
+\DoxyCodeLine{00720\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00721\ \ \ \}}
+\DoxyCodeLine{00722\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{00725\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{00726\ }
+\DoxyCodeLine{00727\ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
+\DoxyCodeLine{00728\ \ \ \{}
+\DoxyCodeLine{00729\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
+\DoxyCodeLine{00730\ \ \ \ \ endPic-\/-\/;}
+\DoxyCodeLine{00731\ \ \ \ \ Picture\ *pcPicTop,\ *pcPicBottom\ =\ NULL;}
+\DoxyCodeLine{00732\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
+\DoxyCodeLine{00733\ \ \ \ \ \{}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ pcPicTop\ =\ *(iterPic);}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ pcPicBottom\ =\ *(iterPic);}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPicTop-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00742\ }
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&\ !(pcPicTop-\/>getPOC()\%2)\ \&\&\ (pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ )}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00745\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00748\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ isTff\ \ \ =\ pcPicTop-\/>topField;}
+\DoxyCodeLine{00754\ }
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ isTff\ );}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
+\DoxyCodeLine{00766\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00768\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
+\DoxyCodeLine{00771\ }
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPicTop)}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>destroy();}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicTop;}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ pcPicTop\ =\ NULL;}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00791\ \ \ \ \ \}}
+\DoxyCodeLine{00792\ \ \ \ \ \textcolor{keywordflow}{if}(pcPicBottom)}
+\DoxyCodeLine{00793\ \ \ \ \ \{}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ pcPicBottom-\/>destroy();}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicBottom;}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ pcPicBottom\ =\ NULL;}
+\DoxyCodeLine{00797\ \ \ \ \ \}}
+\DoxyCodeLine{00798\ \ \ \}}
+\DoxyCodeLine{00799\ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//Frame\ decoding}}
+\DoxyCodeLine{00800\ \ \ \{}
+\DoxyCodeLine{00801\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{00802\ \ \ \ \ \{}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{00804\ }
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPic-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00813\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00816\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ ChromaFormat\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
+\DoxyCodeLine{00840\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00842\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic\ !=\ NULL)}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ pcPic-\/>destroy();}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPic;}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ pcPic\ =\ NULL;}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ *iterPic\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{00861\ \ \ \ \ \}}
+\DoxyCodeLine{00862\ \ \ \}}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \ \ \textcolor{keywordflow}{if}(\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{00865\ \ \ \{}
+\DoxyCodeLine{00866\ \ \ \ \ pcListPic-\/>remove\_if([](Picture*\ p)\ \{\ \textcolor{keywordflow}{return}\ p\ ==\ \textcolor{keyword}{nullptr};\ \});}
+\DoxyCodeLine{00867\ \ \ \}}
+\DoxyCodeLine{00868\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00869\ \ \ pcListPic-\/>clear();}
+\DoxyCodeLine{00870\ \ \ m\_iPOCLastDisplay\ =\ -\/MAX\_INT;}
+\DoxyCodeLine{00871\ \}}
+\DoxyCodeLine{00872\ }
+\DoxyCodeLine{00875\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetDecLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00876\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00877\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetDecLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
+\DoxyCodeLine{00878\ \ \ \{}
+\DoxyCodeLine{00879\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00880\ \ \ \}}
+\DoxyCodeLine{00881\ }
+\DoxyCodeLine{00882\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetDecLayerIdSet.end();}
+\DoxyCodeLine{00883\ \}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00887\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetOutputLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00888\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00889\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetOutputLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
+\DoxyCodeLine{00890\ \ \ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00892\ \ \ \}}
+\DoxyCodeLine{00893\ }
+\DoxyCodeLine{00894\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetOutputLayerIdSet.begin(),\ m\_targetOutputLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetOutputLayerIdSet.end();}
+\DoxyCodeLine{00895\ \}}
+\DoxyCodeLine{00896\ }
+
+\end{DoxyCode}

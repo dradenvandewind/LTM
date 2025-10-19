@@ -1,0 +1,559 @@
+\doxysection{Entropy\+Encoder.\+cpp}
+\label{EntropyEncoder_8cpp_source}\index{encoder/src/EntropyEncoder.cpp@{encoder/src/EntropyEncoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ EntropyEncoder.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}EntropyEncoder.hpp"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BitstreamPacker.hpp"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}HuffmanEncoder.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }EntropyModelResiduals\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ residual\ RLE\ modelling\ -\/\ used\ to\ select\ between\ 3\ huffman\ trees}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_ZERO,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ EntropyModelResiduals()\ \{\}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_high\_count(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_run(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros);}
+\DoxyCodeLine{00062\ \ \ \ \ EncodedChunk\ finish();}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_LSB;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{00074\ \ \ \ \ \};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{00081\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ c\ >>\ 7);}
+\DoxyCodeLine{00087\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_run(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ run?}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ zeros\_bit\ =\ (zeros\ >\ 0)\ ?\ 0x80\ :\ 0;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Encode\ value}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{if}\ (residual\ >=\ -\/32\ \&\&\ residual\ <\ 32)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (residual\ *\ 2\ +\ 0x40)\ |\ zeros\_bit);}
+\DoxyCodeLine{00097\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ clamped\_residual\ =\ std::min(std::max(residual\ +\ 0x2000,\ 0),\ 0x3fff)\ <<\ 1;}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (clamped\_residual\ \&\ 0xfe)\ |\ 0x01);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ ((clamped\_residual\ >>\ 8)\ \&\ 0x7f)\ |\ zeros\_bit);}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Add\ any\ required\ run\ symbols}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ LSByte\ first}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ /***}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ \ \ while\ (zeros)\ \{}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ \ \ \ const\ uint8\_t\ low\_bits\ =\ zeros\ \&\ 0x7f;}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ \ \ \ \ \ \ zeros\ >>=\ 7;}}
+\DoxyCodeLine{00109\ \textcolor{comment}{}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (zeros)}}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits\ |\ 0x80);}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ \ \ \ \ else}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits);}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ ***/}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ MSByte\ first}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\_bit)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ >\ 0x7f)}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ encode\_high\_count(STATE\_ZERO,\ zeros\ >>\ 7);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ zeros\ \&\ 0x7f);}
+\DoxyCodeLine{00122\ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ EncodedChunk\ EntropyModelResiduals::finish()\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{00128\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ BitstreamPacker\ raw\_packer;}
+\DoxyCodeLine{00131\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ EncodedChunk\ EntropyEncoderResiduals::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<int16\_t>();}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ EntropyModelResiduals\ models;}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ int16\_t\ residual\ =\ 0;}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(residual,\ zeros);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{00189\ \ \ \ \ models.encode\_run(residual,\ zeros);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ EncodedChunk\ EntropyEncoderResidualsTiled::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<int16\_t>();}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ EntropyModelResiduals\ models;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ int16\_t\ residual\ =\ 0;}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(residual,\ zeros);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{00246\ \ \ \ \ models.encode\_run(residual,\ zeros);}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00255\ \textcolor{comment}{//}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00258\ \textcolor{comment}{//}}
+\DoxyCodeLine{00259\ \textcolor{comment}{//\ Encode\ a\ mask\ of\ 0,1\ runs\ using\ two\ models}}
+\DoxyCodeLine{00260\ \textcolor{comment}{//}}
+\DoxyCodeLine{00261\ \textcolor{keyword}{class\ }EntropyModelRleFlag\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ RLE\ parser\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees\ (0..,\ 1..)}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_ZERO\_RUN,\ STATE\_ONE\_RUN,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00266\ \ \ \ \ EntropyModelRleFlag()\ \{\}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c);}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_run(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count);}
+\DoxyCodeLine{00270\ \ \ \ \ EncodedChunk\ finish(\textcolor{keywordtype}{bool}\ start\_value);}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_ZERO\_RUN;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{00282\ \ \ \ \ \};}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{00285\ \};}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{00289\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ c\ >>\ 7);}
+\DoxyCodeLine{00295\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
+\DoxyCodeLine{00296\ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_run(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count)\ \{}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{const}\ State\ s\ =\ value\ ?\ STATE\_ONE\_RUN\ :\ STATE\_ZERO\_RUN;}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ >\ 0x7f)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ count\ >>\ 7);}
+\DoxyCodeLine{00304\ \ \ \ \ encode\_symbol(s,\ count\ \&\ 0x7f);}
+\DoxyCodeLine{00305\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ EncodedChunk\ EntropyModelRleFlag::finish(\textcolor{keywordtype}{bool}\ start\_value)\ \{}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{00310\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ BitstreamPacker\ raw\_packer;}
+\DoxyCodeLine{00313\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{comment}{//\ Add\ starting\ value\ to\ each\ bitstream}}
+\DoxyCodeLine{00322\ \ \ \ \ raw\_packer.u(8,\ start\_value\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00323\ \ \ \ \ huffman\_packer.u(8,\ start\_value\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
+\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ EncodedChunk\ EntropyEncoderTemporal::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{bool}\ use\_reduced\_signalling)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint8\_t>();}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ EntropyModelRleFlag\ models;}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ (including\ any\ part\ tiles)\ ...}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ intra\_tile\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ first\_transform\_in\_tile\ =\ (tx\ ==\ x)\ \&\&\ (ty\ ==\ y);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ ==\ TemporalType::TEMPORAL\_INTR)\ ?\ 1\ :\ 0;}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (v)}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ intra\ flag\ for\ whole\ tile}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_reduced\_signalling\ \&\&\ first\_transform\_in\_tile\ \&\&\ v\ !=\ 0)}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intra\_tile\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reduced\ signalling\ -\/\ don't\ encode\ rest\ of\ tile\ if\ first\ is\ intra}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!first\_transform\_in\_tile\ \&\&\ use\_reduced\_signalling\ \&\&\ intra\_tile)}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(value,\ count);}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{00394\ \ \ \ \ models.encode\_run(value,\ count);}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish(start);}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
+\DoxyCodeLine{00400\ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ EncodedChunk\ EntropyEncoderFlags::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint8\_t>();}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ EntropyModelRleFlag\ models;}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ For\ each\ flag\ ...}}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ !=\ 0)\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(value,\ count);}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00434\ \ \ \ \ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{00437\ \ \ \ \ models.encode\_run(value,\ count);}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish(start);}
+\DoxyCodeLine{00440\ \}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00443\ \textcolor{comment}{//}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ Used\ for\ tile\ sizes}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{class\ }EntropyModelSizes\ \{}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ size\ modelling\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees}}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00451\ \ \ \ \ EntropyModelSizes()\ \{\}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_size(uint16\_t\ value);}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_size\_delta(int32\_t\ value);}
+\DoxyCodeLine{00455\ \ \ \ \ EncodedChunk\ finish();}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_LSB;}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{00467\ \ \ \ \ \};}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{00470\ \};}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{00473\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{00474\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
+\DoxyCodeLine{00475\ \}}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_size(uint16\_t\ value)\ \{}
+\DoxyCodeLine{00478\ \ \ \ \ CHECK(value\ <=\ 32767);}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ <\ 0x80)\ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (value\ *\ 2)\ |\ 0x00);}
+\DoxyCodeLine{00482\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ value\ >>\ 7);}
+\DoxyCodeLine{00485\ \ \ \ \ \}}
+\DoxyCodeLine{00486\ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_size\_delta(int32\_t\ value)\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ CHECK(value\ >=\ -\/16384\ \&\&\ value\ <=\ 16383);}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{comment}{//\ Decoder\ will\ sign\ extend}}
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ >=\ -\/64\ \&\&\ value\ <=\ 63)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ *\ 2)\ |\ 0x00)\ \&\ 0xff);}
+\DoxyCodeLine{00494\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ (value\ >>\ 7)\ \&\ 0xff);}
+\DoxyCodeLine{00497\ \ \ \ \ \}}
+\DoxyCodeLine{00498\ \}}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ EncodedChunk\ EntropyModelSizes::finish()\ \{}
+\DoxyCodeLine{00501\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{00502\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ BitstreamPacker\ raw\_packer;}
+\DoxyCodeLine{00505\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{00511\ \ \ \ \ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{00517\ \ \ \ \ \}}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
+\DoxyCodeLine{00520\ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ EncodedChunk\ EntropyEncoderSizes::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keyword}{const}\ std::vector<bool>\ entropy\_enabled,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_idx,}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CompressionType\ compression\_type)\ \{}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint16\_t>();}
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ EntropyModelSizes\ models;}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (compression\_type\ ==\ CompressionType\_Prefix)\ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(v\ !=\ 0);}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_size(v);}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ uint16\_t\ p\ =\ 0;}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(v\ !=\ 0);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_size\_delta(v\ -\/\ p);}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p\ =\ v;}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00552\ \ \ \ \ \}}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
+\DoxyCodeLine{00555\ \}}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

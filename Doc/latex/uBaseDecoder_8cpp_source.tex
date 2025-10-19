@@ -1,0 +1,246 @@
+\doxysection{u\+Base\+Decoder.\+cpp}
+\label{uBaseDecoder_8cpp_source}\index{src/uBaseDecoder.cpp@{src/uBaseDecoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <climits>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}uBaseDecoder.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ Parsing\ short\_term\_ref\_pic\_sets\ according\ to\ standard\ seems\ to\ fail\ very\ occasionally\ when\ given\ HM\ output}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Notably,\ HM\ decoder\ uses\ a\ different\ mechanism\ to\ that\ described\ in\ standard\ to\ maintain\ short\ term\ RPS.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ We\ don't\ actually\ need\ this\ for\ LCEVC\ embedding\ so\ bail\ for\ the\ momement}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ NO\_STRPS}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ NO\_VUIPARAMS}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ push}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ push}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/but-\/set-\/variable"{}}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00064\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00065\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00066\ \textcolor{keyword}{const}\ uint32\_t\ kNalHeaderLength\ =\ 3;}
+\DoxyCodeLine{00067\ \textcolor{keyword}{const}\ uint8\_t\ kNalHeader[kNalHeaderLength]\ =\ \{0,\ 0,\ 1\};}
+\DoxyCodeLine{00068\ \textcolor{keyword}{const}\ uint32\_t\ kNalEscapeLength\ =\ 3;}
+\DoxyCodeLine{00069\ \textcolor{keyword}{const}\ uint8\_t\ kNalEscape[kNalEscapeLength]\ =\ \{0,\ 0,\ 3\};}
+\DoxyCodeLine{00070\ \textcolor{keyword}{const}\ uint8\_t\ kBitCountByteMask[9]\ =\ \{0,\ 128,\ 192,\ 224,\ 240,\ 248,\ 252,\ 254,\ 255\};}
+\DoxyCodeLine{00071\ \textcolor{keyword}{const}\ uint8\_t\ kMaxNumRefFramesAllowed\ =\ 16;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ uint32\_t\ GetBitCountFromMax(uint32\_t\ maxValue)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ Bit\ count\ is\ determined\ by\ ceil(log2(maxRepresentation);}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Because\ log2\ is\ c99\ which\ is\ not\ so\ widely\ available\ we\ can\ use\ standard\ log\ with\ a\ divide.}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ log2(x)\ =\ logY(x)\ /\ logY(2)}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Alternatively\ we\ want\ to\ find\ the\ highest\ bit\ set\ in\ maxValue.}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ logBase\ =\ log(2.0f);}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{float}\ log2Value\ =\ log(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(maxValue))\ /\ logBase;}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(ceil(log2Value));}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{static}\ uint32\_t\ uOffsetForNalUnitHeader(\textcolor{keyword}{const}\ uint8\_t\ *nal)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(nal,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength;}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{if}\ (!nal[0]\ \&\&\ memcmp(nal\ +\ 1,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength\ +\ 1;}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Base\ class}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ BaseDecoder::BaseDecoder()\ :\ m\_currentBits(0),\ m\_remainingBits(8),\ m\_byteOffset(0)\ \{\}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ BaseDecoder::\string~BaseDecoder()\ \{\}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}\ BaseDecoder::Unencapsulate(\textcolor{keyword}{const}\ uint8\_t\ *nalIn,\ uint32\_t\ nalLength,\ DataBuffer\ \&out)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ out.resize(nalLength);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *nalEnd\ =\ nalIn\ +\ nalLength;}
+\DoxyCodeLine{00106\ \ \ \ \ uint8\_t\ *outPtr\ =\ out.data();}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{while}\ (nalIn\ <\ nalEnd\ -\/\ 3)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(nalIn,\ kNalEscape,\ kNalEscapeLength)\ ==\ 0)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ nalIn\ +=\ 3;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ *outPtr++\ =\ 0;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ *outPtr++\ =\ 0;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ *outPtr++\ =\ *nalIn;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ nalIn++;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ Appending\ remaining\ data.}}
+\DoxyCodeLine{00120\ \ \ \ \ uint32\_t\ remaining\ =\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(nalEnd\ -\/\ nalIn);}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{if}\ (remaining)\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ memcpy(outPtr,\ nalIn,\ remaining);}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ outPtr\ +=\ remaining;}
+\DoxyCodeLine{00124\ \ \ \ \ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ Shrink\ to\ correct\ size.}}
+\DoxyCodeLine{00127\ \ \ \ \ uint32\_t\ newLength\ =\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(outPtr\ -\/\ out.data());}
+\DoxyCodeLine{00128\ \ \ \ \ out.resize(newLength);}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ uint32\_t\ BaseDecoder::ReadBits(uint8\_t\ numBits)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ assert(numBits\ <=\ 32);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ uint32\_t\ res\ =\ 0;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{while}\ (numBits)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_remainingBits\ <\ numBits)\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ res\ <<=\ m\_remainingBits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ room}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ res\ |=\ (m\_currentBits\ >>\ (8\ -\/\ m\_remainingBits));\ \textcolor{comment}{//\ Push\ in\ the\ bits\ we\ want}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ numBits\ -\/=\ m\_remainingBits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reduce\ number\ of\ bits\ remaining\ to\ read}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ m\_byteOffset++;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ to\ next\ byte\ for\ next\ load}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_byteOffset\ >=\ m\_currentNalPayload.size())\ \textcolor{comment}{//\ Safety.}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}ERROR\ -\/-\/\ NalParsing\ error,\ out\ of\ bytes\ to\ read\ from"{}});}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}NalParsing\ error,\ out\ of\ bytes\ to\ read\ from"{}});}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ m\_currentBits\ =\ *(m\_currentNalPayload.data()\ +\ m\_byteOffset);\ \textcolor{comment}{//\ Load\ in\ new\ byte}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ m\_remainingBits\ =\ 8;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ remaining\ bits}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ res\ <<=\ numBits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ room}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ res\ |=\ (m\_currentBits\ >>\ (8\ -\/\ numBits));\ \textcolor{comment}{//\ Push\ in\ the\ bits\ we\ want}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ m\_currentBits\ <<=\ numBits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ current\ bits}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ m\_remainingBits\ -\/=\ numBits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reduce\ number\ of\ bits\ remaining\ to\ read}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ numBits\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Done.}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00161\ \}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ uint32\_t\ BaseDecoder::ReadUE()\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ uint32\_t\ digitCount\ =\ 0;}
+\DoxyCodeLine{00165\ \ \ \ \ uint32\_t\ bit\ =\ ReadBits(1);}
+\DoxyCodeLine{00166\ \ \ \ \ uint32\_t\ res\ =\ 0;}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{while}\ (bit\ ==\ 0)\ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ digitCount\ +=\ 1;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ bit\ =\ ReadBits(1);}
+\DoxyCodeLine{00171\ \ \ \ \ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ res\ =\ bit;}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{while}\ (digitCount\ >\ 0)\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ digitCount\ -\/=\ 1;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ res\ <<=\ 1;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ res\ |=\ ReadBits(1);}
+\DoxyCodeLine{00179\ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{return}\ res\ -\/\ 1;}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ int32\_t\ BaseDecoder::ReadSE()\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ uint32\_t\ ue\ =\ ReadUE();}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ Even\ UE\ are\ negative.}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Odd\ are\ positive.}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordflow}{if}\ (ue\ \&\ 0x01)\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}int32\_t\textcolor{keyword}{>}((ue\ +\ 1)\ >>\ 1);}
+\DoxyCodeLine{00192\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Negate,\ and\ on\ even\ boundary\ so\ no\ need\ for\ the\ addition.}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/\textcolor{keyword}{static\_cast<}int32\_t\textcolor{keyword}{>}(ue\ >>\ 1);}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{keywordtype}{bool}\ BaseDecoder::ReadFlag()\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ uint32\_t\ bit\ =\ ReadBits(1);}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordflow}{return}\ (bit\ !=\ 0);}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keywordtype}{bool}\ BaseDecoder::ByteAligned()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_remainingBits\ \%\ 8)\ ==\ 0;}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoder(BaseDecoder::Codec\ base\_codec)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keyword}{extern}\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderAVC();}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keyword}{extern}\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderHEVC();}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{extern}\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderVVC();}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keyword}{extern}\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderEVC();}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{extern}\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderYUV();}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{switch}\ (base\_codec)\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecoder::AVC:}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>(CHECK(CreateBaseDecoderAVC()));}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecoder::HEVC:}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>(CHECK(CreateBaseDecoderHEVC()));}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecoder::VVC:}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>(CHECK(CreateBaseDecoderVVC()));}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecoder::EVC:}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>(CHECK(CreateBaseDecoderEVC()));}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecoder::None:}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>(CHECK(CreateBaseDecoderYUV()));}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00228\ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00232\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ pop}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ pop}}
+\DoxyCodeLine{00239\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

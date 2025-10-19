@@ -1,0 +1,1132 @@
+\doxysection{Unit\+Partitioner.\+cpp}
+\label{UnitPartitioner_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/UnitPartitioner.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/UnitPartitioner.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}UnitPartitioner.h"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}CodingStructure.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Unit.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Slice.h"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}UnitTools.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Picture.h"{}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ PartLevel::PartLevel()}
+\DoxyCodeLine{00048\ :\ split\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00049\ ,\ parts\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00050\ ,\ idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ 0u\ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00051\ ,\ checkdIfImplicit\ \ \ \ (\ false\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00052\ ,\ isImplicit\ \ \ \ \ \ \ \ \ \ (\ false\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00053\ ,\ implicitSplit\ \ \ \ \ \ \ (\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00054\ ,\ firstSubPartSplit\ \ \ (\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00055\ ,\ canQtSplit\ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00056\ ,\ qgEnable\ \ \ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00057\ ,\ qgChromaEnable\ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00058\ ,\ modeType\ \ \ \ \ \ \ \ \ \ \ \ (\ MODE\_TYPE\_ALL\ )}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ PartLevel::PartLevel(\ \textcolor{keyword}{const}\ PartSplit\ \_split,\ \textcolor{keyword}{const}\ Partitioning\&\ \_parts\ )}
+\DoxyCodeLine{00063\ :\ split\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \_split\ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00064\ ,\ parts\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \_parts\ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00065\ ,\ idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ 0u\ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00066\ ,\ checkdIfImplicit\ \ \ \ (\ false\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00067\ ,\ isImplicit\ \ \ \ \ \ \ \ \ \ (\ false\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00068\ ,\ implicitSplit\ \ \ \ \ \ \ (\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00069\ ,\ firstSubPartSplit\ \ \ (\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00070\ ,\ canQtSplit\ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00071\ ,\ qgEnable\ \ \ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00072\ ,\ qgChromaEnable\ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00073\ ,\ modeType\ \ \ \ \ \ \ \ \ \ \ \ (\ MODE\_TYPE\_ALL\ )}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ PartLevel::PartLevel(\ \textcolor{keyword}{const}\ PartSplit\ \_split,\ Partitioning\&\&\ \_parts\ )}
+\DoxyCodeLine{00078\ :\ split\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \_split\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00079\ ,\ parts\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ std::forward<Partitioning>(\ \_parts\ )\ )}
+\DoxyCodeLine{00080\ ,\ idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ 0u\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00081\ ,\ checkdIfImplicit\ \ \ \ (\ false\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00082\ ,\ isImplicit\ \ \ \ \ \ \ \ \ \ (\ false\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00083\ ,\ implicitSplit\ \ \ \ \ \ \ (\ CU\_DONT\_SPLIT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00084\ ,\ firstSubPartSplit\ \ \ (\ CU\_DONT\_SPLIT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00085\ ,\ canQtSplit\ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00086\ ,\ qgEnable\ \ \ \ \ \ \ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00087\ ,\ qgChromaEnable\ \ \ \ \ \ (\ true\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00088\ ,\ modeType\ \ \ \ \ \ \ \ \ \ \ \ (\ MODE\_TYPE\_ALL\ )}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ Partitioner\ class}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ SplitSeries\ Partitioner::getSplitSeries()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00097\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00098\ \ \ SplitSeries\ splitSeries\ =\ 0;}
+\DoxyCodeLine{00099\ \ \ SplitSeries\ depth\ =\ 0;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&level\ :\ m\_partStack\ )}
+\DoxyCodeLine{00102\ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{if}(\ level.split\ ==\ CTU\_LEVEL\ )\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{else}\ splitSeries\ +=\ \textcolor{keyword}{static\_cast<}\ SplitSeries\ \textcolor{keyword}{>}(\ level.split\ )\ <<\ (\ depth\ *\ SPLIT\_DMULT\ );}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ depth++;}
+\DoxyCodeLine{00107\ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \textcolor{keywordflow}{return}\ splitSeries;}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ ModeTypeSeries\ Partitioner::getModeTypeSeries()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00113\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00114\ \ \ ModeTypeSeries\ modeTypeSeries\ =\ 0;}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordtype}{int}\ depth\ =\ 0;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&level\ :\ m\_partStack\ )}
+\DoxyCodeLine{00118\ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{if}(\ level.split\ ==\ CTU\_LEVEL\ )\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{else}\ modeTypeSeries\ +=\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(level.modeType)\ <<\ (depth\ *\ 3);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ depth++;}
+\DoxyCodeLine{00123\ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{return}\ modeTypeSeries;}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{bool}\ Partitioner::isSepTree(\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{00129\ \{}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordflow}{return}\ treeType\ !=\ TREE\_D\ ||\ CS::isDualITree(\ cs\ );}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{keywordtype}{bool}\ Partitioner::isLocalSepTree(\textcolor{keyword}{const}\ CodingStructure\ \&cs)}
+\DoxyCodeLine{00134\ \{}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{return}\ treeType\ !=\ TREE\_D\ \&\&\ !CS::isDualITree(cs);}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{void}\ Partitioner::setCUData(\ CodingUnit\&\ cu\ )}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ cu.depth\ \ \ \ \ \ \ =\ currDepth;}
+\DoxyCodeLine{00141\ \ \ cu.btDepth\ \ \ \ \ =\ currBtDepth;}
+\DoxyCodeLine{00142\ \ \ cu.mtDepth\ \ \ \ \ =\ currMtDepth;}
+\DoxyCodeLine{00143\ \ \ cu.qtDepth\ \ \ \ \ =\ currQtDepth;}
+\DoxyCodeLine{00144\ \ \ cu.splitSeries\ =\ getSplitSeries();}
+\DoxyCodeLine{00145\ \ \ cu.modeTypeSeries\ =\ getModeTypeSeries();}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keywordtype}{void}\ Partitioner::copyState(\ \textcolor{keyword}{const}\ Partitioner\&\ other\ )}
+\DoxyCodeLine{00149\ \{}
+\DoxyCodeLine{00150\ \ \ m\_partStack\ =\ other.m\_partStack;}
+\DoxyCodeLine{00151\ \ \ currBtDepth\ =\ other.currBtDepth;}
+\DoxyCodeLine{00152\ \ \ currQtDepth\ =\ other.currQtDepth;}
+\DoxyCodeLine{00153\ \ \ currDepth\ \ \ =\ other.currDepth;}
+\DoxyCodeLine{00154\ \ \ currMtDepth\ =\ other.currMtDepth;}
+\DoxyCodeLine{00155\ \ \ currTrDepth\ =\ other.currTrDepth;}
+\DoxyCodeLine{00156\ \ \ currSubdiv\ \ =\ other.currSubdiv;}
+\DoxyCodeLine{00157\ \ \ currQgPos\ \ \ =\ other.currQgPos;}
+\DoxyCodeLine{00158\ \ \ currQgChromaPos\ =\ other.currQgChromaPos;}
+\DoxyCodeLine{00159\ \ \ currImplicitBtDepth}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ other.currImplicitBtDepth;}
+\DoxyCodeLine{00161\ \ \ chType\ \ \ \ \ \ =\ other.chType;}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#ifdef\ \_DEBUG}}
+\DoxyCodeLine{00163\ \ \ m\_currArea\ \ =\ other.m\_currArea;}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00165\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ AdaptiveDepthPartitioner\ class}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{keywordtype}{void}\ AdaptiveDepthPartitioner::setMaxMinDepth(\ \textcolor{keywordtype}{unsigned}\&\ minDepth,\ \textcolor{keywordtype}{unsigned}\&\ maxDepth,\ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00172\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ stdMinDepth\ =\ 0;}
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ stdMaxDepth\ =\ (\ floorLog2(cs.sps-\/>getCTUSize())\ -\/\ floorLog2(cs.sps-\/>getMinQTSize(\ cs.slice-\/>getSliceType(),\ chType\ )));}
+\DoxyCodeLine{00175\ \ \ \textcolor{keyword}{const}\ Position\ \ \ \ pos\ \ \ \ \ \ \ \ \ =\ currArea().blocks[chType].pos();}
+\DoxyCodeLine{00176\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ curSliceIdx\ =\ cs.slice-\/>getIndependentSliceIdx();}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ curTileIdx\ \ =\ cs.pps-\/>getTileIdx(\ currArea().lumaPos()\ );}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \textcolor{keyword}{const}\ CodingUnit*\ cuLeft\ \ \ \ \ \ \ \ =\ cs.getCURestricted(\ pos.offset(\ -\/1,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0\ ),\ pos,\ curSliceIdx,\ curTileIdx,\ chType\ );}
+\DoxyCodeLine{00180\ \ \ \textcolor{keyword}{const}\ CodingUnit*\ cuBelowLeft\ \ \ =\ cs.getCURestricted(\ pos.offset(\ -\/1,\ currArea().blocks[chType].height),\ pos,\ curSliceIdx,\ curTileIdx,\ chType\ );}
+\DoxyCodeLine{00181\ \ \ \textcolor{keyword}{const}\ CodingUnit*\ cuAbove\ \ \ \ \ \ \ =\ cs.getCURestricted(\ pos.offset(\ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/1\ ),\ pos,\ curSliceIdx,\ curTileIdx,\ chType\ );}
+\DoxyCodeLine{00182\ \ \ \textcolor{keyword}{const}\ CodingUnit*\ cuAboveRight\ \ =\ cs.getCURestricted(\ pos.offset(\ currArea().blocks[chType].width,\ -\/1\ ),\ pos,\ curSliceIdx,\ curTileIdx,\ chType\ );}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ minDepth\ =\ stdMaxDepth;}
+\DoxyCodeLine{00185\ \ \ maxDepth\ =\ stdMinDepth;}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \textcolor{keywordflow}{if}(\ cuLeft\ )}
+\DoxyCodeLine{00188\ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ minDepth\ =\ std::min<unsigned>(\ minDepth,\ cuLeft-\/>qtDepth\ );}
+\DoxyCodeLine{00190\ \ \ \ \ maxDepth\ =\ std::max<unsigned>(\ maxDepth,\ cuLeft-\/>qtDepth\ );}
+\DoxyCodeLine{00191\ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00193\ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ minDepth\ =\ stdMinDepth;}
+\DoxyCodeLine{00195\ \ \ \ \ maxDepth\ =\ stdMaxDepth;}
+\DoxyCodeLine{00196\ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordflow}{if}(\ cuBelowLeft\ )}
+\DoxyCodeLine{00199\ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ minDepth\ =\ std::min<unsigned>(\ minDepth,\ cuBelowLeft-\/>qtDepth\ );}
+\DoxyCodeLine{00201\ \ \ \ \ maxDepth\ =\ std::max<unsigned>(\ maxDepth,\ cuBelowLeft-\/>qtDepth\ );}
+\DoxyCodeLine{00202\ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00204\ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ minDepth\ =\ stdMinDepth;}
+\DoxyCodeLine{00206\ \ \ \ \ maxDepth\ =\ stdMaxDepth;}
+\DoxyCodeLine{00207\ \ \ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \textcolor{keywordflow}{if}(\ cuAbove\ )}
+\DoxyCodeLine{00210\ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ minDepth\ =\ std::min<unsigned>(\ minDepth,\ cuAbove-\/>qtDepth\ );}
+\DoxyCodeLine{00212\ \ \ \ \ maxDepth\ =\ std::max<unsigned>(\ maxDepth,\ cuAbove-\/>qtDepth\ );}
+\DoxyCodeLine{00213\ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00215\ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ minDepth\ =\ stdMinDepth;}
+\DoxyCodeLine{00217\ \ \ \ \ maxDepth\ =\ stdMaxDepth;}
+\DoxyCodeLine{00218\ \ \ \}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \textcolor{keywordflow}{if}(\ cuAboveRight\ )}
+\DoxyCodeLine{00221\ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ minDepth\ =\ std::min<unsigned>(\ minDepth,\ cuAboveRight-\/>qtDepth\ );}
+\DoxyCodeLine{00223\ \ \ \ \ maxDepth\ =\ std::max<unsigned>(\ maxDepth,\ cuAboveRight-\/>qtDepth\ );}
+\DoxyCodeLine{00224\ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00226\ \ \ \{}
+\DoxyCodeLine{00227\ \ \ \ \ minDepth\ =\ stdMinDepth;}
+\DoxyCodeLine{00228\ \ \ \ \ maxDepth\ =\ stdMaxDepth;}
+\DoxyCodeLine{00229\ \ \ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ minDepth\ =\ (\ minDepth\ >=\ 1\ ?\ minDepth\ -\/\ 1\ :\ 0\ );}
+\DoxyCodeLine{00232\ \ \ maxDepth\ =\ std::min<unsigned>(\ stdMaxDepth,\ maxDepth\ +\ 1\ );}
+\DoxyCodeLine{00233\ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ QTBTPartitioner}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{keywordtype}{void}\ QTBTPartitioner::initCtu(\ \textcolor{keyword}{const}\ UnitArea\&\ ctuArea,\ \textcolor{keyword}{const}\ ChannelType\ \_chType,\ \textcolor{keyword}{const}\ Slice\&\ slice\ )}
+\DoxyCodeLine{00250\ \{}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00252\ \ \ m\_currArea\ =\ ctuArea;}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00254\ \ \ currDepth\ \ \ =\ 0;}
+\DoxyCodeLine{00255\ \ \ currTrDepth\ =\ 0;}
+\DoxyCodeLine{00256\ \ \ currBtDepth\ =\ 0;}
+\DoxyCodeLine{00257\ \ \ currMtDepth\ =\ 0;}
+\DoxyCodeLine{00258\ \ \ currQtDepth\ =\ 0;}
+\DoxyCodeLine{00259\ \ \ currSubdiv\ \ =\ 0;}
+\DoxyCodeLine{00260\ \ \ currQgPos\ \ \ =\ ctuArea.lumaPos();}
+\DoxyCodeLine{00261\ \ \ currQgChromaPos\ =\ ctuArea.chromaFormat\ !=\ CHROMA\_400\ ?\ ctuArea.chromaPos()\ :\ Position();}
+\DoxyCodeLine{00262\ \ \ currImplicitBtDepth\ =\ 0;}
+\DoxyCodeLine{00263\ \ \ chType\ \ \ \ \ \ =\ \_chType;}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ m\_partStack.clear();}
+\DoxyCodeLine{00266\ \ \ m\_partStack.push\_back(\ PartLevel(\ CTU\_LEVEL,\ Partitioning\{\ ctuArea\ \}\ )\ );}
+\DoxyCodeLine{00267\ \ \ treeType\ =\ TREE\_D;}
+\DoxyCodeLine{00268\ \ \ modeType\ =\ MODE\_TYPE\_ALL;}
+\DoxyCodeLine{00269\ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \textcolor{keywordtype}{void}\ QTBTPartitioner::splitCurrArea(\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ )}
+\DoxyCodeLine{00272\ \{}
+\DoxyCodeLine{00273\ \ \ CHECKD(\ !canSplit(\ split,\ cs\ ),\ \textcolor{stringliteral}{"{}Trying\ to\ apply\ a\ prohibited\ split!"{}}\ );}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \textcolor{keywordtype}{bool}\ isImplicit\ =\ isSplitImplicit(\ split,\ cs\ );}
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordtype}{bool}\ canQtSplit\ =\ canSplit(\ CU\_QUAD\_SPLIT,\ cs\ );}
+\DoxyCodeLine{00277\ \ \ \textcolor{keywordtype}{bool}\ qgEnable\ =\ currQgEnable();}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordtype}{bool}\ qgChromaEnable\ =\ currQgChromaEnable();}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \textcolor{keywordflow}{switch}(\ split\ )}
+\DoxyCodeLine{00281\ \ \ \{}
+\DoxyCodeLine{00282\ \ \ \textcolor{keywordflow}{case}\ CU\_QUAD\_SPLIT:}
+\DoxyCodeLine{00283\ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getCUSubPartitions(\ currArea(),\ cs\ )\ )\ );}
+\DoxyCodeLine{00284\ \ \ \ \ m\_partStack.back().modeType\ =\ modeType;}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordflow}{case}\ CU\_HORZ\_SPLIT:}
+\DoxyCodeLine{00287\ \ \ \textcolor{keywordflow}{case}\ CU\_VERT\_SPLIT:}
+\DoxyCodeLine{00288\ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getCUSubPartitions(\ currArea(),\ cs,\ split\ )\ )\ );}
+\DoxyCodeLine{00289\ \ \ \ \ m\_partStack.back().modeType\ =\ modeType;}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00291\ \ \ \textcolor{keywordflow}{case}\ CU\_TRIH\_SPLIT:}
+\DoxyCodeLine{00292\ \ \ \textcolor{keywordflow}{case}\ CU\_TRIV\_SPLIT:}
+\DoxyCodeLine{00293\ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getCUSubPartitions(\ currArea(),\ cs,\ split\ )\ )\ );}
+\DoxyCodeLine{00294\ \ \ \ \ m\_partStack.back().modeType\ =\ modeType;}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00296\ \ \ \textcolor{keywordflow}{case}\ TU\_MAX\_TR\_SPLIT:}
+\DoxyCodeLine{00297\ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getMaxTuTiling(\ currArea(),\ cs\ )\ )\ );}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00299\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_HALF\_POS0\_SPLIT:}
+\DoxyCodeLine{00300\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_HALF\_POS1\_SPLIT:}
+\DoxyCodeLine{00301\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_HALF\_POS0\_SPLIT:}
+\DoxyCodeLine{00302\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_HALF\_POS1\_SPLIT:}
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_QUAD\_POS0\_SPLIT:}
+\DoxyCodeLine{00304\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_QUAD\_POS1\_SPLIT:}
+\DoxyCodeLine{00305\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_QUAD\_POS0\_SPLIT:}
+\DoxyCodeLine{00306\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_QUAD\_POS1\_SPLIT:}
+\DoxyCodeLine{00307\ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getSbtTuTiling(\ currArea(),\ cs,\ split\ )\ )\ );}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00310\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ split\ mode"{}}\ );}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00312\ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ currDepth++;}
+\DoxyCodeLine{00315\ \ \ currSubdiv++;}
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00317\ \ \ m\_currArea\ =\ m\_partStack.back().parts.front();}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \textcolor{keywordflow}{if}(\ split\ ==\ TU\_MAX\_TR\_SPLIT\ )}
+\DoxyCodeLine{00321\ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ currTrDepth++;}
+\DoxyCodeLine{00323\ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ split\ >=\ SBT\_VER\_HALF\_POS0\_SPLIT\ \&\&\ split\ <=\ SBT\_HOR\_QUAD\_POS1\_SPLIT\ )}
+\DoxyCodeLine{00325\ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ currTrDepth++;}
+\DoxyCodeLine{00327\ \ \ \}}
+\DoxyCodeLine{00328\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00329\ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ currTrDepth\ =\ 0;}
+\DoxyCodeLine{00331\ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \textcolor{keywordflow}{if}(\ split\ ==\ CU\_HORZ\_SPLIT\ ||\ split\ ==\ CU\_VERT\_SPLIT\ ||\ split\ ==\ CU\_TRIH\_SPLIT\ ||\ split\ ==\ CU\_TRIV\_SPLIT\ )}
+\DoxyCodeLine{00334\ \ \ \{}
+\DoxyCodeLine{00335\ \ \ \ \ currBtDepth++;}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordflow}{if}(\ isImplicit\ )\ currImplicitBtDepth++;}
+\DoxyCodeLine{00337\ \ \ \ \ currMtDepth++;}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordflow}{if}(\ split\ ==\ CU\_TRIH\_SPLIT\ ||\ split\ ==\ CU\_TRIV\_SPLIT\ )}
+\DoxyCodeLine{00340\ \ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \textcolor{comment}{//\ first\ and\ last\ part\ of\ triple\ split\ are\ equivalent\ to\ double\ bt\ split}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ currBtDepth++;}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ currSubdiv++;}
+\DoxyCodeLine{00344\ \ \ \ \ \}}
+\DoxyCodeLine{00345\ \ \ \ \ m\_partStack.back().canQtSplit\ =\ canQtSplit;}
+\DoxyCodeLine{00346\ \ \ \}}
+\DoxyCodeLine{00347\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ split\ ==\ CU\_QUAD\_SPLIT\ )}
+\DoxyCodeLine{00348\ \ \ \{}
+\DoxyCodeLine{00349\ \ \ \ \ CHECK(\ currBtDepth\ >\ 0,\ \textcolor{stringliteral}{"{}Cannot\ split\ a\ non-\/square\ area\ other\ than\ with\ a\ binary\ split"{}}\ );}
+\DoxyCodeLine{00350\ \ \ \ \ CHECK(\ currMtDepth\ >\ 0,\ \textcolor{stringliteral}{"{}Cannot\ split\ a\ non-\/square\ area\ other\ than\ with\ a\ binary\ split"{}}\ );}
+\DoxyCodeLine{00351\ \ \ \ \ currMtDepth\ =\ 0;}
+\DoxyCodeLine{00352\ \ \ \ \ currBtDepth\ =\ 0;}
+\DoxyCodeLine{00353\ \ \ \ \ currQtDepth++;}
+\DoxyCodeLine{00354\ \ \ \ \ currSubdiv++;}
+\DoxyCodeLine{00355\ \ \ \}}
+\DoxyCodeLine{00356\ \ \ qgEnable\ \ \ \ \ \ \ \&=\ (currSubdiv\ <=\ cs.slice-\/>getCuQpDeltaSubdiv());}
+\DoxyCodeLine{00357\ \ \ qgChromaEnable\ \&=\ (currSubdiv\ <=\ cs.slice-\/>getCuChromaQpOffsetSubdiv());}
+\DoxyCodeLine{00358\ \ \ m\_partStack.back().qgEnable\ \ \ \ \ \ \ =\ qgEnable;}
+\DoxyCodeLine{00359\ \ \ m\_partStack.back().qgChromaEnable\ =\ qgChromaEnable;}
+\DoxyCodeLine{00360\ \ \ \textcolor{keywordflow}{if}\ (qgEnable)}
+\DoxyCodeLine{00361\ \ \ \ \ currQgPos\ =\ currArea().lumaPos();}
+\DoxyCodeLine{00362\ \ \ \textcolor{keywordflow}{if}\ (qgChromaEnable)}
+\DoxyCodeLine{00363\ \ \ \ \ currQgChromaPos\ =\ currArea().chromaPos();}
+\DoxyCodeLine{00364\ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{keywordtype}{void}\ QTBTPartitioner::canSplit(\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\&\ canNo,\ \textcolor{keywordtype}{bool}\&\ canQt,\ \textcolor{keywordtype}{bool}\&\ canBh,\ \textcolor{keywordtype}{bool}\&\ canBv,\ \textcolor{keywordtype}{bool}\&\ canTh,\ \textcolor{keywordtype}{bool}\&\ canTv\ )}
+\DoxyCodeLine{00367\ \{}
+\DoxyCodeLine{00368\ \ \ \textcolor{keyword}{const}\ PartSplit\ implicitSplit\ =\ m\_partStack.back().checkdIfImplicit\ ?\ m\_partStack.back().implicitSplit\ :\ getImplicitSplit(\ cs\ );}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ maxBTD\ \ \ \ \ \ \ \ \ =\ cs.pcv-\/>getMaxBtDepth(\ *cs.slice,\ chType\ )\ +\ currImplicitBtDepth;}
+\DoxyCodeLine{00371\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ maxBtSize\ \ \ \ \ \ =\ cs.pcv-\/>getMaxBtSize\ (\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00372\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ minBtSize\ \ \ \ \ \ =\ cs.pcv-\/>getMinBtSize\ (\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00373\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ maxTtSize\ \ \ \ \ \ =\ cs.pcv-\/>getMaxTtSize\ (\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00374\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ minTtSize\ \ \ \ \ \ =\ cs.pcv-\/>getMinTtSize\ (\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00375\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ minQtSize\ \ \ \ \ \ =\ cs.pcv-\/>getMinQtSize\ (\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ canNo\ =\ canQt\ =\ canBh\ =\ canTh\ =\ canBv\ =\ canTv\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00378\ \ \ \textcolor{keywordtype}{bool}\ canBtt\ =\ currMtDepth\ <\ maxBTD;}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \textcolor{comment}{//\ the\ minimal\ and\ maximal\ sizes\ are\ given\ in\ luma\ samples}}
+\DoxyCodeLine{00381\ \ \ \textcolor{keyword}{const}\ CompArea\&\ \ area\ \ =\ currArea().Y();}
+\DoxyCodeLine{00382\ \ \ \textcolor{keyword}{const}\ CompArea\ \ *areaC\ =\ (chType\ ==\ CHANNEL\_TYPE\_CHROMA)\ ?\ \&(currArea().Cb())\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ PartLevel\&\ level\ =\ m\_partStack.back();}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{const}\ PartSplit\ lastSplit\ =\ level.split;}
+\DoxyCodeLine{00386\ \ \ \textcolor{keyword}{const}\ PartSplit\ parlSplit\ =\ lastSplit\ ==\ CU\_TRIH\_SPLIT\ ?\ CU\_HORZ\_SPLIT\ :\ CU\_VERT\_SPLIT;}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \textcolor{comment}{//\ don't\ allow\ QT-\/splitting\ below\ a\ BT\ split}}
+\DoxyCodeLine{00389\ \ \ \textcolor{keywordflow}{if}(\ lastSplit\ !=\ CTU\_LEVEL\ \&\&\ lastSplit\ !=\ CU\_QUAD\_SPLIT\ )\ canQt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00390\ \ \ \textcolor{keywordflow}{if}(\ area.width\ <=\ minQtSize\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ canQt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \textcolor{keywordflow}{if}(\ areaC\ \&\&\ areaC-\/>width\ <=\ MIN\_DUALTREE\_CHROMA\_WIDTH\ )\ canQt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00393\ \ \ \textcolor{keywordflow}{if}(\ treeType\ ==\ TREE\_C\ )}
+\DoxyCodeLine{00394\ \ \ \{}
+\DoxyCodeLine{00395\ \ \ \ \ canQt\ =\ canBh\ =\ canTh\ =\ canBv\ =\ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00397\ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \textcolor{keywordflow}{if}(\ implicitSplit\ !=\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00399\ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ canNo\ =\ canTh\ =\ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ canBh\ =\ implicitSplit\ ==\ CU\_HORZ\_SPLIT;}
+\DoxyCodeLine{00403\ \ \ \ \ canBv\ =\ implicitSplit\ ==\ CU\_VERT\_SPLIT;}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keywordflow}{if}\ (areaC\ \&\&\ areaC-\/>width\ ==\ 4)\ canBv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keywordflow}{if}(\ !canBh\ \&\&\ !canBv\ \&\&\ !canQt\ )\ canQt\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00407\ \ \ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \textcolor{keywordflow}{if}(\ (\ lastSplit\ ==\ CU\_TRIH\_SPLIT\ ||\ lastSplit\ ==\ CU\_TRIV\_SPLIT\ )\ \&\&\ currPartIdx()\ ==\ 1\ )}
+\DoxyCodeLine{00410\ \ \ \{}
+\DoxyCodeLine{00411\ \ \ \ \ canBh\ =\ parlSplit\ !=\ CU\_HORZ\_SPLIT;}
+\DoxyCodeLine{00412\ \ \ \ \ canBv\ =\ parlSplit\ !=\ CU\_VERT\_SPLIT;}
+\DoxyCodeLine{00413\ \ \ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \textcolor{keywordflow}{if}(\ canBtt\ \&\&\ (\ area.width\ <=\ minBtSize\ \&\&\ area.height\ <=\ minBtSize\ )}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \&\&\ (\ (\ area.width\ <=\ minTtSize\ \&\&\ area.height\ <=\ minTtSize\ )\ )\ )}
+\DoxyCodeLine{00417\ \ \ \{}
+\DoxyCodeLine{00418\ \ \ \ \ canBtt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00419\ \ \ \}}
+\DoxyCodeLine{00420\ \ \ \textcolor{keywordflow}{if}(\ canBtt\ \&\&\ (\ area.width\ >\ maxBtSize\ ||\ area.height\ >\ maxBtSize\ )}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \&\&\ (\ (\ area.width\ >\ maxTtSize\ ||\ area.height\ >\ maxTtSize\ )\ )\ )}
+\DoxyCodeLine{00422\ \ \ \{}
+\DoxyCodeLine{00423\ \ \ \ \ canBtt\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00424\ \ \ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \textcolor{keywordflow}{if}(\ !canBtt\ )}
+\DoxyCodeLine{00427\ \ \ \{}
+\DoxyCodeLine{00428\ \ \ \ \ canBh\ =\ canTh\ =\ canBv\ =\ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00431\ \ \ \}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \textcolor{keywordflow}{if}(\ area.width\ >\ maxBtSize\ ||\ area.height\ >\ maxBtSize\ )}
+\DoxyCodeLine{00434\ \ \ \{}
+\DoxyCodeLine{00435\ \ \ \ \ canBh\ =\ canBv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00436\ \ \ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \textcolor{comment}{//\ specific\ check\ for\ BT\ splits}}
+\DoxyCodeLine{00439\ \ \ \textcolor{keywordflow}{if}(\ area.height\ <=\ minBtSize\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ canBh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00440\ \ \ \textcolor{keywordflow}{if}(\ area.width\ >\ MAX\_TB\_SIZEY\ \&\&\ area.height\ <=\ MAX\_TB\_SIZEY\ )\ canBh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00441\ \ \ \textcolor{keywordflow}{if}(\ areaC\ \&\&\ areaC-\/>width\ *\ areaC-\/>height\ <=\ MIN\_DUALTREE\_CHROMA\_SIZE\ )\ \ \ \ \ canBh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00442\ \ \ \textcolor{keywordflow}{if}(\ area.width\ <=\ minBtSize\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ canBv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordflow}{if}(\ area.width\ <=\ MAX\_TB\_SIZEY\ \&\&\ area.height\ >\ MAX\_TB\_SIZEY\ )\ canBv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00444\ \ \ \textcolor{keywordflow}{if}\ (areaC\ \&\&\ (areaC-\/>width\ *\ areaC-\/>height\ <=\ MIN\_DUALTREE\_CHROMA\_SIZE\ ||\ areaC-\/>width\ ==\ 4))\ \ \ \ \ canBv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordflow}{if}(\ modeType\ ==\ MODE\_TYPE\_INTER\ \&\&\ area.width\ *\ area.height\ ==\ 32\ )\ \ canBv\ =\ canBh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00446\ \ \ \textcolor{keywordflow}{if}(\ area.height\ <=\ 2\ *\ minTtSize\ ||\ area.height\ >\ maxTtSize\ ||\ area.width\ >\ maxTtSize\ )}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ canTh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00448\ \ \ \textcolor{keywordflow}{if}(\ area.width\ >\ MAX\_TB\_SIZEY\ ||\ area.height\ >\ MAX\_TB\_SIZEY\ )\ \ canTh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00449\ \ \ \textcolor{keywordflow}{if}(\ areaC\ \&\&\ areaC-\/>width\ *\ areaC-\/>height\ <=\ MIN\_DUALTREE\_CHROMA\_SIZE*2\ )\ \ \ \ \ canTh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00450\ \ \ \textcolor{keywordflow}{if}(\ area.width\ <=\ 2\ *\ minTtSize\ ||\ area.width\ >\ maxTtSize\ ||\ area.height\ >\ maxTtSize\ )}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00452\ \ \ \textcolor{keywordflow}{if}(\ area.width\ >\ MAX\_TB\_SIZEY\ ||\ area.height\ >\ MAX\_TB\_SIZEY\ )\ \ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00453\ \ \ \textcolor{keywordflow}{if}\ (areaC\ \&\&\ (areaC-\/>width\ *\ areaC-\/>height\ <=\ MIN\_DUALTREE\_CHROMA\_SIZE\ *\ 2\ ||\ areaC-\/>width\ ==\ 8))\ \ \ \ \ canTv\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00454\ \ \ \textcolor{keywordflow}{if}(\ modeType\ ==\ MODE\_TYPE\_INTER\ \&\&\ area.width\ *\ area.height\ ==\ 64\ )\ \ canTv\ =\ canTh\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \}}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \textcolor{keywordtype}{bool}\ QTBTPartitioner::canSplit(\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{00459\ \{}
+\DoxyCodeLine{00460\ \ \ \textcolor{keyword}{const}\ CompArea\ area\ \ \ \ \ \ \ =\ currArea().Y();}
+\DoxyCodeLine{00461\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ maxTrSize\ \ =\ cs.sps-\/>getMaxTbSize();}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \textcolor{keywordtype}{bool}\ canNo,\ canQt,\ canBh,\ canTh,\ canBv,\ canTv;}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ canSplit(\ cs,\ canNo,\ canQt,\ canBh,\ canBv,\ canTh,\ canTv\ );}
+\DoxyCodeLine{00466\ \ \ \textcolor{keywordflow}{switch}(\ split\ )}
+\DoxyCodeLine{00467\ \ \ \{}
+\DoxyCodeLine{00468\ \ \ \textcolor{keywordflow}{case}\ CTU\_LEVEL:}
+\DoxyCodeLine{00469\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Checking\ if\ top\ level\ split\ is\ possible"{}}\ );}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00472\ \ \ \textcolor{keywordflow}{case}\ TU\_MAX\_TR\_SPLIT:}
+\DoxyCodeLine{00473\ \ \ \ \ \textcolor{keywordflow}{return}\ area.width\ >\ maxTrSize\ ||\ area.height\ >\ maxTrSize;}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00475\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_HALF\_POS0\_SPLIT:}
+\DoxyCodeLine{00476\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_HALF\_POS1\_SPLIT:}
+\DoxyCodeLine{00477\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_HALF\_POS0\_SPLIT:}
+\DoxyCodeLine{00478\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_HALF\_POS1\_SPLIT:}
+\DoxyCodeLine{00479\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_QUAD\_POS0\_SPLIT:}
+\DoxyCodeLine{00480\ \ \ \textcolor{keywordflow}{case}\ SBT\_VER\_QUAD\_POS1\_SPLIT:}
+\DoxyCodeLine{00481\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_QUAD\_POS0\_SPLIT:}
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordflow}{case}\ SBT\_HOR\_QUAD\_POS1\_SPLIT:}
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordflow}{return}\ currTrDepth\ ==\ 0;}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00485\ \ \ \textcolor{keywordflow}{case}\ CU\_QUAD\_SPLIT:}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordflow}{return}\ canQt;}
+\DoxyCodeLine{00487\ \ \ \textcolor{keywordflow}{case}\ CU\_DONT\_SPLIT:}
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{keywordflow}{return}\ canNo;}
+\DoxyCodeLine{00489\ \ \ \textcolor{keywordflow}{case}\ CU\_HORZ\_SPLIT:}
+\DoxyCodeLine{00490\ \ \ \ \ \textcolor{keywordflow}{return}\ canBh;}
+\DoxyCodeLine{00491\ \ \ \textcolor{keywordflow}{case}\ CU\_VERT\_SPLIT:}
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{keywordflow}{return}\ canBv;}
+\DoxyCodeLine{00493\ \ \ \textcolor{keywordflow}{case}\ CU\_TRIH\_SPLIT:}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{return}\ canTh;}
+\DoxyCodeLine{00495\ \ \ \textcolor{keywordflow}{case}\ CU\_TRIV\_SPLIT:}
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keywordflow}{return}\ canTv;}
+\DoxyCodeLine{00497\ \ \ \textcolor{keywordflow}{case}\ CU\_MT\_SPLIT:}
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ canBh\ ||\ canTh\ ||\ canBv\ ||\ canTv\ );}
+\DoxyCodeLine{00499\ \ \ \textcolor{keywordflow}{case}\ CU\_BT\_SPLIT:}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ canBh\ ||\ canBv\ );}
+\DoxyCodeLine{00501\ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00502\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00503\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ split\ mode"{}}\ );}
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00505\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00506\ \ \ \}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00509\ \}}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \textcolor{keywordtype}{bool}\ QTBTPartitioner::isSplitImplicit(\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{00512\ \{}
+\DoxyCodeLine{00513\ \ \ \textcolor{keywordflow}{return}\ split\ ==\ getImplicitSplit(\ cs\ );}
+\DoxyCodeLine{00514\ \}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ PartSplit\ QTBTPartitioner::getImplicitSplit(\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{00517\ \{}
+\DoxyCodeLine{00518\ \ \ \textcolor{keywordflow}{if}(\ m\_partStack.back().checkdIfImplicit\ )}
+\DoxyCodeLine{00519\ \ \ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_partStack.back().implicitSplit;}
+\DoxyCodeLine{00521\ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ PartSplit\ split\ =\ CU\_DONT\_SPLIT;}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \textcolor{keywordflow}{if}(\ split\ ==\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00526\ \ \ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isBlInPic\ =\ cs.picture-\/>Y().contains(\ currArea().Y().bottomLeft()\ );}
+\DoxyCodeLine{00528\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isTrInPic\ =\ cs.picture-\/>Y().contains(\ currArea().Y().topRight()\ );}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\&\ area\ \ \ \ \ \ =\ currArea().Y();}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ maxBtSize\ \ =\ cs.pcv-\/>getMaxBtSize(\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00532\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isBtAllowed\ \ \ \ =\ area.width\ <=\ maxBtSize\ \&\&\ area.height\ <=\ maxBtSize\ \&\&\ currMtDepth\ <\ (cs.pcv-\/>getMaxBtDepth(*cs.slice,\ chType)\ +\ currImplicitBtDepth);}
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ minQtSize\ \ =\ cs.pcv-\/>getMinQtSize(\ *cs.slice,\ chType\ );}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isQtAllowed\ \ \ \ =\ area.width\ >\ \ minQtSize\ \&\&\ area.height\ >\ \ minQtSize\ \&\&\ currBtDepth\ ==\ 0;}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \textcolor{keywordflow}{if}(\ !isBlInPic\ \&\&\ !isTrInPic\ \&\&\ isQtAllowed\ )}
+\DoxyCodeLine{00537\ \ \ \ \ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ split\ =\ CU\_QUAD\_SPLIT;}
+\DoxyCodeLine{00539\ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !isBlInPic\ \&\&\ isBtAllowed\ \&\&\ area.width\ <=\ MAX\_TB\_SIZEY\ )}
+\DoxyCodeLine{00541\ \ \ \ \ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ split\ =\ CU\_HORZ\_SPLIT;}
+\DoxyCodeLine{00543\ \ \ \ \ \}}
+\DoxyCodeLine{00544\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !isTrInPic\ \&\&\ isBtAllowed\ \&\&\ area.height\ <=\ MAX\_TB\_SIZEY\ )}
+\DoxyCodeLine{00545\ \ \ \ \ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ split\ =\ CU\_VERT\_SPLIT;}
+\DoxyCodeLine{00547\ \ \ \ \ \}}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !isBlInPic\ ||\ !isTrInPic\ )}
+\DoxyCodeLine{00549\ \ \ \ \ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ split\ =\ CU\_QUAD\_SPLIT;}
+\DoxyCodeLine{00551\ \ \ \ \ \}}
+\DoxyCodeLine{00552\ \ \ \ \ \textcolor{keywordflow}{if}\ (CS::isDualITree(cs)\ \&\&\ (currArea().Y().width\ >\ 64\ ||\ currArea().Y().height\ >\ 64))}
+\DoxyCodeLine{00553\ \ \ \ \ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ split\ =\ CU\_QUAD\_SPLIT;}
+\DoxyCodeLine{00555\ \ \ \ \ \}}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keywordflow}{if}(\ (!isBlInPic\ ||\ !isTrInPic)\ \&\&\ split\ ==\ CU\_DONT\_SPLIT\ )}
+\DoxyCodeLine{00557\ \ \ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ split\ =\ CU\_QUAD\_SPLIT;}
+\DoxyCodeLine{00559\ \ \ \ \ \}}
+\DoxyCodeLine{00560\ \ \ \}}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ m\_partStack.back().checkdIfImplicit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00563\ \ \ m\_partStack.back().isImplicit\ =\ split\ !=\ CU\_DONT\_SPLIT;}
+\DoxyCodeLine{00564\ \ \ m\_partStack.back().implicitSplit\ =\ split;}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \textcolor{keywordflow}{return}\ split;}
+\DoxyCodeLine{00567\ \}}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \textcolor{keywordtype}{void}\ QTBTPartitioner::exitCurrSplit()}
+\DoxyCodeLine{00570\ \{}
+\DoxyCodeLine{00571\ \ \ PartSplit\ currSplit\ =\ m\_partStack.back().split;}
+\DoxyCodeLine{00572\ \ \ \textcolor{keywordtype}{unsigned}\ \ currIdx\ =\ m\_partStack.back().idx;}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ m\_partStack.pop\_back();}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \ \ CHECK(\ currDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}depth\ is\ '0',\ although\ a\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00577\ \ \ currDepth-\/-\/;}
+\DoxyCodeLine{00578\ \ \ currSubdiv-\/-\/;}
+\DoxyCodeLine{00579\ \ \ \textcolor{keywordflow}{if}(\ currQgEnable()\ )}
+\DoxyCodeLine{00580\ \ \ \ \ currQgPos\ =\ currArea().lumaPos();}
+\DoxyCodeLine{00581\ \ \ \textcolor{keywordflow}{if}(\ currArea().chromaFormat\ !=\ CHROMA\_400\ \&\&\ currQgChromaEnable()\ )}
+\DoxyCodeLine{00582\ \ \ \ \ currQgChromaPos\ =\ currArea().chromaPos();}
+\DoxyCodeLine{00583\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00584\ \ \ m\_currArea\ =\ m\_partStack.back().parts[m\_partStack.back().idx];}
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00587\ \ \ \textcolor{keywordflow}{if}(\ currSplit\ ==\ CU\_HORZ\_SPLIT\ ||\ currSplit\ ==\ CU\_VERT\_SPLIT\ ||\ currSplit\ ==\ CU\_TRIH\_SPLIT\ ||\ currSplit\ ==\ CU\_TRIV\_SPLIT\ )}
+\DoxyCodeLine{00588\ \ \ \{}
+\DoxyCodeLine{00589\ \ \ \ \ CHECK(\ !m\_partStack.back().checkdIfImplicit,\ \textcolor{stringliteral}{"{}Didn't\ check\ if\ the\ current\ split\ is\ implicit"{}}\ );}
+\DoxyCodeLine{00590\ \ \ \ \ CHECK(\ currBtDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}BT\ depth\ is\ '0',\ athough\ a\ BT\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00591\ \ \ \ \ CHECK(\ currMtDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}MT\ depth\ is\ '0',\ athough\ a\ BT\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00592\ \ \ \ \ currMtDepth-\/-\/;}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_partStack.back().isImplicit\ )\ currImplicitBtDepth-\/-\/;}
+\DoxyCodeLine{00594\ \ \ \ \ currBtDepth-\/-\/;}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ currSplit\ ==\ CU\_TRIH\_SPLIT\ ||\ currSplit\ ==\ CU\_TRIV\_SPLIT\ )\ \&\&\ currIdx\ !=\ 1\ )}
+\DoxyCodeLine{00596\ \ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ CHECK(\ currBtDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}BT\ depth\ is\ '0',\ athough\ a\ TT\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ currBtDepth-\/-\/;}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ currSubdiv-\/-\/;}
+\DoxyCodeLine{00600\ \ \ \ \ \}}
+\DoxyCodeLine{00601\ \ \ \}}
+\DoxyCodeLine{00602\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ currSplit\ ==\ TU\_MAX\_TR\_SPLIT\ )}
+\DoxyCodeLine{00603\ \ \ \{}
+\DoxyCodeLine{00604\ \ \ \ \ CHECK(\ currTrDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}TR\ depth\ is\ '0',\ although\ a\ TU\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00605\ \ \ \ \ currTrDepth-\/-\/;}
+\DoxyCodeLine{00606\ \ \ \}}
+\DoxyCodeLine{00607\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ currSplit\ >=\ SBT\_VER\_HALF\_POS0\_SPLIT\ \&\&\ currSplit\ <=\ SBT\_HOR\_QUAD\_POS1\_SPLIT\ )}
+\DoxyCodeLine{00608\ \ \ \{}
+\DoxyCodeLine{00609\ \ \ \ \ CHECK(\ currTrDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}TR\ depth\ is\ '0',\ although\ a\ TU\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00610\ \ \ \ \ currTrDepth-\/-\/;}
+\DoxyCodeLine{00611\ \ \ \}}
+\DoxyCodeLine{00612\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00613\ \ \ \{}
+\DoxyCodeLine{00614\ \ \ \ \ CHECK(\ currTrDepth\ >\ 0,\ \textcolor{stringliteral}{"{}RQT\ found\ with\ QTBT\ partitioner"{}}\ );}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \ \ \ \ CHECK(\ currQtDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}QT\ depth\ is\ '0',\ although\ a\ QT\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00617\ \ \ \ \ currQtDepth-\/-\/;}
+\DoxyCodeLine{00618\ \ \ \ \ currSubdiv-\/-\/;}
+\DoxyCodeLine{00619\ \ \ \}}
+\DoxyCodeLine{00620\ \}}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \textcolor{keywordtype}{bool}\ QTBTPartitioner::nextPart(\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\ autoPop\ \textcolor{comment}{/*=\ false*/}\ )}
+\DoxyCodeLine{00623\ \{}
+\DoxyCodeLine{00624\ \ \ \textcolor{keyword}{const}\ Position\ \&prevPos\ =\ currArea().blocks[chType].pos();}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \textcolor{keywordtype}{unsigned}\ currIdx\ =\ ++m\_partStack.back().idx;}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \ \ m\_partStack.back().checkdIfImplicit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00629\ \ \ m\_partStack.back().isImplicit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ \ \ \textcolor{keywordflow}{if}(\ currIdx\ ==\ 1\ )}
+\DoxyCodeLine{00632\ \ \ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keyword}{const}\ CodingUnit*\ prevCU\ =\ cs.getCU(\ prevPos,\ chType\ );}
+\DoxyCodeLine{00634\ \ \ \ \ m\_partStack.back().firstSubPartSplit\ =\ prevCU\ ?\ CU::getSplitAtDepth(\ *prevCU,\ currDepth\ )\ :\ CU\_DONT\_SPLIT;}
+\DoxyCodeLine{00635\ \ \ \}}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \textcolor{keywordflow}{if}(\ currIdx\ <\ m\_partStack.back().parts.size()\ )}
+\DoxyCodeLine{00638\ \ \ \{}
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_partStack.back().split\ ==\ CU\_TRIH\_SPLIT\ ||\ m\_partStack.back().split\ ==\ CU\_TRIV\_SPLIT\ )}
+\DoxyCodeLine{00640\ \ \ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \textcolor{comment}{//\ adapt\ the\ current\ bt\ depth}}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ currIdx\ ==\ 1\ )\ currBtDepth-\/-\/;}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currBtDepth++;}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ currIdx\ ==\ 1\ )\ currSubdiv-\/-\/;}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currSubdiv++;}
+\DoxyCodeLine{00646\ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \textcolor{keywordflow}{if}(\ currQgEnable()\ )}
+\DoxyCodeLine{00648\ \ \ \ \ currQgPos\ =\ currArea().lumaPos();}
+\DoxyCodeLine{00649\ \ \ \textcolor{keywordflow}{if}(\ currQgChromaEnable()\ )}
+\DoxyCodeLine{00650\ \ \ \ \ currQgChromaPos\ =\ currArea().chromaPos();}
+\DoxyCodeLine{00651\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00652\ \ \ \ \ m\_currArea\ =\ m\_partStack.back().parts[currIdx];}
+\DoxyCodeLine{00653\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00655\ \ \ \}}
+\DoxyCodeLine{00656\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00657\ \ \ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{keywordflow}{if}(\ autoPop\ )\ exitCurrSplit();}
+\DoxyCodeLine{00659\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00660\ \ \ \}}
+\DoxyCodeLine{00661\ \}}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \textcolor{keywordtype}{bool}\ QTBTPartitioner::hasNextPart()}
+\DoxyCodeLine{00664\ \{}
+\DoxyCodeLine{00665\ \ \ \textcolor{keywordflow}{return}\ (\ (\ m\_partStack.back().idx\ +\ 1\ )\ <\ m\_partStack.back().parts.size()\ );}
+\DoxyCodeLine{00666\ \}}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \textcolor{keywordtype}{void}\ TUIntraSubPartitioner::splitCurrArea(\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ )}
+\DoxyCodeLine{00669\ \{}
+\DoxyCodeLine{00670\ \ \ \textcolor{keywordflow}{switch}(\ split\ )}
+\DoxyCodeLine{00671\ \ \ \{}
+\DoxyCodeLine{00672\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_1D\_HORZ\_SPLIT:}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_1D\_VERT\_SPLIT:}
+\DoxyCodeLine{00674\ \ \ \ \ \{}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UnitArea\ \&area\ =\ currArea();}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ m\_partStack.push\_back(\ PartLevel()\ );}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ m\_partStack.back().split\ =\ split;}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ PartitionerImpl::getTUIntraSubPartitions(\ m\_partStack.back().parts,\ area,\ cs,\ split\ );}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00680\ \ \ \ \ \}}
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_MAX\_TR\_SPLIT:\ \textcolor{comment}{//we\ need\ this\ non\ ISP\ split\ because\ of\ the\ maxTrSize\ limitation}}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ m\_partStack.push\_back(\ PartLevel(\ split,\ PartitionerImpl::getMaxTuTiling(\ currArea(),\ cs\ )\ )\ );}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ ISP\ split\ mode"{}}\ );}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00687\ \ \ \}}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \ \ currDepth++;}
+\DoxyCodeLine{00690\ \ \ currTrDepth++;\ \textcolor{comment}{//\ we\ need\ this\ to\ identify\ the\ level.\ since\ the\ 1d\ partitions\ are\ forbidden\ if\ the\ RQT\ is\ on,\ there\ area\ no\ compatibility\ issues}}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00693\ \ \ m\_currArea\ =\ m\_partStack.back().parts.front();}
+\DoxyCodeLine{00694\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00695\ \}}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \textcolor{keywordtype}{void}\ TUIntraSubPartitioner::exitCurrSplit()}
+\DoxyCodeLine{00698\ \{}
+\DoxyCodeLine{00699\ \ \ PartSplit\ currSplit\ =\ m\_partStack.back().split;}
+\DoxyCodeLine{00700\ }
+\DoxyCodeLine{00701\ \ \ m\_partStack.pop\_back();}
+\DoxyCodeLine{00702\ }
+\DoxyCodeLine{00703\ \ \ CHECK(\ currDepth\ ==\ 0,\ \textcolor{stringliteral}{"{}depth\ is\ '0',\ although\ a\ split\ was\ performed"{}}\ );}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \ \ currDepth-\/-\/;}
+\DoxyCodeLine{00706\ \ \ currTrDepth-\/-\/;}
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00709\ \ \ m\_currArea\ =\ m\_partStack.back().parts[m\_partStack.back().idx];}
+\DoxyCodeLine{00710\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \ CHECK(\ !(\ currSplit\ ==\ TU\_1D\_HORZ\_SPLIT\ ||\ currSplit\ ==\ TU\_1D\_VERT\_SPLIT\ ||\ currSplit\ ==\ TU\_MAX\_TR\_SPLIT\ ),\ \textcolor{stringliteral}{"{}Unknown\ 1D\ partition\ split\ type!"{}}\ );}
+\DoxyCodeLine{00713\ \}}
+\DoxyCodeLine{00714\ }
+\DoxyCodeLine{00715\ \textcolor{keywordtype}{bool}\ TUIntraSubPartitioner::nextPart(\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\ autoPop\ \textcolor{comment}{/*=\ false*/}\ )}
+\DoxyCodeLine{00716\ \{}
+\DoxyCodeLine{00717\ \ \ \textcolor{keywordtype}{unsigned}\ currIdx\ =\ ++m\_partStack.back().idx;}
+\DoxyCodeLine{00718\ }
+\DoxyCodeLine{00719\ \ \ m\_partStack.back().checkdIfImplicit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00720\ \ \ m\_partStack.back().isImplicit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00721\ }
+\DoxyCodeLine{00722\ \ \ \textcolor{keywordflow}{if}(\ currIdx\ <\ m\_partStack.back().parts.size()\ )}
+\DoxyCodeLine{00723\ \ \ \{}
+\DoxyCodeLine{00724\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00725\ \ \ \ \ m\_currArea\ =\ m\_partStack.back().parts[m\_partStack.back().idx];}
+\DoxyCodeLine{00726\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00727\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00728\ \ \ \}}
+\DoxyCodeLine{00729\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00730\ \ \ \{}
+\DoxyCodeLine{00731\ \ \ \ \ \textcolor{keywordflow}{if}(\ autoPop\ )\ exitCurrSplit();}
+\DoxyCodeLine{00732\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00733\ \ \ \}}
+\DoxyCodeLine{00734\ \}}
+\DoxyCodeLine{00735\ }
+\DoxyCodeLine{00736\ \textcolor{keywordtype}{bool}\ TUIntraSubPartitioner::hasNextPart()}
+\DoxyCodeLine{00737\ \{}
+\DoxyCodeLine{00738\ \ \ \textcolor{keywordflow}{return}\ (\ (\ m\_partStack.back().idx\ +\ 1\ )\ <\ m\_partStack.back().parts.size()\ );}
+\DoxyCodeLine{00739\ \}}
+\DoxyCodeLine{00740\ }
+\DoxyCodeLine{00741\ \textcolor{keywordtype}{bool}\ TUIntraSubPartitioner::canSplit(\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{00742\ \{}
+\DoxyCodeLine{00743\ \ \ \textcolor{comment}{//const\ PartSplit\ implicitSplit\ =\ getImplicitSplit(cs);}}
+\DoxyCodeLine{00744\ \ \ \textcolor{keyword}{const}\ UnitArea\ \&area\ =\ currArea();}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \textcolor{keywordflow}{switch}(\ split\ )}
+\DoxyCodeLine{00747\ \ \ \{}
+\DoxyCodeLine{00748\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_1D\_HORZ\_SPLIT:}
+\DoxyCodeLine{00749\ \ \ \ \ \{}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ area.lheight()\ ==\ m\_partStack[0].parts[0].lheight();}
+\DoxyCodeLine{00751\ \ \ \ \ \}}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_1D\_VERT\_SPLIT:}
+\DoxyCodeLine{00753\ \ \ \ \ \{}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ area.lwidth()\ ==\ m\_partStack[0].parts[0].lwidth();}
+\DoxyCodeLine{00755\ \ \ \ \ \}}
+\DoxyCodeLine{00756\ \ \ \ \ \textcolor{keywordflow}{case}\ TU\_MAX\_TR\_SPLIT:}
+\DoxyCodeLine{00757\ \ \ \ \ \{}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \textcolor{comment}{//this\ split\ is\ performed\ implicitly\ with\ the\ other\ splits}}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00760\ \ \ \ \ \}}
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ 1-\/D\ split\ mode"{}}\ );}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00764\ \ \ \}}
+\DoxyCodeLine{00765\ \}}
+\DoxyCodeLine{00766\ }
+\DoxyCodeLine{00768\ \textcolor{comment}{//\ Partitioner\ methods\ describing\ the\ actual\ partitioning\ logic}}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ Partitioning\ PartitionerImpl::getCUSubPartitions(\ \textcolor{keyword}{const}\ UnitArea\ \&cuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ \_splitType\ \textcolor{comment}{/*=\ CU\_QUAD\_SPLIT*/}\ )}
+\DoxyCodeLine{00772\ \{}
+\DoxyCodeLine{00773\ \ \ \textcolor{keyword}{const}\ PartSplit\ splitType\ =\ \_splitType;}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \textcolor{keywordflow}{if}(\ splitType\ ==\ CU\_QUAD\_SPLIT\ )}
+\DoxyCodeLine{00776\ \ \ \{}
+\DoxyCodeLine{00777\ \ \ \ \ \textcolor{keywordflow}{if}(\ !cs.pcv-\/>noChroma2x2\ )}
+\DoxyCodeLine{00778\ \ \ \ \ \{}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ Partitioning\ sub;}
+\DoxyCodeLine{00780\ }
+\DoxyCodeLine{00781\ \ \ \ \ \ \ sub.resize(\ 4,\ cuArea\ );}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ 4;\ i++\ )}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&blk\ :\ sub[i].blocks\ )}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ blk.height\ >>=\ 1;}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ blk.width\ \ >>=\ 1;}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ >=\ 2\ )\ blk.y\ +=\ blk.height;}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ \&\ \ 1\ )\ blk.x\ +=\ blk.width;}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().height\ <\ MIN\_TB\_SIZEY,\ \textcolor{stringliteral}{"{}the\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sub;}
+\DoxyCodeLine{00797\ \ \ \ \ \}}
+\DoxyCodeLine{00798\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00799\ \ \ \ \ \{}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ minCUSize\ =\ 1\ <<\ cs.sps-\/>getLog2MinCodingBlockSize();}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ canSplit\ =\ cuArea.lumaSize().width\ >\ minCUSize\ \&\&\ cuArea.lumaSize().height\ >\ minCUSize;}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \ \ \ \ \ \ Partitioning\ ret;}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ }
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ canSplit\ )}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ ret.resize(\ 4\ );}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ cuArea.chromaFormat\ ==\ CHROMA\_400\ )}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ CompArea\ \ blkY\ =\ cuArea.Y();}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \ \ blkY.width\ >>=\ 1;}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ blkY.height\ >>=\ 1;}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \ \ ret[0]\ \ =\ UnitArea(\ cuArea.chromaFormat,\ blkY\ );}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ blkY.x\ +=\ blkY.width;}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ ret[1]\ \ =\ UnitArea(\ cuArea.chromaFormat,\ blkY\ );}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ blkY.x\ -\/=\ blkY.width;}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ blkY.y\ +=\ blkY.height;}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ ret[2]\ \ =\ UnitArea(\ cuArea.chromaFormat,\ blkY\ );}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ blkY.x\ +=\ blkY.width;}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ ret[3]\ \ =\ UnitArea(\ cuArea.chromaFormat,\ blkY\ );}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ 4;\ i++\ )}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ ret[i]\ =\ cuArea;}
+\DoxyCodeLine{00830\ }
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ CompArea\ \&blkY\ \ =\ ret[i].Y();}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ CompArea\ \&blkCb\ =\ ret[i].Cb();}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ CompArea\ \&blkCr\ =\ ret[i].Cr();}
+\DoxyCodeLine{00834\ }
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ blkY.width\ \ /=\ 2;}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ blkY.height\ /=\ 2;}
+\DoxyCodeLine{00837\ }
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ get\ those\ params\ from\ SPS}}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ blkCb.width\ >\ 4\ )}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCb.width\ \ /=\ 2;}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCb.height\ /=\ 2;}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCr.width\ \ /=\ 2;}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCr.height\ /=\ 2;}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ i\ >\ 0\ )}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCb\ =\ CompArea();}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCr\ =\ CompArea();}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00851\ }
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ i\ \&\ 1\ )\ ==\ 1\ )}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkY.x\ \ +=\ blkY\ .width;}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCb.x\ +=\ blkCb.width;}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCr.x\ +=\ blkCr.width;}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00858\ }
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ >\ 1\ )}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkY.y\ \ +=\ blkY\ .height;}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCb.y\ +=\ blkCb.height;}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blkCr.y\ +=\ blkCr.height;}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00868\ }
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00870\ \ \ \ \ \}}
+\DoxyCodeLine{00871\ \ \ \}}
+\DoxyCodeLine{00872\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ splitType\ ==\ CU\_HORZ\_SPLIT\ )}
+\DoxyCodeLine{00873\ \ \ \{}
+\DoxyCodeLine{00874\ \ \ \ \ Partitioning\ sub;}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ sub.resize(2,\ cuArea);}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{00879\ \ \ \ \ \{}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&blk\ :\ sub[i].blocks)}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ blk.height\ >>=\ 1;}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ 1)\ blk.y\ +=\ blk.height;}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \ \ \ \ \ \ CHECK(sub[i].lumaSize().height\ <\ MIN\_TB\_SIZEY,\ \textcolor{stringliteral}{"{}the\ cs\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}});}
+\DoxyCodeLine{00887\ \ \ \ \ \}}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \ \ \textcolor{keywordflow}{return}\ sub;}
+\DoxyCodeLine{00890\ \ \ \}}
+\DoxyCodeLine{00891\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ splitType\ ==\ CU\_VERT\_SPLIT\ )}
+\DoxyCodeLine{00892\ \ \ \{}
+\DoxyCodeLine{00893\ \ \ \ \ Partitioning\ sub;}
+\DoxyCodeLine{00894\ }
+\DoxyCodeLine{00895\ \ \ \ \ sub.resize(\ 2,\ cuArea\ );}
+\DoxyCodeLine{00896\ }
+\DoxyCodeLine{00897\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ 2;\ i++\ )}
+\DoxyCodeLine{00898\ \ \ \ \ \{}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&blk\ :\ sub[i].blocks\ )}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ blk.width\ >>=\ 1;}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ 1\ )\ blk.x\ +=\ blk.width;}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00904\ }
+\DoxyCodeLine{00905\ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().width\ <\ MIN\_TB\_SIZEY,\ \textcolor{stringliteral}{"{}the\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00906\ \ \ \ \ \}}
+\DoxyCodeLine{00907\ }
+\DoxyCodeLine{00908\ \ \ \ \ \textcolor{keywordflow}{return}\ sub;}
+\DoxyCodeLine{00909\ \ \ \}}
+\DoxyCodeLine{00910\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ splitType\ ==\ CU\_TRIH\_SPLIT\ )}
+\DoxyCodeLine{00911\ \ \ \{}
+\DoxyCodeLine{00912\ \ \ \ \ Partitioning\ sub;}
+\DoxyCodeLine{00913\ }
+\DoxyCodeLine{00914\ \ \ \ \ sub.resize(\ 3,\ cuArea\ );}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 3;\ i++\ )}
+\DoxyCodeLine{00917\ \ \ \ \ \{}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&blk\ :\ sub[i].blocks\ )}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \ \ blk.height\ >>=\ 1;}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ i\ +\ 1\ )\ \&\ 1\ )\ blk.height\ >>=\ 1;}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ 1\ )\ \ \ \ \ \ \ \ blk.y\ \ \ \ \ \ \ +=\ \ \ \ \ blk.height\ /\ 2;}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ 2\ )\ \ \ \ \ \ \ \ blk.y\ \ \ \ \ \ \ +=\ 3\ *\ blk.height;}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00925\ }
+\DoxyCodeLine{00926\ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().height\ <\ MIN\_TB\_SIZEY,\ \textcolor{stringliteral}{"{}the\ cs\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00927\ \ \ \ \ \}}
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \ \ \ \ \textcolor{keywordflow}{return}\ sub;}
+\DoxyCodeLine{00930\ \ \ \}}
+\DoxyCodeLine{00931\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ splitType\ ==\ CU\_TRIV\_SPLIT\ )}
+\DoxyCodeLine{00932\ \ \ \{}
+\DoxyCodeLine{00933\ \ \ \ \ Partitioning\ sub;}
+\DoxyCodeLine{00934\ }
+\DoxyCodeLine{00935\ \ \ \ \ sub.resize(\ 3,\ cuArea\ );}
+\DoxyCodeLine{00936\ }
+\DoxyCodeLine{00937\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 3;\ i++\ )}
+\DoxyCodeLine{00938\ \ \ \ \ \{}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&blk\ :\ sub[i].blocks\ )}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ blk.width\ >>=\ 1;}
+\DoxyCodeLine{00942\ }
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ i\ +\ 1\ )\ \&\ 1\ )\ blk.width\ >>=\ 1;}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ 1\ )\ \ \ \ \ \ \ \ blk.x\ \ \ \ \ \ +=\ \ \ \ \ blk.width\ /\ 2;}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ 2\ )\ \ \ \ \ \ \ \ blk.x\ \ \ \ \ \ +=\ 3\ *\ blk.width;}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00947\ }
+\DoxyCodeLine{00948\ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().width\ <\ MIN\_TB\_SIZEY,\ \textcolor{stringliteral}{"{}the\ cs\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00949\ \ \ \ \ \}}
+\DoxyCodeLine{00950\ }
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{keywordflow}{return}\ sub;}
+\DoxyCodeLine{00952\ \ \ \}}
+\DoxyCodeLine{00953\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00954\ \ \ \{}
+\DoxyCodeLine{00955\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ CU\ sub-\/partitioning"{}}\ );}
+\DoxyCodeLine{00956\ \ \ \ \ \textcolor{keywordflow}{return}\ Partitioning();}
+\DoxyCodeLine{00957\ \ \ \}}
+\DoxyCodeLine{00958\ \}}
+\DoxyCodeLine{00959\ }
+\DoxyCodeLine{00960\ \textcolor{keywordtype}{void}\ PartitionerImpl::getTUIntraSubPartitions(\ Partitioning\ \&sub,\ \textcolor{keyword}{const}\ UnitArea\ \&tuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ splitType\ )}
+\DoxyCodeLine{00961\ \{}
+\DoxyCodeLine{00962\ \ \ uint32\_t\ nPartitions;}
+\DoxyCodeLine{00963\ \ \ uint32\_t\ splitDimensionSize\ =\ CU::getISPSplitDim(\ tuArea.lumaSize().width,\ tuArea.lumaSize().height,\ splitType\ );}
+\DoxyCodeLine{00964\ }
+\DoxyCodeLine{00965\ \ \ \textcolor{keywordtype}{bool}\ isDualTree\ =\ CS::isDualITree(\ cs\ )\ ||\ cs.treeType\ !=\ TREE\_D;}
+\DoxyCodeLine{00966\ }
+\DoxyCodeLine{00967\ \ \ \textcolor{keywordflow}{if}(\ splitType\ ==\ TU\_1D\_HORZ\_SPLIT\ )}
+\DoxyCodeLine{00968\ \ \ \{}
+\DoxyCodeLine{00969\ \ \ \ \ nPartitions\ =\ tuArea.lumaSize().height\ >>\ floorLog2(splitDimensionSize);}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00971\ \ \ \ \ sub.resize(\ nPartitions\ );}
+\DoxyCodeLine{00972\ }
+\DoxyCodeLine{00973\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ nPartitions;\ i++\ )}
+\DoxyCodeLine{00974\ \ \ \ \ \{}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ sub[i]\ =\ tuArea;}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ CompArea\&\ blkY\ =\ sub[i].blocks[COMPONENT\_Y];}
+\DoxyCodeLine{00977\ }
+\DoxyCodeLine{00978\ \ \ \ \ \ \ blkY.height\ =\ splitDimensionSize;}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ blkY.y\ =\ i\ >\ 0\ ?\ sub[i\ -\/\ 1].blocks[COMPONENT\_Y].y\ +\ splitDimensionSize\ :\ blkY.y;}
+\DoxyCodeLine{00980\ }
+\DoxyCodeLine{00981\ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().height\ <\ 1,\ \textcolor{stringliteral}{"{}the\ cs\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00982\ \ \ \ \ \}}
+\DoxyCodeLine{00983\ \ \ \}}
+\DoxyCodeLine{00984\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ splitType\ ==\ TU\_1D\_VERT\_SPLIT\ )}
+\DoxyCodeLine{00985\ \ \ \{}
+\DoxyCodeLine{00986\ \ \ \ \ nPartitions\ =\ tuArea.lumaSize().width\ >>\ floorLog2(splitDimensionSize);}
+\DoxyCodeLine{00987\ }
+\DoxyCodeLine{00988\ \ \ \ \ sub.resize(\ nPartitions\ );}
+\DoxyCodeLine{00989\ }
+\DoxyCodeLine{00990\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ nPartitions;\ i++\ )}
+\DoxyCodeLine{00991\ \ \ \ \ \{}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ sub[i]\ =\ tuArea;}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ CompArea\&\ blkY\ =\ sub[i].blocks[COMPONENT\_Y];}
+\DoxyCodeLine{00994\ }
+\DoxyCodeLine{00995\ \ \ \ \ \ \ blkY.width\ =\ splitDimensionSize;}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ blkY.x\ =\ i\ >\ 0\ ?\ sub[i\ -\/\ 1].blocks[COMPONENT\_Y].x\ +\ splitDimensionSize\ :\ blkY.x;}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ CHECK(\ sub[i].lumaSize().width\ <\ 1,\ \textcolor{stringliteral}{"{}the\ split\ causes\ the\ block\ to\ be\ smaller\ than\ the\ minimal\ TU\ size"{}}\ );}
+\DoxyCodeLine{00998\ \ \ \ \ \}}
+\DoxyCodeLine{00999\ \ \ \}}
+\DoxyCodeLine{01000\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01001\ \ \ \{}
+\DoxyCodeLine{01002\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ TU\ sub-\/partitioning"{}}\ );}
+\DoxyCodeLine{01003\ \ \ \}}
+\DoxyCodeLine{01004\ \ \ \textcolor{comment}{//we\ only\ partition\ luma,\ so\ there\ is\ going\ to\ be\ only\ one\ chroma\ tu\ at\ the\ end\ (unless\ it\ is\ dual\ tree,\ in\ which\ case\ there\ won't\ be\ any\ chroma\ components)}}
+\DoxyCodeLine{01005\ \ \ uint32\_t\ partitionsWithoutChroma\ =\ (cs.area.chromaFormat\ ==\ CHROMA\_400)\ ?\ 0\ :\ (isDualTree\ ?\ nPartitions\ :\ nPartitions\ -\/\ 1);}
+\DoxyCodeLine{01006\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ partitionsWithoutChroma;\ i++\ )}
+\DoxyCodeLine{01007\ \ \ \{}
+\DoxyCodeLine{01008\ \ \ \ \ CompArea\&\ blkCb\ =\ sub[i].blocks[COMPONENT\_Cb];}
+\DoxyCodeLine{01009\ \ \ \ \ CompArea\&\ blkCr\ =\ sub[i].blocks[COMPONENT\_Cr];}
+\DoxyCodeLine{01010\ \ \ \ \ blkCb\ =\ CompArea();}
+\DoxyCodeLine{01011\ \ \ \ \ blkCr\ =\ CompArea();}
+\DoxyCodeLine{01012\ \ \ \}}
+\DoxyCodeLine{01013\ \}}
+\DoxyCodeLine{01014\ }
+\DoxyCodeLine{01015\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ g\_maxRtGridSize\ =\ 3;}
+\DoxyCodeLine{01016\ }
+\DoxyCodeLine{01017\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ g\_zScanToX[1\ <<\ (\ g\_maxRtGridSize\ <<\ 1\ )]\ =}
+\DoxyCodeLine{01018\ \{}
+\DoxyCodeLine{01019\ \ \ \ 0,\ \ 1,\ \ 0,\ \ 1,\ \ 2,\ \ 3,\ \ 2,\ \ 3,}
+\DoxyCodeLine{01020\ \ \ \ 0,\ \ 1,\ \ 0,\ \ 1,\ \ 2,\ \ 3,\ \ 2,\ \ 3,}
+\DoxyCodeLine{01021\ \ \ \ 4,\ \ 5,\ \ 4,\ \ 5,\ \ 6,\ \ 7,\ \ 6,\ \ 7,}
+\DoxyCodeLine{01022\ \ \ \ 4,\ \ 5,\ \ 4,\ \ 5,\ \ 6,\ \ 7,\ \ 6,\ \ 7,}
+\DoxyCodeLine{01023\ \ \ \ 0,\ \ 1,\ \ 0,\ \ 1,\ \ 2,\ \ 3,\ \ 2,\ \ 3,}
+\DoxyCodeLine{01024\ \ \ \ 0,\ \ 1,\ \ 0,\ \ 1,\ \ 2,\ \ 3,\ \ 2,\ \ 3,}
+\DoxyCodeLine{01025\ \ \ \ 4,\ \ 5,\ \ 4,\ \ 5,\ \ 6,\ \ 7,\ \ 6,\ \ 7,}
+\DoxyCodeLine{01026\ \ \ \ 4,\ \ 5,\ \ 4,\ \ 5,\ \ 6,\ \ 7,\ \ 6,\ \ 7,}
+\DoxyCodeLine{01027\ \};}
+\DoxyCodeLine{01028\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ g\_zScanToY[1\ <<\ (\ g\_maxRtGridSize\ <<\ 1\ )]\ =}
+\DoxyCodeLine{01029\ \{}
+\DoxyCodeLine{01030\ \ \ \ 0,\ \ 0,\ \ 1,\ \ 1,\ \ 0,\ \ 0,\ \ 1,\ \ 1,}
+\DoxyCodeLine{01031\ \ \ \ 2,\ \ 2,\ \ 3,\ \ 3,\ \ 2,\ \ 2,\ \ 3,\ \ 3,}
+\DoxyCodeLine{01032\ \ \ \ 0,\ \ 0,\ \ 1,\ \ 1,\ \ 0,\ \ 0,\ \ 1,\ \ 1,}
+\DoxyCodeLine{01033\ \ \ \ 2,\ \ 2,\ \ 3,\ \ 3,\ \ 2,\ \ 2,\ \ 3,\ \ 3,}
+\DoxyCodeLine{01034\ \ \ \ 4,\ \ 4,\ \ 5,\ \ 5,\ \ 4,\ \ 4,\ \ 5,\ \ 5,}
+\DoxyCodeLine{01035\ \ \ \ 6,\ \ 6,\ \ 7,\ \ 7,\ \ 6,\ \ 6,\ \ 7,\ \ 7,}
+\DoxyCodeLine{01036\ \ \ \ 4,\ \ 4,\ \ 5,\ \ 5,\ \ 4,\ \ 4,\ \ 5,\ \ 5,}
+\DoxyCodeLine{01037\ \ \ \ 6,\ \ 6,\ \ 7,\ \ 7,\ \ 6,\ \ 6,\ \ 7,\ \ 7,}
+\DoxyCodeLine{01038\ \};}
+\DoxyCodeLine{01039\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ g\_rsScanToZ[1\ <<\ (\ g\_maxRtGridSize\ <<\ 1\ )]\ =}
+\DoxyCodeLine{01040\ \{}
+\DoxyCodeLine{01041\ \ \ \ 0,\ \ 1,\ \ 4,\ \ 5,\ 16,\ 17,\ 20,\ 21,}
+\DoxyCodeLine{01042\ \ \ \ 2,\ \ 3,\ \ 6,\ \ 7,\ 18,\ 19,\ 22,\ 23,}
+\DoxyCodeLine{01043\ \ \ \ 8,\ \ 9,\ 12,\ 13,\ 24,\ 25,\ 28,\ 29,}
+\DoxyCodeLine{01044\ \ \ 10,\ 11,\ 14,\ 15,\ 26,\ 27,\ 30,\ 31,}
+\DoxyCodeLine{01045\ \ \ 32,\ 33,\ 36,\ 37,\ 48,\ 49,\ 52,\ 53,}
+\DoxyCodeLine{01046\ \ \ 34,\ 35,\ 38,\ 39,\ 50,\ 51,\ 54,\ 55,}
+\DoxyCodeLine{01047\ \ \ 40,\ 41,\ 44,\ 45,\ 56,\ 57,\ 60,\ 61,}
+\DoxyCodeLine{01048\ \ \ 42,\ 43,\ 46,\ 47,\ 58,\ 59,\ 62,\ 63,}
+\DoxyCodeLine{01049\ \};}
+\DoxyCodeLine{01050\ }
+\DoxyCodeLine{01051\ Partitioning\ PartitionerImpl::getMaxTuTiling(\ \textcolor{keyword}{const}\ UnitArea\ \&cuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )}
+\DoxyCodeLine{01052\ \{}
+\DoxyCodeLine{01053\ \ \ \textcolor{keyword}{static\_assert}(\ MAX\_LOG2\_DIFF\_CU\_TR\_SIZE\ <=\ g\_maxRtGridSize,\ \textcolor{stringliteral}{"{}Z-\/scan\ tables\ are\ only\ provided\ for\ MAX\_LOG2\_DIFF\_CU\_TR\_SIZE\ for\ up\ to\ 3\ (8x8\ tiling)!"{}}\ );}
+\DoxyCodeLine{01054\ }
+\DoxyCodeLine{01055\ \ \ \textcolor{keyword}{const}\ Size\ area\ \ \ \ \ =\ cuArea.lumaSize();}
+\DoxyCodeLine{01056\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxTrSize\ =\ (area.width>64\ ||\ area.height>64)\ ?\ 64\ :\ cs.sps-\/>getMaxTbSize();}
+\DoxyCodeLine{01057\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numTilesH\ =\ std::max<int>(\ 1,\ area.width\ \ /\ maxTrSize\ );}
+\DoxyCodeLine{01058\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numTilesV\ =\ std::max<int>(\ 1,\ area.height\ /\ maxTrSize\ );}
+\DoxyCodeLine{01059\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numTiles\ \ =\ numTilesH\ *\ numTilesV;}
+\DoxyCodeLine{01060\ }
+\DoxyCodeLine{01061\ \ \ CHECK(\ numTiles\ >\ MAX\_CU\_TILING\_PARTITIONS,\ \textcolor{stringliteral}{"{}CU\ partitioning\ requires\ more\ partitions\ than\ available"{}}\ );}
+\DoxyCodeLine{01062\ }
+\DoxyCodeLine{01063\ \ \ Partitioning\ ret;}
+\DoxyCodeLine{01064\ \ \ ret.resize(\ numTiles,\ cuArea\ );}
+\DoxyCodeLine{01065\ }
+\DoxyCodeLine{01066\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ numTiles;\ i++\ )}
+\DoxyCodeLine{01067\ \ \ \{}
+\DoxyCodeLine{01068\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rsy\ =\ i\ /\ numTilesH;}
+\DoxyCodeLine{01069\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rsx\ =\ i\ \%\ numTilesH;}
+\DoxyCodeLine{01070\ }
+\DoxyCodeLine{01071\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ x\ =\ g\_zScanToX[g\_rsScanToZ[(\ rsy\ <<\ g\_maxRtGridSize\ )\ +\ rsx]];}
+\DoxyCodeLine{01072\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ y\ =\ g\_zScanToY[g\_rsScanToZ[(\ rsy\ <<\ g\_maxRtGridSize\ )\ +\ rsx]];}
+\DoxyCodeLine{01073\ }
+\DoxyCodeLine{01074\ \ \ \ \ UnitArea\&\ tile\ =\ ret[i];}
+\DoxyCodeLine{01075\ }
+\DoxyCodeLine{01076\ \ \ \ \ \textcolor{keywordflow}{for}(\ CompArea\ \&comp\ :\ tile.blocks\ )}
+\DoxyCodeLine{01077\ \ \ \ \ \{}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !comp.valid()\ )\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{01079\ }
+\DoxyCodeLine{01080\ \ \ \ \ \ \ comp.width\ \ /=\ numTilesH;}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ comp.height\ /=\ numTilesV;}
+\DoxyCodeLine{01082\ }
+\DoxyCodeLine{01083\ \ \ \ \ \ \ comp.x\ +=\ comp.width\ \ *\ x;}
+\DoxyCodeLine{01084\ \ \ \ \ \ \ comp.y\ +=\ comp.height\ *\ y;}
+\DoxyCodeLine{01085\ \ \ \ \ \}}
+\DoxyCodeLine{01086\ \ \ \}}
+\DoxyCodeLine{01087\ }
+\DoxyCodeLine{01088\ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{01089\ \}}
+\DoxyCodeLine{01090\ }
+\DoxyCodeLine{01091\ Partitioning\ PartitionerImpl::getSbtTuTiling(\ \textcolor{keyword}{const}\ UnitArea\&\ cuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ splitType\ )}
+\DoxyCodeLine{01092\ \{}
+\DoxyCodeLine{01093\ \ \ Partitioning\ ret;}
+\DoxyCodeLine{01094\ \ \ \textcolor{keywordtype}{int}\ numTiles\ =\ 2;}
+\DoxyCodeLine{01095\ \ \ \textcolor{keywordtype}{int}\ widthFactor,\ heightFactor,\ xOffsetFactor,\ yOffsetFactor;\ \textcolor{comment}{//\ y\ =\ (x\ *\ factor)\ >>\ 2;}}
+\DoxyCodeLine{01096\ \ \ assert(\ splitType\ >=\ SBT\_VER\_HALF\_POS0\_SPLIT\ \&\&\ splitType\ <=\ SBT\_HOR\_QUAD\_POS1\_SPLIT\ );}
+\DoxyCodeLine{01097\ }
+\DoxyCodeLine{01098\ \ \ ret.resize(\ numTiles,\ cuArea\ );}
+\DoxyCodeLine{01099\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ numTiles;\ i++\ )}
+\DoxyCodeLine{01100\ \ \ \{}
+\DoxyCodeLine{01101\ \ \ \ \ \textcolor{keywordflow}{if}(\ splitType\ >=\ SBT\_VER\_QUAD\_POS0\_SPLIT\ )}
+\DoxyCodeLine{01102\ \ \ \ \ \{}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ splitType\ ==\ SBT\_HOR\_QUAD\_POS0\_SPLIT\ ||\ splitType\ ==\ SBT\_HOR\_QUAD\_POS1\_SPLIT\ )}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ widthFactor\ =\ 4;}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ xOffsetFactor\ =\ 0;}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ heightFactor\ =\ (\ (\ i\ ==\ 0\ \&\&\ splitType\ ==\ SBT\_HOR\_QUAD\_POS0\_SPLIT\ )\ ||\ (\ i\ ==\ 1\ \&\&\ splitType\ ==\ SBT\_HOR\_QUAD\_POS1\_SPLIT\ )\ )\ ?\ 1\ :\ 3;}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ yOffsetFactor\ =\ (\ i\ ==\ 0\ )\ ?\ 0\ :\ (\ splitType\ ==\ SBT\_HOR\_QUAD\_POS0\_SPLIT\ ?\ 1\ :\ 3\ );}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ widthFactor\ =\ (\ (\ i\ ==\ 0\ \&\&\ splitType\ ==\ SBT\_VER\_QUAD\_POS0\_SPLIT\ )\ ||\ (\ i\ ==\ 1\ \&\&\ splitType\ ==\ SBT\_VER\_QUAD\_POS1\_SPLIT\ )\ )\ ?\ 1\ :\ 3;}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ xOffsetFactor\ =\ (\ i\ ==\ 0\ )\ ?\ 0\ :\ (\ splitType\ ==\ SBT\_VER\_QUAD\_POS0\_SPLIT\ ?\ 1\ :\ 3\ );}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ heightFactor\ =\ 4;}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ yOffsetFactor\ =\ 0;}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01117\ \ \ \ \ \}}
+\DoxyCodeLine{01118\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01119\ \ \ \ \ \{}
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ splitType\ ==\ SBT\_HOR\_HALF\_POS0\_SPLIT\ ||\ splitType\ ==\ SBT\_HOR\_HALF\_POS1\_SPLIT\ )}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ \ \ widthFactor\ =\ 4;}
+\DoxyCodeLine{01123\ \ \ \ \ \ \ \ \ xOffsetFactor\ =\ 0;}
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \ \ heightFactor\ =\ 2;}
+\DoxyCodeLine{01125\ \ \ \ \ \ \ \ \ yOffsetFactor\ =\ (\ i\ ==\ 0\ )\ ?\ 0\ :\ 2;}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01128\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01129\ \ \ \ \ \ \ \ \ widthFactor\ =\ 2;}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ xOffsetFactor\ =\ (\ i\ ==\ 0\ )\ ?\ 0\ :\ 2;}
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \ \ heightFactor\ =\ 4;}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \ \ yOffsetFactor\ =\ 0;}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01134\ \ \ \ \ \}}
+\DoxyCodeLine{01135\ }
+\DoxyCodeLine{01136\ \ \ \ \ UnitArea\&\ tile\ =\ ret[i];}
+\DoxyCodeLine{01137\ \ \ \ \ \textcolor{keywordflow}{for}(\ CompArea\ \&comp\ :\ tile.blocks\ )}
+\DoxyCodeLine{01138\ \ \ \ \ \{}
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !comp.valid()\ )\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ comp.x\ +=\ (\ comp.width\ \ *\ xOffsetFactor\ )\ >>\ 2;}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ comp.y\ +=\ (\ comp.height\ *\ yOffsetFactor\ )\ >>\ 2;}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ comp.width\ =\ (\ comp.width\ \ *\ widthFactor\ )\ >>\ 2;}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ comp.height\ =\ (\ comp.height\ *\ heightFactor\ )\ >>\ 2;}
+\DoxyCodeLine{01144\ \ \ \ \ \}}
+\DoxyCodeLine{01145\ \ \ \}}
+\DoxyCodeLine{01146\ }
+\DoxyCodeLine{01147\ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{01148\ \}}
+
+\end{DoxyCode}

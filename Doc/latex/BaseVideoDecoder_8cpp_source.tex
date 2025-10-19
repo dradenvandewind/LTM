@@ -1,0 +1,622 @@
+\doxysection{Base\+Video\+Decoder.\+cpp}
+\label{BaseVideoDecoder_8cpp_source}\index{decoder/src/BaseVideoDecoder.cpp@{decoder/src/BaseVideoDecoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ BaseVideoDecoder.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Base\ decoder\ implementation\ using\ external\ executable\ to\ decode\ base\ layer}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BaseVideoDecoder.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ "{}Dimensions.hpp"{}}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#include\ "{}Probe.hpp"{}}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ "{}ScanEnhancement.hpp"{}}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ "{}uESFile.h"{}}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#include\ "{}uYUVDesc.h"{}}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#include\ "{}BaseVideoDecoderCodecApi.hpp"{}}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00078\ \textcolor{keyword}{extern}\ PsnrStatistic\ goPsnr;}
+\DoxyCodeLine{00079\ \textcolor{keyword}{extern}\ uint8\_t\ gaucMd5Digest[][16];}
+\DoxyCodeLine{00080\ \textcolor{keyword}{extern}\ ReportStructure\ goReportStructure;}
+\DoxyCodeLine{00081\ \textcolor{keyword}{extern}\ std::priority\_queue<ReportStructure,\ std::vector<ReportStructure,\ std::allocator<ReportStructure>>,\ ReportStructureComp>\ goReportQueue;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{using\ namespace\ }vnova::utility;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#define\ QUEUE\_LIMIT\ 32}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ compare\_packet\_timestamps(\textcolor{keyword}{const}\ lctm::Packet\ \&l,\ \textcolor{keyword}{const}\ lctm::Packet\ \&r)\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ uint64\_t\ lt\ =\ l.timestamp();}
+\DoxyCodeLine{00093\ \ \ \ \ uint64\_t\ rt\ =\ r.timestamp();}
+\DoxyCodeLine{00094\ \ \ \ \ int64\_t\ d\ =\ (rt\ -\/\ lt);}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{return}\ d\ <\ 0;}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ PSS\ data\ that\ is\ queued\ whilst\ base\ frames\ are\ decoded}}
+\DoxyCodeLine{00099\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ Packet\ packet;}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr;}
+\DoxyCodeLine{00102\ \}\ PssPacket;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{struct\ }BufferCompare\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ PssPacket\ \&l,\ \textcolor{keyword}{const}\ PssPacket\ \&r)\ \{\ \textcolor{keywordflow}{return}\ compare\_packet\_timestamps(l.packet,\ r.packet);\ \}}
+\DoxyCodeLine{00106\ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ Common\ code\ for\ external\ base\ decoders.}}
+\DoxyCodeLine{00111\ \textcolor{comment}{//}}
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ Specialised\ for\ AVC/HEVC/VVC/EVC}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \textcolor{keyword}{class\ }BaseVideoDecoderExternal\ :\ \textcolor{keyword}{public}\ BaseVideoDecoder\ \{}
+\DoxyCodeLine{00115\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00116\ \ \ \ \ BaseVideoDecoderExternal(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base);}
+\DoxyCodeLine{00118\ \ \ \ \ \string~BaseVideoDecoderExternal()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{void}\ stop()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{virtual}\ BaseCoding\ base\_coding()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr);}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{void}\ flush();}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ Consumer\ interface}}
+\DoxyCodeLine{00134\ \ \ \ \ Output\ \&output\_;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Type\ of\ enhancement\ payload\ encapsulation}}
+\DoxyCodeLine{00137\ \ \ \ \ Encapsulation\ encapsulation\_;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ If\ not-\/null\ -\/name\ of\ predecoded\ YUV\ base\ images}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ prepared\_yuv\_file\_name\_;}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Temp.\ files}}
+\DoxyCodeLine{00143\ \ \ \ \ vector<uint8\_t>\ buffer\_;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{string}\ es\_file\_name\_;}
+\DoxyCodeLine{00146\ \ \ \ \ FILE\ *es\_file\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{string}\ yuv\_file\_name\_;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Keep\ base\ files}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base\_;}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ Priority\ queues\ of\ buffers\ for\ base\ \&\ pss\ ordered\ by\ timestamp}}
+\DoxyCodeLine{00154\ \ \ \ \ priority\_queue<PssPacket,\ vector<PssPacket>,\ BufferCompare>\ enhancement\_queue\_;}
+\DoxyCodeLine{00155\ \ \ \ \ vector<PssPacket>\ enhancement\_vector\_;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ base\ video\ -\/\ initisalized\ on\ first\ decoded\ base\ frame}}
+\DoxyCodeLine{00160\ \ \ \ \ uint32\_t\ base\_buffer\_size\_\ =\ 0;}
+\DoxyCodeLine{00161\ \ \ \ \ uint32\_t\ base\_width\_\ =\ 0;}
+\DoxyCodeLine{00162\ \ \ \ \ uint32\_t\ base\_height\_\ =\ 0;}
+\DoxyCodeLine{00163\ \ \ \ \ uint32\_t\ base\_bit\_depth\_\ =\ 0;}
+\DoxyCodeLine{00164\ \};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ BaseVideoDecoderExternal::BaseVideoDecoderExternal(Output\ \&output,\ Encapsulation\ encapsulation,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00168\ \ \ \ \ :\ output\_(output),\ encapsulation\_(encapsulation),\ prepared\_yuv\_file\_name\_(prepared\_yuv\_file\_name),\ keep\_base\_(keep\_base)\ \{\}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ BaseVideoDecoderExternal::\string~BaseVideoDecoderExternal()\ \{\ stop();\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::start()\ \{}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_coding()\ !=\ BaseCoding::BaseCoding\_YUV)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ ES}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ es\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.es"{}});}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ es\_file\_\ =\ CHECK(fopen(es\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ ES\ data:\ '\%s'"{}},\ es\_file\_name\_.c\_str());}
+\DoxyCodeLine{00179\ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{if}\ (prepared\_yuv\_file\_name\_.empty())\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ YUV}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ yuv\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.yuv"{}});}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ YUV\ data:\ '\%s'"{}},\ yuv\_file\_name\_.c\_str());}
+\DoxyCodeLine{00186\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ prepared\ file\ for\ YUV\ data:\ '\%s'"{}},\ prepared\_yuv\_file\_name\_.c\_str());}
+\DoxyCodeLine{00188\ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_nal\_marker(\textcolor{keyword}{const}\ uint8\_t\ *data)\ \{\ \textcolor{keywordflow}{return}\ data[0]\ ==\ 0\ \&\&\ data[1]\ ==\ 0\ \&\&\ data[2]\ ==\ 1;\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{if}\ (data)\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temp.\ copy\ of\ AU}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ vector<uint8\_t>\ b(data,\ data\ +\ data\_size);}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ out\ enhancement\ data\ -\/\ may\ be\ removed\ -\/\ new\ size\ is\ returned}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_size\ =\ scan\_enhancement(b.data(),\ data\_size,\ encapsulation\_,\ base\_coding(),\ pts,\ is\_base\_idr,}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}](\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PacketView\ v(pkt);}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>enhancement\_queue\_.push(\{pkt,\ is\_lcevc\_idr\});}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ b.resize(new\_size);}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ goReportStructure.miTimeStamp\ =\ (int)(pts);}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ goReportStructure.miPictureType\ =\ iPictureType;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ goReportStructure.miBaseSize\ =\ (int)(new\_size);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ goReportStructure.miEnhancementSize\ =\ (int)(data\_size\ -\/\ new\_size);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ goReportQueue.push(goReportStructure);}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flush\ any\ previous\ buffer}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts,\ is\_base\_idr);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ buffer\_.swap(b);}
+\DoxyCodeLine{00218\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())\ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts,\ is\_base\_idr);}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ flush();}
+\DoxyCodeLine{00224\ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr)\ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ CHECK(fwrite(\&zero,\ 1,\ 1,\ es\_file\_)\ ==\ 1);}
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ file}}
+\DoxyCodeLine{00235\ \ \ \ \ CHECK(fwrite(data,\ 1,\ data\_size,\ es\_file\_)\ ==\ data\_size);}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::flush()\ \{}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{int}\ iPictureCount\ =\ 0;}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_coding()\ !=\ BaseCoding::BaseCoding\_YUV)\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Got\ end\ of\ input\ -\/\ finish\ up\ ES\ file}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ fflush(es\_file\_);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ fclose(es\_file\_);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ es\_file\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{while}\ (!enhancement\_queue\_.empty())\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ enhancement\_vector\_.push\_back(std::move(\textcolor{keyword}{const\_cast<}PssPacket\ \&\textcolor{keyword}{>}(enhancement\_queue\_.top())));}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ enhancement\_queue\_.pop();}
+\DoxyCodeLine{00252\ \ \ \ \ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{if}\ (keep\_base\_)\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ es\_enhancement\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_enhancement.es"{}});}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ FILE\ *es\_enhancement\_file\_\ =\ CHECK(fopen(es\_enhancement\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ enhancement\ data:\ '\%s'"{}},\ es\_enhancement\_file\_name\_.c\_str());}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&element\ :\ enhancement\_vector\_)\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nal\_type\ =\ 28\ +\ element.is\_lcevc\_idr;}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x41\ |\ (nal\_type\ <<\ 1)),\ 0xff\};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fwrite(\&nalu\_header,\ 1,\ \textcolor{keyword}{sizeof}(nalu\_header),\ es\_enhancement\_file\_)\ ==\ \textcolor{keyword}{sizeof}(nalu\_header));}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(element.packet);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fwrite(v.data(),\ 1,\ v.size(),\ es\_enhancement\_file\_)\ ==\ v.size());}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ fflush(es\_enhancement\_file\_);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ fclose(es\_enhancement\_file\_);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ es\_enhancement\_file\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00272\ \ \ \ \ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ Surface\ symbols\_initial[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS];}
+\DoxyCodeLine{00275\ \ \ \ \ PssPacket\ pss\_initial;}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordflow}{if}\ (!enhancement\_vector\_.empty())\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ pss\_initial\ =\ enhancement\_vector\_.front();}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ enhancement\_vector\_.erase(enhancement\_vector\_.begin());}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ PacketView\ enhancement\_view(pss\_initial.packet);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ output\_.deserialize\_enhancement(enhancement\_view.data(),\ enhancement\_view.size(),\ symbols\_initial);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ iPictureCount++;}
+\DoxyCodeLine{00284\ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ found\ in\ bitstream!"{}});}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ Find\ base\ size}}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width\ =\ 0,\ height\ =\ 0,\ bit\_depth\ =\ 0,\ chroma\_format\_idc\ =\ 0;}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{if}\ (prepared\_yuv\_file\_name\_.empty())\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!probe\_es\_file(es\_file\_name\_,\ base\_coding(),\ width,\ height,\ bit\_depth,\ chroma\_format\_idc))\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ get\ base\ size,\ depth,\ and\ chroma\_format\_idc"{}});}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Verify\ base\ dimensions\ with\ signalled\ LCEVC\ configuration}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ Dimensions\ dimensions\ =\ output\_.get\_dimensions();}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(bit\_depth\ ==\ output\_.get\_base\_bitdepth());}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(width\ ==\ dimensions.base\_width());}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(height\ ==\ dimensions.base\_height());}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(chroma\_format\_idc\ ==\ output\_.get\_colourspace());}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00303\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ base\ dimensions\ from\ singalled\ LCEVC\ configuration}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ ==\ 0)}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ and\ no\ base\ bitstream\ -\/>\ Cannot\ get\ width/height/format"{}});}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ Dimensions\ dimensions\ =\ output\_.get\_dimensions();}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ width\ =\ dimensions.base\_width();}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ height\ =\ dimensions.base\_height();}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ bit\_depth\ =\ output\_.get\_base\_bitdepth();}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ chroma\_format\_idc\ =\ output\_.get\_colourspace();}
+\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ Figure\ ESFile\ format}}
+\DoxyCodeLine{00315\ \ \ \ \ YUVFormat::Enum\ format;}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{switch}\ (bit\_depth)\ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(0\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(4\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(8\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(12\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00336\ \ \ \ \ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ YUVDesc\ yuv\_desc;}
+\DoxyCodeLine{00339\ \ \ \ \ yuv\_desc.Initialise(format,\ width,\ height);}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ base\_size\ =\ yuv\_desc.GetMemorySize();}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *fmt\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00343\ \ \ \ \ YUVFormat::ToString(\&fmt,\ format);}
+\DoxyCodeLine{00344\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Base\ is\ \%s\ \%dx\%d\ \%d\ bit\ (\%zu\ bytes)\(\backslash\)n"{}},\ fmt,\ width,\ height,\ bit\_depth,\ base\_size);}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \ base\_width\_\ =\ width;}
+\DoxyCodeLine{00347\ \ \ \ \ base\_height\_\ =\ height;}
+\DoxyCodeLine{00348\ \ \ \ \ base\_bit\_depth\_\ =\ bit\_depth;}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ UniquePtrFile\ yuv\_file;}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{if}\ (!prepared\_yuv\_file\_name\_.empty())\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ been\ given\ decoded\ YUV\ already}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ yuv\_file.reset(CHECK(fopen(prepared\_yuv\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
+\DoxyCodeLine{00355\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Run\ the\ decoder\ esfile-\/>yuvfile}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ run\_decoder(es\_file\_name\_,\ yuv\_file\_name\_);}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ temp.\ file}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ yuv\_file.reset(CHECK(fopen(yuv\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
+\DoxyCodeLine{00362\ \ \ \ \ \}}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ Buffer\ for\ the\ YUV\ frames}}
+\DoxyCodeLine{00365\ \ \ \ \ vector<uint8\_t>\ base(base\_size);}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First\ frame:\ Copy\ data\ through,\ already\ deserialized\ previously}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ CHECK(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ output\_.push\_base\_enhancement(base.data(),\ base.size(),\ symbols\_initial,\ pss\_initial.packet.timestamp(),}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss\_initial.is\_lcevc\_idr);}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Consume\ queue\ in\ PTS\ order}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!enhancement\_vector\_.empty())\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ base}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS];}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ PssPacket\ pss\ =\ enhancement\_vector\_.front();}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ enhancement\_vector\_.erase(enhancement\_vector\_.begin());}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ PacketView\ enhancement\_view(pss.packet);}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ output\_.deserialize\_enhancement(enhancement\_view.data(),\ enhancement\_view.size(),\ symbols);}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ output\_.push\_base\_enhancement(base.data(),\ base.size(),\ symbols,\ pss.packet.timestamp(),\ pss.is\_lcevc\_idr);}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ iPictureCount++;}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iFrames\ =\ iPictureCount;}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fAccMse[3];}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fPsnr[3];}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ yuv\_desc.GetPlaneCount();\ plane++)\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ fAccMse[plane]\ =\ goPsnr.mfAccMse[plane]\ /\ iFrames;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[plane]\ =\ (float)(10.0f\ *\ log10((32767.0f\ *\ 32767.0f)\ /\ fAccMse[plane]));}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_desc.GetPlaneCount()\ >\ 1)}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ YUV\ \%8.4f\ -\/-\/\ Y\ \%8.4f\ U\ \%8.4f\ V\ \%8.4f"{}},\ (6\ *\ fPsnr[0]\ +\ fPsnr[1]\ +\ fPsnr[2])\ /\ 8,\ fPsnr[0],\ fPsnr[1],}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[2]);}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ Y\ \%8.4f"{}},\ fPsnr[0]);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}BITS\ -\/-\/\ base\ \%8d\ bps\ -\/-\/\ enha\ \%8d\ bps\ "{}},\ (goPsnr.miBaseBytes\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames,}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (goPsnr.miEnhancementBytes\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames);}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00406\ \ \ \ \ \}}
+\DoxyCodeLine{00407\ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::stop()\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (!keep\_base\_)\ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!es\_file\_name\_.empty())}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(es\_file\_name\_.c\_str());}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!yuv\_file\_name\_.empty())}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(yuv\_file\_name\_.c\_str());}
+\DoxyCodeLine{00416\ \ \ \ \ \}}
+\DoxyCodeLine{00417\ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::StatisticsComputation()\ \{}
+\DoxyCodeLine{00420\ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ RBSP\ encapsualtion\ (0b00000000\ 0b00000000\ 0b000000xx\ -\/>\ 0b00000000\ 0b00000000\ 0b00000011\ 0b000000xx)}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//}}
+\DoxyCodeLine{00424\ Packet\ BaseVideoDecoder::rbsp\_encapsulate(\textcolor{keyword}{const}\ Packet\ \&src)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00425\ \ \ \ \ PacketView\ in(src);}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ vector<uint8\_t>\ out;}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ in.size();\ ++i)\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ uint8\_t\ b\ =\ in.data()[i];}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ ==\ 2\ \&\&\ (b\ \&\ \string~3)\ ==\ 0)\ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ out.push\_back(0x03);}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ ==\ 0)}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ ++zeros;}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ out.push\_back(b);}
+\DoxyCodeLine{00444\ \ \ \ \ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \ out.push\_back(0x80);}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordflow}{return}\ Packet::build().contents(out).finish();}
+\DoxyCodeLine{00449\ \}}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \textcolor{comment}{//\ AVC\ Base\ Codec}}
+\DoxyCodeLine{00452\ \textcolor{comment}{//}}
+\DoxyCodeLine{00453\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalAVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
+\DoxyCodeLine{00454\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00455\ \ \ \ \ BaseVideoDecoderExternalAVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_AVC;\ \};}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/ldecod"{}});}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/p\ InputFile=\%s\ -\/p\ OutputFile=\%s\ -\/p\ WriteUV=0"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{00470\ \ \ \ \ \}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{00473\ \};}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{comment}{//\ HEVC\ Base\ Codec}}
+\DoxyCodeLine{00476\ \textcolor{comment}{//}}
+\DoxyCodeLine{00477\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalHEVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
+\DoxyCodeLine{00478\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00479\ \ \ \ \ BaseVideoDecoderExternalHEVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_HEVC;\ \};}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppDecoder"{}});}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_bit\_depth\_\ >\ Bitdepth\_10)\ \{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ p.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{00497\ \ \ \ \ \}}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{00500\ \};}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{comment}{//\ VVC\ Base\ Codec}}
+\DoxyCodeLine{00503\ \textcolor{comment}{//}}
+\DoxyCodeLine{00504\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalVVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
+\DoxyCodeLine{00505\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00506\ \ \ \ \ BaseVideoDecoderExternalVVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_VVC;\ \};}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/VTM/DecoderApp"{}});}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{00520\ \ \ \ \ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{00523\ \};}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \textcolor{comment}{//\ EVC\ Base\ Codec}}
+\DoxyCodeLine{00526\ \textcolor{comment}{//}}
+\DoxyCodeLine{00527\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalEVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
+\DoxyCodeLine{00528\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00529\ \ \ \ \ BaseVideoDecoderExternalEVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_EVC;\ \};}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/ETM/evca\_decoder"{}});}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/-\/input\ \%s\ -\/-\/output\ \%s\ -\/-\/output\_bit\_depth\ \%d"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str(),\ base\_bit\_depth\_).c\_str());}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{00543\ \ \ \ \ \}}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{00546\ \};}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \textcolor{comment}{//\ No\ Base\ Codec\ (base\ YUV\ file\ as\ input)}}
+\DoxyCodeLine{00549\ \textcolor{comment}{//}}
+\DoxyCodeLine{00550\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalYUV\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
+\DoxyCodeLine{00551\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00552\ \ \ \ \ BaseVideoDecoderExternalYUV(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_YUV;\ \};}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{00561\ \};}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \textcolor{comment}{//\ Factory\ function}}
+\DoxyCodeLine{00564\ \textcolor{comment}{//}}
+\DoxyCodeLine{00565\ unique\_ptr<BaseVideoDecoder>\ CreateBaseVideoDecoder(BaseVideoDecoder::Output\ \&output,\ BaseCoding\ base,\ Encapsulation\ encapsulation,}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ external,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,\ \textcolor{keywordtype}{bool}\ keep\_base)\ \{}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (external\ ||\ keep\_base\ ||\ !yuv\_file.empty())\ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_AVC)}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalAVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_HEVC)}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalHEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_VVC)}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalVVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_EVC)}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_YUV)}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalYUV(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_AVC)\ \{}
+\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_AVC)}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}avc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00586\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalAVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00588\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_HEVC)\ \{}
+\DoxyCodeLine{00590\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_HEVC)}}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,base,\ \textcolor{stringliteral}{"{}hevc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00592\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalHEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00594\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_VVC)\ \{}
+\DoxyCodeLine{00596\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_VVC)}}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}vvc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00598\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalVVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00600\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_EVC)\ \{}
+\DoxyCodeLine{00602\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_EVC)}}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}evc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00604\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{00606\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00611\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keywordtype}{string}\ e)\ \{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}CreateBaseVideoDecoder:\ Caught:\ \%s\(\backslash\)n"{}},\ e.c\_str());}
+\DoxyCodeLine{00613\ \ \ \ \ \}}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00615\ \}}
+\DoxyCodeLine{00616\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

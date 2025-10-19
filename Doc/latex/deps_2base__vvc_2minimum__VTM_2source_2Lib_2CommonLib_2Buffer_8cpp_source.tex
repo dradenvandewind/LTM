@@ -1,0 +1,894 @@
+\doxysection{Buffer.\+cpp}
+\label{deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Buffer.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Buffer.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#define\ DONT\_UNDEF\_SIZE\_AWARE\_PER\_EL\_OP}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ unit\ needs\ to\ come\ first\ due\ to\ a\ forward\ declaration}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Unit.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Buffer.h"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}InterpolationFilter.h"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{void}\ applyPROFCore(Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keyword}{const}\ Pel\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keyword}{const}\ Pel\ *gradX,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ *gradY,\ \textcolor{keywordtype}{int}\ gradStride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ *dMvX,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ *dMvY,\ \textcolor{keywordtype}{int}\ dMvStride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \&bi,\ \textcolor{keywordtype}{int}\ shiftNum,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Pel\ offset,\ \textcolor{keyword}{const}\ ClpRng\ \&clpRng)\ \{}
+\DoxyCodeLine{00050\ \ \ \textcolor{keywordtype}{int}\ idx\ =\ 0;}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dILimit\ =\ 1\ <<\ std::max<int>(clpRng.bd\ +\ 1,\ 13);}
+\DoxyCodeLine{00053\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ h\ =\ 0;\ h\ <\ height;\ h++)}
+\DoxyCodeLine{00054\ \ \ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ w\ =\ 0;\ w\ <\ width;\ w++)}
+\DoxyCodeLine{00056\ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ int32\_t\ dI\ =\ dMvX[idx]\ *\ gradX[w]\ +\ dMvY[idx]\ *\ gradY[w];}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ dI\ =\ Clip3(-\/dILimit,\ dILimit\ -\/\ 1,\ dI);}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ dst[w]\ =\ src[w]\ +\ dI;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bi)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ dst[w]\ =\ (dst[w]\ +\ offset)\ >>\ shiftNum;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ dst[w]\ =\ ClipPel(dst[w],\ clpRng);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ idx++;}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \ gradX\ +=\ gradStride;}
+\DoxyCodeLine{00069\ \ \ \ \ gradY\ +=\ gradStride;}
+\DoxyCodeLine{00070\ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00071\ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00072\ \ \ \}}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ T\ >}
+\DoxyCodeLine{00077\ \textcolor{keywordtype}{void}\ addAvgCore(\ \textcolor{keyword}{const}\ T*\ src1,\ \textcolor{keywordtype}{int}\ src1Stride,\ \textcolor{keyword}{const}\ T*\ src2,\ \textcolor{keywordtype}{int}\ src2Stride,\ T*\ dest,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ rshift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_CORE\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ rightShift(\ (\ src1[ADDR]\ +\ src2[ADDR]\ +\ offset\ ),\ rshift\ ),\ clpRng\ )}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_CORE\_INC\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ src1\ +=\ src1Stride;\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\ \ src2\ +=\ src2Stride;\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ dest\ +=\ \ dstStride;\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00085\ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ ADD\_AVG\_CORE\_OP,\ ADD\_AVG\_CORE\_INC\ );}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_CORE\_OP}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_CORE\_INC}}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keywordtype}{void}\ addBIOAvgCore(\textcolor{keyword}{const}\ Pel*\ src0,\ \textcolor{keywordtype}{int}\ src0Stride,\ \textcolor{keyword}{const}\ Pel*\ src1,\ \textcolor{keywordtype}{int}\ src1Stride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keyword}{const}\ Pel\ *gradX0,\ \textcolor{keyword}{const}\ Pel\ *gradX1,\ \textcolor{keyword}{const}\ Pel\ *gradY0,\ \textcolor{keyword}{const}\ Pel*gradY1,\ \textcolor{keywordtype}{int}\ gradStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ tmpx,\ \textcolor{keywordtype}{int}\ tmpy,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{00092\ \{}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordtype}{int}\ b\ =\ 0;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00096\ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width;\ x\ +=\ 4)}
+\DoxyCodeLine{00098\ \ \ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ b\ =\ tmpx\ *\ (gradX0[x]\ -\/\ gradX1[x])\ +\ tmpy\ *\ (gradY0[x]\ -\/\ gradY1[x]);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ dst[x]\ =\ ClipPel(rightShift((src0[x]\ +\ src1[x]\ +\ b\ +\ offset),\ shift),\ clpRng);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ b\ =\ tmpx\ *\ (gradX0[x\ +\ 1]\ -\/\ gradX1[x\ +\ 1])\ +\ tmpy\ *\ (gradY0[x\ +\ 1]\ -\/\ gradY1[x\ +\ 1]);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ dst[x\ +\ 1]\ =\ ClipPel(rightShift((src0[x\ +\ 1]\ +\ src1[x\ +\ 1]\ +\ b\ +\ offset),\ shift),\ clpRng);}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ b\ =\ tmpx\ *\ (gradX0[x\ +\ 2]\ -\/\ gradX1[x\ +\ 2])\ +\ tmpy\ *\ (gradY0[x\ +\ 2]\ -\/\ gradY1[x\ +\ 2]);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ dst[x\ +\ 2]\ =\ ClipPel(rightShift((src0[x\ +\ 2]\ +\ src1[x\ +\ 2]\ +\ b\ +\ offset),\ shift),\ clpRng);}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ b\ =\ tmpx\ *\ (gradX0[x\ +\ 3]\ -\/\ gradX1[x\ +\ 3])\ +\ tmpy\ *\ (gradY0[x\ +\ 3]\ -\/\ gradY1[x\ +\ 3]);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ dst[x\ +\ 3]\ =\ ClipPel(rightShift((src0[x\ +\ 3]\ +\ src1[x\ +\ 3]\ +\ b\ +\ offset),\ shift),\ clpRng);}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ dst\ +=\ dstStride;\ \ \ \ \ \ \ src0\ +=\ src0Stride;\ \ \ \ \ src1\ +=\ src1Stride;}
+\DoxyCodeLine{00112\ \ \ \ \ gradX0\ +=\ gradStride;\ gradX1\ +=\ gradStride;\ gradY0\ +=\ gradStride;\ gradY1\ +=\ gradStride;}
+\DoxyCodeLine{00113\ \ \ \}}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ PAD\ =\ true>}
+\DoxyCodeLine{00117\ \textcolor{keywordtype}{void}\ gradFilterCore(Pel*\ pSrc,\ \textcolor{keywordtype}{int}\ srcStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ gradStride,\ Pel*\ gradX,\ Pel*\ gradY,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth)}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ Pel*\ srcTmp\ =\ pSrc\ +\ srcStride\ +\ 1;}
+\DoxyCodeLine{00120\ \ \ Pel*\ gradXTmp\ =\ gradX\ +\ gradStride\ +\ 1;}
+\DoxyCodeLine{00121\ \ \ Pel*\ gradYTmp\ =\ gradY\ +\ gradStride\ +\ 1;}
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordtype}{int}\ \ shift1\ =\ 6;}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE);\ y++)}
+\DoxyCodeLine{00125\ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ (width\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE);\ x++)}
+\DoxyCodeLine{00127\ \ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ gradYTmp[x]\ =\ (\ srcTmp[x\ +\ srcStride]\ >>\ shift1\ )\ -\/\ (\ srcTmp[x\ -\/\ srcStride]\ >>\ shift1\ );}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ gradXTmp[x]\ =\ (\ srcTmp[x\ +\ 1]\ >>\ shift1\ )\ -\/\ (\ srcTmp[x\ -\/\ 1]\ >>\ shift1\ );}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \ \ gradXTmp\ +=\ gradStride;}
+\DoxyCodeLine{00132\ \ \ \ \ gradYTmp\ +=\ gradStride;}
+\DoxyCodeLine{00133\ \ \ \ \ srcTmp\ +=\ srcStride;}
+\DoxyCodeLine{00134\ \ \ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \textcolor{keywordflow}{if}\ (PAD)}
+\DoxyCodeLine{00137\ \ \ \{}
+\DoxyCodeLine{00138\ \ \ gradXTmp\ =\ gradX\ +\ gradStride\ +\ 1;}
+\DoxyCodeLine{00139\ \ \ gradYTmp\ =\ gradY\ +\ gradStride\ +\ 1;}
+\DoxyCodeLine{00140\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE);\ y++)}
+\DoxyCodeLine{00141\ \ \ \{}
+\DoxyCodeLine{00142\ \ \ \ \ gradXTmp[-\/1]\ =\ gradXTmp[0];}
+\DoxyCodeLine{00143\ \ \ \ \ gradXTmp[width\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE]\ =\ gradXTmp[width\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE\ -\/\ 1];}
+\DoxyCodeLine{00144\ \ \ \ \ gradXTmp\ +=\ gradStride;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ gradYTmp[-\/1]\ =\ gradYTmp[0];}
+\DoxyCodeLine{00147\ \ \ \ \ gradYTmp[width\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE]\ =\ gradYTmp[width\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE\ -\/\ 1];}
+\DoxyCodeLine{00148\ \ \ \ \ gradYTmp\ +=\ gradStride;}
+\DoxyCodeLine{00149\ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ gradXTmp\ =\ gradX\ +\ gradStride;}
+\DoxyCodeLine{00152\ \ \ gradYTmp\ =\ gradY\ +\ gradStride;}
+\DoxyCodeLine{00153\ \ \ ::memcpy(gradXTmp\ -\/\ gradStride,\ gradXTmp,\ \textcolor{keyword}{sizeof}(Pel)*(width));}
+\DoxyCodeLine{00154\ \ \ ::memcpy(gradXTmp\ +\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE)*gradStride,\ gradXTmp\ +\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE\ -\/\ 1)*gradStride,\ \textcolor{keyword}{sizeof}(Pel)*(width));}
+\DoxyCodeLine{00155\ \ \ ::memcpy(gradYTmp\ -\/\ gradStride,\ gradYTmp,\ \textcolor{keyword}{sizeof}(Pel)*(width));}
+\DoxyCodeLine{00156\ \ \ ::memcpy(gradYTmp\ +\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE)*gradStride,\ gradYTmp\ +\ (height\ -\/\ 2\ *\ BIO\_EXTEND\_SIZE\ -\/\ 1)*gradStride,\ \textcolor{keyword}{sizeof}(Pel)*(width));}
+\DoxyCodeLine{00157\ \ \ \}}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keywordtype}{void}\ calcBIOSumsCore(\textcolor{keyword}{const}\ Pel*\ srcY0Tmp,\ \textcolor{keyword}{const}\ Pel*\ srcY1Tmp,\ Pel*\ gradX0,\ Pel*\ gradX1,\ Pel*\ gradY0,\ Pel*\ gradY1,\ \textcolor{keywordtype}{int}\ xu,\ \textcolor{keywordtype}{int}\ yu,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ src0Stride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ src1Stride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ widthG,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth,\ \textcolor{keywordtype}{int}*\ sumAbsGX,\ \textcolor{keywordtype}{int}*\ sumAbsGY,\ \textcolor{keywordtype}{int}*\ sumDIX,\ \textcolor{keywordtype}{int}*\ sumDIY,\ \textcolor{keywordtype}{int}*\ sumSignGY\_GX)}
+\DoxyCodeLine{00161\ \{}
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordtype}{int}\ shift4\ =\ 4;}
+\DoxyCodeLine{00163\ \ \ \textcolor{keywordtype}{int}\ shift5\ =\ 1;}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ 6;\ y++)}
+\DoxyCodeLine{00166\ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ 6;\ x++)}
+\DoxyCodeLine{00168\ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmpGX\ =\ (gradX0[x]\ +\ gradX1[x])\ >>\ shift5;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmpGY\ =\ (gradY0[x]\ +\ gradY1[x])\ >>\ shift5;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmpDI\ =\ (int)((srcY1Tmp[x]\ >>\ shift4)\ -\/\ (srcY0Tmp[x]\ >>\ shift4));}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ *sumAbsGX\ +=\ (tmpGX\ <\ 0\ ?\ -\/tmpGX\ :\ tmpGX);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ *sumAbsGY\ +=\ (tmpGY\ <\ 0\ ?\ -\/tmpGY\ :\ tmpGY);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ *sumDIX\ +=\ (tmpGX\ <\ 0\ ?\ -\/tmpDI\ :\ (tmpGX\ ==\ 0\ ?\ 0\ :\ tmpDI));}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ *sumDIY\ +=\ (tmpGY\ <\ 0\ ?\ -\/tmpDI\ :\ (tmpGY\ ==\ 0\ ?\ 0\ :\ tmpDI));}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ *sumSignGY\_GX\ +=\ (tmpGY\ <\ 0\ ?\ -\/tmpGX\ :\ (tmpGY\ ==\ 0\ ?\ 0\ :\ tmpGX));}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ \ srcY1Tmp\ +=\ src1Stride;}
+\DoxyCodeLine{00180\ \ \ \ \ srcY0Tmp\ +=\ src0Stride;}
+\DoxyCodeLine{00181\ \ \ \ \ gradX0\ +=\ widthG;}
+\DoxyCodeLine{00182\ \ \ \ \ gradX1\ +=\ widthG;}
+\DoxyCodeLine{00183\ \ \ \ \ gradY0\ +=\ widthG;}
+\DoxyCodeLine{00184\ \ \ \ \ gradY1\ +=\ widthG;}
+\DoxyCodeLine{00185\ \ \ \}}
+\DoxyCodeLine{00186\ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keywordtype}{void}\ calcBlkGradientCore(\textcolor{keywordtype}{int}\ sx,\ \textcolor{keywordtype}{int}\ sy,\ \textcolor{keywordtype}{int}\ \ \ \ \ *arraysGx2,\ \textcolor{keywordtype}{int}\ \ \ \ \ *arraysGxGy,\ \textcolor{keywordtype}{int}\ \ \ \ \ *arraysGxdI,\ \textcolor{keywordtype}{int}\ \ \ \ \ *arraysGy2,\ \textcolor{keywordtype}{int}\ \ \ \ \ *arraysGydI,\ \textcolor{keywordtype}{int}\ \ \ \ \ \&sGx2,\ \textcolor{keywordtype}{int}\ \ \ \ \ \&sGy2,\ \textcolor{keywordtype}{int}\ \ \ \ \ \&sGxGy,\ \textcolor{keywordtype}{int}\ \ \ \ \ \&sGxdI,\ \textcolor{keywordtype}{int}\ \ \ \ \ \&sGydI,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ unitSize)}
+\DoxyCodeLine{00190\ \{}
+\DoxyCodeLine{00191\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ *Gx2\ =\ arraysGx2;}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ *Gy2\ =\ arraysGy2;}
+\DoxyCodeLine{00193\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ *GxGy\ =\ arraysGxGy;}
+\DoxyCodeLine{00194\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ *GxdI\ =\ arraysGxdI;}
+\DoxyCodeLine{00195\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ *GydI\ =\ arraysGydI;}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \textcolor{comment}{//\ set\ to\ the\ above\ row\ due\ to\ JVET\_K0485\_BIO\_EXTEND\_SIZE}}
+\DoxyCodeLine{00198\ \ \ Gx2\ -\/=\ (BIO\_EXTEND\_SIZE*width);}
+\DoxyCodeLine{00199\ \ \ Gy2\ -\/=\ (BIO\_EXTEND\_SIZE*width);}
+\DoxyCodeLine{00200\ \ \ GxGy\ -\/=\ (BIO\_EXTEND\_SIZE*width);}
+\DoxyCodeLine{00201\ \ \ GxdI\ -\/=\ (BIO\_EXTEND\_SIZE*width);}
+\DoxyCodeLine{00202\ \ \ GydI\ -\/=\ (BIO\_EXTEND\_SIZE*width);}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ -\/BIO\_EXTEND\_SIZE;\ y\ <\ unitSize\ +\ BIO\_EXTEND\_SIZE;\ y++)}
+\DoxyCodeLine{00205\ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ -\/BIO\_EXTEND\_SIZE;\ x\ <\ unitSize\ +\ BIO\_EXTEND\_SIZE;\ x++)}
+\DoxyCodeLine{00207\ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ sGx2\ +=\ Gx2[x];}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ sGy2\ +=\ Gy2[x];}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ sGxGy\ +=\ GxGy[x];}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ sGxdI\ +=\ GxdI[x];}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ sGydI\ +=\ GydI[x];}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ Gx2\ +=\ width;}
+\DoxyCodeLine{00215\ \ \ \ \ Gy2\ +=\ width;}
+\DoxyCodeLine{00216\ \ \ \ \ GxGy\ +=\ width;}
+\DoxyCodeLine{00217\ \ \ \ \ GxdI\ +=\ width;}
+\DoxyCodeLine{00218\ \ \ \ \ GydI\ +=\ width;}
+\DoxyCodeLine{00219\ \ \ \}}
+\DoxyCodeLine{00220\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BCW}}
+\DoxyCodeLine{00223\ \textcolor{keywordtype}{void}\ removeWeightHighFreq(int16\_t*\ dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keyword}{const}\ int16\_t*\ src,\ \textcolor{keywordtype}{int}\ srcStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ bcwWeight)}
+\DoxyCodeLine{00224\ \{}
+\DoxyCodeLine{00225\ \ \ \textcolor{keywordtype}{int}\ normalizer\ =\ ((1\ <<\ 16)\ +\ (bcwWeight\ >\ 0\ ?\ (bcwWeight\ >>\ 1)\ :\ -\/(bcwWeight\ >>\ 1)))\ /\ bcwWeight;}
+\DoxyCodeLine{00226\ \ \ \textcolor{keywordtype}{int}\ weight0\ =\ normalizer\ <<\ g\_BcwLog2WeightBase;}
+\DoxyCodeLine{00227\ \ \ \textcolor{keywordtype}{int}\ weight1\ =\ (g\_BcwWeightBase\ -\/\ bcwWeight)*normalizer;}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#define\ REM\_HF\_INC\ \ \(\backslash\)}}
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\ \ src\ +=\ srcStride;\ \(\backslash\)}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\ \ dst\ +=\ dstStride;\ \(\backslash\)}}
+\DoxyCodeLine{00231\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\#define\ REM\_HF\_OP(\ ADDR\ )\ \ \ \ \ \ dst[ADDR]\ =\ \ \ \ \ \ \ \ \ \ \ \ \ (dst[ADDR]*weight0\ -\/\ src[ADDR]*weight1\ +\ (1<<15))>>16}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ SIZE\_AWARE\_PER\_EL\_OP(REM\_HF\_OP,\ REM\_HF\_INC);}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#undef\ REM\_HF\_INC}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#undef\ REM\_HF\_OP}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#undef\ REM\_HF\_OP\_CLIP}}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{keywordtype}{void}\ removeHighFreq(int16\_t*\ dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keyword}{const}\ int16\_t*\ src,\ \textcolor{keywordtype}{int}\ srcStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
+\DoxyCodeLine{00242\ \{}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\#define\ REM\_HF\_INC\ \ \(\backslash\)}}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\ \ src\ +=\ srcStride;\ \(\backslash\)}}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\ \ dst\ +=\ dstStride;\ \(\backslash\)}}
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\#define\ REM\_HF\_OP(\ ADDR\ )\ \ \ \ \ \ dst[ADDR]\ =\ \ \ \ \ \ \ \ \ \ \ \ \ 2\ *\ dst[ADDR]\ -\/\ src[ADDR]}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ SIZE\_AWARE\_PER\_EL\_OP(REM\_HF\_OP,\ REM\_HF\_INC);}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#undef\ REM\_HF\_INC}}
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\#undef\ REM\_HF\_OP}}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#undef\ REM\_HF\_OP\_CLIP}}
+\DoxyCodeLine{00254\ \}}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00258\ \textcolor{keywordtype}{void}\ reconstructCore(\ \textcolor{keyword}{const}\ T*\ src1,\ \textcolor{keywordtype}{int}\ src1Stride,\ \textcolor{keyword}{const}\ T*\ src2,\ \textcolor{keywordtype}{int}\ src2Stride,\ T*\ dest,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00259\ \{}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\#define\ RECO\_CORE\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ src1[ADDR]\ +\ src2[ADDR],\ clpRng\ )}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#define\ RECO\_CORE\_INC\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\ \ src1\ +=\ src1Stride;\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\ \ src2\ +=\ src2Stride;\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00264\ \textcolor{preprocessor}{\ \ dest\ +=\ \ dstStride;\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00266\ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ RECO\_CORE\_OP,\ RECO\_CORE\_INC\ );}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\#undef\ RECO\_CORE\_OP}}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\#undef\ RECO\_CORE\_INC}}
+\DoxyCodeLine{00270\ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00274\ \textcolor{keywordtype}{void}\ linTfCore(\ \textcolor{keyword}{const}\ T*\ src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ scale,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ \textcolor{keywordtype}{bool}\ bClip\ )}
+\DoxyCodeLine{00275\ \{}
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\#define\ LINTF\_CORE\_OP(\ ADDR\ )\ dst[ADDR]\ =\ (\ Pel\ )\ bClip\ ?\ ClipPel(\ rightShift(\ scale\ *\ src[ADDR],\ shift\ )\ +\ offset,\ clpRng\ )\ :\ (\ rightShift(\ scale\ *\ src[ADDR],\ shift\ )\ +\ offset\ )}}
+\DoxyCodeLine{00277\ \textcolor{preprocessor}{\#define\ LINTF\_CORE\_INC\ \ \(\backslash\)}}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\ \ src\ +=\ srcStride;\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00279\ \textcolor{preprocessor}{\ \ dst\ +=\ dstStride;\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00280\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00281\ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ LINTF\_CORE\_OP,\ LINTF\_CORE\_INC\ );}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \textcolor{preprocessor}{\#undef\ LINTF\_CORE\_OP}}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#undef\ LINTF\_CORE\_INC}}
+\DoxyCodeLine{00285\ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ PelBufferOps::PelBufferOps()}
+\DoxyCodeLine{00288\ \{}
+\DoxyCodeLine{00289\ \ \ addAvg4\ =\ addAvgCore<Pel>;}
+\DoxyCodeLine{00290\ \ \ addAvg8\ =\ addAvgCore<Pel>;}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ reco4\ =\ reconstructCore<Pel>;}
+\DoxyCodeLine{00293\ \ \ reco8\ =\ reconstructCore<Pel>;}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ linTf4\ =\ linTfCore<Pel>;}
+\DoxyCodeLine{00296\ \ \ linTf8\ =\ linTfCore<Pel>;}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ addBIOAvg4\ \ \ \ \ \ =\ addBIOAvgCore;}
+\DoxyCodeLine{00299\ \ \ bioGradFilter\ \ \ =\ gradFilterCore;}
+\DoxyCodeLine{00300\ \ \ calcBIOSums\ =\ calcBIOSumsCore;}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ copyBuffer\ =\ copyBufferCore;}
+\DoxyCodeLine{00303\ \ \ padding\ =\ paddingCore;}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BCW}}
+\DoxyCodeLine{00305\ \ \ removeWeightHighFreq8\ =\ removeWeightHighFreq;}
+\DoxyCodeLine{00306\ \ \ removeWeightHighFreq4\ =\ removeWeightHighFreq;}
+\DoxyCodeLine{00307\ \ \ removeHighFreq8\ =\ removeHighFreq;}
+\DoxyCodeLine{00308\ \ \ removeHighFreq4\ =\ removeHighFreq;}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ profGradFilter\ =\ gradFilterCore\ <false>;}
+\DoxyCodeLine{00312\ \ \ applyPROF\ \ \ \ \ \ =\ applyPROFCore;}
+\DoxyCodeLine{00313\ \ \ roundIntVector\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00314\ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ PelBufferOps\ g\_pelBufOP\ =\ PelBufferOps();}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{keywordtype}{void}\ copyBufferCore(Pel\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
+\DoxyCodeLine{00319\ \{}
+\DoxyCodeLine{00320\ \ \ \textcolor{keywordtype}{int}\ numBytes\ =\ width\ *\ \textcolor{keyword}{sizeof}(Pel);}
+\DoxyCodeLine{00321\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)}
+\DoxyCodeLine{00322\ \ \ \{}
+\DoxyCodeLine{00323\ \ \ \ \ memcpy(dst\ +\ i\ *\ dstStride,\ src\ +\ i\ *\ srcStride,\ numBytes);}
+\DoxyCodeLine{00324\ \ \ \}}
+\DoxyCodeLine{00325\ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{keywordtype}{void}\ paddingCore(Pel\ *ptr,\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ padSize)}
+\DoxyCodeLine{00328\ \{}
+\DoxyCodeLine{00329\ \ \ \textcolor{comment}{/*left\ and\ right\ padding*/}}
+\DoxyCodeLine{00330\ \ \ Pel\ *ptrTemp1\ =\ ptr;}
+\DoxyCodeLine{00331\ \ \ Pel\ *ptrTemp2\ =\ ptr\ +\ (width\ -\/\ 1);}
+\DoxyCodeLine{00332\ \ \ \textcolor{keywordtype}{int}\ offset\ =\ 0;}
+\DoxyCodeLine{00333\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)}
+\DoxyCodeLine{00334\ \ \ \{}
+\DoxyCodeLine{00335\ \ \ \ \ offset\ =\ stride\ *\ i;}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <=\ padSize;\ j++)}
+\DoxyCodeLine{00337\ \ \ \ \ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ *(ptrTemp1\ -\/\ j\ +\ offset)\ =\ *(ptrTemp1\ +\ offset);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ *(ptrTemp2\ +\ j\ +\ offset)\ =\ *(ptrTemp2\ +\ offset);}
+\DoxyCodeLine{00340\ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \textcolor{comment}{/*Top\ and\ Bottom\ padding*/}}
+\DoxyCodeLine{00343\ \ \ \textcolor{keywordtype}{int}\ numBytes\ =\ (width\ +\ padSize\ +\ padSize)\ *\ \textcolor{keyword}{sizeof}(Pel);}
+\DoxyCodeLine{00344\ \ \ ptrTemp1\ =\ (ptr\ -\/\ padSize);}
+\DoxyCodeLine{00345\ \ \ ptrTemp2\ =\ (ptr\ +\ (stride\ *\ (height\ -\/\ 1))\ -\/\ padSize);}
+\DoxyCodeLine{00346\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <=\ padSize;\ i++)}
+\DoxyCodeLine{00347\ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ memcpy(ptrTemp1\ -\/\ (i\ *\ stride),\ (ptrTemp1),\ numBytes);}
+\DoxyCodeLine{00349\ \ \ \ \ memcpy(ptrTemp2\ +\ (i\ *\ stride),\ (ptrTemp2),\ numBytes);}
+\DoxyCodeLine{00350\ \ \ \}}
+\DoxyCodeLine{00351\ \}}
+\DoxyCodeLine{00352\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00353\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::addWeightedAvg(\textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&other1,\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&other2,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ \textcolor{keyword}{const}\ int8\_t\ bcwIdx)}
+\DoxyCodeLine{00354\ \{}
+\DoxyCodeLine{00355\ \ \ \textcolor{keyword}{const}\ int8\_t\ w0\ =\ getBcwWeight(bcwIdx,\ REF\_PIC\_LIST\_0);}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{const}\ int8\_t\ w1\ =\ getBcwWeight(bcwIdx,\ REF\_PIC\_LIST\_1);}
+\DoxyCodeLine{00357\ \ \ \textcolor{keyword}{const}\ int8\_t\ log2WeightBase\ =\ g\_BcwLog2WeightBase;}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \textcolor{keyword}{const}\ Pel*\ src0\ =\ other1.buf;}
+\DoxyCodeLine{00360\ \ \ \textcolor{keyword}{const}\ Pel*\ src2\ =\ other2.buf;}
+\DoxyCodeLine{00361\ \ \ Pel*\ dest\ =\ buf;}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src1Stride\ =\ other1.stride;}
+\DoxyCodeLine{00364\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src2Stride\ =\ other2.stride;}
+\DoxyCodeLine{00365\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ destStride\ =\ stride;}
+\DoxyCodeLine{00366\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ clipbd\ =\ clpRng.bd;}
+\DoxyCodeLine{00367\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ IF\_INTERNAL\_FRAC\_BITS(clipbd)\ +\ log2WeightBase;}
+\DoxyCodeLine{00368\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ (1\ <<\ (shiftNum\ -\/\ 1))\ +\ (IF\_INTERNAL\_OFFS\ <<\ log2WeightBase);}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ rightShift(\ (\ src0[ADDR]*w0\ +\ src2[ADDR]*w1\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ )}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_INC\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\ \ \ \ src0\ +=\ src1Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\ \ \ \ src2\ +=\ src2Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\ \ \ \ dest\ +=\ destStride;\ \(\backslash\)}}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00376\ \ \ SIZE\_AWARE\_PER\_EL\_OP(ADD\_AVG\_OP,\ ADD\_AVG\_INC);}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_OP}}
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_INC}}
+\DoxyCodeLine{00380\ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00383\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::rspSignal(std::vector<Pel>\&\ pLUT)}
+\DoxyCodeLine{00384\ \{}
+\DoxyCodeLine{00385\ \ \ Pel*\ dst\ =\ buf;}
+\DoxyCodeLine{00386\ \ \ Pel*\ src\ =\ buf;}
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00388\ \ \ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ dst[x]\ =\ pLUT[src[x]];}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ dst\ +=\ stride;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ src\ +=\ stride;}
+\DoxyCodeLine{00395\ \ \ \ \ \}}
+\DoxyCodeLine{00396\ \}}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00399\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::scaleSignal(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ dir,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{00400\ \{}
+\DoxyCodeLine{00401\ \ \ Pel*\ dst\ =\ buf;}
+\DoxyCodeLine{00402\ \ \ Pel*\ src\ =\ buf;}
+\DoxyCodeLine{00403\ \ \ \textcolor{keywordtype}{int}\ sign,\ absval;}
+\DoxyCodeLine{00404\ \ \ \textcolor{keywordtype}{int}\ maxAbsclipBD\ =\ (1<<clpRng.bd)\ -\/\ 1;}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \textcolor{keywordflow}{if}\ (dir)\ \textcolor{comment}{//\ forward}}
+\DoxyCodeLine{00407\ \ \ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keywordflow}{if}\ (width\ ==\ 1)}
+\DoxyCodeLine{00409\ \ \ \ \ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ THROW(\textcolor{stringliteral}{"{}Blocks\ of\ width\ =\ 1\ not\ supported"{}});}
+\DoxyCodeLine{00411\ \ \ \ \ \}}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00413\ \ \ \ \ \{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ sign\ =\ src[x]\ >=\ 0\ ?\ 1\ :\ -\/1;}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ absval\ =\ sign\ *\ src[x];}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ (Pel)Clip3(-\/maxAbsclipBD,\ maxAbsclipBD,\ sign\ *\ (((absval\ <<\ CSCALE\_FP\_PREC)\ +\ (scale\ >>\ 1))\ /\ scale));}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ dst\ +=\ stride;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ src\ +=\ stride;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \}}
+\DoxyCodeLine{00427\ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ inverse}}
+\DoxyCodeLine{00428\ \ \ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00430\ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ src[x]\ =\ (Pel)Clip3((Pel)(-\/maxAbsclipBD\ -\/\ 1),\ (Pel)maxAbsclipBD,\ src[x]);}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ sign\ =\ src[x]\ >=\ 0\ ?\ 1\ :\ -\/1;}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ absval\ =\ sign\ *\ src[x];}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ val\ =\ sign\ *\ ((absval\ *\ scale\ +\ (1\ <<\ (CSCALE\_FP\_PREC\ -\/\ 1)))\ >>\ CSCALE\_FP\_PREC);}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(Pel)\ ==\ 2)\ \textcolor{comment}{//\ avoid\ overflow\ when\ storing\ data}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ val\ =\ Clip3<int>(-\/32768,\ 32767,\ val);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ dst[x]\ =\ (Pel)val;}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ dst\ +=\ stride;}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ src\ +=\ stride;}
+\DoxyCodeLine{00445\ \ \ \ \ \}}
+\DoxyCodeLine{00446\ \ \ \}}
+\DoxyCodeLine{00447\ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00450\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::addAvg(\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&other1,\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&other2,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{00451\ \{}
+\DoxyCodeLine{00452\ \ \ \textcolor{keyword}{const}\ Pel*\ src0\ =\ other1.buf;}
+\DoxyCodeLine{00453\ \ \ \textcolor{keyword}{const}\ Pel*\ src2\ =\ other2.buf;}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ Pel*\ dest\ =\ \ \ \ \ \ \ \ buf;}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src1Stride\ =\ other1.stride;}
+\DoxyCodeLine{00457\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src2Stride\ =\ other2.stride;}
+\DoxyCodeLine{00458\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ destStride\ =\ \ \ \ \ \ \ \ stride;}
+\DoxyCodeLine{00459\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ clipbd\ \ \ \ \ \ =\ clpRng.bd;}
+\DoxyCodeLine{00460\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ IF\_INTERNAL\_FRAC\_BITS(clipbd)\ +\ 1;}
+\DoxyCodeLine{00461\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ offset\ \ \ \ \ \ =\ (1\ <<\ (shiftNum\ -\/\ 1))\ +\ 2\ *\ IF\_INTERNAL\_OFFS;}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BUFFER\ \&\&\ defined(TARGET\_SIMD\_X86)}}
+\DoxyCodeLine{00464\ \ \ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 7\ )\ ==\ 0\ )}
+\DoxyCodeLine{00465\ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ g\_pelBufOP.addAvg8(\ src0,\ src1Stride,\ src2,\ src2Stride,\ dest,\ destStride,\ width,\ height,\ shiftNum,\ offset,\ clpRng\ );}
+\DoxyCodeLine{00467\ \ \ \}}
+\DoxyCodeLine{00468\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 3\ )\ ==\ 0\ )}
+\DoxyCodeLine{00469\ \ \ \{}
+\DoxyCodeLine{00470\ \ \ \ \ g\_pelBufOP.addAvg4(\ src0,\ src1Stride,\ src2,\ src2Stride,\ dest,\ destStride,\ width,\ height,\ shiftNum,\ offset,\ clpRng\ );}
+\DoxyCodeLine{00471\ \ \ \}}
+\DoxyCodeLine{00472\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00474\ \ \ \{}
+\DoxyCodeLine{00475\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ rightShift(\ (\ src0[ADDR]\ +\ src2[ADDR]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ )}}
+\DoxyCodeLine{00476\ \textcolor{preprocessor}{\#define\ ADD\_AVG\_INC\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00477\ \textcolor{preprocessor}{\ \ \ \ src0\ +=\ src1Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00478\ \textcolor{preprocessor}{\ \ \ \ src2\ +=\ src2Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00479\ \textcolor{preprocessor}{\ \ \ \ dest\ +=\ destStride;\ \(\backslash\)}}
+\DoxyCodeLine{00480\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00481\ \ \ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ ADD\_AVG\_OP,\ ADD\_AVG\_INC\ );}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_OP}}
+\DoxyCodeLine{00484\ \textcolor{preprocessor}{\#undef\ ADD\_AVG\_INC}}
+\DoxyCodeLine{00485\ \ \ \}}
+\DoxyCodeLine{00486\ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00489\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::toLast(\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00490\ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ Pel*\ src\ \ \ \ \ \ \ =\ buf;}
+\DoxyCodeLine{00492\ \ \ \textcolor{keyword}{const}\ uint32\_t\ srcStride\ =\ stride;}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipbd\ \ \ \ =\ clpRng.bd;}
+\DoxyCodeLine{00495\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ IF\_INTERNAL\_FRAC\_BITS(clipbd);}
+\DoxyCodeLine{00496\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ \ =\ (\ 1\ <<\ (\ shiftNum\ -\/\ 1\ )\ )\ +\ IF\_INTERNAL\_OFFS;}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \textcolor{keywordflow}{if}\ (width\ ==\ 1)}
+\DoxyCodeLine{00499\ \ \ \{}
+\DoxyCodeLine{00500\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Blocks\ of\ width\ =\ 1\ not\ supported"{}}\ );}
+\DoxyCodeLine{00501\ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (width\&2)}
+\DoxyCodeLine{00503\ \ \ \{}
+\DoxyCodeLine{00504\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++\ )}
+\DoxyCodeLine{00505\ \ \ \ \ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0\ ;\ x\ <\ width;\ x+=2\ )}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ src[x\ +\ 0]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 0]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ src[x\ +\ 1]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 1]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00512\ \ \ \ \ \}}
+\DoxyCodeLine{00513\ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00515\ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++\ )}
+\DoxyCodeLine{00517\ \ \ \ \ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0\ ;\ x\ <\ width;\ x+=4\ )}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ src[x\ +\ 0]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 0]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ src[x\ +\ 1]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 1]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ src[x\ +\ 2]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 2]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ src[x\ +\ 3]\ =\ ClipPel(\ rightShift(\ (\ src[x\ +\ 3]\ +\ offset\ ),\ shiftNum\ ),\ clpRng\ );}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00527\ \ \ \ \ \}}
+\DoxyCodeLine{00528\ \ \ \}}
+\DoxyCodeLine{00529\ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00533\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::copyClip(\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&src,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00534\ \{}
+\DoxyCodeLine{00535\ \ \ \textcolor{keyword}{const}\ Pel*\ srcp\ =\ src.buf;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ Pel*\ dest\ =\ \ \ \ \ buf;}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ srcStride\ \ =\ src.stride;}
+\DoxyCodeLine{00539\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ destStride\ =\ stride;}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \textcolor{keywordflow}{if}(\ width\ ==\ 1\ )}
+\DoxyCodeLine{00542\ \ \ \{}
+\DoxyCodeLine{00543\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Blocks\ of\ width\ =\ 1\ not\ supported"{}}\ );}
+\DoxyCodeLine{00544\ \ \ \}}
+\DoxyCodeLine{00545\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00546\ \ \ \{}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{\#define\ RECO\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ srcp[ADDR],\ clpRng\ )}}
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\#define\ RECO\_INC\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00549\ \textcolor{preprocessor}{\ \ \ \ srcp\ +=\ srcStride;\ \ \(\backslash\)}}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\ \ \ \ dest\ +=\ destStride;\ \(\backslash\)}}
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00552\ \ \ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ RECO\_OP,\ RECO\_INC\ );}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\#undef\ RECO\_OP}}
+\DoxyCodeLine{00555\ \textcolor{preprocessor}{\#undef\ RECO\_INC}}
+\DoxyCodeLine{00556\ \ \ \}}
+\DoxyCodeLine{00557\ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00560\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::roundToOutputBitdepth(\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&src,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00561\ \{}
+\DoxyCodeLine{00562\ \ \ \textcolor{keyword}{const}\ Pel*\ srcp\ =\ src.buf;}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ Pel*\ dest\ =\ \ \ \ \ buf;}
+\DoxyCodeLine{00564\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ srcStride\ \ =\ src.stride;}
+\DoxyCodeLine{00565\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ destStride\ =\ stride;}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \textcolor{keyword}{const}\ int32\_t\ clipbd\ \ \ \ \ \ \ \ \ \ \ \ =\ clpRng.bd;}
+\DoxyCodeLine{00568\ \ \ \textcolor{keyword}{const}\ int32\_t\ shiftDefault\ \ \ \ \ \ =\ IF\_INTERNAL\_FRAC\_BITS(clipbd);}
+\DoxyCodeLine{00569\ \ \ \textcolor{keyword}{const}\ int32\_t\ offsetDefault\ \ \ \ \ =\ (1<<(shiftDefault-\/1))\ +\ IF\_INTERNAL\_OFFS;}
+\DoxyCodeLine{00570\ }
+\DoxyCodeLine{00571\ \ \ \textcolor{keywordflow}{if}(\ width\ ==\ 1\ )}
+\DoxyCodeLine{00572\ \ \ \{}
+\DoxyCodeLine{00573\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Blocks\ of\ width\ =\ 1\ not\ supported"{}}\ );}
+\DoxyCodeLine{00574\ \ \ \}}
+\DoxyCodeLine{00575\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00576\ \ \ \{}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\#define\ RND\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ rightShift(\ srcp[ADDR]\ +\ offsetDefault,\ shiftDefault),\ clpRng\ )}}
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\#define\ RND\_INC\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00579\ \textcolor{preprocessor}{\ \ \ \ srcp\ +=\ srcStride;\ \ \(\backslash\)}}
+\DoxyCodeLine{00580\ \textcolor{preprocessor}{\ \ \ \ dest\ +=\ destStride;\ \(\backslash\)}}
+\DoxyCodeLine{00581\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00582\ \ \ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ RND\_OP,\ RND\_INC\ );}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#undef\ RND\_OP}}
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\#undef\ RND\_INC}}
+\DoxyCodeLine{00586\ \ \ \}}
+\DoxyCodeLine{00587\ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00591\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::reconstruct(\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&pred,\ \textcolor{keyword}{const}\ AreaBuf<const\ Pel>\ \&resi,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00592\ \{}
+\DoxyCodeLine{00593\ \ \ \textcolor{keyword}{const}\ Pel*\ src1\ =\ pred.buf;}
+\DoxyCodeLine{00594\ \ \ \textcolor{keyword}{const}\ Pel*\ src2\ =\ resi.buf;}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ Pel*\ dest\ =\ \ \ \ \ \ buf;}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src1Stride\ =\ pred.stride;}
+\DoxyCodeLine{00598\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src2Stride\ =\ resi.stride;}
+\DoxyCodeLine{00599\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ destStride\ =\ \ \ \ \ \ stride;}
+\DoxyCodeLine{00600\ }
+\DoxyCodeLine{00601\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BUFFER\ \&\&\ defined(TARGET\_SIMD\_X86)}}
+\DoxyCodeLine{00602\ \ \ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 7\ )\ ==\ 0\ )}
+\DoxyCodeLine{00603\ \ \ \{}
+\DoxyCodeLine{00604\ \ \ \ \ g\_pelBufOP.reco8(\ src1,\ src1Stride,\ src2,\ src2Stride,\ dest,\ destStride,\ width,\ height,\ clpRng\ );}
+\DoxyCodeLine{00605\ \ \ \}}
+\DoxyCodeLine{00606\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 3\ )\ ==\ 0\ )}
+\DoxyCodeLine{00607\ \ \ \{}
+\DoxyCodeLine{00608\ \ \ \ \ g\_pelBufOP.reco4(\ src1,\ src1Stride,\ src2,\ src2Stride,\ dest,\ destStride,\ width,\ height,\ clpRng\ );}
+\DoxyCodeLine{00609\ \ \ \}}
+\DoxyCodeLine{00610\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00611\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00612\ \ \ \{}
+\DoxyCodeLine{00613\ \textcolor{preprocessor}{\#define\ RECO\_OP(\ ADDR\ )\ dest[ADDR]\ =\ ClipPel(\ src1[ADDR]\ +\ src2[ADDR],\ clpRng\ )}}
+\DoxyCodeLine{00614\ \textcolor{preprocessor}{\#define\ RECO\_INC\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00615\ \textcolor{preprocessor}{\ \ \ \ src1\ +=\ src1Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\ \ \ \ src2\ +=\ src2Stride;\ \(\backslash\)}}
+\DoxyCodeLine{00617\ \textcolor{preprocessor}{\ \ \ \ dest\ +=\ destStride;\ \(\backslash\)}}
+\DoxyCodeLine{00618\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00619\ \ \ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ RECO\_OP,\ RECO\_INC\ );}
+\DoxyCodeLine{00620\ }
+\DoxyCodeLine{00621\ \textcolor{preprocessor}{\#undef\ RECO\_OP}}
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#undef\ RECO\_INC}}
+\DoxyCodeLine{00623\ \ \ \}}
+\DoxyCodeLine{00624\ \}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00627\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::linearTransform(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scale,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keywordtype}{bool}\ bClip,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ )}
+\DoxyCodeLine{00628\ \{}
+\DoxyCodeLine{00629\ \ \ \textcolor{keyword}{const}\ Pel*\ src\ =\ buf;}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ Pel*\ dst\ =\ buf;}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \textcolor{keywordflow}{if}(\ width\ ==\ 1\ )}
+\DoxyCodeLine{00633\ \ \ \{}
+\DoxyCodeLine{00634\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Blocks\ of\ width\ =\ 1\ not\ supported"{}}\ );}
+\DoxyCodeLine{00635\ \ \ \}}
+\DoxyCodeLine{00636\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BUFFER\ \&\&\ defined(TARGET\_SIMD\_X86)}}
+\DoxyCodeLine{00637\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 7\ )\ ==\ 0\ )}
+\DoxyCodeLine{00638\ \ \ \{}
+\DoxyCodeLine{00639\ \ \ \ \ g\_pelBufOP.linTf8(\ src,\ stride,\ dst,\ stride,\ width,\ height,\ scale,\ shift,\ offset,\ clpRng,\ bClip\ );}
+\DoxyCodeLine{00640\ \ \ \}}
+\DoxyCodeLine{00641\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ width\ \&\ 3\ )\ ==\ 0\ )}
+\DoxyCodeLine{00642\ \ \ \{}
+\DoxyCodeLine{00643\ \ \ \ \ g\_pelBufOP.linTf4(\ src,\ stride,\ dst,\ stride,\ width,\ height,\ scale,\ shift,\ offset,\ clpRng,\ bClip\ );}
+\DoxyCodeLine{00644\ \ \ \}}
+\DoxyCodeLine{00645\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00646\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00647\ \ \ \{}
+\DoxyCodeLine{00648\ \textcolor{preprocessor}{\#define\ LINTF\_OP(\ ADDR\ )\ dst[ADDR]\ =\ (\ Pel\ )\ bClip\ ?\ ClipPel(\ rightShift(\ scale\ *\ src[ADDR],\ shift\ )\ +\ offset,\ clpRng\ )\ :\ (\ rightShift(\ scale\ *\ src[ADDR],\ shift\ )\ +\ offset\ )}}
+\DoxyCodeLine{00649\ \textcolor{preprocessor}{\#define\ LINTF\_INC\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00650\ \textcolor{preprocessor}{\ \ \ \ src\ +=\ stride;\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00651\ \textcolor{preprocessor}{\ \ \ \ dst\ +=\ stride;\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00652\ \textcolor{preprocessor}{}}
+\DoxyCodeLine{00653\ \ \ \ \ SIZE\_AWARE\_PER\_EL\_OP(\ LINTF\_OP,\ LINTF\_INC\ );}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \textcolor{preprocessor}{\#undef\ RECO\_OP}}
+\DoxyCodeLine{00656\ \textcolor{preprocessor}{\#undef\ RECO\_INC}}
+\DoxyCodeLine{00657\ \ \ \}}
+\DoxyCodeLine{00658\ \}}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_BUFFER\ \&\&\ defined(TARGET\_SIMD\_X86)}}
+\DoxyCodeLine{00661\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00662\ \textcolor{keywordtype}{void}\ AreaBuf<Pel>::subtract(\ \textcolor{keyword}{const}\ Pel\ val\ )}
+\DoxyCodeLine{00663\ \{}
+\DoxyCodeLine{00664\ \ \ ClpRng\ clpRngDummy;}
+\DoxyCodeLine{00665\ \ \ linearTransform(\ 1,\ 0,\ -\/val,\ \textcolor{keyword}{false},\ clpRngDummy\ );}
+\DoxyCodeLine{00666\ \}}
+\DoxyCodeLine{00667\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ PelStorage::PelStorage()}
+\DoxyCodeLine{00671\ \{}
+\DoxyCodeLine{00672\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ MAX\_NUM\_COMPONENT;\ i++\ )}
+\DoxyCodeLine{00673\ \ \ \{}
+\DoxyCodeLine{00674\ \ \ \ \ m\_origin[i]\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00675\ \ \ \}}
+\DoxyCodeLine{00676\ \}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ PelStorage::\string~PelStorage()}
+\DoxyCodeLine{00679\ \{}
+\DoxyCodeLine{00680\ \ \ destroy();}
+\DoxyCodeLine{00681\ \}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \textcolor{keywordtype}{void}\ PelStorage::create(\ \textcolor{keyword}{const}\ UnitArea\ \&\_UnitArea\ )}
+\DoxyCodeLine{00684\ \{}
+\DoxyCodeLine{00685\ \ \ create(\ \_UnitArea.chromaFormat,\ \_UnitArea.blocks[0]\ );}
+\DoxyCodeLine{00686\ \}}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \textcolor{keywordtype}{void}\ PelStorage::create(\ \textcolor{keyword}{const}\ ChromaFormat\ \&\_chromaFormat,\ \textcolor{keyword}{const}\ Area\&\ \_area,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_maxCUSize,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_margin,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_alignment,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \_scaleChromaMargin\ )}
+\DoxyCodeLine{00689\ \{}
+\DoxyCodeLine{00690\ \ \ CHECK(\ !bufs.empty(),\ \textcolor{stringliteral}{"{}Trying\ to\ re-\/create\ an\ already\ initialized\ buffer"{}}\ );}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \ \ chromaFormat\ =\ \_chromaFormat;}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numCh\ =\ getNumberValidComponents(\ \_chromaFormat\ );}
+\DoxyCodeLine{00695\ }
+\DoxyCodeLine{00696\ \ \ \textcolor{keywordtype}{unsigned}\ extHeight\ =\ \_area.height;}
+\DoxyCodeLine{00697\ \ \ \textcolor{keywordtype}{unsigned}\ extWidth\ \ =\ \_area.width;}
+\DoxyCodeLine{00698\ }
+\DoxyCodeLine{00699\ \ \ \textcolor{keywordflow}{if}(\ \_maxCUSize\ )}
+\DoxyCodeLine{00700\ \ \ \{}
+\DoxyCodeLine{00701\ \ \ \ \ extHeight\ =\ (\ (\ \_area.height\ +\ \_maxCUSize\ -\/\ 1\ )\ /\ \_maxCUSize\ )\ *\ \_maxCUSize;}
+\DoxyCodeLine{00702\ \ \ \ \ extWidth\ \ =\ (\ (\ \_area.width\ \ +\ \_maxCUSize\ -\/\ 1\ )\ /\ \_maxCUSize\ )\ *\ \_maxCUSize;}
+\DoxyCodeLine{00703\ \ \ \}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ numCh;\ i++\ )}
+\DoxyCodeLine{00706\ \ \ \{}
+\DoxyCodeLine{00707\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(\ i\ );}
+\DoxyCodeLine{00708\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ scaleX\ =\ vtm::getComponentScaleX(\ compID,\ \_chromaFormat\ );}
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ scaleY\ =\ vtm::getComponentScaleY(\ compID,\ \_chromaFormat\ );}
+\DoxyCodeLine{00710\ }
+\DoxyCodeLine{00711\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ scaledHeight\ =\ extHeight\ >>\ scaleY;}
+\DoxyCodeLine{00712\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ scaledWidth\ \ =\ extWidth\ \ >>\ scaleX;}
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ ymargin\ \ \ \ \ \ =\ \_margin\ >>\ (\_scaleChromaMargin?scaleY:0);}
+\DoxyCodeLine{00714\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ xmargin\ \ \ \ \ \ =\ \_margin\ >>\ (\_scaleChromaMargin?scaleX:0);}
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ totalWidth\ \ \ =\ scaledWidth\ +\ 2*xmargin;}
+\DoxyCodeLine{00716\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ totalHeight\ \ =\ scaledHeight\ +2*ymargin;}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \ \ \ \ \textcolor{keywordflow}{if}(\ \_alignment\ )}
+\DoxyCodeLine{00719\ \ \ \ \ \{}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \textcolor{comment}{//\ make\ sure\ buffer\ lines\ are\ align}}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ CHECK(\ \_alignment\ !=\ MEMORY\_ALIGN\_DEF\_SIZE,\ \textcolor{stringliteral}{"{}Unsupported\ alignment"{}}\ );}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ totalWidth\ =\ (\ (\ totalWidth\ +\ \_alignment\ -\/\ 1\ )\ /\ \_alignment\ )\ *\ \_alignment;}
+\DoxyCodeLine{00723\ \ \ \ \ \}}
+\DoxyCodeLine{00724\ \ \ \ \ uint32\_t\ area\ =\ totalWidth\ *\ totalHeight;}
+\DoxyCodeLine{00725\ \ \ \ \ CHECK(\ !area,\ \textcolor{stringliteral}{"{}Trying\ to\ create\ a\ buffer\ with\ zero\ area"{}}\ );}
+\DoxyCodeLine{00726\ }
+\DoxyCodeLine{00727\ \ \ \ \ m\_origin[i]\ =\ (\ Pel*\ )\ xMalloc(\ Pel,\ area\ );}
+\DoxyCodeLine{00728\ \ \ \ \ Pel*\ topLeft\ =\ m\_origin[i]\ +\ totalWidth\ *\ ymargin\ +\ xmargin;}
+\DoxyCodeLine{00729\ \ \ \ \ bufs.push\_back(\ PelBuf(\ topLeft,\ totalWidth,\ \_area.width\ >>\ scaleX,\ \_area.height\ >>\ scaleY\ )\ );}
+\DoxyCodeLine{00730\ \ \ \}}
+\DoxyCodeLine{00731\ \}}
+\DoxyCodeLine{00732\ }
+\DoxyCodeLine{00733\ \textcolor{keywordtype}{void}\ PelStorage::createFromBuf(\ PelUnitBuf\ buf\ )}
+\DoxyCodeLine{00734\ \{}
+\DoxyCodeLine{00735\ \ \ chromaFormat\ =\ buf.chromaFormat;}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numCh\ =\ vtm::getNumberValidComponents(\ chromaFormat\ );}
+\DoxyCodeLine{00738\ }
+\DoxyCodeLine{00739\ \ \ bufs.resize(numCh);}
+\DoxyCodeLine{00740\ }
+\DoxyCodeLine{00741\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ numCh;\ i++\ )}
+\DoxyCodeLine{00742\ \ \ \{}
+\DoxyCodeLine{00743\ \ \ \ \ PelBuf\ cPelBuf\ =\ buf.get(\ ComponentID(\ i\ )\ );}
+\DoxyCodeLine{00744\ \ \ \ \ bufs[i]\ =\ PelBuf(\ cPelBuf.bufAt(\ 0,\ 0\ ),\ cPelBuf.stride,\ cPelBuf.width,\ cPelBuf.height\ );}
+\DoxyCodeLine{00745\ \ \ \}}
+\DoxyCodeLine{00746\ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \textcolor{keywordtype}{void}\ PelStorage::swap(\ PelStorage\&\ other\ )}
+\DoxyCodeLine{00749\ \{}
+\DoxyCodeLine{00750\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numCh\ =\ vtm::getNumberValidComponents(\ chromaFormat\ );}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ numCh;\ i++\ )}
+\DoxyCodeLine{00753\ \ \ \{}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{comment}{//\ check\ this\ otherwise\ it\ would\ turn\ out\ to\ get\ very\ weird}}
+\DoxyCodeLine{00755\ \ \ \ \ CHECK(\ chromaFormat\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !=\ other.chromaFormat\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{stringliteral}{"{}Incompatible\ formats"{}}\ );}
+\DoxyCodeLine{00756\ \ \ \ \ CHECK(\ get(\ ComponentID(\ i\ )\ )\ \ \ \ \ \ \ \ !=\ other.get(\ ComponentID(\ i\ )\ )\ \ \ \ \ \ \ ,\ \textcolor{stringliteral}{"{}Incompatible\ formats"{}}\ );}
+\DoxyCodeLine{00757\ \ \ \ \ CHECK(\ get(\ ComponentID(\ i\ )\ ).stride\ !=\ other.get(\ ComponentID(\ i\ )\ ).stride,\ \textcolor{stringliteral}{"{}Incompatible\ formats"{}}\ );}
+\DoxyCodeLine{00758\ }
+\DoxyCodeLine{00759\ \ \ \ \ std::swap(\ bufs[i].buf,\ \ \ \ other.bufs[i].buf\ );}
+\DoxyCodeLine{00760\ \ \ \ \ std::swap(\ bufs[i].stride,\ other.bufs[i].stride\ );}
+\DoxyCodeLine{00761\ \ \ \ \ std::swap(\ m\_origin[i],\ \ \ \ other.m\_origin[i]\ );}
+\DoxyCodeLine{00762\ \ \ \}}
+\DoxyCodeLine{00763\ \}}
+\DoxyCodeLine{00764\ }
+\DoxyCodeLine{00765\ \textcolor{keywordtype}{void}\ PelStorage::destroy()}
+\DoxyCodeLine{00766\ \{}
+\DoxyCodeLine{00767\ \ \ chromaFormat\ =\ NUM\_CHROMA\_FORMAT;}
+\DoxyCodeLine{00768\ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 0;\ i\ <\ MAX\_NUM\_COMPONENT;\ i++\ )}
+\DoxyCodeLine{00769\ \ \ \{}
+\DoxyCodeLine{00770\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_origin[i]\ )}
+\DoxyCodeLine{00771\ \ \ \ \ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ xFree(\ m\_origin[i]\ );}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ m\_origin[i]\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00774\ \ \ \ \ \}}
+\DoxyCodeLine{00775\ \ \ \}}
+\DoxyCodeLine{00776\ \ \ bufs.clear();}
+\DoxyCodeLine{00777\ \}}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ PelBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ ComponentID\ CompID\ )}
+\DoxyCodeLine{00780\ \{}
+\DoxyCodeLine{00781\ \ \ \textcolor{keywordflow}{return}\ bufs[CompID];}
+\DoxyCodeLine{00782\ \}}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \textcolor{keyword}{const}\ CPelBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ ComponentID\ CompID\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00785\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00786\ \ \ \textcolor{keywordflow}{return}\ bufs[CompID];}
+\DoxyCodeLine{00787\ \}}
+\DoxyCodeLine{00788\ }
+\DoxyCodeLine{00789\ PelBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ CompArea\ \&blk\ )}
+\DoxyCodeLine{00790\ \{}
+\DoxyCodeLine{00791\ \ \ \textcolor{keyword}{const}\ PelBuf\&\ r\ =\ bufs[blk.compID];}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ CHECKD(\ rsAddr(\ blk.bottomRight(),\ r.stride\ )\ >=\ (\ (\ r.height\ -\/\ 1\ )\ *\ r.stride\ +\ r.width\ ),\ \textcolor{stringliteral}{"{}Trying\ to\ access\ a\ buf\ outside\ of\ bound!"{}}\ );}
+\DoxyCodeLine{00794\ }
+\DoxyCodeLine{00795\ \ \ \textcolor{keywordflow}{return}\ PelBuf(\ r.buf\ +\ rsAddr(\ blk,\ r.stride\ ),\ r.stride,\ blk\ );}
+\DoxyCodeLine{00796\ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \textcolor{keyword}{const}\ CPelBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ CompArea\ \&blk\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00799\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00800\ \ \ \textcolor{keyword}{const}\ PelBuf\&\ r\ =\ bufs[blk.compID];}
+\DoxyCodeLine{00801\ \ \ \textcolor{keywordflow}{return}\ CPelBuf(\ r.buf\ +\ rsAddr(\ blk,\ r.stride\ ),\ r.stride,\ blk\ );}
+\DoxyCodeLine{00802\ \}}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ PelUnitBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ UnitArea\ \&unit\ )}
+\DoxyCodeLine{00805\ \{}
+\DoxyCodeLine{00806\ \ \ \textcolor{keywordflow}{return}\ (\ chromaFormat\ ==\ CHROMA\_400\ )\ ?\ PelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y()\ )\ )\ :\ PelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y()\ ),\ getBuf(\ unit.Cb()\ ),\ getBuf(\ unit.Cr()\ )\ );}
+\DoxyCodeLine{00807\ \}}
+\DoxyCodeLine{00808\ }
+\DoxyCodeLine{00809\ \textcolor{keyword}{const}\ CPelUnitBuf\ PelStorage::getBuf(\ \textcolor{keyword}{const}\ UnitArea\ \&unit\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00810\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00811\ \ \ \textcolor{keywordflow}{return}\ (\ chromaFormat\ ==\ CHROMA\_400\ )\ ?\ CPelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y()\ )\ )\ :\ CPelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y()\ ),\ getBuf(\ unit.Cb()\ ),\ getBuf(\ unit.Cr()\ )\ );}
+\DoxyCodeLine{00812\ \}}
+\DoxyCodeLine{00813\ }
+\DoxyCodeLine{00814\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00815\ \textcolor{keywordtype}{void}\ UnitBuf<Pel>::colorSpaceConvert(\textcolor{keyword}{const}\ UnitBuf<Pel>\ \&other,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ forward,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{00816\ \{}
+\DoxyCodeLine{00817\ \ \ \textcolor{keyword}{const}\ Pel*\ pOrg0\ =\ bufs[COMPONENT\_Y].buf;}
+\DoxyCodeLine{00818\ \ \ \textcolor{keyword}{const}\ Pel*\ pOrg1\ =\ bufs[COMPONENT\_Cb].buf;}
+\DoxyCodeLine{00819\ \ \ \textcolor{keyword}{const}\ Pel*\ pOrg2\ =\ bufs[COMPONENT\_Cr].buf;}
+\DoxyCodeLine{00820\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ strideOrg\ =\ bufs[COMPONENT\_Y].stride;}
+\DoxyCodeLine{00821\ }
+\DoxyCodeLine{00822\ \ \ Pel*\ pDst0\ =\ other.bufs[COMPONENT\_Y].buf;}
+\DoxyCodeLine{00823\ \ \ Pel*\ pDst1\ =\ other.bufs[COMPONENT\_Cb].buf;}
+\DoxyCodeLine{00824\ \ \ Pel*\ pDst2\ =\ other.bufs[COMPONENT\_Cr].buf;}
+\DoxyCodeLine{00825\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ strideDst\ =\ other.bufs[COMPONENT\_Y].stride;}
+\DoxyCodeLine{00826\ }
+\DoxyCodeLine{00827\ \ \ \textcolor{keywordtype}{int}\ width\ =\ bufs[COMPONENT\_Y].width;}
+\DoxyCodeLine{00828\ \ \ \textcolor{keywordtype}{int}\ height\ =\ bufs[COMPONENT\_Y].height;}
+\DoxyCodeLine{00829\ \ \ \textcolor{keywordtype}{int}\ maxAbsclipBD\ =\ (1\ <<\ (clpRng.bd\ +\ 1))\ -\/\ 1;}
+\DoxyCodeLine{00830\ \ \ \textcolor{keywordtype}{int}\ r,\ g,\ b;}
+\DoxyCodeLine{00831\ \ \ \textcolor{keywordtype}{int}\ y0,\ cg,\ co;}
+\DoxyCodeLine{00832\ }
+\DoxyCodeLine{00833\ \ \ CHECK(bufs[COMPONENT\_Y].stride\ !=\ bufs[COMPONENT\_Cb].stride\ ||\ bufs[COMPONENT\_Y].stride\ !=\ bufs[COMPONENT\_Cr].stride,\ \textcolor{stringliteral}{"{}unequal\ stride\ for\ 444\ content"{}});}
+\DoxyCodeLine{00834\ \ \ CHECK(other.bufs[COMPONENT\_Y].stride\ !=\ other.bufs[COMPONENT\_Cb].stride\ ||\ other.bufs[COMPONENT\_Y].stride\ !=\ other.bufs[COMPONENT\_Cr].stride,\ \textcolor{stringliteral}{"{}unequal\ stride\ for\ 444\ content"{}});}
+\DoxyCodeLine{00835\ \ \ CHECK(bufs[COMPONENT\_Y].width\ !=\ other.bufs[COMPONENT\_Y].width\ ||\ bufs[COMPONENT\_Y].height\ !=\ other.bufs[COMPONENT\_Y].height,\ \textcolor{stringliteral}{"{}unequal\ block\ size"{}})}
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ \ \ \ \ \textcolor{keywordflow}{if}\ (forward)}
+\DoxyCodeLine{00838\ \ \ \ \ \{}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ r\ =\ pOrg2[x];}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ g\ =\ pOrg0[x];}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ b\ =\ pOrg1[x];}
+\DoxyCodeLine{00846\ }
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ co\ =\ r\ -\/\ b;}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ t\ =\ b\ +\ (co\ >>\ 1);}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ cg\ =\ g\ -\/\ t;}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \ \ pDst0[x]\ =\ t\ +\ (cg\ >>\ 1);}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \ \ pDst1[x]\ =\ cg;}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ pDst2[x]\ =\ co;}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ pOrg0\ +=\ strideOrg;}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ pOrg1\ +=\ strideOrg;}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ pOrg2\ +=\ strideOrg;}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ pDst0\ +=\ strideDst;}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ pDst1\ +=\ strideDst;}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ pDst2\ +=\ strideDst;}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00861\ \ \ \ \ \}}
+\DoxyCodeLine{00862\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00863\ \ \ \ \ \{}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \ y0\ =\ pOrg0[x];}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \ \ cg\ =\ pOrg1[x];}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \ \ co\ =\ pOrg2[x];}
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \ \ y0\ =\ Clip3((-\/maxAbsclipBD\ -\/\ 1),\ maxAbsclipBD,\ y0);}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \ \ cg\ =\ Clip3((-\/maxAbsclipBD\ -\/\ 1),\ maxAbsclipBD,\ cg);}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \ \ co\ =\ Clip3((-\/maxAbsclipBD\ -\/\ 1),\ maxAbsclipBD,\ co);}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ t\ =\ y0\ -\/\ (cg\ >>\ 1);}
+\DoxyCodeLine{00877\ \ \ \ \ \ \ \ \ \ \ pDst0[x]\ =\ cg\ +\ t;}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ \ \ pDst1[x]\ =\ t\ -\/\ (co\ >>\ 1);}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ \ \ pDst2[x]\ =\ co\ +\ pDst1[x];}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00881\ }
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ pOrg0\ +=\ strideOrg;}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ pOrg1\ +=\ strideOrg;}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ pOrg2\ +=\ strideOrg;}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ pDst0\ +=\ strideDst;}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ pDst1\ +=\ strideDst;}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ pDst2\ +=\ strideDst;}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00889\ \ \ \ \ \}}
+\DoxyCodeLine{00890\ \}}
+\DoxyCodeLine{00891\ }
+\DoxyCodeLine{00892\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+
+\end{DoxyCode}

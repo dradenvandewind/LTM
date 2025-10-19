@@ -1,0 +1,208 @@
+\doxysection{Parameter\+Set\+Manager.\+cpp}
+\label{ParameterSetManager_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/ParameterSetManager.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/ParameterSetManager.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}CommonDef.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}ParameterSetManager.h"{}}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ ParameterSetManager::ParameterSetManager()}
+\DoxyCodeLine{00040\ :\ m\_spsMap(MAX\_NUM\_SPS)}
+\DoxyCodeLine{00041\ ,\ m\_ppsMap(MAX\_NUM\_PPS)}
+\DoxyCodeLine{00042\ ,\ m\_apsMap(MAX\_NUM\_APS\ *\ MAX\_NUM\_APS\_TYPE)}
+\DoxyCodeLine{00043\ ,\ m\_vpsMap(MAX\_NUM\_VPS)}
+\DoxyCodeLine{00044\ ,\ m\_activeSPSId(-\/1)}
+\DoxyCodeLine{00045\ ,\ m\_activeVPSId(-\/1)}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ ParameterSetManager::\string~ParameterSetManager()}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ VPS*\ ParameterSetManager::getVPS(\ \textcolor{keywordtype}{int}\ vpsId\ )}
+\DoxyCodeLine{00055\ \{}
+\DoxyCodeLine{00056\ \ \ \textcolor{keywordflow}{if}\ (\ vpsId\ !=\ 0)}
+\DoxyCodeLine{00057\ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_vpsMap.getPS(\ vpsId\ );}
+\DoxyCodeLine{00059\ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00061\ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ VPS\ Id\ zero\ contains\ inferred\ values\ only.\ Allocate\ (with\ defaults)\ on\ first\ access}}
+\DoxyCodeLine{00063\ \ \ \ \ VPS\ *vps\ =\ m\_vpsMap.getPS\ (0);}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{if}\ (vps\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00065\ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ m\_vpsMap.allocatePS(0);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ vps\ =\ m\_vpsMap.getPS(\ 0\ );}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ vps-\/>deriveOutputLayerSets();}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_vpsMap.getPS(\ 0\ );}
+\DoxyCodeLine{00071\ \ \ \}}
+\DoxyCodeLine{00072\ \};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ activate\ a\ PPS\ and\ depending\ on\ isIRAP\ parameter\ also\ SPS}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ returns\ true,\ if\ activation\ is\ successful}}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{bool}\ ParameterSetManager::activatePPS(\textcolor{keywordtype}{int}\ ppsId,\ \textcolor{keywordtype}{bool}\ isIRAP)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ PPS\ *pps\ =\ m\_ppsMap.getPS(ppsId);}
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{if}\ (pps)}
+\DoxyCodeLine{00080\ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{int}\ spsId\ =\ pps-\/>getSPSId();}
+\DoxyCodeLine{00082\ \ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ SPS\ *sps\ =\ m\_spsMap.getPS(spsId);}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sps)}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ vpsId\ =\ sps-\/>getVPSId();}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ VPS\ *vps\ =\ m\_vpsMap.getPS(vpsId);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(vps)}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ m\_activeVPSId\ =\ vpsId;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ m\_vpsMap.setActive(vpsId);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ msg(\ WARNING,\ \textcolor{stringliteral}{"{}Warning:\ tried\ to\ activate\ a\ PPS\ that\ refers\ to\ a\ non-\/existing\ VPS."{}}\ );}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ m\_spsMap.clearActive();}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ m\_spsMap.setActive(spsId);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ m\_activeSPSId\ =\ spsId;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ m\_ppsMap.clearActive();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ m\_ppsMap.setActive(ppsId);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ msg(\ WARNING,\ \textcolor{stringliteral}{"{}Warning:\ tried\ to\ activate\ a\ PPS\ that\ refers\ to\ a\ non-\/existing\ SPS."{}});}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \}}
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ msg(\ WARNING,\ \textcolor{stringliteral}{"{}Warning:\ tried\ to\ activate\ a\ non-\/existing\ PPS."{}});}
+\DoxyCodeLine{00116\ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \textcolor{comment}{//\ Failed\ to\ activate\ if\ reach\ here.}}
+\DoxyCodeLine{00119\ \ \ m\_activeSPSId=-\/1;}
+\DoxyCodeLine{00120\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{bool}\ ParameterSetManager::activateAPS(\textcolor{keywordtype}{int}\ apsId,\ \textcolor{keywordtype}{int}\ apsType)}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ APS\ *aps\ =\ m\_apsMap.getPS(\ (\ apsId\ <<\ NUM\_APS\_TYPE\_LEN\ )\ +\ apsType\ );}
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordflow}{if}\ (aps)}
+\DoxyCodeLine{00127\ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ m\_apsMap.setActive(\ (\ apsId\ <<\ NUM\_APS\_TYPE\_LEN\ )\ +\ apsType\ );}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00130\ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00132\ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ msg(WARNING,\ \textcolor{stringliteral}{"{}Warning:\ tried\ to\ activate\ a\ non-\/existing\ APS."{}});}
+\DoxyCodeLine{00134\ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00139\ \textcolor{keywordtype}{void}\ ParameterSetMap<APS>::setID(APS*\ parameterSet,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ psId)}
+\DoxyCodeLine{00140\ \{}
+\DoxyCodeLine{00141\ \ \ parameterSet-\/>setAPSId(psId);}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00144\ \textcolor{keywordtype}{void}\ ParameterSetMap<PPS>::setID(PPS*\ parameterSet,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ psId)}
+\DoxyCodeLine{00145\ \{}
+\DoxyCodeLine{00146\ \ \ parameterSet-\/>setPPSId(psId);}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00150\ \textcolor{keywordtype}{void}\ ParameterSetMap<SPS>::setID(SPS*\ parameterSet,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ psId)}
+\DoxyCodeLine{00151\ \{}
+\DoxyCodeLine{00152\ \ \ parameterSet-\/>setSPSId(psId);}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{void}\ ParameterSetMap<VPS>::setID(VPS*\ parameterSet,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ psId)}
+\DoxyCodeLine{00157\ \{}
+\DoxyCodeLine{00158\ \ \ parameterSet-\/>setVPSId(psId);}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ ProfileTierLevel::ProfileTierLevel()}
+\DoxyCodeLine{00162\ \ \ :\ m\_tierFlag\ \ \ \ \ \ \ \ (Level::MAIN)}
+\DoxyCodeLine{00163\ \ \ ,\ m\_profileIdc\ \ \ \ \ \ (Profile::NONE)}
+\DoxyCodeLine{00164\ \ \ ,\ m\_numSubProfile(0)}
+\DoxyCodeLine{00165\ \ \ ,\ m\_subProfileIdc(0)}
+\DoxyCodeLine{00166\ \ \ ,\ m\_levelIdc\ \ \ \ \ \ \ \ (Level::NONE)}
+\DoxyCodeLine{00167\ \ \ ,\ m\_frameOnlyConstraintFlag(1)}
+\DoxyCodeLine{00168\ \ \ ,\ m\_multiLayerEnabledFlag(0)}
+\DoxyCodeLine{00169\ \{}
+\DoxyCodeLine{00170\ \ \ ::memset(m\_subLayerLevelPresentFlag,\ \ \ 0,\ \textcolor{keyword}{sizeof}(m\_subLayerLevelPresentFlag\ \ ));}
+\DoxyCodeLine{00171\ \ \ ::memset(m\_subLayerLevelIdc,\ Level::NONE,\ \textcolor{keyword}{sizeof}(m\_subLayerLevelIdc\ \ \ \ \ \ \ \ \ \ ));}
+\DoxyCodeLine{00172\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{keywordtype}{void}\ calculateParameterSetChangedFlag(\textcolor{keywordtype}{bool}\ \&changed,\ \textcolor{keyword}{const}\ std::vector<uint8\_t>\ *oldData,\ \textcolor{keyword}{const}\ std::vector<uint8\_t>\ *newData)}
+\DoxyCodeLine{00175\ \{}
+\DoxyCodeLine{00176\ \ \ \textcolor{keywordflow}{if}\ (!changed)}
+\DoxyCodeLine{00177\ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{if}\ ((oldData==0\ \&\&\ newData!=0)\ ||\ (oldData!=0\ \&\&\ newData==0))}
+\DoxyCodeLine{00179\ \ \ \ \ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ changed=\textcolor{keyword}{true};}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (oldData!=0\ \&\&\ newData!=0)}
+\DoxyCodeLine{00183\ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \textcolor{comment}{//\ compare\ the\ two}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (oldData-\/>size()\ !=\ newData-\/>size())}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ changed=\textcolor{keyword}{true};}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *pNewDataArray=\&(*newData)[0];}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *pOldDataArray=\&(*oldData)[0];}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(pOldDataArray,\ pNewDataArray,\ oldData-\/>size()))}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ changed=\textcolor{keyword}{true};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \}}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+
+\end{DoxyCode}

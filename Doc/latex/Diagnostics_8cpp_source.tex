@@ -1,0 +1,136 @@
+\doxysection{Diagnostics.\+cpp}
+\label{Diagnostics_8cpp_source}\index{util/src/Diagnostics.cpp@{util/src/Diagnostics.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Old\ school\ sprintf\ into\ a\ std::string}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <cstdarg>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ std::string\ format(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *fmt,\ ...)\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{char}\ tmp[16\ *\ 1024];}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00050\ \ \ \ \ va\_start(args,\ fmt);}
+\DoxyCodeLine{00051\ \ \ \ \ vsnprintf(tmp,\ \textcolor{keyword}{sizeof}(tmp)\ -\/\ 1,\ fmt,\ args);}
+\DoxyCodeLine{00052\ \ \ \ \ va\_end(args);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{return}\ tmp;}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ std::string\ join(\textcolor{keyword}{const}\ std::vector<std::string>\ \&list,\ \textcolor{keyword}{const}\ std::string\ \&seperator,\ \textcolor{keywordtype}{bool}\ include\_trailing)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ std::string\ r;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{auto}\ i\ =\ list.begin();}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{while}\ (i\ !=\ list.end())\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ r\ +=\ *i;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ ++i;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ list.end()\ ||\ include\_trailing)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ r\ +=\ seperator;}
+\DoxyCodeLine{00066\ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00069\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keywordtype}{void}\ \_check\_failed(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *func,\ \textcolor{keyword}{const}\ std::string\ \&message)\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Error:\ \%s:\%d\ (\%s)\ \%s\(\backslash\)n"{}},\ file,\ line,\ func,\ message.c\_str());}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#ifdef\ DIAGNOSTICS\_CHECK\_ABORTS}}
+\DoxyCodeLine{00074\ \ \ \ \ abort()}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00076\ \ \ \ \ exit(10);}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}\ \_raise(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *func,\ \textcolor{keyword}{const}\ std::string\ \&message)\ \{}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#ifdef\ DIAGNOSTICS\_ERR\_THROWS}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(message.c\_str());}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00084\ \ \ \ \ exit(20);}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00086\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keywordtype}{void}\ \_log(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *file,\ \textcolor{keywordtype}{int}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *func,\ \textcolor{keyword}{const}\ std::string\ \&message)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ source\_coords\ =\ format(\textcolor{stringliteral}{"{}\%s:\%d\ (\%s)\ "{}},\ file,\ line,\ func);}
+\DoxyCodeLine{00090\ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\%s\%s\(\backslash\)n"{}},\ source\_coords.c\_str(),\ message.c\_str());}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ prevent\ log\ "{}concurrency"{}}}
+\DoxyCodeLine{00092\ \ \ \ \ fflush(stderr);}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keywordtype}{void}\ \_log\_report(\textcolor{keyword}{const}\ std::string\ \&message)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\%s\(\backslash\)n"{}},\ message.c\_str());}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ prevent\ log\ "{}concurrency"{}}}
+\DoxyCodeLine{00098\ \ \ \ \ fflush(stderr);}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ std::string\ hex\_dump(\textcolor{keyword}{const}\ uint8\_t\ *data,\ uint64\_t\ size,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ offset)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bytes\_per\_line\ =\ 16;}
+\DoxyCodeLine{00103\ \ \ \ \ std::string\ r;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint64\_t\ l\ =\ 0;\ l\ <\ size;\ l\ +=\ bytes\_per\_line)\ \{}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}\ /*\ \%04x\ */\ "{}},\ offset\ +\ l);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bytes}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint64\_t\ b\ =\ 0;\ b\ <\ bytes\_per\_line;\ ++b)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\ +\ b\ <\ size)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}0x\%02x,\ "{}},\ data[l\ +\ b]);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}\ \ \ \ \ \ "{}});}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}\ //\ "{}});}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Chars}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint64\_t\ b\ =\ 0;\ b\ <\ bytes\_per\_line;\ ++b)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\ +\ b\ <\ size)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}\%c"{}},\ isprint(data[l\ +\ b])\ ?\ data[l\ +\ b]\ :\ \textcolor{charliteral}{'.'});}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ r\ +=\ format(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00125\ \ \ \ \ \}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

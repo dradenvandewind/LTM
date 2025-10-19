@@ -1,0 +1,224 @@
+\doxysection{Huffman\+Encoder.\+cpp}
+\label{HuffmanEncoder_8cpp_source}\index{encoder/src/HuffmanEncoder.cpp@{encoder/src/HuffmanEncoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ HuffmanEncoder.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}HuffmanEncoder.hpp"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}HuffmanDecoder.hpp"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ Add\ a\ symbol\ to\ pending\ code\ tree}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}\ HuffmanEncoderBuilder::add\_symbol(\textcolor{keywordtype}{unsigned}\ symbol,\ \textcolor{keywordtype}{unsigned}\ count)\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ assert(symbol\ <\ HuffmanEncoder::MAX\_SYMBOL);}
+\DoxyCodeLine{00053\ \ \ \ \ symbol\_counts\_[symbol]\ +=\ count;}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ Node\ of\ huffman\ coding}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ Node()\ \{\}}
+\DoxyCodeLine{00059\ \ \ \ \ Node(\textcolor{keywordtype}{unsigned}\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ :\ symbol(s),\ count(c)\ \{\}}
+\DoxyCodeLine{00060\ \ \ \ \ Node(Node\ *l,\ Node\ *r,\ \textcolor{keywordtype}{unsigned}\ node\_number)}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ :\ symbol(HuffmanEncoder::MAX\_SYMBOL\ +\ node\_number),\ count(l-\/>count\ +\ r-\/>count),\ left(l),\ right(r)\ \{\}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ symbol\ =\ HuffmanEncoder::MAX\_SYMBOL;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ bits\ =\ 0;}
+\DoxyCodeLine{00066\ \ \ \ \ Node\ *left\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00067\ \ \ \ \ Node\ *right\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ HuffmanEncoder\ HuffmanEncoderBuilder::finish()\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ std::vector<std::unique\_ptr<Node>>\ nodes;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{int}\ num\_symbols;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ Build\ vector\ of\ uncoded\ nodes,\ sorted\ by\ frequency}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{auto}\ node\_compare\ =\ [](\textcolor{keyword}{const}\ Node\ *l,\ \textcolor{keyword}{const}\ Node\ *r)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l-\/>count\ ==\ r-\/>count)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Equal\ counts\ -\/\ order\ t\ by\ symbol\ or\ node\ number\ -\/\ leaves\ are\ lower\ than\ inter\ nodes}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l-\/>symbol\ <\ r-\/>symbol;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l-\/>count\ >\ r-\/>count;}
+\DoxyCodeLine{00081\ \ \ \ \ \};}
+\DoxyCodeLine{00082\ \ \ \ \ std::priority\_queue<Node\ *,\ std::vector<Node\ *>,\ \textcolor{keyword}{decltype}(node\_compare)>\ heap(node\_compare);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ s\ =\ 0;\ s\ <\ HuffmanEncoder::MAX\_SYMBOL;\ ++s)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (symbol\_counts\_[s])\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ nodes.emplace\_back(\textcolor{keyword}{new}\ Node(s,\ symbol\_counts\_[s]));}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ heap.emplace(nodes.back().get());}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{if}\ (heap.empty())}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ symbols\ at\ all}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ HuffmanEncoder();}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ num\_symbols\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(nodes.size());}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//\ While\ there\ is\ more\ than\ 1\ pending\ node:}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ \ \ take\ 2\ smallest\ by\ frequency\ and\ combine\ them\ to\ make\ a\ new\ internal\ node}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{while}\ (heap.size()\ >\ 1)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ Node\ *l\ =\ heap.top();}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ heap.pop();}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ Node\ *r\ =\ heap.top();}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ heap.pop();}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ nodes.emplace\_back(\textcolor{keyword}{new}\ Node(l,\ r,\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int})nodes.size()));}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ heap.emplace(nodes.back().get());}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ Starting\ with\ the\ root\ (last\ entry\ in\ nodes)\ -\/\ walk\ backwards\ filling\ in\ code\ lengths}}
+\DoxyCodeLine{00112\ \ \ \ \ assert(heap.top()\ ==\ nodes.back().get());}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ n\ =\ nodes.rbegin();\ n\ !=\ nodes.rend();\ ++n)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*n)-\/>symbol\ >=\ HuffmanEncoder::MAX\_SYMBOL)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ (*n)-\/>left-\/>bits\ =\ (*n)-\/>bits\ +\ 1;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ (*n)-\/>right-\/>bits\ =\ (*n)-\/>bits\ +\ 1;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ The\ symbol\ nodes\ will\ now\ have\ their\ final\ code\ lengths.}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//\ Sort\ leaf\ nodes\ by\ (decending\ coded\ length,\ ascending\ symbol)}}
+\DoxyCodeLine{00122\ \ \ \ \ std::sort(nodes.begin(),\ nodes.begin()\ +\ num\_symbols,\ [](\textcolor{keyword}{const}\ std::unique\_ptr<Node>\ \&a,\ \textcolor{keyword}{const}\ std::unique\_ptr<Node>\ \&b)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ if\ (a-\/>bits\ ==\ b-\/>bits)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ return\ a-\/>symbol\ >\ b-\/>symbol;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ else}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ return\ a-\/>bits\ <\ b-\/>bits;}
+\DoxyCodeLine{00127\ \ \ \ \ \});}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Generate\ code\ table\ for\ encoder}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \ \ \ \ std::vector<HuffmanEncoder::HuffmanCode>\ codes;}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ n\ =\ nodes.begin();\ n\ !=\ nodes.begin()\ +\ num\_symbols;\ ++n)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ codes.emplace\_back((*n)-\/>symbol,\ (*n)-\/>bits);}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Assign\ values\ to\ codes}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ current\_length\ =\ codes.back().bits;}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ current\_value\ =\ 0;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ c\ =\ codes.rbegin();\ c\ !=\ codes.rend();\ ++c)\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c-\/>bits\ <\ current\_length)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ current\_value\ >>=\ (current\_length\ -\/\ c-\/>bits);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ current\_length\ =\ c-\/>bits;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ c-\/>value\ =\ current\_value++;}
+\DoxyCodeLine{00145\ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{return}\ HuffmanEncoder(codes);}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ Resolve\ symbol\ codes\ and\ write\ codes+lengths\ to\ bitstream}}
+\DoxyCodeLine{00151\ \textcolor{keywordtype}{void}\ HuffmanEncoder::write\_codes(BitstreamPacker\ \&b)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}entropy\_code"{}});}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{if}\ (codes\_.empty())\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ symbols}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ b.u(5,\ 31,\ \textcolor{stringliteral}{"{}min\_code\_length"{}});}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ b.u(5,\ 31,\ \textcolor{stringliteral}{"{}max\_code\_length"{}});}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00159\ \ \ \ \ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{if}\ (codes\_.size()\ ==\ 1)\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Single\ symbol}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ b.u(5,\ 0,\ \textcolor{stringliteral}{"{}min\_code\_length"{}});}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ b.u(5,\ 0,\ \textcolor{stringliteral}{"{}max\_code\_length"{}});}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ b.u(8,\ codes\_.front().symbol,\ \textcolor{stringliteral}{"{}single\_symbol"{}});}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00167\ \ \ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ min\_code\_length\ =\ codes\_.front().bits;}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ max\_code\_length\ =\ codes\_.back().bits;}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ length\_bits\ =\ HuffmanDecoder::bit\_width(max\_code\_length\ -\/\ min\_code\_length);}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ b.u(5,\ min\_code\_length,\ \textcolor{stringliteral}{"{}min\_code\_length"{}});}
+\DoxyCodeLine{00174\ \ \ \ \ b.u(5,\ max\_code\_length,\ \textcolor{stringliteral}{"{}max\_code\_length"{}});}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}\ (codes\_.size()\ >\ 31)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}presence\_bitmap"{}});}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ More\ than\ 31\ coded\ symbols\ -\/\ write\ a\ 'presence'\ bitmap}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ lengths[MAX\_SYMBOL]\ =\ \{0\};}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&c\ :\ codes\_)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ lengths[c.symbol]\ =\ c.bits;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ s\ =\ 0;\ s\ <\ MAX\_SYMBOL;\ ++s)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (lengths[s])\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}presence"{}});}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.u(length\_bits,\ lengths[s]\ -\/\ min\_code\_length,\ \textcolor{stringliteral}{"{}length"{}});}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}presence"{}});}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}presence\_bitmap"{}});}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 31\ or\ less\ coded\ symbols\ -\/\ Write\ symbol/length\ pairs}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ b.u(5,\ (uint32\_t)codes\_.size(),\ \textcolor{stringliteral}{"{}count"{}});}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&c\ :\ codes\_)\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(8,\ c.symbol,\ \textcolor{stringliteral}{"{}symbol"{}});}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(length\_bits,\ c.bits\ -\/\ min\_code\_length,\ \textcolor{stringliteral}{"{}length"{}});}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \textcolor{comment}{//\ Write\ a\ coded\ symbol\ to\ the\ bitstream}}
+\DoxyCodeLine{00206\ \textcolor{keywordtype}{void}\ HuffmanEncoder::write\_symbol(BitstreamPacker\ \&b,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}entropy\_symb"{}});}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ Find\ symbols\ in\ codes}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&c\ :\ codes\_)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c.symbol\ ==\ symbol)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(c.bits,\ c.value,\ \textcolor{stringliteral}{"{}codebits"{}});}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ FATAL(\textcolor{stringliteral}{"{}Uncoded\ symbol"{}});}
+\DoxyCodeLine{00217\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

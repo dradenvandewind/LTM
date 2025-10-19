@@ -1,0 +1,360 @@
+\doxysection{Inverse\+Quantize.\+cpp}
+\label{InverseQuantize_8cpp_source}\index{decoder/src/InverseQuantize.cpp@{decoder/src/InverseQuantize.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ InverseQuantize.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}InverseQuantize.hpp"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Surface.hpp"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ clang-\/format\ off}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{const}\ uint8\_t\ default\_qm\_coefficient\_4x4[3][16]\ =\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \{\ \ \ 13u,\ \ \ \ 26u,\ \ \ \ 19u,\ \ \ \ 32u,\ \ \ \ 52u,\ \ \ \ \ 1u,\ \ \ \ 78u,\ \ \ \ \ 9u,\ \ \ \ 13u,\ \ \ \ 26u,\ \ \ \ 19u,\ \ \ \ 32u,\ \ \ 150u,\ \ \ \ 91u,\ \ \ \ 91u,\ \ \ \ 19u\},}
+\DoxyCodeLine{00050\ \ \ \ \ \{\ \ \ 13u,\ \ \ \ 26u,\ \ \ \ 19u,\ \ \ \ 32u,\ \ \ \ 52u,\ \ \ \ \ 1u,\ \ \ \ 78u,\ \ \ \ \ 9u,\ \ \ \ 26u,\ \ \ \ 72u,\ \ \ \ \ 0u,\ \ \ \ \ 3u,\ \ \ 150u,\ \ \ \ 91u,\ \ \ \ 91u,\ \ \ \ 19u\},}
+\DoxyCodeLine{00051\ \ \ \ \ \{\ \ \ \ 0u,\ \ \ \ \ 0u,\ \ \ \ \ 0u,\ \ \ \ \ 2u,\ \ \ \ 52u,\ \ \ \ \ 1u,\ \ \ \ 78u,\ \ \ \ \ 9u,\ \ \ \ 26u,\ \ \ \ 72u,\ \ \ \ \ 0u,\ \ \ \ \ 3u,\ \ \ 150u,\ \ \ \ 91u,\ \ \ \ 91u,\ \ \ \ 19u\}}
+\DoxyCodeLine{00052\ \};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{const}\ uint8\_t\ default\_qm\_coefficient\_2x2[3][4]\ =\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \{\ \ \ \ 0u,\ \ \ \ \ 2u,\ \ \ \ \ 0u,\ \ \ \ \ 0u\},}
+\DoxyCodeLine{00056\ \ \ \ \ \{\ \ \ 32u,\ \ \ \ \ 3u,\ \ \ \ \ 0u,\ \ \ \ 32u\},}
+\DoxyCodeLine{00057\ \ \ \ \ \{\ \ \ \ 0u,\ \ \ \ \ 3u,\ \ \ \ \ 0u,\ \ \ \ 32u\}}
+\DoxyCodeLine{00058\ \};}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ clang-\/format\ on}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ int32\_t\ find\_quant\_matrix\_coeff(\textcolor{keyword}{const}\ PictureConfiguration\ \&picture\_configuration,\ \textcolor{keywordtype}{unsigned}\ num\_layers,\ \textcolor{keywordtype}{bool}\ horizontal\_only,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keywordtype}{unsigned}\ layer,\ \textcolor{keywordtype}{bool}\ is\_idr,\ int32\_t\ previous)\ \{}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *d\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_layers\ ==\ 4)\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 2x2\ case}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_1)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_2x2[2];\ \textcolor{comment}{//\ LOQ1}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (horizontal\_only)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_2x2[0];\ \textcolor{comment}{//\ LOQ2\ 1D}}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_2x2[1];\ \textcolor{comment}{//\ LOQ2\ 2D}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 4x4\ case}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_1)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_4x4[2];\ \textcolor{comment}{//\ LOQ1}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (horizontal\_only)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_4x4[0];\ \textcolor{comment}{//\ LOQ2\ 1D}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d\ =\ default\_qm\_coefficient\_4x4[1];\ \textcolor{comment}{//\ LOQ2\ 2D}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.quant\_matrix\_mode)\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_BothPrevious:}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_idr)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)d[layer];}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (previous\ ==\ -\/1)\ ?\ (int32\_t)d[layer]\ :\ previous;}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_BothDefault:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)d[layer];}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_SameAndCustom:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ picture\_configuration.qm\_coefficient\_2[layer];}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_Level2CustomLevel1Default:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2)}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ picture\_configuration.qm\_coefficient\_2[layer];}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ d[layer];}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_Level2DefaultLevel1Custom:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_1)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ picture\_configuration.qm\_coefficient\_1[layer];}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ d[layer];}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_DifferentAndCustom:}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2)}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ picture\_configuration.qm\_coefficient\_2[layer];}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ picture\_configuration.qm\_coefficient\_1[layer];}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ int32\_t\ Aconst\ =\ 39;}
+\DoxyCodeLine{00127\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ int32\_t\ Bconst\ =\ 126484;}
+\DoxyCodeLine{00128\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ int32\_t\ Cconst\ =\ 5242;}
+\DoxyCodeLine{00129\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ int32\_t\ Dconst\ =\ 99614;}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ int32\_t\ find\_dirq\_step\_width(int32\_t\ orig\_step\_width,\ int32\_t\ quant\_matrix\_coeff)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ int64\_t\ dirq\_step\_width\_64\ =\ quant\_matrix\_coeff;}
+\DoxyCodeLine{00133\ \ \ \ \ dirq\_step\_width\_64\ =\ (dirq\_step\_width\_64\ *\ orig\_step\_width)\ +\ (1\ <<\ 16);}
+\DoxyCodeLine{00134\ \ \ \ \ dirq\_step\_width\_64\ =\ clamp(dirq\_step\_width\_64,\ (int64\_t)0,\ (int64\_t)(3\ <<\ 16));}
+\DoxyCodeLine{00135\ \ \ \ \ dirq\_step\_width\_64\ =\ (dirq\_step\_width\_64\ *\ orig\_step\_width)\ >>\ 16;}
+\DoxyCodeLine{00136\ \ \ \ \ int32\_t\ dirq\_step\_width\_32\ =\ (int32\_t)clamp(dirq\_step\_width\_64,\ (int64\_t)MIN\_STEP\_WIDTH,\ (int64\_t)MAX\_STEP\_WIDTH);}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{return}\ dirq\_step\_width\_32;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ int32\_t\ find\_invq\_offset(\textcolor{keyword}{const}\ PictureConfiguration\ \&picture\_configuration,\ int32\_t\ orig\_step\_width,\ int32\_t\ dirq\_step\_width)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ dequant\_offset\_signalled\ =\ picture\_configuration.dequant\_offset\_signalled;}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{const}\ DequantOffset\ dequant\_offset\_mode\ =\ picture\_configuration.dequant\_offset\_mode;}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ dequant\_offset\ =\ picture\_configuration.dequant\_offset;}
+\DoxyCodeLine{00144\ \ \ \ \ int32\_t\ dequant\_offset\_return\ =\ 0;}
+\DoxyCodeLine{00145\ \ \ \ \ int32\_t\ log\_orig\_sw\ =\ 0;}
+\DoxyCodeLine{00146\ \ \ \ \ int32\_t\ log\_dirq\_sw\ =\ 0;}
+\DoxyCodeLine{00147\ \ \ \ \ int64\_t\ dequant\_offset64\ =\ 0;}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordflow}{if}\ (dequant\_offset\_signalled)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dequant\_offset\ ==\ 0)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ dequant\_offset\_return\ =\ dequant\_offset;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ log\_orig\_sw\ =\ \textcolor{keyword}{static\_cast<}int32\_t\textcolor{keyword}{>}(((-\/1)\ *\ Cconst)\ *\ log(dirq\_step\_width));}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ log\_dirq\_sw\ =\ \textcolor{keyword}{static\_cast<}int32\_t\textcolor{keyword}{>}(((1)\ *\ Cconst)\ *\ log(orig\_step\_width));}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dequant\_offset\_mode\ ==\ DequantOffset\_ConstOffset)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dequant\_offset64\ =\ (dequant\_offset\ <<\ 9);}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dequant\_offset\_mode\ ==\ DequantOffset\_Default)\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dequant\_offset64\ =\ (dequant\_offset\ <<\ 11);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ dequant\_offset64\ =\ ((log\_orig\_sw\ +\ log\_dirq\_sw\ +\ dequant\_offset64)\ *\ dirq\_step\_width);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ dequant\_offset\_return\ =\ \textcolor{keyword}{static\_cast<}int32\_t\textcolor{keyword}{>}(dequant\_offset64\ >>\ 16);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{return}\ dequant\_offset\_return;}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ int32\_t\ find\_invq\_step\_width(\textcolor{keyword}{const}\ PictureConfiguration\ \&picture\_configuration,\ int32\_t\ dirq\_step\_width,\ int32\_t\ invq\_offset)\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ dequant\_offset\_signalled\ =\ picture\_configuration.dequant\_offset\_signalled;}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keyword}{const}\ DequantOffset\ dequant\_offset\_mode\ =\ picture\_configuration.dequant\_offset\_mode;}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ dequant\_offset\ =\ picture\_configuration.dequant\_offset;}
+\DoxyCodeLine{00173\ \ \ \ \ int32\_t\ invq\_step\_width\ =\ 0;}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{if}\ (dequant\_offset\_signalled\ ==\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ int64\_t\ modi\_step\_width\ =\ (int64\_t)(Dconst\ -\/\ Cconst\ *\ log(dirq\_step\_width));}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ modi\_step\_width\ =\ (modi\_step\_width\ *\ dirq\_step\_width\ *\ dirq\_step\_width);}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ modi\_step\_width\ =\ (modi\_step\_width\ >>\ 31);}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ modi\_step\_width\ =\ (modi\_step\_width\ /\ 32768)\ >>\ 16;}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ invq\_step\_width\ =\ (int32\_t)clamp(dirq\_step\_width\ +\ modi\_step\_width,\ (int64\_t)MIN\_STEP\_WIDTH,\ (int64\_t)MAX\_STEP\_WIDTH);}
+\DoxyCodeLine{00184\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dequant\_offset\_mode\ ==\ DequantOffset\_ConstOffset)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ invq\_step\_width\ =\ dirq\_step\_width;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dequant\_offset\_mode\ ==\ DequantOffset\_Default)\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ modi\_step\_width\ =\ (invq\_offset\ *\ dirq\_step\_width);}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ modi\_step\_width\ =\ (modi\_step\_width\ >>\ 15);}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ modi\_step\_width\ =\ modi\_step\_width\ /\ 32768;}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ invq\_step\_width\ =\ (int32\_t)clamp(dirq\_step\_width\ +\ modi\_step\_width,\ (int64\_t)MIN\_STEP\_WIDTH,\ (int64\_t)MAX\_STEP\_WIDTH);}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{return}\ invq\_step\_width;}
+\DoxyCodeLine{00199\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{comment}{//\ Derive\ the\ appropriate\ dead\_zone\ from\ current\ configuration}}
+\DoxyCodeLine{00202\ \textcolor{comment}{//}}
+\DoxyCodeLine{00203\ int32\_t\ find\_layer\_deadzone(int32\_t\ orig\_step\_width,\ int32\_t\ step\_width)\ \{}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ int64\_t\ deadzone;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{if}\ (orig\_step\_width\ >\ 16)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ deadzone\ =\ (((Aconst\ *\ step\_width)\ +\ Bconst)\ >>\ 1);}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ deadzone\ =\ ((1\ <<\ 16)\ -\/\ deadzone);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ deadzone\ =\ (deadzone\ *\ step\_width)\ >>\ 16;}
+\DoxyCodeLine{00211\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ deadzone\ =\ (orig\_step\_width\ >>\ 1);}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)deadzone;}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ int32\_t\ find\_invq\_applied\_offset(\textcolor{keyword}{const}\ PictureConfiguration\ \&picture\_configuration,\ int32\_t\ invq\_offset,\ int32\_t\ layer\_deadzone)\ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ dequant\_offset\_signalled\ =\ picture\_configuration.dequant\_offset\_signalled;}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{const}\ DequantOffset\ dequant\_offset\_mode\ =\ picture\_configuration.dequant\_offset\_mode;}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{if}\ ((dequant\_offset\_signalled\ ==\ \textcolor{keyword}{false})\ ||\ (dequant\_offset\_signalled\ ==\ \textcolor{keyword}{true}\ \&\&\ dequant\_offset\_mode\ ==\ DequantOffset\_Default))}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)((-\/1)\ *\ layer\_deadzone);}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dequant\_offset\_signalled\ ==\ \textcolor{keyword}{true}\ \&\&\ dequant\_offset\_mode\ ==\ DequantOffset\_ConstOffset)}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int32\_t)(invq\_offset\ -\/\ layer\_deadzone);}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00229\ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ Surface\ InverseQuantize::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ int32\_t\ layer\_step\_width,\ int32\_t\ applied\_dequant\_offset)\ \{}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ int32\_t\ layer\_step\_width;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ int32\_t\ applied\_dequant\_offset;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00238\ \ \ \ \ \}\ ctx\ =\ \{layer\_step\_width,\ applied\_dequant\_offset,\ src\_plane.view\_as<int16\_t>()\};}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00242\ \ \ \ \ dest.reserve(src\_plane.width(),\ src\_plane.height());}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_plane.height();\ ++y)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrc\ =\ ctx.src.data(0,\ y);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_plane.width();\ ++x)\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ int16\_t\ c\ =\ ctx.src.read(x,\ y);}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c\ =\ *psrc++;}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\#if\ defined\ \_\_QUANT\_MULTIPLY\_\_}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ (c\ >\ 0)\ ?\ 1\ :\ ((c\ <\ 0)\ ?\ -\/1\ :\ 0);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width\ +\ sign\ *\ ctx.applied\_dequant\_offset);}
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out\ =\ 0;}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ (int16\_t)(c\ *\ ctx.layer\_step\_width\ +\ ctx.applied\_dequant\_offset);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ (int16\_t)(c\ *\ ctx.layer\_step\_width\ -\/\ ctx.applied\_dequant\_offset);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ out);}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ clamp\_int16(out);}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00264\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&ctx)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c\ =\ ctx.src.read(x,\ y);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp\_int16(c\ *\ ctx.layer\_step\_width\ +\ ctx.applied\_dequant\_offset);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp\_int16(c\ *\ ctx.layer\_step\_width\ -\/\ ctx.applied\_dequant\_offset);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ ctx)}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00280\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00281\ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ Surface\ InverseQuantize\_SWM::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ int32\_t\ *layer\_step\_width,}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ *applied\_dequant\_offset,\ \textcolor{keyword}{const}\ Surface\ \&temporal\_map)\ \{}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ int32\_t\ *layer\_step\_width;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ int32\_t\ *applied\_dequant\_offset;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ mask;}
+\DoxyCodeLine{00291\ \ \ \ \ \}\ ctx\ =\ \{layer\_step\_width,\ applied\_dequant\_offset,\ src\_plane.view\_as<int16\_t>(),\ temporal\_map.view\_as<uint8\_t>()\};}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00295\ \ \ \ \ dest.reserve(src\_plane.width(),\ src\_plane.height());}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_plane.height();\ ++y)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrc\ =\ ctx.src.data(0,\ y);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_plane.width();\ ++x)\ \{}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ int16\_t\ c\ =\ ctx.src.read(x,\ y);}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c\ =\ *psrc++;}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out\ =\ 0;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ctx.mask.read(x,\ y)\ ==\ TEMPORAL\_PRED)\ \{}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\#if\ defined\ \_\_QUANT\_MULTIPLY\_\_}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ (c\ >\ 0)\ ?\ 1\ :\ ((c\ <\ 0)\ ?\ -\/1\ :\ 0);}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (c\ *\ ctx.layer\_step\_width[0]\ +\ sign\ *\ ctx.applied\_dequant\_offset[0]);}
+\DoxyCodeLine{00307\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[0]\ +\ ctx.applied\_dequant\_offset[0]);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[0]\ -\/\ ctx.applied\_dequant\_offset[0]);}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#if\ defined\ \_\_QUANT\_MULTIPLY\_\_}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ (c\ >\ 0)\ ?\ 1\ :\ ((c\ <\ 0)\ ?\ -\/1\ :\ 0);}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (c\ *\ ctx.layer\_step\_width[1]\ +\ sign\ *\ ctx.applied\_dequant\_offset[1]);}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[1]\ +\ ctx.applied\_dequant\_offset[1]);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[1]\ -\/\ ctx.applied\_dequant\_offset[1]);}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ out);}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ out;}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00327\ \ \ \ \ \}}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&ctx)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c\ =\ ctx.src.read(x,\ y);}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out\ =\ 0;}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ctx.mask.read(x,\ y)\ ==\ TEMPORAL\_PRED)\ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[0]\ +\ ctx.applied\_dequant\_offset[0]);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[0]\ -\/\ ctx.applied\_dequant\_offset[0]);}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0)}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[1]\ +\ ctx.applied\_dequant\_offset[1]);}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ <\ 0)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp\_int16(c\ *\ ctx.layer\_step\_width[1]\ -\/\ ctx.applied\_dequant\_offset[1]);}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ ctx)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00352\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

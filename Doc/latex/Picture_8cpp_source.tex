@@ -1,0 +1,1393 @@
+\doxysection{Picture.\+cpp}
+\label{Picture_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Picture.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Picture.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Picture.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}SEI.h"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}ChromaFormat.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}CommonLib/InterpolationFilter.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{int}\ g\_wppThreadId(\ 0\ );}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#pragma\ omp\ threadprivate(g\_wppThreadId)}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{int}\ g\_splitThreadId(\ 0\ );}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#pragma\ omp\ threadprivate(g\_splitThreadId)}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keywordtype}{int}\ g\_splitJobId(\ 0\ );}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#pragma\ omp\ threadprivate(g\_splitJobId)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ Scheduler::Scheduler()\ :}
+\DoxyCodeLine{00059\ \#if\ ENABLE\_SPLIT\_PARALLELISM}
+\DoxyCodeLine{00060\ \ \ m\_numSplitThreads(\ 1\ )}
+\DoxyCodeLine{00061\ \#endif}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ Scheduler::\string~Scheduler()}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00070\ \textcolor{keywordtype}{unsigned}\ Scheduler::getSplitDataId(\ \textcolor{keywordtype}{int}\ jobId\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00071\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00072\ \ \ \textcolor{keywordflow}{if}(\ m\_numSplitThreads\ >\ 1\ \&\&\ m\_hasParallelBuffer\ )}
+\DoxyCodeLine{00073\ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{int}\ splitJobId\ =\ jobId\ ==\ CURR\_THREAD\_ID\ ?\ g\_splitJobId\ :\ jobId;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ g\_wppThreadId\ *\ NUM\_RESERVERD\_SPLIT\_JOBS\ )\ +\ splitJobId;}
+\DoxyCodeLine{00077\ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00079\ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00081\ \ \ \}}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{unsigned}\ Scheduler::getSplitPicId(\ \textcolor{keywordtype}{int}\ tId\ \textcolor{comment}{/*=\ CURR\_THREAD\_ID\ */}\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordflow}{if}(\ m\_numSplitThreads\ >\ 1\ \&\&\ m\_hasParallelBuffer\ )}
+\DoxyCodeLine{00087\ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{int}\ threadId\ =\ tId\ ==\ CURR\_THREAD\_ID\ ?\ g\_splitThreadId\ :\ tId;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ g\_wppThreadId\ *\ m\_numSplitThreads\ )\ +\ threadId;}
+\DoxyCodeLine{00091\ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00095\ \ \ \}}
+\DoxyCodeLine{00096\ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{unsigned}\ Scheduler::getSplitJobId()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00099\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordflow}{if}(\ m\_numSplitThreads\ >\ 1\ )}
+\DoxyCodeLine{00101\ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{return}\ g\_splitJobId;}
+\DoxyCodeLine{00103\ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00105\ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00107\ \ \ \}}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keywordtype}{void}\ Scheduler::setSplitJobId(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jobId\ )}
+\DoxyCodeLine{00111\ \{}
+\DoxyCodeLine{00112\ \ \ CHECK(\ g\_splitJobId\ !=\ 0\ \&\&\ jobId\ !=\ 0,\ \textcolor{stringliteral}{"{}Need\ to\ reset\ the\ jobId\ after\ usage!"{}}\ );}
+\DoxyCodeLine{00113\ \ \ g\_splitJobId\ =\ jobId;}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{void}\ Scheduler::startParallel()}
+\DoxyCodeLine{00117\ \{}
+\DoxyCodeLine{00118\ \ \ m\_hasParallelBuffer\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00119\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keywordtype}{void}\ Scheduler::finishParallel()}
+\DoxyCodeLine{00122\ \{}
+\DoxyCodeLine{00123\ \ \ m\_hasParallelBuffer\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00124\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keywordtype}{void}\ Scheduler::setSplitThreadId(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tId\ )}
+\DoxyCodeLine{00127\ \{}
+\DoxyCodeLine{00128\ \ \ g\_splitThreadId\ =\ tId\ ==\ CURR\_THREAD\_ID\ ?\ omp\_get\_thread\_num()\ :\ tId;}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keywordtype}{unsigned}\ Scheduler::getDataId()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00138\ \ \ \textcolor{keywordflow}{if}(\ m\_numSplitThreads\ >\ 1\ )}
+\DoxyCodeLine{00139\ \ \ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{return}\ getSplitDataId();}
+\DoxyCodeLine{00141\ \ \ \}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00143\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keywordtype}{bool}\ Scheduler::init(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ ctuYsize,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ ctuXsize,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numWppThreadsRunning,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numWppExtraLines,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numSplitThreads\ )}
+\DoxyCodeLine{00147\ \{}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00149\ \ \ m\_numSplitThreads\ =\ numSplitThreads;}
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{int}\ Scheduler::getNumPicInstances()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00157\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#if\ !ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00161\ \ \ \textcolor{keywordflow}{return}\ (\ m\_numSplitThreads\ >\ 1\ ?\ m\_numSplitThreads\ :\ 1\ );}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00163\ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ picture\ methods}}
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ Picture::Picture()}
+\DoxyCodeLine{00175\ \{}
+\DoxyCodeLine{00176\ \ \ cs\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00177\ \ \ m\_isSubPicBorderSaved\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00178\ \ \ m\_bIsBorderExtended\ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00179\ \ \ m\_wrapAroundValid\ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00180\ \ \ m\_wrapAroundOffset\ \ \ =\ 0;}
+\DoxyCodeLine{00181\ \ \ usedByCurr\ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00182\ \ \ longTerm\ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00183\ \ \ reconstructed\ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00184\ \ \ neededForOutput\ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00185\ \ \ referenced\ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00186\ \ \ temporalId\ \ \ \ \ \ \ \ \ \ \ =\ std::numeric\_limits<uint32\_t>::max();}
+\DoxyCodeLine{00187\ \ \ fieldPic\ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00188\ \ \ topField\ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00189\ \ \ precedingDRAP\ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00190\ \ \ nonReferencePictureFlag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ i++\ )}
+\DoxyCodeLine{00193\ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ m\_prevQP[i]\ =\ -\/1;}
+\DoxyCodeLine{00195\ \ \ \}}
+\DoxyCodeLine{00196\ \ \ m\_spliceIdx\ =\ NULL;}
+\DoxyCodeLine{00197\ \ \ m\_ctuNums\ =\ 0;}
+\DoxyCodeLine{00198\ \ \ layerId\ =\ NOT\_VALID;}
+\DoxyCodeLine{00199\ \ \ numSlices\ =\ 1;}
+\DoxyCodeLine{00200\ \ \ unscaledPic\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keywordtype}{void}\ Picture::create(\ \textcolor{keyword}{const}\ ChromaFormat\ \&\_chromaFormat,\ \textcolor{keyword}{const}\ Size\ \&size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_maxCUSize,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_margin,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \_decoder,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \_layerId,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ gopBasedTemporalFilterEnabled\ )}
+\DoxyCodeLine{00204\ \{}
+\DoxyCodeLine{00205\ \ \ layerId\ =\ \_layerId;}
+\DoxyCodeLine{00206\ \ \ UnitArea::operator=(\ UnitArea(\ \_chromaFormat,\ Area(\ Position\{\ 0,\ 0\ \},\ size\ )\ )\ );}
+\DoxyCodeLine{00207\ \ \ margin\ \ \ \ \ \ \ \ \ \ \ \ =\ \ MAX\_SCALING\_RATIO*\_margin;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{const}\ Area\ a\ \ \ \ \ \ =\ Area(\ Position(),\ size\ );}
+\DoxyCodeLine{00209\ \ \ M\_BUFS(\ 0,\ PIC\_RECONSTRUCTION\ ).create(\ \_chromaFormat,\ a,\ \_maxCUSize,\ margin,\ MEMORY\_ALIGN\_DEF\_SIZE\ );}
+\DoxyCodeLine{00210\ \ \ M\_BUFS(\ 0,\ PIC\_RECON\_WRAP\ ).create(\ \_chromaFormat,\ a,\ \_maxCUSize,\ margin,\ MEMORY\_ALIGN\_DEF\_SIZE\ );}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordflow}{if}(\ !\_decoder\ )}
+\DoxyCodeLine{00213\ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ M\_BUFS(\ 0,\ PIC\_ORIGINAL\ ).\ \ \ \ create(\ \_chromaFormat,\ a\ );}
+\DoxyCodeLine{00215\ \ \ \ \ M\_BUFS(\ 0,\ PIC\_TRUE\_ORIGINAL\ ).\ create(\ \_chromaFormat,\ a\ );}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{if}(gopBasedTemporalFilterEnabled)}
+\DoxyCodeLine{00217\ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ M\_BUFS(\ 0,\ PIC\_FILTERED\_ORIGINAL\ ).\ create(\ \_chromaFormat,\ a\ );}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \}}
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\#if\ !KEEP\_PRED\_AND\_RESI\_SIGNALS}}
+\DoxyCodeLine{00222\ \ \ m\_ctuArea\ =\ UnitArea(\ \_chromaFormat,\ Area(\ Position\{\ 0,\ 0\ \},\ Size(\ \_maxCUSize,\ \_maxCUSize\ )\ )\ );}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00224\ \ \ m\_hashMap.clearAll();}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{keywordtype}{void}\ Picture::destroy()}
+\DoxyCodeLine{00228\ \{}
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00230\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ jId\ =\ 0;\ jId\ <\ PARL\_SPLIT\_MAX\_NUM\_THREADS;\ jId++\ )}
+\DoxyCodeLine{00231\ \#endif}
+\DoxyCodeLine{00232\ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ t\ =\ 0;\ t\ <\ NUM\_PIC\_TYPES;\ t++)}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ M\_BUFS(jId,\ t).destroy();}
+\DoxyCodeLine{00236\ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ m\_hashMap.clearAll();}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{if}\ (cs)}
+\DoxyCodeLine{00239\ \ \ \ \ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ cs-\/>destroy();}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ cs;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ cs\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00243\ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&ps:\ slices)}
+\DoxyCodeLine{00246\ \ \ \ \ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ ps;}
+\DoxyCodeLine{00248\ \ \ \ \ \}}
+\DoxyCodeLine{00249\ \ \ \ \ slices.clear();}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&psei:\ SEIs)}
+\DoxyCodeLine{00252\ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ psei;}
+\DoxyCodeLine{00254\ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \ \ SEIs.clear();}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_spliceIdx)}
+\DoxyCodeLine{00258\ \ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ m\_spliceIdx;}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ m\_spliceIdx\ =\ NULL;}
+\DoxyCodeLine{00261\ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \}}
+\DoxyCodeLine{00263\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{keywordtype}{void}\ Picture::createTempBuffers(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_maxCUSize\ )}
+\DoxyCodeLine{00266\ \{}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#if\ KEEP\_PRED\_AND\_RESI\_SIGNALS}}
+\DoxyCodeLine{00268\ \ \ \textcolor{keyword}{const}\ Area\ a(\ Position\{\ 0,\ 0\ \},\ lumaSize()\ );}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00270\ \ \ \textcolor{keyword}{const}\ Area\ a\ =\ m\_ctuArea.Y();}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00274\ \ \ scheduler.startParallel();}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ jId\ =\ 0;\ jId\ <\ scheduler.getNumPicInstances();\ jId++\ )}
+\DoxyCodeLine{00277\ \#endif}
+\DoxyCodeLine{00278\ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ M\_BUFS(\ jId,\ PIC\_PREDICTION\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ).create(\ chromaFormat,\ a,\ \ \ \_maxCUSize\ );}
+\DoxyCodeLine{00280\ \ \ \ \ M\_BUFS(\ jId,\ PIC\_RESIDUAL\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ).create(\ chromaFormat,\ a,\ \ \ \_maxCUSize\ );}
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{if}\ (jId\ >\ 0)}
+\DoxyCodeLine{00283\ \ \ \ \ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ M\_BUFS(jId,\ PIC\_RECONSTRUCTION).create(chromaFormat,\ Y(),\ \_maxCUSize,\ margin,\ MEMORY\_ALIGN\_DEF\_SIZE);}
+\DoxyCodeLine{00285\ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00287\ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \textcolor{keywordflow}{if}\ (cs)}
+\DoxyCodeLine{00290\ \ \ \{}
+\DoxyCodeLine{00291\ \ \ \ \ cs-\/>rebindPicBufs();}
+\DoxyCodeLine{00292\ \ \ \}}
+\DoxyCodeLine{00293\ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \textcolor{keywordtype}{void}\ Picture::destroyTempBuffers()}
+\DoxyCodeLine{00296\ \{}
+\DoxyCodeLine{00297\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00298\ \ \ scheduler.finishParallel();}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ jId\ =\ 0;\ jId\ <\ scheduler.getNumPicInstances();\ jId++\ )}
+\DoxyCodeLine{00301\ \#endif}
+\DoxyCodeLine{00302\ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ t\ =\ 0;\ t\ <\ NUM\_PIC\_TYPES;\ t++)}
+\DoxyCodeLine{00304\ \ \ \ \ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\ ==\ PIC\_RESIDUAL\ ||\ t\ ==\ PIC\_PREDICTION)}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ M\_BUFS(jId,\ t).destroy();}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\ ==\ PIC\_RECONSTRUCTION\ \&\&\ jId\ >\ 0)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ M\_BUFS(jId,\ t).destroy();}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00315\ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \textcolor{keywordflow}{if}\ (cs)}
+\DoxyCodeLine{00319\ \ \ \{}
+\DoxyCodeLine{00320\ \ \ \ \ cs-\/>rebindPicBufs();}
+\DoxyCodeLine{00321\ \ \ \}}
+\DoxyCodeLine{00322\ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00325\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getOrigBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00327\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getOrigBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getOrigBuf()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ \ \ \ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00329\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getOrigBuf()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ \ \ \ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getOrigBuf(\textcolor{keyword}{const}\ ComponentID\ compID)\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(compID,\ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00332\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getOrigBuf(\textcolor{keyword}{const}\ ComponentID\ compID)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(compID,\ PIC\_ORIGINAL);\ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getTrueOrigBuf()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ PIC\_TRUE\_ORIGINAL);\ \}}
+\DoxyCodeLine{00334\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getTrueOrigBuf()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ PIC\_TRUE\_ORIGINAL);\ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getTrueOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ PIC\_TRUE\_ORIGINAL);\ \}}
+\DoxyCodeLine{00336\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getTrueOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ PIC\_TRUE\_ORIGINAL);\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getFilteredOrigBuf()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ PIC\_FILTERED\_ORIGINAL);\ \}}
+\DoxyCodeLine{00339\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getFilteredOrigBuf()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ M\_BUFS(0,\ PIC\_FILTERED\_ORIGINAL);\ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getFilteredOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ PIC\_FILTERED\_ORIGINAL);\ \}}
+\DoxyCodeLine{00341\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getFilteredOrigBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ PIC\_FILTERED\_ORIGINAL);\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getPredBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_PREDICTION);\ \}}
+\DoxyCodeLine{00344\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getPredBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_PREDICTION);\ \}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getPredBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_PREDICTION);\ \}}
+\DoxyCodeLine{00346\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getPredBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_PREDICTION);\ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getResiBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_RESIDUAL);\ \}}
+\DoxyCodeLine{00349\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getResiBuf(\textcolor{keyword}{const}\ CompArea\ \&blk)\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ PIC\_RESIDUAL);\ \}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getResiBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_RESIDUAL);\ \}}
+\DoxyCodeLine{00351\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getResiBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ PIC\_RESIDUAL);\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getRecoBuf(\textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keywordtype}{bool}\ wrap)\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(compID,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00354\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getRecoBuf(\textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keywordtype}{bool}\ wrap)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(compID,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ PelBuf\ \ \ \ \ Picture::getRecoBuf(\textcolor{keyword}{const}\ CompArea\ \&blk,\ \textcolor{keywordtype}{bool}\ wrap)\ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00356\ \textcolor{keyword}{const}\ CPelBuf\ \ \ \ \ Picture::getRecoBuf(\textcolor{keyword}{const}\ CompArea\ \&blk,\ \textcolor{keywordtype}{bool}\ wrap)\textcolor{keyword}{\ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(blk,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getRecoBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit,\ \textcolor{keywordtype}{bool}\ wrap)\ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00358\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getRecoBuf(\textcolor{keyword}{const}\ UnitArea\ \&unit,\ \textcolor{keywordtype}{bool}\ wrap)\textcolor{keyword}{\ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ getBuf(unit,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ PelUnitBuf\ Picture::getRecoBuf(\textcolor{keywordtype}{bool}\ wrap)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ M\_BUFS(scheduler.getSplitPicId(),\ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00360\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getRecoBuf(\textcolor{keywordtype}{bool}\ wrap)\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ M\_BUFS(scheduler.getSplitPicId(),\ wrap\ ?\ PIC\_RECON\_WRAP\ :\ PIC\_RECONSTRUCTION);\ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{keywordtype}{void}\ Picture::finalInit(\ \textcolor{keyword}{const}\ VPS*\ vps,\ \textcolor{keyword}{const}\ SPS\&\ sps,\ \textcolor{keyword}{const}\ PPS\&\ pps,\ PicHeader\ *picHeader,\ APS**\ alfApss,\ APS*\ lmcsAps,\ APS*\ scalingListAps\ )}
+\DoxyCodeLine{00363\ \{}
+\DoxyCodeLine{00364\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&sei\ :\ SEIs\ )}
+\DoxyCodeLine{00365\ \ \ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keyword}{delete}\ sei;}
+\DoxyCodeLine{00367\ \ \ \}}
+\DoxyCodeLine{00368\ \ \ SEIs.clear();}
+\DoxyCodeLine{00369\ \ \ clearSliceBuffer();}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \textcolor{keyword}{const}\ ChromaFormat\ chromaFormatIDC\ =\ sps.getChromaFormatIdc();}
+\DoxyCodeLine{00372\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ iWidth\ =\ pps.getPicWidthInLumaSamples();}
+\DoxyCodeLine{00373\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ iHeight\ =\ pps.getPicHeightInLumaSamples();}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordflow}{if}(\ cs\ )}
+\DoxyCodeLine{00376\ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ cs-\/>initStructData();}
+\DoxyCodeLine{00378\ \ \ \}}
+\DoxyCodeLine{00379\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00380\ \ \ \{}
+\DoxyCodeLine{00381\ \ \ \ \ cs\ =\ \textcolor{keyword}{new}\ CodingStructure(\ g\_globalUnitCache.cuCache,\ g\_globalUnitCache.puCache,\ g\_globalUnitCache.tuCache\ );}
+\DoxyCodeLine{00382\ \ \ \ \ cs-\/>sps\ =\ \&sps;}
+\DoxyCodeLine{00383\ \ \ \ \ cs-\/>create(chromaFormatIDC,\ Area(0,\ 0,\ iWidth,\ iHeight),\ \textcolor{keyword}{true},\ (\textcolor{keywordtype}{bool})sps.getPLTMode());}
+\DoxyCodeLine{00384\ \ \ \}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ cs-\/>vps\ =\ vps;}
+\DoxyCodeLine{00387\ \ \ cs-\/>picture\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00388\ \ \ cs-\/>slice\ \ \ =\ \textcolor{keyword}{nullptr};\ \ \textcolor{comment}{//\ the\ slices\ for\ this\ picture\ have\ not\ been\ set\ at\ this\ point.\ update\ cs-\/>slice\ after\ swapSliceObject()}}
+\DoxyCodeLine{00389\ \ \ cs-\/>pps\ \ \ \ \ =\ \&pps;}
+\DoxyCodeLine{00390\ \ \ picHeader-\/>setSPSId(\ sps.getSPSId()\ );}
+\DoxyCodeLine{00391\ \ \ picHeader-\/>setPPSId(\ pps.getPPSId()\ );}
+\DoxyCodeLine{00392\ \ \ cs-\/>picHeader\ =\ picHeader;}
+\DoxyCodeLine{00393\ \ \ memcpy(cs-\/>alfApss,\ alfApss,\ \textcolor{keyword}{sizeof}(cs-\/>alfApss));}
+\DoxyCodeLine{00394\ \ \ cs-\/>lmcsAps\ =\ lmcsAps;}
+\DoxyCodeLine{00395\ \ \ cs-\/>scalinglistAps\ =\ scalingListAps;}
+\DoxyCodeLine{00396\ \ \ cs-\/>pcv\ \ \ \ \ =\ pps.pcv;}
+\DoxyCodeLine{00397\ \ \ m\_conformanceWindow\ =\ pps.getConformanceWindow();}
+\DoxyCodeLine{00398\ \ \ m\_scalingWindow\ =\ pps.getScalingWindow();}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \textcolor{keywordflow}{if}\ (m\_spliceIdx\ ==\ NULL)}
+\DoxyCodeLine{00401\ \ \ \{}
+\DoxyCodeLine{00402\ \ \ \ \ m\_ctuNums\ =\ cs-\/>pcv-\/>sizeInCtus;}
+\DoxyCodeLine{00403\ \ \ \ \ m\_spliceIdx\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}[m\_ctuNums];}
+\DoxyCodeLine{00404\ \ \ \ \ memset(m\_spliceIdx,\ 0,\ m\_ctuNums\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{00405\ \ \ \}}
+\DoxyCodeLine{00406\ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \textcolor{keywordtype}{void}\ Picture::allocateNewSlice()}
+\DoxyCodeLine{00409\ \{}
+\DoxyCodeLine{00410\ \ \ slices.push\_back(\textcolor{keyword}{new}\ Slice);}
+\DoxyCodeLine{00411\ \ \ Slice\&\ slice\ =\ *slices.back();}
+\DoxyCodeLine{00412\ \ \ memcpy(slice.getAlfAPSs(),\ cs-\/>alfApss,\ \textcolor{keyword}{sizeof}(cs-\/>alfApss));}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ slice.setPPS(\ cs-\/>pps);}
+\DoxyCodeLine{00415\ \ \ slice.setSPS(\ cs-\/>sps);}
+\DoxyCodeLine{00416\ \ \ slice.setVPS(\ cs-\/>vps);}
+\DoxyCodeLine{00417\ \ \ \textcolor{keywordflow}{if}(slices.size()>=2)}
+\DoxyCodeLine{00418\ \ \ \{}
+\DoxyCodeLine{00419\ \ \ \ \ slice.copySliceInfo(\ slices[slices.size()-\/2]\ );}
+\DoxyCodeLine{00420\ \ \ \ \ slice.initSlice();}
+\DoxyCodeLine{00421\ \ \ \}}
+\DoxyCodeLine{00422\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{keywordtype}{void}\ Picture::fillSliceLossyLosslessArray(std::vector<uint16\_t>\ sliceLosslessIndexArray,\ \textcolor{keywordtype}{bool}\ mixedLossyLossless)}
+\DoxyCodeLine{00425\ \{}
+\DoxyCodeLine{00426\ \ \ uint16\_t\ numElementsinsliceLosslessIndexArray\ =\ (uint16\_t)sliceLosslessIndexArray.size();}
+\DoxyCodeLine{00427\ \ \ uint32\_t\ numSlices\ =\ this-\/>cs-\/>pps-\/>getNumSlicesInPic();}
+\DoxyCodeLine{00428\ \ \ m\_lossylosslessSliceArray.assign(numSlices,\ \textcolor{keyword}{true});\ \textcolor{comment}{//\ initialize\ to\ all\ slices\ are\ lossless\ }}
+\DoxyCodeLine{00429\ \ \ \textcolor{keywordflow}{if}\ (mixedLossyLossless)}
+\DoxyCodeLine{00430\ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ m\_lossylosslessSliceArray.assign(numSlices,\ \textcolor{keyword}{false});\ \textcolor{comment}{//\ initialize\ to\ all\ slices\ are\ lossless\ }}
+\DoxyCodeLine{00432\ \ \ \ \ CHECK(numElementsinsliceLosslessIndexArray\ ==\ 0\ ,\ \textcolor{stringliteral}{"{}sliceLosslessArray\ is\ empty,\ must\ need\ to\ configure\ for\ mixed\ lossy/lossless"{}});}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ mixed\ lossy/lossless\ slices,\ set\ only\ lossless\ slices;}}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint16\_t\ i\ =\ 0;\ i\ <\ numElementsinsliceLosslessIndexArray;\ i++)}
+\DoxyCodeLine{00436\ \ \ \ \ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ CHECK(sliceLosslessIndexArray[i]\ >=\ numSlices\ ||\ sliceLosslessIndexArray[i]\ <\ 0,\ \textcolor{stringliteral}{"{}index\ of\ lossless\ slice\ is\ out\ of\ slice\ index\ bound"{}});}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ m\_lossylosslessSliceArray[sliceLosslessIndexArray[i]]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00439\ \ \ \ \ \}}
+\DoxyCodeLine{00440\ \ \ \}\ }
+\DoxyCodeLine{00441\ \ \ CHECK(m\_lossylosslessSliceArray.size()\ <\ numSlices,\ \textcolor{stringliteral}{"{}sliceLosslessArray\ size\ is\ less\ than\ number\ of\ slices"{}});}
+\DoxyCodeLine{00442\ \}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ Slice\ *Picture::swapSliceObject(Slice\ *\ p,\ uint32\_t\ i)}
+\DoxyCodeLine{00445\ \{}
+\DoxyCodeLine{00446\ \ \ p-\/>setSPS(cs-\/>sps);}
+\DoxyCodeLine{00447\ \ \ p-\/>setPPS(cs-\/>pps);}
+\DoxyCodeLine{00448\ \ \ p-\/>setVPS(cs-\/>vps);}
+\DoxyCodeLine{00449\ \ \ p-\/>setAlfAPSs(cs-\/>alfApss);}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ Slice\ *\ pTmp\ =\ slices[i];}
+\DoxyCodeLine{00453\ \ \ slices[i]\ =\ p;}
+\DoxyCodeLine{00454\ \ \ pTmp-\/>setSPS(0);}
+\DoxyCodeLine{00455\ \ \ pTmp-\/>setPPS(0);}
+\DoxyCodeLine{00456\ \ \ pTmp-\/>setVPS(0);}
+\DoxyCodeLine{00457\ \ \ memset(pTmp-\/>getAlfAPSs(),\ 0,\ \textcolor{keyword}{sizeof}(*pTmp-\/>getAlfAPSs())*ALF\_CTB\_MAX\_NUM\_APS);}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \textcolor{keywordflow}{return}\ pTmp;}
+\DoxyCodeLine{00460\ \}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \textcolor{keywordtype}{void}\ Picture::clearSliceBuffer()}
+\DoxyCodeLine{00463\ \{}
+\DoxyCodeLine{00464\ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ uint32\_t(slices.size());\ i++)}
+\DoxyCodeLine{00465\ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keyword}{delete}\ slices[i];}
+\DoxyCodeLine{00467\ \ \ \}}
+\DoxyCodeLine{00468\ \ \ slices.clear();}
+\DoxyCodeLine{00469\ \}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00472\ \textcolor{keywordtype}{void}\ Picture::finishParallelPart(\ \textcolor{keyword}{const}\ UnitArea\&\ area\ )}
+\DoxyCodeLine{00473\ \{}
+\DoxyCodeLine{00474\ \ \ \textcolor{keyword}{const}\ UnitArea\ clipdArea\ =\ clipArea(\ area,\ *\textcolor{keyword}{this}\ );}
+\DoxyCodeLine{00475\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ sourceID\ \ =\ scheduler.getSplitPicId(\ 0\ );}
+\DoxyCodeLine{00476\ \ \ CHECK(\ scheduler.getSplitJobId()\ >\ 0,\ \textcolor{stringliteral}{"{}Finish-\/CU\ cannot\ be\ called\ from\ within\ a\ mode-\/\ or\ split-\/parallelized\ block!"{}}\ );}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \textcolor{comment}{//\ distribute\ the\ reconstruction\ across\ all\ of\ the\ parallel\ workers}}
+\DoxyCodeLine{00479\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ tId\ =\ 1;\ tId\ <\ scheduler.getNumSplitThreads();\ tId++\ )}
+\DoxyCodeLine{00480\ \ \ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ destID\ =\ scheduler.getSplitPicId(\ tId\ );}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ M\_BUFS(\ destID,\ PIC\_RECONSTRUCTION\ ).subBuf(\ clipdArea\ ).copyFrom(\ M\_BUFS(\ sourceID,\ PIC\_RECONSTRUCTION\ ).subBuf(\ clipdArea\ )\ );}
+\DoxyCodeLine{00484\ \ \ \}}
+\DoxyCodeLine{00485\ \}}
+\DoxyCodeLine{00486\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \textcolor{keyword}{const}\ TFilterCoeff\ DownsamplingFilterSRC[8][16][12]\ =}
+\DoxyCodeLine{00489\ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 1}}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ 128,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 2,\ \ -\/6,\ 127,\ \ \ 7,\ \ -\/2,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/12,\ 125,\ \ 16,\ \ -\/5,\ \ \ 1,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 4,\ -\/16,\ 120,\ \ 26,\ \ -\/7,\ \ \ 1,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 5,\ -\/18,\ 114,\ \ 36,\ -\/10,\ \ \ 1,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 5,\ -\/20,\ 107,\ \ 46,\ -\/12,\ \ \ 2,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 5,\ -\/21,\ \ 99,\ \ 57,\ -\/15,\ \ \ 3,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 5,\ -\/20,\ \ 89,\ \ 68,\ -\/18,\ \ \ 4,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 4,\ -\/19,\ \ 79,\ \ 79,\ -\/19,\ \ \ 4,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 4,\ -\/18,\ \ 68,\ \ 89,\ -\/20,\ \ \ 5,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/15,\ \ 57,\ \ 99,\ -\/21,\ \ \ 5,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 2,\ -\/12,\ \ 46,\ 107,\ -\/20,\ \ \ 5,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 1,\ -\/10,\ \ 36,\ 114,\ -\/18,\ \ \ 5,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 1,\ \ -\/7,\ \ 26,\ 120,\ -\/16,\ \ \ 4,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 1,\ \ -\/5,\ \ 16,\ 125,\ -\/12,\ \ \ 3,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ \ 0,\ \ -\/2,\ \ \ 7,\ 127,\ \ -\/6,\ \ \ 2,\ \ \ 0,\ \ \ 0,\ \ \ 0\ \}}
+\DoxyCodeLine{00507\ \ \ \ \ \},}
+\DoxyCodeLine{00508\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 1.5}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 2,\ \ \ 0,\ -\/14,\ \ 33,\ \ 86,\ \ 33,\ -\/14,\ \ \ 0,\ \ \ 2,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 1,\ \ \ 1,\ -\/14,\ \ 29,\ \ 85,\ \ 38,\ -\/13,\ \ -\/1,\ \ \ 2,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 1,\ \ \ 2,\ -\/14,\ \ 24,\ \ 84,\ \ 43,\ -\/12,\ \ -\/2,\ \ \ 2,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 1,\ \ \ 2,\ -\/13,\ \ 19,\ \ 83,\ \ 48,\ -\/11,\ \ -\/3,\ \ \ 2,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/13,\ \ 15,\ \ 81,\ \ 53,\ -\/10,\ \ -\/4,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/12,\ \ 11,\ \ 79,\ \ 57,\ \ -\/8,\ \ -\/5,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/11,\ \ \ 7,\ \ 76,\ \ 62,\ \ -\/5,\ \ -\/7,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ -\/10,\ \ \ 3,\ \ 73,\ \ 65,\ \ -\/2,\ \ -\/7,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ \ -\/9,\ \ \ 0,\ \ 70,\ \ 70,\ \ \ 0,\ \ -\/9,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ \ -\/7,\ \ -\/2,\ \ 65,\ \ 73,\ \ \ 3,\ -\/10,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ \ -\/7,\ \ -\/5,\ \ 62,\ \ 76,\ \ \ 7,\ -\/11,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ \ -\/5,\ \ -\/8,\ \ 57,\ \ 79,\ \ 11,\ -\/12,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 3,\ \ -\/4,\ -\/10,\ \ 53,\ \ 81,\ \ 15,\ -\/13,\ \ \ 3,\ \ \ 0,\ \ \ 0\ \},}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 2,\ \ -\/3,\ -\/11,\ \ 48,\ \ 83,\ \ 19,\ -\/13,\ \ \ 2,\ \ \ 1,\ \ \ 0\ \},}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 2,\ \ -\/2,\ -\/12,\ \ 43,\ \ 84,\ \ 24,\ -\/14,\ \ \ 2,\ \ \ 1,\ \ \ 0\ \},}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 2,\ \ -\/1,\ -\/13,\ \ 38,\ \ 85,\ \ 29,\ -\/14,\ \ \ 1,\ \ \ 1,\ \ \ 0\ \}}
+\DoxyCodeLine{00525\ \ \ \ \ \},}
+\DoxyCodeLine{00526\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 2}}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 5,\ \ \ -\/6,\ \ -\/10,\ \ 37,\ \ 76,\ \ \ 37,\ \ -\/10,\ \ -\/6,\ \ \ \ 5,\ \ 0,\ \ \ 0\},\ \textcolor{comment}{//0}}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 5,\ \ \ -\/4,\ \ -\/11,\ \ 33,\ \ 76,\ \ \ 40,\ \ -\/9,\ \ \ \ -\/7,\ \ \ \ 5,\ \ 0,\ \ \ 0\},\ \textcolor{comment}{//1}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \textcolor{comment}{//\{\ \ \ 0,\ \ \ 5,\ \ \ -\/3,\ \ -\/12,\ \ 28,\ \ 75,\ \ \ 44,\ \ -\/7,\ \ \ \ -\/8,\ \ \ \ 5,\ \ 1,\ \ \ 0\},\ //2}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 5,\ \ \ -\/3,\ \ -\/12,\ \ 29,\ \ 75,\ \ \ 45,\ \ -\/7,\ \ \ \ -\/8,\ \ \ 5,\ \ 0,\ \ \ 0\},\ \textcolor{comment}{//2\ new\ coefficients\ in\ m24499}}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 4,\ \ \ -\/2,\ \ -\/13,\ \ 25,\ \ 75,\ \ \ 48,\ \ -\/5,\ \ \ \ -\/9,\ \ \ \ 5,\ \ 1,\ \ \ 0\},\ \textcolor{comment}{//3}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 4,\ \ \ -\/1,\ \ -\/13,\ \ 22,\ \ 73,\ \ \ 52,\ \ -\/3,\ \ \ \ -\/10,\ \ 4,\ \ 1,\ \ \ 0\},\ \textcolor{comment}{//4}}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 4,\ \ \ 0,\ \ \ \ -\/13,\ \ 18,\ \ 72,\ \ \ 55,\ \ -\/1,\ \ \ \ -\/11,\ \ 4,\ \ 2,\ \ -\/1\},\ \textcolor{comment}{//5}}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 4,\ \ \ 1,\ \ \ \ -\/13,\ \ 14,\ \ 70,\ \ \ 59,\ \ 2,\ \ \ \ -\/12,\ \ 3,\ \ 2,\ \ -\/1\},\ \textcolor{comment}{//6}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 3,\ \ \ 1,\ \ \ \ -\/13,\ \ 11,\ \ 68,\ \ \ 62,\ \ 5,\ \ \ \ -\/12,\ \ 3,\ \ 2,\ \ -\/1\},\ \textcolor{comment}{//7}}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 3,\ \ \ 2,\ \ \ \ -\/13,\ \ 8,\ \ 65,\ \ \ 65,\ \ 8,\ \ \ \ -\/13,\ \ 2,\ \ 3,\ \ -\/1\},\ \textcolor{comment}{//8}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 2,\ \ \ 3,\ \ \ \ -\/12,\ \ 5,\ \ 62,\ \ \ 68,\ \ 11,\ \ \ \ -\/13,\ \ 1,\ \ 3,\ \ -\/1\},\ \textcolor{comment}{//9}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 2,\ \ \ 3,\ \ \ \ -\/12,\ \ 2,\ \ 59,\ \ \ 70,\ \ 14,\ \ \ \ -\/13,\ \ 1,\ \ 4,\ \ -\/1\},\ \textcolor{comment}{//10}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \{\ \ -\/1,\ \ \ 2,\ \ \ 4,\ \ \ \ -\/11,\ \ -\/1,\ \ 55,\ \ \ 72,\ \ 18,\ \ \ \ -\/13,\ \ 0,\ \ 4,\ \ -\/1\},\ \textcolor{comment}{//11}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 1,\ \ \ 4,\ \ \ \ -\/10,\ \ -\/3,\ \ 52,\ \ \ 73,\ \ 22,\ \ \ \ -\/13,\ \ -\/1,\ \ 4,\ \ -\/1\},\ \textcolor{comment}{//12}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 1,\ \ \ 5,\ \ \ \ -\/9,\ \ \ \ -\/5,\ \ 48,\ \ \ 75,\ \ 25,\ \ \ \ -\/13,\ \ -\/2,\ \ 4,\ \ -\/1\},\ \textcolor{comment}{//13}}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \textcolor{comment}{//\{\ \ \ 0,\ \ \ 1,\ \ \ 5,\ \ \ \ -\/8,\ \ \ \ -\/7,\ \ 44,\ \ \ 75,\ \ 28,\ \ \ \ -\/12,\ \ -\/3,\ \ 5,\ \ \ 0\},\ //14}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \{\ \ \ \ 0,\ \ \ 0,\ \ \ 5,\ \ \ \ -\/8,\ \ \ -\/7,\ \ 45,\ \ \ 75,\ \ 29,\ \ \ \ -\/12,\ \ -\/3,\ \ 5,\ \ -\/1\}\ \ ,\ \textcolor{comment}{//14\ new\ coefficients\ in\ m24499}}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \{\ \ \ 0,\ \ \ 0,\ \ \ 5,\ \ \ \ -\/7,\ \ \ \ -\/9,\ \ 40,\ \ \ 76,\ \ 33,\ \ \ \ -\/11,\ \ -\/4,\ \ 5,\ \ \ 0\},\ \textcolor{comment}{//15}}
+\DoxyCodeLine{00545\ \ \ \ \ \},}
+\DoxyCodeLine{00546\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 2.5}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/3,\ \ \ -\/9,\ \ 6,\ \ \ 39,\ \ 58,\ \ \ 39,\ \ 6,\ \ \ -\/9,\ \ -\/3,\ \ \ \ 2,\ \ \ \ 0\},\ \textcolor{comment}{//\ 0}}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/3,\ \ \ -\/9,\ \ 4,\ \ \ 38,\ \ 58,\ \ \ 43,\ \ 7,\ \ \ -\/9,\ \ -\/4,\ \ \ \ 1,\ \ \ \ 0\},\ \textcolor{comment}{//\ 1}}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/2,\ \ \ -\/9,\ \ 2,\ \ \ 35,\ \ 58,\ \ \ 44,\ \ 9,\ \ \ -\/8,\ \ -\/4,\ \ \ \ 1,\ \ \ \ 0\},\ \textcolor{comment}{//\ 2}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/2,\ \ \ -\/9,\ \ 1,\ \ \ 34,\ \ 58,\ \ \ 46,\ \ 11,\ \ \ -\/8,\ \ -\/5,\ \ \ \ 1,\ \ \ \ 0\},\ \textcolor{comment}{//\ 3}}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \textcolor{comment}{//\{\ \ \ 1,\ \ -\/1,\ \ \ -\/8,\ \ -\/1,\ \ \ 31,\ \ 57,\ \ \ 48,\ \ 13,\ \ \ -\/8,\ \ -\/5,\ \ \ \ 1,\ \ \ \ 0\},\ //\ 4}}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/1,\ \ \ -\/8,\ \ -\/1,\ \ \ 31,\ \ 57,\ \ \ 47,\ \ 13,\ \ \ -\/7,\ \ -\/5,\ \ \ \ 1,\ \ \ \ 0\},\ \ \textcolor{comment}{//\ 4\ new\ coefficients\ in\ m24499}}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/1,\ \ \ -\/8,\ \ -\/2,\ \ \ 29,\ \ 56,\ \ \ 49,\ \ 15,\ \ \ -\/7,\ \ -\/6,\ \ \ \ 1,\ \ \ \ 1\},\ \textcolor{comment}{//\ 5}}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 0,\ \ \ -\/8,\ \ -\/3,\ \ \ 26,\ \ 55,\ \ \ 51,\ \ 17,\ \ \ -\/7,\ \ -\/6,\ \ \ \ 1,\ \ \ \ 1\},\ \textcolor{comment}{//\ 6}}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 0,\ \ \ -\/7,\ \ -\/4,\ \ \ 24,\ \ 54,\ \ \ 52,\ \ 19,\ \ \ -\/6,\ \ -\/7,\ \ \ \ 1,\ \ \ \ 1\},\ \textcolor{comment}{//\ 7}}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 0,\ \ \ -\/7,\ \ -\/5,\ \ \ 22,\ \ 53,\ \ \ 53,\ \ 22,\ \ \ -\/5,\ \ -\/7,\ \ \ \ 0,\ \ \ \ 1\},\ \textcolor{comment}{//\ 8}}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 1,\ \ \ -\/7,\ \ -\/6,\ \ \ 19,\ \ 52,\ \ \ 54,\ \ 24,\ \ \ -\/4,\ \ -\/7,\ \ \ \ 0,\ \ \ \ 1\},\ \textcolor{comment}{//\ 9}}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 1,\ \ \ -\/6,\ \ -\/7,\ \ \ 17,\ \ 51,\ \ \ 55,\ \ 26,\ \ \ -\/3,\ \ -\/8,\ \ \ \ 0,\ \ \ \ 1\},\ \textcolor{comment}{//\ 10}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \{\ \ \ 1,\ \ 1,\ \ \ -\/6,\ \ -\/7,\ \ \ 15,\ \ 49,\ \ \ 56,\ \ 29,\ \ \ -\/2,\ \ -\/8,\ \ \ \ -\/1,\ \ \ \ 1\},\ \textcolor{comment}{//\ 11}}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \textcolor{comment}{//\{\ \ \ 0,\ \ 1,\ \ \ -\/5,\ \ -\/8,\ \ \ 13,\ \ 48,\ \ \ 57,\ \ 31,\ \ \ -\/1,\ \ -\/8,\ \ \ \ -\/1,\ \ \ \ 1\},\ //\ 12\ new\ coefficients\ in\ m24499}}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \{\ \ \ 0,\ \ 1,\ \ \ -\/5,\ \ -\/7,\ \ \ 13,\ \ 47,\ \ 57,\ \ 31,\ \ -\/1,\ \ \ \ -\/8,\ \ \ -\/1,\ \ \ \ 1\},\ \textcolor{comment}{//\ 12}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \{\ \ \ 0,\ \ 1,\ \ \ -\/5,\ \ -\/8,\ \ \ 11,\ \ 46,\ \ \ 58,\ \ 34,\ \ \ 1,\ \ \ \ -\/9,\ \ \ \ -\/2,\ \ \ \ 1\},\ \textcolor{comment}{//\ 13}}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \{\ \ \ 0,\ \ 1,\ \ \ -\/4,\ \ -\/8,\ \ \ 9,\ \ \ \ 44,\ \ \ 58,\ \ 35,\ \ \ 2,\ \ \ \ -\/9,\ \ \ \ -\/2,\ \ \ \ 2\},\ \textcolor{comment}{//\ 14}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \{\ \ \ 0,\ \ 1,\ \ \ -\/4,\ \ -\/9,\ \ \ 7,\ \ \ \ 43,\ \ \ 58,\ \ 38,\ \ \ 4,\ \ \ \ -\/9,\ \ \ \ -\/3,\ \ \ \ 2\},\ \textcolor{comment}{//\ 15}}
+\DoxyCodeLine{00565\ \ \ \ \ \},}
+\DoxyCodeLine{00566\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 3}}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \{\ \ -\/2,\ \ -\/7,\ \ \ 0,\ \ 17,\ \ 35,\ \ 43,\ \ 35,\ \ 17,\ \ \ 0,\ \ -\/7,\ \ -\/5,\ \ \ 2\ \},}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \{\ \ -\/2,\ \ -\/7,\ \ -\/1,\ \ 16,\ \ 34,\ \ 43,\ \ 36,\ \ 18,\ \ \ 1,\ \ -\/7,\ \ -\/5,\ \ \ 2\ \},}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \{\ \ -\/1,\ \ -\/7,\ \ -\/1,\ \ 14,\ \ 33,\ \ 43,\ \ 36,\ \ 19,\ \ \ 1,\ \ -\/6,\ \ -\/5,\ \ \ 2\ \},}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \{\ \ -\/1,\ \ -\/7,\ \ -\/2,\ \ 13,\ \ 32,\ \ 42,\ \ 37,\ \ 20,\ \ \ 3,\ \ -\/6,\ \ -\/5,\ \ \ 2\ \},}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \{\ \ \ 0,\ \ -\/7,\ \ -\/3,\ \ 12,\ \ 31,\ \ 42,\ \ 38,\ \ 21,\ \ \ 3,\ \ -\/6,\ \ -\/5,\ \ \ 2\ \},}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \{\ \ \ 0,\ \ -\/7,\ \ -\/3,\ \ 11,\ \ 30,\ \ 42,\ \ 39,\ \ 23,\ \ \ 4,\ \ -\/6,\ \ -\/6,\ \ \ 1\ \},}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \{\ \ \ 0,\ \ -\/7,\ \ -\/4,\ \ 10,\ \ 29,\ \ 42,\ \ 40,\ \ 24,\ \ \ 5,\ \ -\/6,\ \ -\/6,\ \ \ 1\ \},}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/7,\ \ -\/4,\ \ \ 9,\ \ 27,\ \ 41,\ \ 40,\ \ 25,\ \ \ 6,\ \ -\/5,\ \ -\/6,\ \ \ 1\ \},}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/6,\ \ -\/5,\ \ \ 7,\ \ 26,\ \ 41,\ \ 41,\ \ 26,\ \ \ 7,\ \ -\/5,\ \ -\/6,\ \ \ 1\ \},}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/6,\ \ -\/5,\ \ \ 6,\ \ 25,\ \ 40,\ \ 41,\ \ 27,\ \ \ 9,\ \ -\/4,\ \ -\/7,\ \ \ 1\ \},}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/6,\ \ -\/6,\ \ \ 5,\ \ 24,\ \ 40,\ \ 42,\ \ 29,\ \ 10,\ \ -\/4,\ \ -\/7,\ \ \ 0\ \},}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \{\ \ \ 1,\ \ -\/6,\ \ -\/6,\ \ \ 4,\ \ 23,\ \ 39,\ \ 42,\ \ 30,\ \ 11,\ \ -\/3,\ \ -\/7,\ \ \ 0\ \},}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/5,\ \ -\/6,\ \ \ 3,\ \ 21,\ \ 38,\ \ 42,\ \ 31,\ \ 12,\ \ -\/3,\ \ -\/7,\ \ \ 0\ \},}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/5,\ \ -\/6,\ \ \ 3,\ \ 20,\ \ 37,\ \ 42,\ \ 32,\ \ 13,\ \ -\/2,\ \ -\/7,\ \ -\/1\ \},}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/5,\ \ -\/6,\ \ \ 1,\ \ 19,\ \ 36,\ \ 43,\ \ 33,\ \ 14,\ \ -\/1,\ \ -\/7,\ \ -\/1\ \},}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \{\ \ \ 2,\ \ -\/5,\ \ -\/7,\ \ \ 1,\ \ 18,\ \ 36,\ \ 43,\ \ 34,\ \ 16,\ \ -\/1,\ \ -\/7,\ \ -\/2\ \}}
+\DoxyCodeLine{00583\ \ \ \ \ \},}
+\DoxyCodeLine{00584\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 3.5}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/3,\ \ \ 5,\ \ 19,\ \ 31,\ \ 36,\ \ 31,\ \ 19,\ \ \ 5,\ \ -\/3,\ \ -\/6,\ \ \ 0\ \},}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/4,\ \ \ 4,\ \ 18,\ \ 31,\ \ 37,\ \ 32,\ \ 20,\ \ \ 6,\ \ -\/3,\ \ -\/6,\ \ -\/1\ \},}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/4,\ \ \ 4,\ \ 17,\ \ 30,\ \ 36,\ \ 33,\ \ 21,\ \ \ 7,\ \ -\/3,\ \ -\/6,\ \ -\/1\ \},}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \{\ \ -\/5,\ \ -\/5,\ \ \ 3,\ \ 16,\ \ 30,\ \ 36,\ \ 33,\ \ 22,\ \ \ 8,\ \ -\/2,\ \ -\/6,\ \ -\/2\ \},}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \{\ \ -\/5,\ \ -\/5,\ \ \ 2,\ \ 15,\ \ 29,\ \ 36,\ \ 34,\ \ 23,\ \ \ 9,\ \ -\/2,\ \ -\/6,\ \ -\/2\ \},}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \{\ \ -\/5,\ \ -\/5,\ \ \ 2,\ \ 15,\ \ 28,\ \ 36,\ \ 34,\ \ 24,\ \ 10,\ \ -\/2,\ \ -\/6,\ \ -\/3\ \},}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \{\ \ -\/4,\ \ -\/5,\ \ \ 1,\ \ 14,\ \ 27,\ \ 36,\ \ 35,\ \ 24,\ \ 10,\ \ -\/1,\ \ -\/6,\ \ -\/3\ \},}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \{\ \ -\/4,\ \ -\/5,\ \ \ 0,\ \ 13,\ \ 26,\ \ 35,\ \ 35,\ \ 25,\ \ 11,\ \ \ 0,\ \ -\/5,\ \ -\/3\ \},}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \{\ \ -\/4,\ \ -\/6,\ \ \ 0,\ \ 12,\ \ 26,\ \ 36,\ \ 36,\ \ 26,\ \ 12,\ \ \ 0,\ \ -\/6,\ \ -\/4\ \},}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \{\ \ -\/3,\ \ -\/5,\ \ \ 0,\ \ 11,\ \ 25,\ \ 35,\ \ 35,\ \ 26,\ \ 13,\ \ \ 0,\ \ -\/5,\ \ -\/4\ \},}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \{\ \ -\/3,\ \ -\/6,\ \ -\/1,\ \ 10,\ \ 24,\ \ 35,\ \ 36,\ \ 27,\ \ 14,\ \ \ 1,\ \ -\/5,\ \ -\/4\ \},}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \{\ \ -\/3,\ \ -\/6,\ \ -\/2,\ \ 10,\ \ 24,\ \ 34,\ \ 36,\ \ 28,\ \ 15,\ \ \ 2,\ \ -\/5,\ \ -\/5\ \},}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \{\ \ -\/2,\ \ -\/6,\ \ -\/2,\ \ \ 9,\ \ 23,\ \ 34,\ \ 36,\ \ 29,\ \ 15,\ \ \ 2,\ \ -\/5,\ \ -\/5\ \},}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \{\ \ -\/2,\ \ -\/6,\ \ -\/2,\ \ \ 8,\ \ 22,\ \ 33,\ \ 36,\ \ 30,\ \ 16,\ \ \ 3,\ \ -\/5,\ \ -\/5\ \},}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \{\ \ -\/1,\ \ -\/6,\ \ -\/3,\ \ \ 7,\ \ 21,\ \ 33,\ \ 36,\ \ 30,\ \ 17,\ \ \ 4,\ \ -\/4,\ \ -\/6\ \},}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \{\ \ -\/1,\ \ -\/6,\ \ -\/3,\ \ \ 6,\ \ 20,\ \ 32,\ \ 37,\ \ 31,\ \ 18,\ \ \ 4,\ \ -\/4,\ \ -\/6\ \}}
+\DoxyCodeLine{00601\ \ \ \ \ \},}
+\DoxyCodeLine{00602\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 4}}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 0,\ \ \ 9,\ \ 20,\ \ 28,\ \ 32,\ \ 28,\ \ 20,\ \ \ 9,\ \ \ 0,\ \ -\/9,\ \ \ 0\ \},}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 0,\ \ \ 8,\ \ 19,\ \ 28,\ \ 32,\ \ 29,\ \ 20,\ \ 10,\ \ \ 0,\ \ -\/4,\ \ -\/5\ \},}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \{\ \ -\/9,\ \ -\/1,\ \ \ 8,\ \ 18,\ \ 28,\ \ 32,\ \ 29,\ \ 21,\ \ 10,\ \ \ 1,\ \ -\/4,\ \ -\/5\ \},}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \{\ \ -\/9,\ \ -\/1,\ \ \ 7,\ \ 18,\ \ 27,\ \ 32,\ \ 30,\ \ 22,\ \ 11,\ \ \ 1,\ \ -\/4,\ \ -\/6\ \},}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \{\ \ -\/8,\ \ -\/2,\ \ \ 6,\ \ 17,\ \ 27,\ \ 32,\ \ 30,\ \ 22,\ \ 12,\ \ \ 2,\ \ -\/4,\ \ -\/6\ \},}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \{\ \ -\/8,\ \ -\/2,\ \ \ 6,\ \ 16,\ \ 26,\ \ 32,\ \ 31,\ \ 23,\ \ 12,\ \ \ 2,\ \ -\/4,\ \ -\/6\ \},}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \{\ \ -\/8,\ \ -\/2,\ \ \ 5,\ \ 16,\ \ 26,\ \ 31,\ \ 31,\ \ 23,\ \ 13,\ \ \ 3,\ \ -\/3,\ \ -\/7\ \},}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \{\ \ -\/8,\ \ -\/3,\ \ \ 5,\ \ 15,\ \ 25,\ \ 31,\ \ 31,\ \ 24,\ \ 14,\ \ \ 4,\ \ -\/3,\ \ -\/7\ \},}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \{\ \ -\/7,\ \ -\/3,\ \ \ 4,\ \ 14,\ \ 25,\ \ 31,\ \ 31,\ \ 25,\ \ 14,\ \ \ 4,\ \ -\/3,\ \ -\/7\ \},}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \{\ \ -\/7,\ \ -\/3,\ \ \ 4,\ \ 14,\ \ 24,\ \ 31,\ \ 31,\ \ 25,\ \ 15,\ \ \ 5,\ \ -\/3,\ \ -\/8\ \},}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \{\ \ -\/7,\ \ -\/3,\ \ \ 3,\ \ 13,\ \ 23,\ \ 31,\ \ 31,\ \ 26,\ \ 16,\ \ \ 5,\ \ -\/2,\ \ -\/8\ \},}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/4,\ \ \ 2,\ \ 12,\ \ 23,\ \ 31,\ \ 32,\ \ 26,\ \ 16,\ \ \ 6,\ \ -\/2,\ \ -\/8\ \},}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/4,\ \ \ 2,\ \ 12,\ \ 22,\ \ 30,\ \ 32,\ \ 27,\ \ 17,\ \ \ 6,\ \ -\/2,\ \ -\/8\ \},}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \{\ \ -\/6,\ \ -\/4,\ \ \ 1,\ \ 11,\ \ 22,\ \ 30,\ \ 32,\ \ 27,\ \ 18,\ \ \ 7,\ \ -\/1,\ \ -\/9\ \},}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \{\ \ -\/5,\ \ -\/4,\ \ \ 1,\ \ 10,\ \ 21,\ \ 29,\ \ 32,\ \ 28,\ \ 18,\ \ \ 8,\ \ -\/1,\ \ -\/9\ \},}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \{\ \ -\/5,\ \ -\/4,\ \ \ 0,\ \ 10,\ \ 20,\ \ 29,\ \ 32,\ \ 28,\ \ 19,\ \ \ 8,\ \ \ 0,\ \ -\/9\ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \},}
+\DoxyCodeLine{00620\ \ \ \ \ \{\ \textcolor{comment}{//\ D\ =\ 5.5}}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \{\ \ -\/8,\ \ \ 7,\ \ 13,\ \ 18,\ \ 22,\ \ 24,\ \ 22,\ \ 18,\ \ 13,\ \ \ 7,\ \ \ 2,\ -\/10\ \},}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \{\ \ -\/8,\ \ \ 7,\ \ 13,\ \ 18,\ \ 22,\ \ 23,\ \ 22,\ \ 19,\ \ 13,\ \ \ 7,\ \ \ 2,\ -\/10\ \},}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \{\ \ -\/8,\ \ \ 6,\ \ 12,\ \ 18,\ \ 22,\ \ 23,\ \ 22,\ \ 19,\ \ 14,\ \ \ 8,\ \ \ 2,\ -\/10\ \},}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 6,\ \ 12,\ \ 17,\ \ 22,\ \ 23,\ \ 23,\ \ 19,\ \ 14,\ \ \ 8,\ \ \ 3,\ -\/10\ \},}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 6,\ \ 12,\ \ 17,\ \ 21,\ \ 23,\ \ 23,\ \ 19,\ \ 14,\ \ \ 9,\ \ \ 3,\ -\/10\ \},}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 5,\ \ 11,\ \ 17,\ \ 21,\ \ 23,\ \ 23,\ \ 20,\ \ 15,\ \ \ 9,\ \ \ 3,\ -\/10\ \},}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 5,\ \ 11,\ \ 16,\ \ 21,\ \ 23,\ \ 23,\ \ 20,\ \ 15,\ \ \ 9,\ \ \ 4,\ -\/10\ \},}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \{\ \ -\/9,\ \ \ 5,\ \ 10,\ \ 16,\ \ 21,\ \ 23,\ \ 23,\ \ 20,\ \ 15,\ \ 10,\ \ \ 4,\ -\/10\ \},}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 5,\ \ 10,\ \ 16,\ \ 20,\ \ 23,\ \ 23,\ \ 20,\ \ 16,\ \ 10,\ \ \ 5,\ -\/10\ \},}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 4,\ \ 10,\ \ 15,\ \ 20,\ \ 23,\ \ 23,\ \ 21,\ \ 16,\ \ 10,\ \ \ 5,\ \ -\/9\ \},}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 4,\ \ \ 9,\ \ 15,\ \ 20,\ \ 23,\ \ 23,\ \ 21,\ \ 16,\ \ 11,\ \ \ 5,\ \ -\/9\ \},}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 3,\ \ \ 9,\ \ 15,\ \ 20,\ \ 23,\ \ 23,\ \ 21,\ \ 17,\ \ 11,\ \ \ 5,\ \ -\/9\ \},}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 3,\ \ \ 9,\ \ 14,\ \ 19,\ \ 23,\ \ 23,\ \ 21,\ \ 17,\ \ 12,\ \ \ 6,\ \ -\/9\ \},}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 3,\ \ \ 8,\ \ 14,\ \ 19,\ \ 23,\ \ 23,\ \ 22,\ \ 17,\ \ 12,\ \ \ 6,\ \ -\/9\ \},}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 2,\ \ \ 8,\ \ 14,\ \ 19,\ \ 22,\ \ 23,\ \ 22,\ \ 18,\ \ 12,\ \ \ 6,\ \ -\/8\ \},}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \{\ -\/10,\ \ \ 2,\ \ \ 7,\ \ 13,\ \ 19,\ \ 22,\ \ 23,\ \ 22,\ \ 18,\ \ 13,\ \ \ 7,\ \ -\/8\ \}}
+\DoxyCodeLine{00637\ \ \ \ \ \}}
+\DoxyCodeLine{00638\ \};}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \textcolor{keywordtype}{void}\ Picture::sampleRateConv(\ \textcolor{keyword}{const}\ std::pair<int,\ int>\ scalingRatio,\ \textcolor{keyword}{const}\ std::pair<int,\ int>\ compScale,}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelBuf\&\ beforeScale,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ beforeScaleLeftOffset,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ beforeScaleTopOffset,}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PelBuf\&\ afterScale,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ afterScaleLeftOffset,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ afterScaleTopOffset,}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ useLumaFilter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ downsampling,}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ horCollocatedPositionFlag,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ verCollocatedPositionFlag\ )}
+\DoxyCodeLine{00645\ \{}
+\DoxyCodeLine{00646\ \ \ \textcolor{keyword}{const}\ Pel*\ orgSrc\ =\ beforeScale.buf;}
+\DoxyCodeLine{00647\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ orgWidth\ =\ beforeScale.width;}
+\DoxyCodeLine{00648\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ orgHeight\ =\ beforeScale.height;}
+\DoxyCodeLine{00649\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ orgStride\ =\ beforeScale.stride;}
+\DoxyCodeLine{00650\ }
+\DoxyCodeLine{00651\ \ \ Pel*\ scaledSrc\ =\ afterScale.buf;}
+\DoxyCodeLine{00652\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scaledWidth\ =\ afterScale.width;}
+\DoxyCodeLine{00653\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scaledHeight\ =\ afterScale.height;}
+\DoxyCodeLine{00654\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ scaledStride\ =\ afterScale.stride;}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ \ \ \textcolor{keywordflow}{if}(\ orgWidth\ ==\ scaledWidth\ \&\&\ orgHeight\ ==\ scaledHeight\ \&\&\ scalingRatio\ ==\ SCALE\_1X\ \&\&\ !beforeScaleLeftOffset\ \&\&\ !beforeScaleTopOffset\ \&\&\ !afterScaleLeftOffset\ \&\&\ !afterScaleTopOffset\ )}
+\DoxyCodeLine{00657\ \ \ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ orgHeight;\ j++\ )}
+\DoxyCodeLine{00659\ \ \ \ \ \{}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ memcpy(\ scaledSrc\ +\ j\ *\ scaledStride,\ orgSrc\ +\ j\ *\ orgStride,\ \textcolor{keyword}{sizeof}(\ Pel\ )\ *\ orgWidth\ );}
+\DoxyCodeLine{00661\ \ \ \ \ \}}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00664\ \ \ \}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \ \ \textcolor{keyword}{const}\ TFilterCoeff*\ filterHor\ =\ useLumaFilter\ ?\ \&InterpolationFilter::m\_lumaFilter[0][0]\ :\ \&InterpolationFilter::m\_chromaFilter[0][0];}
+\DoxyCodeLine{00667\ \ \ \textcolor{keyword}{const}\ TFilterCoeff*\ filterVer\ =\ useLumaFilter\ ?\ \&InterpolationFilter::m\_lumaFilter[0][0]\ :\ \&InterpolationFilter::m\_chromaFilter[0][0];}
+\DoxyCodeLine{00668\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numFracPositions\ =\ useLumaFilter\ ?\ 15\ :\ 31;}
+\DoxyCodeLine{00669\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numFracShift\ =\ useLumaFilter\ ?\ 4\ :\ 5;}
+\DoxyCodeLine{00670\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ posShiftX\ =\ SCALE\_RATIO\_BITS\ -\/\ numFracShift\ +\ compScale.first;}
+\DoxyCodeLine{00671\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ posShiftY\ =\ SCALE\_RATIO\_BITS\ -\/\ numFracShift\ +\ compScale.second;}
+\DoxyCodeLine{00672\ \ \ \textcolor{keywordtype}{int}\ addX\ =\ (\ 1\ <<\ (\ posShiftX\ -\/\ 1\ )\ )\ +\ (\ beforeScaleLeftOffset\ <<\ SCALE\_RATIO\_BITS\ )\ +\ (\ (\ \textcolor{keywordtype}{int}(\ 1\ -\/\ horCollocatedPositionFlag\ )\ *\ 8\ *\ (\ scalingRatio.first\ -\/\ SCALE\_1X.first\ )\ +\ (\ 1\ <<\ (\ 2\ +\ compScale.first\ )\ )\ )\ >>\ (\ 3\ +\ compScale.first\ )\ );}
+\DoxyCodeLine{00673\ \ \ \textcolor{keywordtype}{int}\ addY\ =\ (\ 1\ <<\ (\ posShiftY\ -\/\ 1\ )\ )\ +\ (\ beforeScaleTopOffset\ <<\ SCALE\_RATIO\_BITS\ )\ +\ (\ (\ \textcolor{keywordtype}{int}(\ 1\ -\/\ verCollocatedPositionFlag\ )\ *\ 8\ *\ (\ scalingRatio.second\ -\/\ SCALE\_1X.second\ )\ +\ (\ 1\ <<\ (\ 2\ +\ compScale.second\ )\ )\ )\ >>\ (\ 3\ +\ compScale.second\ )\ );}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \ \ \textcolor{keywordflow}{if}(\ downsampling\ )}
+\DoxyCodeLine{00676\ \ \ \{}
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{keywordtype}{int}\ verFilter\ =\ 0;}
+\DoxyCodeLine{00678\ \ \ \ \ \textcolor{keywordtype}{int}\ horFilter\ =\ 0;}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \ \ \ \ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (15\ <<\ SCALE\_RATIO\_BITS)\ /\ 4)}
+\DoxyCodeLine{00681\ \ \ \ \ \{}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ horFilter\ =\ 7;}
+\DoxyCodeLine{00683\ \ \ \ \ \}}
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (20\ <<\ SCALE\_RATIO\_BITS)\ /\ 7)}
+\DoxyCodeLine{00685\ \ \ \ \ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ horFilter\ =\ 6;}
+\DoxyCodeLine{00687\ \ \ \ \ \}}
+\DoxyCodeLine{00688\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 2)}
+\DoxyCodeLine{00689\ \ \ \ \ \{}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ horFilter\ =\ 5;}
+\DoxyCodeLine{00691\ \ \ \ \ \}}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (2\ <<\ SCALE\_RATIO\_BITS))}
+\DoxyCodeLine{00693\ \ \ \ \ \{}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ horFilter\ =\ 4;}
+\DoxyCodeLine{00695\ \ \ \ \ \}}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 3)}
+\DoxyCodeLine{00697\ \ \ \ \ \{}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ horFilter\ =\ 3;}
+\DoxyCodeLine{00699\ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 4)}
+\DoxyCodeLine{00701\ \ \ \ \ \{}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ horFilter\ =\ 2;}
+\DoxyCodeLine{00703\ \ \ \ \ \}}
+\DoxyCodeLine{00704\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.first\ >\ (20\ <<\ SCALE\_RATIO\_BITS)\ /\ 19)}
+\DoxyCodeLine{00705\ \ \ \ \ \{}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ horFilter\ =\ 1;}
+\DoxyCodeLine{00707\ \ \ \ \ \}}
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (15\ <<\ SCALE\_RATIO\_BITS)\ /\ 4)}
+\DoxyCodeLine{00710\ \ \ \ \ \{}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ verFilter\ =\ 7;}
+\DoxyCodeLine{00712\ \ \ \ \ \}}
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (20\ <<\ SCALE\_RATIO\_BITS)\ /\ 7)}
+\DoxyCodeLine{00714\ \ \ \ \ \{}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ verFilter\ =\ 6;}
+\DoxyCodeLine{00716\ \ \ \ \ \}}
+\DoxyCodeLine{00717\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 2)}
+\DoxyCodeLine{00718\ \ \ \ \ \{}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ verFilter\ =\ 5;}
+\DoxyCodeLine{00720\ \ \ \ \ \}}
+\DoxyCodeLine{00721\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (2\ <<\ SCALE\_RATIO\_BITS))}
+\DoxyCodeLine{00722\ \ \ \ \ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ verFilter\ =\ 4;}
+\DoxyCodeLine{00724\ \ \ \ \ \}}
+\DoxyCodeLine{00725\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 3)}
+\DoxyCodeLine{00726\ \ \ \ \ \{}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ verFilter\ =\ 3;}
+\DoxyCodeLine{00728\ \ \ \ \ \}}
+\DoxyCodeLine{00729\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (5\ <<\ SCALE\_RATIO\_BITS)\ /\ 4)}
+\DoxyCodeLine{00730\ \ \ \ \ \{}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ verFilter\ =\ 2;}
+\DoxyCodeLine{00732\ \ \ \ \ \}}
+\DoxyCodeLine{00733\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (scalingRatio.second\ >\ (20\ <<\ SCALE\_RATIO\_BITS)\ /\ 19)}
+\DoxyCodeLine{00734\ \ \ \ \ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ verFilter\ =\ 1;}
+\DoxyCodeLine{00736\ \ \ \ \ \}}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00738\ \ \ \ \ filterHor\ =\ \&DownsamplingFilterSRC[horFilter][0][0];}
+\DoxyCodeLine{00739\ \ \ \ \ filterVer\ =\ \&DownsamplingFilterSRC[verFilter][0][0];}
+\DoxyCodeLine{00740\ \ \ \}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ filterLength\ =\ downsampling\ ?\ 12\ :\ (\ useLumaFilter\ ?\ NTAPS\_LUMA\ :\ NTAPS\_CHROMA\ );}
+\DoxyCodeLine{00743\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ log2Norm\ =\ downsampling\ ?\ 14\ :\ 12;}
+\DoxyCodeLine{00744\ }
+\DoxyCodeLine{00745\ \ \ \textcolor{keywordtype}{int}\ *buf\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}[orgHeight\ *\ scaledWidth];}
+\DoxyCodeLine{00746\ \ \ \textcolor{keywordtype}{int}\ maxVal\ =\ (\ 1\ <<\ bitDepth\ )\ -\/\ 1;}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \ \ CHECK(\ bitDepth\ >\ 17,\ \textcolor{stringliteral}{"{}Overflow\ may\ happen!"{}}\ );}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ scaledWidth;\ i++\ )}
+\DoxyCodeLine{00751\ \ \ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{keyword}{const}\ Pel*\ org\ =\ orgSrc;}
+\DoxyCodeLine{00753\ \ \ \ \ \textcolor{keywordtype}{int}\ refPos\ =\ (\ (\ (\ i\ <<\ compScale.first\ )\ -\/\ afterScaleLeftOffset\ )\ *\ scalingRatio.first\ +\ addX\ )\ >>\ posShiftX;}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{keywordtype}{int}\ integer\ =\ refPos\ >>\ numFracShift;}
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keywordtype}{int}\ frac\ =\ refPos\ \&\ numFracPositions;}
+\DoxyCodeLine{00756\ \ \ \ \ \textcolor{keywordtype}{int}*\ tmp\ =\ buf\ +\ i;}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ orgHeight;\ j++\ )}
+\DoxyCodeLine{00759\ \ \ \ \ \{}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sum\ =\ 0;}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \textcolor{keyword}{const}\ TFilterCoeff*\ f\ =\ filterHor\ +\ frac\ *\ filterLength;}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ filterLength;\ k++\ )}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ xInt\ =\ std::min<int>(\ std::max(\ 0,\ integer\ +\ k\ -\/\ filterLength\ /\ 2\ +\ 1\ ),\ orgWidth\ -\/\ 1\ );}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ sum\ +=\ f[k]\ *\ org[xInt];\ \textcolor{comment}{//\ postpone\ horizontal\ filtering\ gain\ removal\ after\ vertical\ filtering}}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ \ \ \ \ \ \ *tmp\ =\ sum;}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ \ \ \ \ \ \ tmp\ +=\ scaledWidth;}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ org\ +=\ orgStride;}
+\DoxyCodeLine{00773\ \ \ \ \ \}}
+\DoxyCodeLine{00774\ \ \ \}}
+\DoxyCodeLine{00775\ }
+\DoxyCodeLine{00776\ \ \ Pel*\ dst\ =\ scaledSrc;}
+\DoxyCodeLine{00777\ }
+\DoxyCodeLine{00778\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ scaledHeight;\ j++\ )}
+\DoxyCodeLine{00779\ \ \ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \textcolor{keywordtype}{int}\ refPos\ =\ (\ (\ (\ j\ <<\ compScale.second\ )\ -\/\ afterScaleTopOffset\ )\ *\ scalingRatio.second\ +\ addY\ )\ >>\ posShiftY;}
+\DoxyCodeLine{00781\ \ \ \ \ \textcolor{keywordtype}{int}\ integer\ =\ refPos\ >>\ numFracShift;}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{keywordtype}{int}\ frac\ =\ refPos\ \&\ numFracPositions;}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ scaledWidth;\ i++\ )}
+\DoxyCodeLine{00785\ \ \ \ \ \{}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sum\ =\ 0;}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \textcolor{keywordtype}{int}*\ tmp\ =\ buf\ +\ i;}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \textcolor{keyword}{const}\ TFilterCoeff*\ f\ =\ filterVer\ +\ frac\ *\ filterLength;}
+\DoxyCodeLine{00789\ }
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ filterLength;\ k++\ )}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ yInt\ =\ std::min<int>(\ std::max(\ 0,\ integer\ +\ k\ -\/\ filterLength\ /\ 2\ +\ 1\ ),\ orgHeight\ -\/\ 1\ );}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ sum\ +=\ f[k]\ *\ tmp[yInt*scaledWidth];}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \ \ \ \ \ \ dst[i]\ =\ std::min<int>(\ std::max(\ 0,\ (\ sum\ +\ (\ 1\ <<\ (\ log2Norm\ -\/\ 1\ )\ )\ )\ >>\ log2Norm\ ),\ maxVal\ );}
+\DoxyCodeLine{00797\ \ \ \ \ \}}
+\DoxyCodeLine{00798\ }
+\DoxyCodeLine{00799\ \ \ \ \ dst\ +=\ scaledStride;}
+\DoxyCodeLine{00800\ \ \ \}}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \ \ \textcolor{keyword}{delete}[]\ buf;}
+\DoxyCodeLine{00803\ \}}
+\DoxyCodeLine{00804\ }
+\DoxyCodeLine{00805\ \textcolor{keywordtype}{void}\ Picture::rescalePicture(\ \textcolor{keyword}{const}\ std::pair<int,\ int>\ scalingRatio,}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\&\ beforeScaling,\ \textcolor{keyword}{const}\ Window\&\ scalingWindowBefore,}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PelUnitBuf\&\ afterScaling,\ \textcolor{keyword}{const}\ Window\&\ scalingWindowAfter,}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ chromaFormatIDC,\ \textcolor{keyword}{const}\ BitDepths\&\ bitDepths,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ useLumaFilter,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ downsampling,}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ horCollocatedChromaFlag,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ verCollocatedChromaFlag\ )}
+\DoxyCodeLine{00810\ \{}
+\DoxyCodeLine{00811\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ comp\ =\ 0;\ comp\ <\ vtm::getNumberValidComponents(\ chromaFormatIDC\ );\ comp++\ )}
+\DoxyCodeLine{00812\ \ \ \{}
+\DoxyCodeLine{00813\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(\ comp\ );}
+\DoxyCodeLine{00814\ \ \ \ \ \textcolor{keyword}{const}\ CPelBuf\&\ beforeScale\ =\ beforeScaling.get(\ compID\ );}
+\DoxyCodeLine{00815\ \ \ \ \ \textcolor{keyword}{const}\ PelBuf\&\ afterScale\ =\ afterScaling.get(\ compID\ );}
+\DoxyCodeLine{00816\ }
+\DoxyCodeLine{00817\ \ \ \ \ sampleRateConv(\ scalingRatio,\ std::pair<int,\ int>(\ vtm::getComponentScaleX(\ compID,\ chromaFormatIDC\ ),\ vtm::getComponentScaleY(\ compID,\ chromaFormatIDC\ )\ ),}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ beforeScale,\ scalingWindowBefore.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),\ scalingWindowBefore.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ afterScale,\ scalingWindowAfter.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),\ scalingWindowAfter.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitDepths.recon[toChannelType(compID)],\ downsampling\ ||\ useLumaFilter\ ?\ \textcolor{keyword}{true}\ :\ isLuma(\ compID\ ),\ downsampling,}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ isLuma(\ compID\ )\ ?\ 1\ :\ horCollocatedChromaFlag,\ isLuma(\ compID\ )\ ?\ 1\ :\ verCollocatedChromaFlag\ );}
+\DoxyCodeLine{00822\ \ \ \}}
+\DoxyCodeLine{00823\ \}}
+\DoxyCodeLine{00824\ }
+\DoxyCodeLine{00825\ \textcolor{keywordtype}{void}\ Picture::saveSubPicBorder(\textcolor{keywordtype}{int}\ POC,\ \textcolor{keywordtype}{int}\ subPicX0,\ \textcolor{keywordtype}{int}\ subPicY0,\ \textcolor{keywordtype}{int}\ subPicWidth,\ \textcolor{keywordtype}{int}\ subPicHeight)}
+\DoxyCodeLine{00826\ \{}
+\DoxyCodeLine{00827\ }
+\DoxyCodeLine{00828\ \ \ \textcolor{comment}{//\ 1.1\ set\ up\ margin\ for\ back\ up\ memory\ allocation}}
+\DoxyCodeLine{00829\ \ \ \textcolor{keywordtype}{int}\ xMargin\ =\ margin\ >>\ getComponentScaleX(COMPONENT\_Y,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00830\ \ \ \textcolor{keywordtype}{int}\ yMargin\ =\ margin\ >>\ getComponentScaleY(COMPONENT\_Y,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00832\ \ \ \textcolor{comment}{//\ 1.2\ measure\ the\ size\ of\ back\ up\ memory}}
+\DoxyCodeLine{00833\ \ \ Area\ areaAboveBelow(0,\ 0,\ subPicWidth\ +\ 2\ *\ xMargin,\ yMargin);}
+\DoxyCodeLine{00834\ \ \ Area\ areaLeftRight(0,\ 0,\ xMargin,\ subPicHeight);}
+\DoxyCodeLine{00835\ \ \ UnitArea\ unitAreaAboveBelow(cs-\/>area.chromaFormat,\ areaAboveBelow);}
+\DoxyCodeLine{00836\ \ \ UnitArea\ unitAreaLeftRight(cs-\/>area.chromaFormat,\ areaLeftRight);}
+\DoxyCodeLine{00837\ }
+\DoxyCodeLine{00838\ \ \ \textcolor{comment}{//\ 1.3\ create\ back\ up\ memory}}
+\DoxyCodeLine{00839\ \ \ m\_bufSubPicAbove.create(unitAreaAboveBelow);}
+\DoxyCodeLine{00840\ \ \ m\_bufSubPicBelow.create(unitAreaAboveBelow);}
+\DoxyCodeLine{00841\ \ \ m\_bufSubPicLeft.create(unitAreaLeftRight);}
+\DoxyCodeLine{00842\ \ \ m\_bufSubPicRight.create(unitAreaLeftRight);}
+\DoxyCodeLine{00843\ \ \ m\_bufWrapSubPicAbove.create(unitAreaAboveBelow);}
+\DoxyCodeLine{00844\ \ \ m\_bufWrapSubPicBelow.create(unitAreaAboveBelow);}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ comp\ =\ 0;\ comp\ <\ getNumberValidComponents(cs-\/>area.chromaFormat);\ comp++)}
+\DoxyCodeLine{00847\ \ \ \{}
+\DoxyCodeLine{00848\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{00849\ }
+\DoxyCodeLine{00850\ \ \ \ \ \textcolor{comment}{//\ 2.1\ measure\ the\ margin\ for\ each\ component}}
+\DoxyCodeLine{00851\ \ \ \ \ \textcolor{keywordtype}{int}\ xmargin\ =\ margin\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00852\ \ \ \ \ \textcolor{keywordtype}{int}\ ymargin\ =\ margin\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00853\ }
+\DoxyCodeLine{00854\ \ \ \ \ \textcolor{comment}{//\ 2.2\ calculate\ the\ origin\ of\ the\ subpicture}}
+\DoxyCodeLine{00855\ \ \ \ \ \textcolor{keywordtype}{int}\ left\ =\ subPicX0\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00856\ \ \ \ \ \textcolor{keywordtype}{int}\ top\ =\ subPicY0\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00857\ }
+\DoxyCodeLine{00858\ \ \ \ \ \textcolor{comment}{//\ 2.3\ calculate\ the\ width/height\ of\ the\ subPic}}
+\DoxyCodeLine{00859\ \ \ \ \ \textcolor{keywordtype}{int}\ width\ =\ subPicWidth\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00860\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ subPicHeight\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00861\ }
+\DoxyCodeLine{00862\ }
+\DoxyCodeLine{00863\ \ \ \ \ \textcolor{comment}{//\ 3.1.1\ set\ reconstructed\ picture}}
+\DoxyCodeLine{00864\ \ \ \ \ PelBuf\ s\ =\ M\_BUFS(0,\ PIC\_RECONSTRUCTION).get(compID);}
+\DoxyCodeLine{00865\ \ \ \ \ Pel\ *src\ =\ s.bufAt(left,\ top);}
+\DoxyCodeLine{00866\ }
+\DoxyCodeLine{00867\ \ \ \ \ \textcolor{comment}{//\ 3.2.1\ set\ back\ up\ buffer\ for\ left}}
+\DoxyCodeLine{00868\ \ \ \ \ PelBuf\ dBufLeft\ \ \ =\ m\_bufSubPicLeft.getBuf(compID);}
+\DoxyCodeLine{00869\ \ \ \ \ Pel\ \ \ \ *dstLeft\ \ \ =\ dBufLeft.bufAt(0,\ 0);}
+\DoxyCodeLine{00870\ }
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ \ \ \ \ \textcolor{comment}{//\ 3.2.2\ set\ back\ up\ buffer\ for\ right}}
+\DoxyCodeLine{00873\ \ \ \ \ PelBuf\ dBufRight\ \ =\ m\_bufSubPicRight.getBuf(compID);}
+\DoxyCodeLine{00874\ \ \ \ \ Pel\ \ \ \ *dstRight\ \ =\ dBufRight.bufAt(0,\ 0);}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{comment}{//\ 3.2.3\ copy\ to\ recon\ picture\ to\ back\ up\ buffer}}
+\DoxyCodeLine{00877\ \ \ \ \ Pel\ *srcLeft\ \ =\ src\ -\/\ xmargin;}
+\DoxyCodeLine{00878\ \ \ \ \ Pel\ *srcRight\ =\ src\ +\ width;}
+\DoxyCodeLine{00879\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00880\ \ \ \ \ \{}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ ::memcpy(dstLeft\ \ +\ y\ *\ \ dBufLeft.stride,\ srcLeft\ \ +\ y\ *\ s.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ xmargin);}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ ::memcpy(dstRight\ +\ y\ *\ dBufRight.stride,\ srcRight\ +\ y\ *\ s.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ xmargin);}
+\DoxyCodeLine{00883\ \ \ \ \ \}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ \ \ \ \ \textcolor{comment}{//\ 3.3.1\ set\ back\ up\ buffer\ for\ above}}
+\DoxyCodeLine{00886\ \ \ \ \ PelBuf\ dBufTop\ =\ m\_bufSubPicAbove.getBuf(compID);}
+\DoxyCodeLine{00887\ \ \ \ \ Pel\ \ \ \ *dstTop\ =\ dBufTop.bufAt(0,\ 0);}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \ \ \textcolor{comment}{//\ 3.3.2\ set\ back\ up\ buffer\ for\ below}}
+\DoxyCodeLine{00890\ \ \ \ \ PelBuf\ dBufBottom\ =\ m\_bufSubPicBelow.getBuf(compID);}
+\DoxyCodeLine{00891\ \ \ \ \ Pel\ \ \ \ *dstBottom\ =\ dBufBottom.bufAt(0,\ 0);}
+\DoxyCodeLine{00892\ }
+\DoxyCodeLine{00893\ \ \ \ \ \textcolor{comment}{//\ 3.3.3\ copy\ to\ recon\ picture\ to\ back\ up\ buffer}}
+\DoxyCodeLine{00894\ \ \ \ \ Pel\ *srcTop\ \ \ \ =\ src\ -\/\ xmargin\ -\/\ ymargin\ *\ s.stride;}
+\DoxyCodeLine{00895\ \ \ \ \ Pel\ *srcBottom\ =\ src\ -\/\ xmargin\ +\ \ height\ *\ s.stride;}
+\DoxyCodeLine{00896\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{00897\ \ \ \ \ \{}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ ::memcpy(dstTop\ \ \ \ +\ y\ *\ \ \ \ dBufTop.stride,\ srcTop\ \ \ \ +\ y\ *\ s.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ ::memcpy(dstBottom\ +\ y\ *\ dBufBottom.stride,\ srcBottom\ +\ y\ *\ s.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00900\ \ \ \ \ \}}
+\DoxyCodeLine{00901\ }
+\DoxyCodeLine{00902\ \ \ \ \ \textcolor{comment}{//\ back\ up\ recon\ wrap\ buffer}}
+\DoxyCodeLine{00903\ \ \ \ \ \textcolor{keywordflow}{if}\ (cs-\/>sps-\/>getWrapAroundEnabledFlag())}
+\DoxyCodeLine{00904\ \ \ \ \ \{}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ PelBuf\ sWrap\ =\ M\_BUFS(0,\ PIC\_RECON\_WRAP).get(compID);}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ Pel\ *srcWrap\ =\ sWrap.bufAt(left,\ top);}
+\DoxyCodeLine{00907\ }
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \textcolor{comment}{//\ 3.4.1\ set\ back\ up\ buffer\ for\ above}}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ PelBuf\ dBufTopWrap\ =\ m\_bufWrapSubPicAbove.getBuf(compID);}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ Pel\ \ \ \ *dstTopWrap\ =\ dBufTopWrap.bufAt(0,\ 0);}
+\DoxyCodeLine{00911\ }
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \textcolor{comment}{//\ 3.4.2\ set\ back\ up\ buffer\ for\ below}}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ PelBuf\ dBufBottomWrap\ =\ m\_bufWrapSubPicBelow.getBuf(compID);}
+\DoxyCodeLine{00914\ \ \ \ \ \ \ Pel\ \ \ \ *dstBottomWrap\ =\ dBufBottomWrap.bufAt(0,\ 0);}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \textcolor{comment}{//\ 3.4.3\ copy\ recon\ wrap\ picture\ to\ back\ up\ buffer}}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ Pel\ *srcTopWrap\ \ \ \ =\ srcWrap\ -\/\ xmargin\ -\/\ ymargin\ *\ sWrap.stride;}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ Pel\ *srcBottomWrap\ =\ srcWrap\ -\/\ xmargin\ +\ \ height\ *\ sWrap.stride;}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ ::memcpy(dstTopWrap\ \ \ \ +\ y\ *\ \ \ \ dBufTopWrap.stride,\ srcTopWrap\ \ \ \ +\ y\ *\ sWrap.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ ::memcpy(dstBottomWrap\ +\ y\ *\ dBufBottomWrap.stride,\ srcBottomWrap\ +\ y\ *\ sWrap.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00924\ \ \ \ \ \}}
+\DoxyCodeLine{00925\ \ \ \}}
+\DoxyCodeLine{00926\ \}}
+\DoxyCodeLine{00927\ }
+\DoxyCodeLine{00928\ \textcolor{keywordtype}{void}\ Picture::extendSubPicBorder(\textcolor{keywordtype}{int}\ POC,\ \textcolor{keywordtype}{int}\ subPicX0,\ \textcolor{keywordtype}{int}\ subPicY0,\ \textcolor{keywordtype}{int}\ subPicWidth,\ \textcolor{keywordtype}{int}\ subPicHeight)}
+\DoxyCodeLine{00929\ \{}
+\DoxyCodeLine{00930\ }
+\DoxyCodeLine{00931\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ comp\ =\ 0;\ comp\ <\ getNumberValidComponents(cs-\/>area.chromaFormat);\ comp++)}
+\DoxyCodeLine{00932\ \ \ \{}
+\DoxyCodeLine{00933\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{00934\ }
+\DoxyCodeLine{00935\ \ \ \ \ \textcolor{comment}{//\ 2.1\ measure\ the\ margin\ for\ each\ component}}
+\DoxyCodeLine{00936\ \ \ \ \ \textcolor{keywordtype}{int}\ xmargin\ =\ margin\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00937\ \ \ \ \ \textcolor{keywordtype}{int}\ ymargin\ =\ margin\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00938\ }
+\DoxyCodeLine{00939\ \ \ \ \ \textcolor{comment}{//\ 2.2\ calculate\ the\ origin\ of\ the\ Subpicture}}
+\DoxyCodeLine{00940\ \ \ \ \ \textcolor{keywordtype}{int}\ left\ =\ subPicX0\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00941\ \ \ \ \ \textcolor{keywordtype}{int}\ top\ =\ subPicY0\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00942\ }
+\DoxyCodeLine{00943\ \ \ \ \ \textcolor{comment}{//\ 2.3\ calculate\ the\ width/height\ of\ the\ Subpicture}}
+\DoxyCodeLine{00944\ \ \ \ \ \textcolor{keywordtype}{int}\ width\ =\ subPicWidth\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00945\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ subPicHeight\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{00946\ }
+\DoxyCodeLine{00947\ \ \ \ \ \textcolor{comment}{//\ 3.1\ set\ reconstructed\ picture}}
+\DoxyCodeLine{00948\ \ \ \ \ PelBuf\ s\ =\ M\_BUFS(0,\ PIC\_RECONSTRUCTION).get(compID);}
+\DoxyCodeLine{00949\ \ \ \ \ Pel\ *src\ =\ s.bufAt(left,\ top);}
+\DoxyCodeLine{00950\ }
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{comment}{//\ 4.1\ apply\ padding\ for\ left\ and\ right}}
+\DoxyCodeLine{00952\ \ \ \ \ \{}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ Pel\ *dstLeft\ \ =\ src\ -\/\ xmargin;}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ Pel\ *dstRight\ =\ src\ +\ width;}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ Pel\ *srcLeft\ \ =\ src\ +\ 0;}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ Pel\ *srcRight\ =\ src\ +\ width\ -\/\ 1;}
+\DoxyCodeLine{00957\ }
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ xmargin;\ x++)}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \ \ dstLeft[x]\ \ =\ *srcLeft;}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ \ \ dstRight[x]\ =\ *srcRight;}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ dstLeft\ +=\ s.stride;}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \ \ dstRight\ +=\ s.stride;}
+\DoxyCodeLine{00967\ \ \ \ \ \ \ \ \ srcLeft\ +=\ s.stride;}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ srcRight\ +=\ s.stride;}
+\DoxyCodeLine{00969\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00970\ \ \ \ \ \}}
+\DoxyCodeLine{00971\ }
+\DoxyCodeLine{00972\ \ \ \ \ \textcolor{comment}{//\ 4.2\ apply\ padding\ on\ bottom}}
+\DoxyCodeLine{00973\ \ \ \ \ Pel\ *srcBottom\ =\ src\ +\ s.stride\ *\ (height\ -\/\ 1)\ -\/\ xmargin;}
+\DoxyCodeLine{00974\ \ \ \ \ Pel\ *dstBottom\ =\ srcBottom\ +\ s.stride;}
+\DoxyCodeLine{00975\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{00976\ \ \ \ \ \{}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ ::memcpy(dstBottom,\ srcBottom,\ \textcolor{keyword}{sizeof}(Pel)*(2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ dstBottom\ +=\ s.stride;}
+\DoxyCodeLine{00979\ \ \ \ \ \}}
+\DoxyCodeLine{00980\ }
+\DoxyCodeLine{00981\ \ \ \ \ \textcolor{comment}{//\ 4.3\ apply\ padding\ for\ top}}
+\DoxyCodeLine{00982\ \ \ \ \ \textcolor{comment}{//\ si\ is\ still\ (-\/marginX,\ SubpictureHeight-\/1)}}
+\DoxyCodeLine{00983\ \ \ \ \ Pel\ *srcTop\ =\ src\ -\/\ xmargin;}
+\DoxyCodeLine{00984\ \ \ \ \ Pel\ *dstTop\ =\ srcTop\ -\/\ s.stride;}
+\DoxyCodeLine{00985\ \ \ \ \ \textcolor{comment}{//\ si\ is\ now\ (-\/marginX,\ 0)}}
+\DoxyCodeLine{00986\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{00987\ \ \ \ \ \{}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ ::memcpy(dstTop,\ srcTop,\ \textcolor{keyword}{sizeof}(Pel)*(2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ dstTop\ -\/=\ s.stride;}
+\DoxyCodeLine{00990\ \ \ \ \ \}}
+\DoxyCodeLine{00991\ }
+\DoxyCodeLine{00992\ \ \ \ \ \textcolor{comment}{//\ Appy\ padding\ for\ recon\ wrap\ buffer}}
+\DoxyCodeLine{00993\ \ \ \ \ \textcolor{keywordflow}{if}\ (cs-\/>sps-\/>getWrapAroundEnabledFlag())}
+\DoxyCodeLine{00994\ \ \ \ \ \{}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \textcolor{comment}{//\ set\ recon\ wrap\ picture}}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ PelBuf\ sWrap\ =\ M\_BUFS(0,\ PIC\_RECON\_WRAP).get(compID);}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ Pel\ *srcWrap\ =\ sWrap.bufAt(left,\ top);}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \textcolor{comment}{//\ apply\ padding\ on\ bottom}}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ Pel\ *srcBottomWrap\ =\ srcWrap\ +\ sWrap.stride\ *\ (height\ -\/\ 1)\ -\/\ xmargin;}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ Pel\ *dstBottomWrap\ =\ srcBottomWrap\ +\ sWrap.stride;}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ ::memcpy(dstBottomWrap,\ srcBottomWrap,\ \textcolor{keyword}{sizeof}(Pel)*(2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01005\ \ \ \ \ \ \ \ \ dstBottomWrap\ +=\ sWrap.stride;}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01007\ }
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \textcolor{comment}{//\ apply\ padding\ for\ top}}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \textcolor{comment}{//\ si\ is\ still\ (-\/marginX,\ SubpictureHeight-\/1)}}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ Pel\ *srcTopWrap\ =\ srcWrap\ -\/\ xmargin;}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ Pel\ *dstTopWrap\ =\ srcTopWrap\ -\/\ sWrap.stride;}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \textcolor{comment}{//\ si\ is\ now\ (-\/marginX,\ 0)}}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \ \ ::memcpy(dstTopWrap,\ srcTopWrap,\ \textcolor{keyword}{sizeof}(Pel)*(2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ dstTopWrap\ -\/=\ sWrap.stride;}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01018\ \ \ \ \ \}}
+\DoxyCodeLine{01019\ \ \ \}\ \textcolor{comment}{//\ end\ of\ for}}
+\DoxyCodeLine{01020\ \}}
+\DoxyCodeLine{01021\ }
+\DoxyCodeLine{01022\ \textcolor{keywordtype}{void}\ Picture::restoreSubPicBorder(\textcolor{keywordtype}{int}\ POC,\ \textcolor{keywordtype}{int}\ subPicX0,\ \textcolor{keywordtype}{int}\ subPicY0,\ \textcolor{keywordtype}{int}\ subPicWidth,\ \textcolor{keywordtype}{int}\ subPicHeight)}
+\DoxyCodeLine{01023\ \{}
+\DoxyCodeLine{01024\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ comp\ =\ 0;\ comp\ <\ getNumberValidComponents(cs-\/>area.chromaFormat);\ comp++)}
+\DoxyCodeLine{01025\ \ \ \{}
+\DoxyCodeLine{01026\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{01027\ }
+\DoxyCodeLine{01028\ \ \ \ \ \textcolor{comment}{//\ 2.1\ measure\ the\ margin\ for\ each\ component}}
+\DoxyCodeLine{01029\ \ \ \ \ \textcolor{keywordtype}{int}\ xmargin\ =\ margin\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01030\ \ \ \ \ \textcolor{keywordtype}{int}\ ymargin\ =\ margin\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01031\ }
+\DoxyCodeLine{01032\ \ \ \ \ \textcolor{comment}{//\ 2.2\ calculate\ the\ origin\ of\ the\ subpicture}}
+\DoxyCodeLine{01033\ \ \ \ \ \textcolor{keywordtype}{int}\ left\ =\ subPicX0\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01034\ \ \ \ \ \textcolor{keywordtype}{int}\ top\ =\ subPicY0\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01035\ }
+\DoxyCodeLine{01036\ \ \ \ \ \textcolor{comment}{//\ 2.3\ calculate\ the\ width/height\ of\ the\ subpicture}}
+\DoxyCodeLine{01037\ \ \ \ \ \textcolor{keywordtype}{int}\ width\ =\ subPicWidth\ >>\ getComponentScaleX(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01038\ \ \ \ \ \textcolor{keywordtype}{int}\ height\ =\ subPicHeight\ >>\ getComponentScaleY(compID,\ cs-\/>area.chromaFormat);}
+\DoxyCodeLine{01039\ }
+\DoxyCodeLine{01040\ \ \ \ \ \textcolor{comment}{//\ 3.1\ set\ reconstructed\ picture}}
+\DoxyCodeLine{01041\ \ \ \ \ PelBuf\ s\ =\ M\_BUFS(0,\ PIC\_RECONSTRUCTION).get(compID);}
+\DoxyCodeLine{01042\ \ \ \ \ Pel\ *src\ =\ s.bufAt(left,\ top);}
+\DoxyCodeLine{01043\ }
+\DoxyCodeLine{01044\ \ \ \ \ \textcolor{comment}{//\ 4.2.1\ copy\ from\ back\ up\ buffer\ to\ recon\ picture}}
+\DoxyCodeLine{01045\ \ \ \ \ PelBuf\ dBufLeft\ =\ m\_bufSubPicLeft.getBuf(compID);}
+\DoxyCodeLine{01046\ \ \ \ \ Pel\ \ \ \ *dstLeft\ =\ dBufLeft.bufAt(0,\ 0);}
+\DoxyCodeLine{01047\ }
+\DoxyCodeLine{01048\ \ \ \ \ \textcolor{comment}{//\ 4.2.2\ set\ back\ up\ buffer\ for\ right}}
+\DoxyCodeLine{01049\ \ \ \ \ PelBuf\ dBufRight\ =\ m\_bufSubPicRight.getBuf(compID);}
+\DoxyCodeLine{01050\ \ \ \ \ Pel\ \ \ \ *dstRight\ =\ dBufRight.bufAt(0,\ 0);}
+\DoxyCodeLine{01051\ }
+\DoxyCodeLine{01052\ \ \ \ \ \textcolor{comment}{//\ 4.2.3\ copy\ to\ recon\ picture\ to\ back\ up\ buffer}}
+\DoxyCodeLine{01053\ \ \ \ \ Pel\ *srcLeft\ \ =\ src\ -\/\ xmargin;}
+\DoxyCodeLine{01054\ \ \ \ \ Pel\ *srcRight\ =\ src\ +\ width;}
+\DoxyCodeLine{01055\ }
+\DoxyCodeLine{01056\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{01057\ \ \ \ \ \{}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ destination\ and\ source\ position\ is\ reversed\ on\ purpose}}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ ::memcpy(srcLeft\ \ +\ y\ *\ s.stride,\ \ dstLeft\ +\ y\ *\ \ dBufLeft.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ xmargin);}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ ::memcpy(srcRight\ +\ y\ *\ s.stride,\ dstRight\ +\ y\ *\ dBufRight.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ xmargin);}
+\DoxyCodeLine{01061\ \ \ \ \ \}}
+\DoxyCodeLine{01062\ }
+\DoxyCodeLine{01063\ }
+\DoxyCodeLine{01064\ \ \ \ \ \textcolor{comment}{//\ 4.3.1\ set\ back\ up\ buffer\ for\ above}}
+\DoxyCodeLine{01065\ \ \ \ \ PelBuf\ dBufTop\ =\ m\_bufSubPicAbove.getBuf(compID);}
+\DoxyCodeLine{01066\ \ \ \ \ Pel\ \ \ \ *dstTop\ =\ dBufTop.bufAt(0,\ 0);}
+\DoxyCodeLine{01067\ }
+\DoxyCodeLine{01068\ \ \ \ \ \textcolor{comment}{//\ 4.3.2\ set\ back\ up\ buffer\ for\ below}}
+\DoxyCodeLine{01069\ \ \ \ \ PelBuf\ dBufBottom\ =\ m\_bufSubPicBelow.getBuf(compID);}
+\DoxyCodeLine{01070\ \ \ \ \ Pel\ \ \ \ *dstBottom\ =\ dBufBottom.bufAt(0,\ 0);}
+\DoxyCodeLine{01071\ }
+\DoxyCodeLine{01072\ \ \ \ \ \textcolor{comment}{//\ 4.3.3\ copy\ to\ recon\ picture\ to\ back\ up\ buffer}}
+\DoxyCodeLine{01073\ \ \ \ \ Pel\ *srcTop\ =\ src\ -\/\ xmargin\ -\/\ ymargin\ *\ s.stride;}
+\DoxyCodeLine{01074\ \ \ \ \ Pel\ *srcBottom\ =\ src\ -\/\ xmargin\ +\ height\ *\ s.stride;}
+\DoxyCodeLine{01075\ }
+\DoxyCodeLine{01076\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{01077\ \ \ \ \ \{}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ ::memcpy(srcTop\ \ \ \ +\ y\ *\ s.stride,\ dstTop\ \ \ \ +\ y\ *\ \ \ \ dBufTop.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ ::memcpy(srcBottom\ +\ y\ *\ s.stride,\ dstBottom\ +\ y\ *\ dBufBottom.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01080\ \ \ \ \ \}}
+\DoxyCodeLine{01081\ }
+\DoxyCodeLine{01082\ \ \ \ \ \textcolor{comment}{//\ restore\ recon\ wrap\ buffer}}
+\DoxyCodeLine{01083\ \ \ \ \ \textcolor{keywordflow}{if}\ (cs-\/>sps-\/>getWrapAroundEnabledFlag())}
+\DoxyCodeLine{01084\ \ \ \ \ \{}
+\DoxyCodeLine{01085\ \ \ \ \ \ \ \textcolor{comment}{//\ set\ recon\ wrap\ picture}}
+\DoxyCodeLine{01086\ \ \ \ \ \ \ PelBuf\ sWrap\ =\ M\_BUFS(0,\ PIC\_RECON\_WRAP).get(compID);}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ Pel\ *srcWrap\ =\ sWrap.bufAt(left,\ top);}
+\DoxyCodeLine{01088\ }
+\DoxyCodeLine{01089\ \ \ \ \ \ \ \textcolor{comment}{//\ set\ back\ up\ buffer\ for\ above}}
+\DoxyCodeLine{01090\ \ \ \ \ \ \ PelBuf\ dBufTopWrap\ =\ m\_bufWrapSubPicAbove.getBuf(compID);}
+\DoxyCodeLine{01091\ \ \ \ \ \ \ Pel\ \ \ \ *dstTopWrap\ =\ dBufTopWrap.bufAt(0,\ 0);}
+\DoxyCodeLine{01092\ }
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \textcolor{comment}{//\ set\ back\ up\ buffer\ for\ below}}
+\DoxyCodeLine{01094\ \ \ \ \ \ \ PelBuf\ dBufBottomWrap\ =\ m\_bufWrapSubPicBelow.getBuf(compID);}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ Pel\ \ \ \ *dstBottomWrap\ =\ dBufBottomWrap.bufAt(0,\ 0);}
+\DoxyCodeLine{01096\ }
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \textcolor{comment}{//\ copy\ to\ recon\ wrap\ picture\ from\ back\ up\ buffer}}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ Pel\ *srcTopWrap\ =\ srcWrap\ -\/\ xmargin\ -\/\ ymargin\ *\ sWrap.stride;}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ Pel\ *srcBottomWrap\ =\ srcWrap\ -\/\ xmargin\ +\ height\ *\ sWrap.stride;}
+\DoxyCodeLine{01100\ }
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++)}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \ \ ::memcpy(srcTopWrap\ \ \ \ +\ y\ *\ sWrap.stride,\ dstTopWrap\ \ \ \ +\ y\ *\ \ \ \ dBufTopWrap.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ ::memcpy(srcBottomWrap\ +\ y\ *\ sWrap.stride,\ dstBottomWrap\ +\ y\ *\ dBufBottomWrap.stride,\ \textcolor{keyword}{sizeof}(Pel)\ *\ (2\ *\ xmargin\ +\ width));}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01106\ \ \ \ \ \}}
+\DoxyCodeLine{01107\ \ \ \}}
+\DoxyCodeLine{01108\ }
+\DoxyCodeLine{01109\ \ \ \textcolor{comment}{//\ 5.0\ destroy\ the\ back\ up\ memory}}
+\DoxyCodeLine{01110\ \ \ m\_bufSubPicAbove.destroy();}
+\DoxyCodeLine{01111\ \ \ m\_bufSubPicBelow.destroy();}
+\DoxyCodeLine{01112\ \ \ m\_bufSubPicLeft.destroy();}
+\DoxyCodeLine{01113\ \ \ m\_bufSubPicRight.destroy();}
+\DoxyCodeLine{01114\ \ \ m\_bufWrapSubPicAbove.destroy();}
+\DoxyCodeLine{01115\ \ \ m\_bufWrapSubPicBelow.destroy();}
+\DoxyCodeLine{01116\ \}}
+\DoxyCodeLine{01117\ }
+\DoxyCodeLine{01118\ \textcolor{keywordtype}{void}\ Picture::extendPicBorder(\ \textcolor{keyword}{const}\ PPS\ *pps\ )}
+\DoxyCodeLine{01119\ \{}
+\DoxyCodeLine{01120\ \ \ \textcolor{keywordflow}{if}\ (\ m\_bIsBorderExtended\ )}
+\DoxyCodeLine{01121\ \ \ \{}
+\DoxyCodeLine{01122\ \ \ \ \ \textcolor{keywordflow}{if}(\ isWrapAroundEnabled(\ pps\ )\ \&\&\ (\ !m\_wrapAroundValid\ ||\ m\_wrapAroundOffset\ !=\ pps-\/>getWrapAroundOffset()\ )\ )}
+\DoxyCodeLine{01123\ \ \ \ \ \{}
+\DoxyCodeLine{01124\ \ \ \ \ \ \ extendWrapBorder(\ pps\ );}
+\DoxyCodeLine{01125\ \ \ \ \ \}}
+\DoxyCodeLine{01126\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01127\ \ \ \}}
+\DoxyCodeLine{01128\ }
+\DoxyCodeLine{01129\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ comp=0;\ comp<getNumberValidComponents(\ cs-\/>area.chromaFormat\ );\ comp++)}
+\DoxyCodeLine{01130\ \ \ \{}
+\DoxyCodeLine{01131\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(\ comp\ );}
+\DoxyCodeLine{01132\ \ \ \ \ PelBuf\ p\ =\ M\_BUFS(\ 0,\ PIC\_RECONSTRUCTION\ ).get(\ compID\ );}
+\DoxyCodeLine{01133\ \ \ \ \ Pel\ *piTxt\ =\ p.bufAt(0,0);}
+\DoxyCodeLine{01134\ \ \ \ \ \textcolor{keywordtype}{int}\ xmargin\ =\ margin\ >>\ getComponentScaleX(\ compID,\ cs-\/>area.chromaFormat\ );}
+\DoxyCodeLine{01135\ \ \ \ \ \textcolor{keywordtype}{int}\ ymargin\ =\ margin\ >>\ getComponentScaleY(\ compID,\ cs-\/>area.chromaFormat\ );}
+\DoxyCodeLine{01136\ }
+\DoxyCodeLine{01137\ \ \ \ \ Pel*\ \ pi\ =\ piTxt;}
+\DoxyCodeLine{01138\ \ \ \ \ \textcolor{comment}{//\ do\ left\ and\ right\ margins}}
+\DoxyCodeLine{01139\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ p.height;\ y++)}
+\DoxyCodeLine{01140\ \ \ \ \ \{}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ xmargin;\ x++)}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ pi[-\/xmargin\ +\ x]\ =\ pi[0];}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \ \ pi[p.width\ +\ x]\ \ =\ pi[p.width\ -\/\ 1];}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ pi\ +=\ p.stride;}
+\DoxyCodeLine{01147\ \ \ \ \ \}}
+\DoxyCodeLine{01148\ }
+\DoxyCodeLine{01149\ \ \ \ \ \textcolor{comment}{//\ pi\ is\ now\ the\ (0,height)\ (bottom\ left\ of\ image\ within\ bigger\ picture}}
+\DoxyCodeLine{01150\ \ \ \ \ pi\ -\/=\ (p.stride\ +\ xmargin);}
+\DoxyCodeLine{01151\ \ \ \ \ \textcolor{comment}{//\ pi\ is\ now\ the\ (-\/marginX,\ height-\/1)}}
+\DoxyCodeLine{01152\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++\ )}
+\DoxyCodeLine{01153\ \ \ \ \ \{}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ ::memcpy(\ pi\ +\ (y+1)*p.stride,\ pi,\ \textcolor{keyword}{sizeof}(Pel)*(p.width\ +\ (xmargin\ <<\ 1)));}
+\DoxyCodeLine{01155\ \ \ \ \ \}}
+\DoxyCodeLine{01156\ }
+\DoxyCodeLine{01157\ \ \ \ \ \textcolor{comment}{//\ pi\ is\ still\ (-\/marginX,\ height-\/1)}}
+\DoxyCodeLine{01158\ \ \ \ \ pi\ -\/=\ ((p.height-\/1)\ *\ p.stride);}
+\DoxyCodeLine{01159\ \ \ \ \ \textcolor{comment}{//\ pi\ is\ now\ (-\/marginX,\ 0)}}
+\DoxyCodeLine{01160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++\ )}
+\DoxyCodeLine{01161\ \ \ \ \ \{}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ ::memcpy(\ pi\ -\/\ (y+1)*p.stride,\ pi,\ \textcolor{keyword}{sizeof}(Pel)*(p.width\ +\ (xmargin<<1))\ );}
+\DoxyCodeLine{01163\ \ \ \ \ \}}
+\DoxyCodeLine{01164\ }
+\DoxyCodeLine{01165\ \ \ \ \ \textcolor{comment}{//\ reference\ picture\ with\ horizontal\ wrapped\ boundary}}
+\DoxyCodeLine{01166\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ isWrapAroundEnabled(\ pps\ )\ )}
+\DoxyCodeLine{01167\ \ \ \ \ \{}
+\DoxyCodeLine{01168\ \ \ \ \ \ \ extendWrapBorder(\ pps\ );}
+\DoxyCodeLine{01169\ \ \ \ \ \}}
+\DoxyCodeLine{01170\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01171\ \ \ \ \ \{}
+\DoxyCodeLine{01172\ \ \ \ \ \ \ m\_wrapAroundValid\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01173\ \ \ \ \ \ \ m\_wrapAroundOffset\ =\ 0;}
+\DoxyCodeLine{01174\ \ \ \ \ \}}
+\DoxyCodeLine{01175\ \ \ \}}
+\DoxyCodeLine{01176\ }
+\DoxyCodeLine{01177\ \ \ m\_bIsBorderExtended\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01178\ \}}
+\DoxyCodeLine{01179\ }
+\DoxyCodeLine{01180\ \textcolor{keywordtype}{void}\ Picture::extendWrapBorder(\ \textcolor{keyword}{const}\ PPS\ *pps\ )}
+\DoxyCodeLine{01181\ \{}
+\DoxyCodeLine{01182\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ comp=0;\ comp<getNumberValidComponents(\ cs-\/>area.chromaFormat\ );\ comp++)}
+\DoxyCodeLine{01183\ \ \ \{}
+\DoxyCodeLine{01184\ \ \ \ \ ComponentID\ compID\ =\ ComponentID(\ comp\ );}
+\DoxyCodeLine{01185\ \ \ \ \ PelBuf\ p\ =\ M\_BUFS(\ 0,\ PIC\_RECON\_WRAP\ ).get(\ compID\ );}
+\DoxyCodeLine{01186\ \ \ \ \ p.copyFrom(M\_BUFS(\ 0,\ PIC\_RECONSTRUCTION\ ).get(\ compID\ ));}
+\DoxyCodeLine{01187\ \ \ \ \ Pel\ *piTxt\ =\ p.bufAt(0,0);}
+\DoxyCodeLine{01188\ \ \ \ \ \textcolor{keywordtype}{int}\ xmargin\ =\ margin\ >>\ getComponentScaleX(\ compID,\ cs-\/>area.chromaFormat\ );}
+\DoxyCodeLine{01189\ \ \ \ \ \textcolor{keywordtype}{int}\ ymargin\ =\ margin\ >>\ getComponentScaleY(\ compID,\ cs-\/>area.chromaFormat\ );}
+\DoxyCodeLine{01190\ \ \ \ \ Pel*\ \ pi\ =\ piTxt;}
+\DoxyCodeLine{01191\ \ \ \ \ \textcolor{keywordtype}{int}\ xoffset\ =\ pps-\/>getWrapAroundOffset()\ >>\ getComponentScaleX(\ compID,\ cs-\/>area.chromaFormat\ );}
+\DoxyCodeLine{01192\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ p.height;\ y++)}
+\DoxyCodeLine{01193\ \ \ \ \ \{}
+\DoxyCodeLine{01194\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ xmargin;\ x++\ )}
+\DoxyCodeLine{01195\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ x\ <\ xoffset\ )}
+\DoxyCodeLine{01197\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01198\ \ \ \ \ \ \ \ \ \ \ pi[\ -\/x\ -\/\ 1\ ]\ =\ pi[\ -\/x\ -\/\ 1\ +\ xoffset\ ];}
+\DoxyCodeLine{01199\ \ \ \ \ \ \ \ \ \ \ pi[\ \ p.width\ +\ x\ ]\ =\ pi[\ p.width\ +\ x\ -\/\ xoffset\ ];}
+\DoxyCodeLine{01200\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01202\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01203\ \ \ \ \ \ \ \ \ \ \ pi[\ -\/x\ -\/\ 1\ ]\ =\ pi[\ 0\ ];}
+\DoxyCodeLine{01204\ \ \ \ \ \ \ \ \ \ \ pi[\ \ p.width\ +\ x\ ]\ =\ pi[\ p.width\ -\/\ 1\ ];}
+\DoxyCodeLine{01205\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01206\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01207\ \ \ \ \ \ \ pi\ +=\ p.stride;}
+\DoxyCodeLine{01208\ \ \ \ \ \}}
+\DoxyCodeLine{01209\ \ \ \ \ pi\ -\/=\ (p.stride\ +\ xmargin);}
+\DoxyCodeLine{01210\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++\ )}
+\DoxyCodeLine{01211\ \ \ \ \ \{}
+\DoxyCodeLine{01212\ \ \ \ \ \ \ ::memcpy(\ pi\ +\ (y+1)*p.stride,\ pi,\ \textcolor{keyword}{sizeof}(Pel)*(p.width\ +\ (xmargin\ <<\ 1)));}
+\DoxyCodeLine{01213\ \ \ \ \ \}}
+\DoxyCodeLine{01214\ \ \ \ \ pi\ -\/=\ ((p.height-\/1)\ *\ p.stride);}
+\DoxyCodeLine{01215\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ ymargin;\ y++\ )}
+\DoxyCodeLine{01216\ \ \ \ \ \{}
+\DoxyCodeLine{01217\ \ \ \ \ \ \ ::memcpy(\ pi\ -\/\ (y+1)*p.stride,\ pi,\ \textcolor{keyword}{sizeof}(Pel)*(p.width\ +\ (xmargin<<1))\ );}
+\DoxyCodeLine{01218\ \ \ \ \ \}}
+\DoxyCodeLine{01219\ \ \ \}}
+\DoxyCodeLine{01220\ \ \ m\_wrapAroundValid\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01221\ \ \ m\_wrapAroundOffset\ =\ pps-\/>getWrapAroundOffset();}
+\DoxyCodeLine{01222\ \}}
+\DoxyCodeLine{01223\ }
+\DoxyCodeLine{01224\ PelBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )}
+\DoxyCodeLine{01225\ \{}
+\DoxyCodeLine{01226\ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ (\ type\ ==\ PIC\_ORIGINAL\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\ ||\ type\ ==\ PIC\_FILTERED\_ORIGINAL\ ||\ type\ ==\ PIC\_ORIGINAL\_INPUT\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\_INPUT\ ||\ type\ ==\ PIC\_FILTERED\_ORIGINAL\_INPUT\ )\ ?\ 0\ :\ scheduler.getSplitPicId(),\ type\ ).getBuf(\ compID\ );}
+\DoxyCodeLine{01227\ \}}
+\DoxyCodeLine{01228\ }
+\DoxyCodeLine{01229\ \textcolor{keyword}{const}\ CPelBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{01230\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{01231\ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ (\ type\ ==\ PIC\_ORIGINAL\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\ ||\ type\ ==\ PIC\_FILTERED\_ORIGINAL\ ||\ type\ ==\ PIC\_ORIGINAL\_INPUT\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\_INPUT\ ||\ type\ ==\ PIC\_FILTERED\_ORIGINAL\_INPUT\ )\ ?\ 0\ :\ scheduler.getSplitPicId(),\ type\ ).getBuf(\ compID\ );}
+\DoxyCodeLine{01232\ \}}
+\DoxyCodeLine{01233\ }
+\DoxyCodeLine{01234\ PelBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ CompArea\ \&blk,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )}
+\DoxyCodeLine{01235\ \{}
+\DoxyCodeLine{01236\ \ \ \textcolor{keywordflow}{if}(\ !blk.valid()\ )}
+\DoxyCodeLine{01237\ \ \ \{}
+\DoxyCodeLine{01238\ \ \ \ \ \textcolor{keywordflow}{return}\ PelBuf();}
+\DoxyCodeLine{01239\ \ \ \}}
+\DoxyCodeLine{01240\ }
+\DoxyCodeLine{01241\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{01242\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jId\ =\ (\ type\ ==\ PIC\_ORIGINAL\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\ ||\ type\ ==\ PIC\_ORIGINAL\_INPUT\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\_INPUT\ )\ ?\ 0\ :\ scheduler.getSplitPicId();}
+\DoxyCodeLine{01243\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01244\ \textcolor{preprocessor}{\#if\ !KEEP\_PRED\_AND\_RESI\_SIGNALS}}
+\DoxyCodeLine{01245\ \ \ \textcolor{keywordflow}{if}(\ type\ ==\ PIC\_RESIDUAL\ ||\ type\ ==\ PIC\_PREDICTION\ )}
+\DoxyCodeLine{01246\ \ \ \{}
+\DoxyCodeLine{01247\ \ \ \ \ CompArea\ localBlk\ =\ blk;}
+\DoxyCodeLine{01248\ \ \ \ \ localBlk.x\ \&=\ (\ cs-\/>pcv-\/>maxCUWidthMask\ \ >>\ getComponentScaleX(\ blk.compID,\ blk.chromaFormat\ )\ );}
+\DoxyCodeLine{01249\ \ \ \ \ localBlk.y\ \&=\ (\ cs-\/>pcv-\/>maxCUHeightMask\ >>\ getComponentScaleY(\ blk.compID,\ blk.chromaFormat\ )\ );}
+\DoxyCodeLine{01250\ }
+\DoxyCodeLine{01251\ \ \ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ jId,\ type\ ).getBuf(\ localBlk\ );}
+\DoxyCodeLine{01252\ \ \ \}}
+\DoxyCodeLine{01253\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01254\ }
+\DoxyCodeLine{01255\ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ jId,\ type\ ).getBuf(\ blk\ );}
+\DoxyCodeLine{01256\ \}}
+\DoxyCodeLine{01257\ }
+\DoxyCodeLine{01258\ \textcolor{keyword}{const}\ CPelBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ CompArea\ \&blk,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{01259\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{01260\ \ \ \textcolor{keywordflow}{if}(\ !blk.valid()\ )}
+\DoxyCodeLine{01261\ \ \ \{}
+\DoxyCodeLine{01262\ \ \ \ \ \textcolor{keywordflow}{return}\ PelBuf();}
+\DoxyCodeLine{01263\ \ \ \}}
+\DoxyCodeLine{01264\ }
+\DoxyCodeLine{01265\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{01266\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jId\ =\ (\ type\ ==\ PIC\_ORIGINAL\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\ )\ ?\ 0\ :\ scheduler.getSplitPicId();}
+\DoxyCodeLine{01267\ }
+\DoxyCodeLine{01268\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01269\ \textcolor{preprocessor}{\#if\ !KEEP\_PRED\_AND\_RESI\_SIGNALS}}
+\DoxyCodeLine{01270\ \ \ \textcolor{keywordflow}{if}(\ type\ ==\ PIC\_RESIDUAL\ ||\ type\ ==\ PIC\_PREDICTION\ )}
+\DoxyCodeLine{01271\ \ \ \{}
+\DoxyCodeLine{01272\ \ \ \ \ CompArea\ localBlk\ =\ blk;}
+\DoxyCodeLine{01273\ \ \ \ \ localBlk.x\ \&=\ (\ cs-\/>pcv-\/>maxCUWidthMask\ \ >>\ getComponentScaleX(\ blk.compID,\ blk.chromaFormat\ )\ );}
+\DoxyCodeLine{01274\ \ \ \ \ localBlk.y\ \&=\ (\ cs-\/>pcv-\/>maxCUHeightMask\ >>\ getComponentScaleY(\ blk.compID,\ blk.chromaFormat\ )\ );}
+\DoxyCodeLine{01275\ }
+\DoxyCodeLine{01276\ \ \ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ jId,\ type\ ).getBuf(\ localBlk\ );}
+\DoxyCodeLine{01277\ \ \ \}}
+\DoxyCodeLine{01278\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01279\ }
+\DoxyCodeLine{01280\ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ jId,\ type\ ).getBuf(\ blk\ );}
+\DoxyCodeLine{01281\ \}}
+\DoxyCodeLine{01282\ }
+\DoxyCodeLine{01283\ PelUnitBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ UnitArea\ \&unit,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )}
+\DoxyCodeLine{01284\ \{}
+\DoxyCodeLine{01285\ \ \ \textcolor{keywordflow}{if}(\ chromaFormat\ ==\ CHROMA\_400\ )}
+\DoxyCodeLine{01286\ \ \ \{}
+\DoxyCodeLine{01287\ \ \ \ \ \textcolor{keywordflow}{return}\ PelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y(),\ type\ )\ );}
+\DoxyCodeLine{01288\ \ \ \}}
+\DoxyCodeLine{01289\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01290\ \ \ \{}
+\DoxyCodeLine{01291\ \ \ \ \ \textcolor{keywordflow}{return}\ PelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y(),\ type\ ),\ getBuf(\ unit.Cb(),\ type\ ),\ getBuf(\ unit.Cr(),\ type\ )\ );}
+\DoxyCodeLine{01292\ \ \ \}}
+\DoxyCodeLine{01293\ \}}
+\DoxyCodeLine{01294\ }
+\DoxyCodeLine{01295\ \textcolor{keyword}{const}\ CPelUnitBuf\ Picture::getBuf(\ \textcolor{keyword}{const}\ UnitArea\ \&unit,\ \textcolor{keyword}{const}\ PictureType\ \&type\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{01296\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{01297\ \ \ \textcolor{keywordflow}{if}(\ chromaFormat\ ==\ CHROMA\_400\ )}
+\DoxyCodeLine{01298\ \ \ \{}
+\DoxyCodeLine{01299\ \ \ \ \ \textcolor{keywordflow}{return}\ CPelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y(),\ type\ )\ );}
+\DoxyCodeLine{01300\ \ \ \}}
+\DoxyCodeLine{01301\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01302\ \ \ \{}
+\DoxyCodeLine{01303\ \ \ \ \ \textcolor{keywordflow}{return}\ CPelUnitBuf(\ chromaFormat,\ getBuf(\ unit.Y(),\ type\ ),\ getBuf(\ unit.Cb(),\ type\ ),\ getBuf(\ unit.Cr(),\ type\ )\ );}
+\DoxyCodeLine{01304\ \ \ \}}
+\DoxyCodeLine{01305\ \}}
+\DoxyCodeLine{01306\ }
+\DoxyCodeLine{01307\ Pel*\ Picture::getOrigin(\ \textcolor{keyword}{const}\ PictureType\ \&type,\ \textcolor{keyword}{const}\ ComponentID\ compID\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{01308\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{01309\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{01310\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jId\ =\ (\ type\ ==\ PIC\_ORIGINAL\ ||\ type\ ==\ PIC\_TRUE\_ORIGINAL\ )\ ?\ 0\ :\ scheduler.getSplitPicId();}
+\DoxyCodeLine{01311\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01312\ \ \ \textcolor{keywordflow}{return}\ M\_BUFS(\ jId,\ type\ ).getOrigin(\ compID\ );}
+\DoxyCodeLine{01313\ \}}
+\DoxyCodeLine{01314\ }
+\DoxyCodeLine{01315\ \textcolor{keywordtype}{void}\ Picture::createSpliceIdx(\textcolor{keywordtype}{int}\ nums)}
+\DoxyCodeLine{01316\ \{}
+\DoxyCodeLine{01317\ \ \ m\_ctuNums\ =\ nums;}
+\DoxyCodeLine{01318\ \ \ m\_spliceIdx\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}[m\_ctuNums];}
+\DoxyCodeLine{01319\ \ \ memset(m\_spliceIdx,\ 0,\ m\_ctuNums\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{01320\ \}}
+\DoxyCodeLine{01321\ }
+\DoxyCodeLine{01322\ \textcolor{keywordtype}{bool}\ Picture::getSpliceFull()}
+\DoxyCodeLine{01323\ \{}
+\DoxyCodeLine{01324\ \ \ \textcolor{keywordtype}{int}\ count\ =\ 0;}
+\DoxyCodeLine{01325\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_ctuNums;\ i++)}
+\DoxyCodeLine{01326\ \ \ \{}
+\DoxyCodeLine{01327\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_spliceIdx[i]\ !=\ 0)}
+\DoxyCodeLine{01328\ \ \ \ \ \{}
+\DoxyCodeLine{01329\ \ \ \ \ \ \ count++;}
+\DoxyCodeLine{01330\ \ \ \ \ \}}
+\DoxyCodeLine{01331\ \ \ \}}
+\DoxyCodeLine{01332\ \ \ \textcolor{keywordflow}{if}\ (count\ <\ m\_ctuNums\ *\ 0.25)}
+\DoxyCodeLine{01333\ \ \ \{}
+\DoxyCodeLine{01334\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01335\ \ \ \}}
+\DoxyCodeLine{01336\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01337\ \}}
+\DoxyCodeLine{01338\ }
+\DoxyCodeLine{01339\ \textcolor{keywordtype}{void}\ Picture::addPictureToHashMapForInter()}
+\DoxyCodeLine{01340\ \{}
+\DoxyCodeLine{01341\ \ \ \textcolor{keywordtype}{int}\ picWidth\ =\ slices[0]-\/>getPPS()-\/>getPicWidthInLumaSamples();}
+\DoxyCodeLine{01342\ \ \ \textcolor{keywordtype}{int}\ picHeight\ =\ slices[0]-\/>getPPS()-\/>getPicHeightInLumaSamples();}
+\DoxyCodeLine{01343\ \ \ uint32\_t*\ blockHashValues[2][2];}
+\DoxyCodeLine{01344\ \ \ \textcolor{keywordtype}{bool}*\ bIsBlockSame[2][3];}
+\DoxyCodeLine{01345\ }
+\DoxyCodeLine{01346\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{01347\ \ \ \{}
+\DoxyCodeLine{01348\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{01349\ \ \ \ \ \{}
+\DoxyCodeLine{01350\ \ \ \ \ \ \ blockHashValues[i][j]\ =\ \textcolor{keyword}{new}\ uint32\_t[picWidth*picHeight];}
+\DoxyCodeLine{01351\ \ \ \ \ \}}
+\DoxyCodeLine{01352\ }
+\DoxyCodeLine{01353\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 3;\ j++)}
+\DoxyCodeLine{01354\ \ \ \ \ \{}
+\DoxyCodeLine{01355\ \ \ \ \ \ \ bIsBlockSame[i][j]\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{bool}[picWidth*picHeight];}
+\DoxyCodeLine{01356\ \ \ \ \ \}}
+\DoxyCodeLine{01357\ \ \ \}}
+\DoxyCodeLine{01358\ \ \ m\_hashMap.create(picWidth,\ picHeight);}
+\DoxyCodeLine{01359\ \ \ m\_hashMap.generateBlock2x2HashValue(getOrigBuf(),\ picWidth,\ picHeight,\ slices[0]-\/>getSPS()-\/>getBitDepths(),\ blockHashValues[0],\ bIsBlockSame[0]);\textcolor{comment}{//2x2}}
+\DoxyCodeLine{01360\ \ \ m\_hashMap.generateBlockHashValue(picWidth,\ picHeight,\ 4,\ 4,\ blockHashValues[0],\ blockHashValues[1],\ bIsBlockSame[0],\ bIsBlockSame[1]);\textcolor{comment}{//4x4}}
+\DoxyCodeLine{01361\ \ \ m\_hashMap.addToHashMapByRowWithPrecalData(blockHashValues[1],\ bIsBlockSame[1][2],\ picWidth,\ picHeight,\ 4,\ 4);}
+\DoxyCodeLine{01362\ }
+\DoxyCodeLine{01363\ \ \ m\_hashMap.generateBlockHashValue(picWidth,\ picHeight,\ 8,\ 8,\ blockHashValues[1],\ blockHashValues[0],\ bIsBlockSame[1],\ bIsBlockSame[0]);\textcolor{comment}{//8x8}}
+\DoxyCodeLine{01364\ \ \ m\_hashMap.addToHashMapByRowWithPrecalData(blockHashValues[0],\ bIsBlockSame[0][2],\ picWidth,\ picHeight,\ 8,\ 8);}
+\DoxyCodeLine{01365\ }
+\DoxyCodeLine{01366\ \ \ m\_hashMap.generateBlockHashValue(picWidth,\ picHeight,\ 16,\ 16,\ blockHashValues[0],\ blockHashValues[1],\ bIsBlockSame[0],\ bIsBlockSame[1]);\textcolor{comment}{//16x16}}
+\DoxyCodeLine{01367\ \ \ m\_hashMap.addToHashMapByRowWithPrecalData(blockHashValues[1],\ bIsBlockSame[1][2],\ picWidth,\ picHeight,\ 16,\ 16);}
+\DoxyCodeLine{01368\ }
+\DoxyCodeLine{01369\ \ \ m\_hashMap.generateBlockHashValue(picWidth,\ picHeight,\ 32,\ 32,\ blockHashValues[1],\ blockHashValues[0],\ bIsBlockSame[1],\ bIsBlockSame[0]);\textcolor{comment}{//32x32}}
+\DoxyCodeLine{01370\ \ \ m\_hashMap.addToHashMapByRowWithPrecalData(blockHashValues[0],\ bIsBlockSame[0][2],\ picWidth,\ picHeight,\ 32,\ 32);}
+\DoxyCodeLine{01371\ }
+\DoxyCodeLine{01372\ \ \ m\_hashMap.generateBlockHashValue(picWidth,\ picHeight,\ 64,\ 64,\ blockHashValues[0],\ blockHashValues[1],\ bIsBlockSame[0],\ bIsBlockSame[1]);\textcolor{comment}{//64x64}}
+\DoxyCodeLine{01373\ \ \ m\_hashMap.addToHashMapByRowWithPrecalData(blockHashValues[1],\ bIsBlockSame[1][2],\ picWidth,\ picHeight,\ 64,\ 64);}
+\DoxyCodeLine{01374\ }
+\DoxyCodeLine{01375\ \ \ m\_hashMap.setInitial();}
+\DoxyCodeLine{01376\ }
+\DoxyCodeLine{01377\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{01378\ \ \ \{}
+\DoxyCodeLine{01379\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{01380\ \ \ \ \ \{}
+\DoxyCodeLine{01381\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ blockHashValues[i][j];}
+\DoxyCodeLine{01382\ \ \ \ \ \}}
+\DoxyCodeLine{01383\ }
+\DoxyCodeLine{01384\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 3;\ j++)}
+\DoxyCodeLine{01385\ \ \ \ \ \{}
+\DoxyCodeLine{01386\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ bIsBlockSame[i][j];}
+\DoxyCodeLine{01387\ \ \ \ \ \}}
+\DoxyCodeLine{01388\ \ \ \}}
+\DoxyCodeLine{01389\ \}}
+\DoxyCodeLine{01390\ }
+\DoxyCodeLine{01391\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+
+\end{DoxyCode}

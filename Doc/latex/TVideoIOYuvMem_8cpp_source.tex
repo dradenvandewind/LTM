@@ -1,0 +1,930 @@
+\doxysection{TVideo\+IOYuv\+Mem.\+cpp}
+\label{TVideoIOYuvMem_8cpp_source}\index{deps/base\_hevc/src/TVideoIOYuvMem.cpp@{deps/base\_hevc/src/TVideoIOYuvMem.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Modified\ for\ LCEVC\ test\ model\ to\ output\ via\ local\ callback}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}TLibCommon/TComRom.h"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}TVideoIOYuvMem.h"{}}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Local\ Functions}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00069\ \textcolor{keyword}{static}\ Void\ scalePlane(Pel*\ img,\ \textcolor{keyword}{const}\ UInt\ stride,\ \textcolor{keyword}{const}\ UInt\ width,\ \textcolor{keyword}{const}\ UInt\ height,\ Int\ shiftbits,\ Pel\ minval,\ Pel\ maxval)}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \textcolor{keywordflow}{if}\ (shiftbits\ >\ 0)}
+\DoxyCodeLine{00072\ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ y\ =\ 0;\ y\ <\ height;\ y++,\ img+=stride)}
+\DoxyCodeLine{00074\ \ \ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ img[x]\ <<=\ shiftbits;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (shiftbits\ <\ 0)}
+\DoxyCodeLine{00082\ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ shiftbits=-\/shiftbits;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ Pel\ rounding\ =\ 1\ <<\ (shiftbits-\/1);}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ y\ =\ 0;\ y\ <\ height;\ y++,\ img+=stride)}
+\DoxyCodeLine{00087\ \ \ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ img[x]\ =\ Clip3(minval,\ maxval,\ Pel((img[x]\ +\ rounding)\ >>\ shiftbits));}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ \ \ \}}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{static}\ Void}
+\DoxyCodeLine{00097\ copyPlane(\textcolor{keyword}{const}\ TComPicYuv\ \&src,\ \textcolor{keyword}{const}\ ComponentID\ srcPlane,\ TComPicYuv\ \&dest,\ \textcolor{keyword}{const}\ ComponentID\ destPlane);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ Public\ member\ functions}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00119\ Void\ TVideoIOYuvMem::open(Writer\ *writer,\ \textcolor{keyword}{const}\ Int\ fileBitDepth[MAX\_NUM\_CHANNEL\_TYPE],\ \textcolor{keyword}{const}\ Int\ MSBExtendedBitDepth[MAX\_NUM\_CHANNEL\_TYPE],\ \textcolor{keyword}{const}\ Int\ internalBitDepth[MAX\_NUM\_CHANNEL\_TYPE]\ )}
+\DoxyCodeLine{00120\ \{}
+\DoxyCodeLine{00121\ \ \ \textcolor{comment}{//NOTE:\ files\ cannot\ have\ bit\ depth\ greater\ than\ 16}}
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordflow}{for}(UInt\ ch=0;\ ch<MAX\_NUM\_CHANNEL\_TYPE;\ ch++)}
+\DoxyCodeLine{00123\ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ m\_fileBitdepth\ \ \ \ \ \ \ [ch]\ =\ std::min<UInt>(fileBitDepth[ch],\ 16);}
+\DoxyCodeLine{00125\ \ \ \ \ m\_MSBExtendedBitDepth[ch]\ =\ MSBExtendedBitDepth[ch];}
+\DoxyCodeLine{00126\ \ \ \ \ m\_bitdepthShift\ \ \ \ \ \ [ch]\ =\ internalBitDepth[ch]\ -\/\ m\_MSBExtendedBitDepth[ch];}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fileBitdepth[ch]\ >\ 16)}
+\DoxyCodeLine{00129\ \ \ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)nWARNING:\ Cannot\ write\ a\ yuv\ file\ of\ bit\ depth\ greater\ than\ 16\ -\/\ output\ will\ be\ right-\/shifted\ down\ to\ 16-\/bit\ precision\(\backslash\)n"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00131\ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ m\_writer\ =\ writer;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ Void\ TVideoIOYuvMem::close()}
+\DoxyCodeLine{00140\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ m\_writer\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ Bool\ TVideoIOYuvMem::isEof()}
+\DoxyCodeLine{00145\ \{}
+\DoxyCodeLine{00146\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ Bool\ TVideoIOYuvMem::isFail()}
+\DoxyCodeLine{00150\ \{}
+\DoxyCodeLine{00151\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00160\ Void\ TVideoIOYuvMem::skipFrames(Int\ numFrames,\ UInt\ width,\ UInt\ height,\ ChromaFormat\ format)}
+\DoxyCodeLine{00161\ \{}
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordflow}{if}\ (numFrames==0)}
+\DoxyCodeLine{00163\ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00165\ \ \ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00168\ \ \ \textcolor{comment}{//set\ the\ frame\ size\ according\ to\ the\ chroma\ format}}
+\DoxyCodeLine{00169\ \ \ streamoff\ frameSize\ =\ 0;}
+\DoxyCodeLine{00170\ \ \ UInt\ wordsize=1;\ \textcolor{comment}{//\ default\ to\ 8-\/bit,\ unless\ a\ channel\ with\ more\ than\ 8-\/bits\ is\ detected.}}
+\DoxyCodeLine{00171\ \ \ \textcolor{keywordflow}{for}\ (UInt\ component\ =\ 0;\ component\ <\ getNumberValidComponents(format);\ component++)}
+\DoxyCodeLine{00172\ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ ComponentID\ compID=ComponentID(component);}
+\DoxyCodeLine{00174\ \ \ \ \ frameSize\ +=\ (width\ >>\ getComponentScaleX(compID,\ format))\ *\ (height\ >>\ getComponentScaleY(compID,\ format));}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fileBitdepth[toChannelType(compID)]\ >\ 8)}
+\DoxyCodeLine{00176\ \ \ \ \ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ wordsize=2;}
+\DoxyCodeLine{00178\ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \}}
+\DoxyCodeLine{00180\ \ \ frameSize\ *=\ wordsize;}
+\DoxyCodeLine{00181\ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \textcolor{keyword}{const}\ streamoff\ offset\ =\ frameSize\ *\ numFrames;}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00186\ \ \ \textcolor{comment}{/*\ attempt\ to\ seek\ */}}
+\DoxyCodeLine{00187\ \ \ \textcolor{keywordflow}{if}\ (!!m\_cHandle.seekg(offset,\ ios::cur))}
+\DoxyCodeLine{00188\ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{return};\ \textcolor{comment}{/*\ success\ */}}
+\DoxyCodeLine{00190\ \ \ \}}
+\DoxyCodeLine{00191\ \ \ m\_cHandle.clear();}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \textcolor{comment}{/*\ fall\ back\ to\ consuming\ the\ input\ */}}
+\DoxyCodeLine{00194\ \ \ TChar\ buf[512];}
+\DoxyCodeLine{00195\ \ \ \textcolor{keyword}{const}\ streamoff\ offset\_mod\_bufsize\ =\ offset\ \%\ \textcolor{keyword}{sizeof}(buf);}
+\DoxyCodeLine{00196\ \ \ \textcolor{keywordflow}{for}\ (streamoff\ i\ =\ 0;\ i\ <\ offset\ -\/\ offset\_mod\_bufsize;\ i\ +=\ \textcolor{keyword}{sizeof}(buf))}
+\DoxyCodeLine{00197\ \ \ \{}
+\DoxyCodeLine{00198\ \ \ \ \ m\_cHandle.read(buf,\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00199\ \ \ \}}
+\DoxyCodeLine{00200\ \ \ m\_cHandle.read(buf,\ offset\_mod\_bufsize);}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00223\ \textcolor{keyword}{static}\ Bool\ readPlane(Pel*\ dst,}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ istream\&\ fd,}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Bool\ is16bit,}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ stride444,}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ width444,}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ height444,}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ pad\_x444,}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ pad\_y444,}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID,}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ destFormat,}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ fileFormat,}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ fileBitDepth)}
+\DoxyCodeLine{00235\ \{}
+\DoxyCodeLine{00236\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_file\ =getComponentScaleX(compID,\ fileFormat);}
+\DoxyCodeLine{00237\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_file\ =getComponentScaleY(compID,\ fileFormat);}
+\DoxyCodeLine{00238\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_dest\ =getComponentScaleX(compID,\ destFormat);}
+\DoxyCodeLine{00239\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_dest\ =getComponentScaleY(compID,\ destFormat);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \textcolor{keyword}{const}\ UInt\ width\_dest\ \ \ \ \ \ \ =\ width444\ >>csx\_dest;}
+\DoxyCodeLine{00242\ \ \ \textcolor{keyword}{const}\ UInt\ height\_dest\ \ \ \ \ \ =\ height444>>csy\_dest;}
+\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{const}\ UInt\ pad\_x\_dest\ \ \ \ \ \ \ =\ pad\_x444>>csx\_dest;}
+\DoxyCodeLine{00244\ \ \ \textcolor{keyword}{const}\ UInt\ pad\_y\_dest\ \ \ \ \ \ \ =\ pad\_y444>>csy\_dest;}
+\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_dest\ \ \ \ \ \ =\ stride444>>csx\_dest;}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{const}\ UInt\ full\_width\_dest\ \ =\ width\_dest+pad\_x\_dest;}
+\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{const}\ UInt\ full\_height\_dest\ =\ height\_dest+pad\_y\_dest;}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_file\ \ \ \ \ \ =\ (width444\ *\ (is16bit\ ?\ 2\ :\ 1))\ >>\ csx\_file;}
+\DoxyCodeLine{00251\ \ \ std::vector<UChar>\ bufVec(stride\_file);}
+\DoxyCodeLine{00252\ \ \ UChar\ *buf=\&(bufVec[0]);}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \textcolor{keywordflow}{if}\ (compID!=COMPONENT\_Y\ \&\&\ (fileFormat==CHROMA\_400\ ||\ destFormat==CHROMA\_400))}
+\DoxyCodeLine{00255\ \ \ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{if}\ (destFormat!=CHROMA\_400)}
+\DoxyCodeLine{00257\ \ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{comment}{//\ set\ chrominance\ data\ to\ mid-\/range:\ (1<<(fileBitDepth-\/1))}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ value=Pel(1<<(fileBitDepth-\/1));}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ y\ =\ 0;\ y\ <\ full\_height\_dest;\ y++,\ dst+=stride\_dest)}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ full\_width\_dest;\ x++)}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ value;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileFormat!=CHROMA\_400)}
+\DoxyCodeLine{00270\ \ \ \ \ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ height\_file\ \ \ \ \ \ =\ height444>>csy\_file;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ fd.seekg(height\_file*stride\_file,\ ios::cur);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fd.eof()\ ||\ fd.fail()\ )}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \}}
+\DoxyCodeLine{00278\ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00280\ \ \ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_file=(1<<csy\_file)-\/1;}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_dest=(1<<csy\_dest)-\/1;}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ y444=0;\ y444<height444;\ y444++)}
+\DoxyCodeLine{00284\ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_file)==0)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ a\ new\ line}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ fd.read(\textcolor{keyword}{reinterpret\_cast<}TChar*\textcolor{keyword}{>}(buf),\ stride\_file);}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fd.eof()\ ||\ fd.fail()\ )}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_dest)==0)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ current\ destination\ line}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (csx\_file\ <\ csx\_dest)}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 444,\ dest\ is\ 422.}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_dest-\/csx\_file;}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_dest;\ x++)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ buf[x<<sx];}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_dest;\ x++)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ Pel(buf[(x<<sx)*2+0])\ |\ (Pel(buf[(x<<sx)*2+1])<<8);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 422,\ dest\ is\ 444.}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_file-\/csx\_dest;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_dest;\ x++)}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ buf[x>>sx];}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_dest;\ x++)}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ Pel(buf[(x>>sx)*2+0])\ |\ (Pel(buf[(x>>sx)*2+1])<<8);}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ right\ hand\ side\ padding}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ val=dst[width\_dest-\/1];}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ width\_dest;\ x\ <\ full\_width\_dest;\ x++)}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ dst[x]\ =\ val;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ dst\ +=\ stride\_dest;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{comment}{//\ process\ lower\ padding}}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ y\ =\ height\_dest;\ y\ <\ full\_height\_dest;\ y++,\ dst+=stride\_dest)}
+\DoxyCodeLine{00350\ \ \ \ \ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ full\_width\_dest;\ x++)}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ dst[x]\ =\ (dst\ -\/\ stride\_dest)[x];}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00355\ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00358\ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00375\ \textcolor{keyword}{static}\ Bool\ writePlane(TVideoIOYuvMem::Writer\ *writer,\ Pel*\ src,\ Bool\ is16bit,}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ stride444,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ width444,\ UInt\ height444,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ srcFormat,}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ fileFormat,}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ fileBitDepth)}
+\DoxyCodeLine{00382\ \{}
+\DoxyCodeLine{00383\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_file\ =getComponentScaleX(compID,\ fileFormat);}
+\DoxyCodeLine{00384\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_file\ =getComponentScaleY(compID,\ fileFormat);}
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_src\ \ =getComponentScaleX(compID,\ srcFormat);}
+\DoxyCodeLine{00386\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_src\ \ =getComponentScaleY(compID,\ srcFormat);}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_src\ \ \ \ \ \ =\ stride444>>csx\_src;}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_file\ \ \ \ \ \ =\ (width444\ *\ (is16bit\ ?\ 2\ :\ 1))\ >>\ csx\_file;}
+\DoxyCodeLine{00391\ \ \ \textcolor{keyword}{const}\ UInt\ width\_file\ \ \ \ \ \ \ =\ width444\ >>csx\_file;}
+\DoxyCodeLine{00392\ \ \ \textcolor{keyword}{const}\ UInt\ height\_file\ \ \ \ \ \ =\ height444>>csy\_file;}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ std::vector<UChar>\ bufVec(stride\_file);}
+\DoxyCodeLine{00395\ \ \ UChar\ *buf=\&(bufVec[0]);}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \textcolor{keywordflow}{if}\ (compID!=COMPONENT\_Y\ \&\&\ (fileFormat==CHROMA\_400\ ||\ srcFormat==CHROMA\_400))}
+\DoxyCodeLine{00398\ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileFormat!=CHROMA\_400)}
+\DoxyCodeLine{00400\ \ \ \ \ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ value=1<<(fileBitDepth-\/1);}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ y=0;\ y<\ height\_file;\ y++)}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ UChar\ val(value);}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ buf[x]=val;}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ UShort\ val(value);}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x+0]=\ (val>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x+1]=\ (val>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ writer-\/>write(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }uint8\_t*\textcolor{keyword}{>}(buf),\ stride\_file);}
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ \ \ \ \ \ \ \ if\ (fd.eof()\ ||\ fd.fail()\ )}}
+\DoxyCodeLine{00425\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00426\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00427\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00429\ \ \ \ \ \}}
+\DoxyCodeLine{00430\ \ \ \}}
+\DoxyCodeLine{00431\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00432\ \ \ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_file=(1<<csy\_file)-\/1;}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_src\ =(1<<csy\_src\ )-\/1;}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ y444=0;\ y444<height444;\ y444++)}
+\DoxyCodeLine{00436\ \ \ \ \ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_file)==0)}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ a\ new\ line}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (csx\_file\ <\ csx\_src)}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 444,\ source\ is\ 422.}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_src-\/csx\_file;}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[x]\ =\ (UChar)(src[x>>sx]);}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x\ \ ]\ =\ (src[x>>sx]>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x+1]\ =\ (src[x>>sx]>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 422,\ src\ is\ 444.}}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_file-\/csx\_src;}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[x]\ =\ (UChar)(src[x<<sx]);}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x\ \ ]\ =\ (src[x<<sx]>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[2*x+1]\ =\ (src[x<<sx]>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ writer-\/>write(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }uint8\_t*\textcolor{keyword}{>}(buf),\ stride\_file);}
+\DoxyCodeLine{00482\ \textcolor{comment}{//\ \ \ \ \ \ \ \ if\ (fd.eof()\ ||\ fd.fail()\ )}}
+\DoxyCodeLine{00483\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00484\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00485\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_src)==0)}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ src\ +=\ stride\_src;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \ \ \ \ \}}
+\DoxyCodeLine{00494\ \ \ \}}
+\DoxyCodeLine{00495\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00496\ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{keyword}{static}\ Bool\ writeField(TVideoIOYuvMem::Writer\ *writer,\ Pel*\ top,\ Pel*\ bottom,\ Bool\ is16bit,}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ stride444,}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UInt\ width444,\ UInt\ height444,}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID,}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ srcFormat,}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChromaFormat\ fileFormat,}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ fileBitDepth,\ \textcolor{keyword}{const}\ Bool\ isTff)}
+\DoxyCodeLine{00505\ \{}
+\DoxyCodeLine{00506\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_file\ =getComponentScaleX(compID,\ fileFormat);}
+\DoxyCodeLine{00507\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_file\ =getComponentScaleY(compID,\ fileFormat);}
+\DoxyCodeLine{00508\ \ \ \textcolor{keyword}{const}\ UInt\ csx\_src\ \ =getComponentScaleX(compID,\ srcFormat);}
+\DoxyCodeLine{00509\ \ \ \textcolor{keyword}{const}\ UInt\ csy\_src\ \ =getComponentScaleY(compID,\ srcFormat);}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_src\ \ \ \ \ \ =\ stride444>>csx\_src;}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \textcolor{keyword}{const}\ UInt\ stride\_file\ \ \ \ \ \ =\ (width444\ *\ (is16bit\ ?\ 2\ :\ 1))\ >>\ csx\_file;}
+\DoxyCodeLine{00514\ \ \ \textcolor{keyword}{const}\ UInt\ width\_file\ \ \ \ \ \ \ =\ width444\ >>csx\_file;}
+\DoxyCodeLine{00515\ \ \ \textcolor{keyword}{const}\ UInt\ height\_file\ \ \ \ \ \ =\ height444>>csy\_file;}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ std::vector<UChar>\ bufVec(stride\_file\ *\ 2);}
+\DoxyCodeLine{00518\ \ \ UChar\ *buf=\&(bufVec[0]);}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \textcolor{keywordflow}{if}\ (compID!=COMPONENT\_Y\ \&\&\ (fileFormat==CHROMA\_400\ ||\ srcFormat==CHROMA\_400))}
+\DoxyCodeLine{00521\ \ \ \{}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileFormat!=CHROMA\_400)}
+\DoxyCodeLine{00523\ \ \ \ \ \{}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ value=1<<(fileBitDepth-\/1);}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ y=0;\ y<\ height\_file;\ y++)}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ field\ =\ 0;\ field\ <\ 2;\ field++)}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ UChar\ *fieldBuffer\ =\ buf\ +\ (field\ *\ stride\_file);}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ UChar\ val(value);}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[x]=val;}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ UShort\ val(value);}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x+0]=\ (val>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x+1]=\ (val>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ writer-\/>write(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }uint8\_t*\textcolor{keyword}{>}(buf),\ (stride\_file\ *\ 2));}
+\DoxyCodeLine{00552\ \textcolor{comment}{//\ \ \ \ \ \ \ \ if\ (fd.eof()\ ||\ fd.fail()\ )}}
+\DoxyCodeLine{00553\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00554\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00555\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00557\ \ \ \ \ \}}
+\DoxyCodeLine{00558\ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00560\ \ \ \{}
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_file=(1<<csy\_file)-\/1;}
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ mask\_y\_src\ =(1<<csy\_src\ )-\/1;}
+\DoxyCodeLine{00563\ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ y444=0;\ y444<height444;\ y444++)}
+\DoxyCodeLine{00564\ \ \ \ \ \{}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_file)==0)}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ field\ =\ 0;\ field\ <\ 2;\ field++)}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ UChar\ *fieldBuffer\ =\ buf\ +\ (field\ *\ stride\_file);}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ Pel\ \ \ *src\ \ \ \ \ \ \ \ \ =\ (((field\ ==\ 0)\ \&\&\ isTff)\ ||\ ((field\ ==\ 1)\ \&\&\ (!isTff)))\ ?\ top\ :\ bottom;}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ a\ new\ line}}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (csx\_file\ <\ csx\_src)}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 444,\ source\ is\ 422.}}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_src-\/csx\_file;}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[x]\ =\ (UChar)(src[x>>sx]);}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x\ \ ]\ =\ (src[x>>sx]>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x+1]\ =\ (src[x>>sx]>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ eg\ file\ is\ 422,\ src\ is\ 444.}}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ sx=csx\_file-\/csx\_src;}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is16bit)}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[x]\ =\ (UChar)(src[x<<sx]);}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (UInt\ x\ =\ 0;\ x\ <\ width\_file;\ x++)}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x\ \ ]\ =\ (src[x<<sx]>>0)\ \&\ 0xff;}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fieldBuffer[2*x+1]\ =\ (src[x<<sx]>>8)\ \&\ 0xff;}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00614\ }
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ writer-\/>write(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }uint8\_t*\textcolor{keyword}{>}(buf),\ (stride\_file\ *\ 2));}
+\DoxyCodeLine{00616\ \textcolor{comment}{//\ \ \ \ \ \ \ \ if\ (fd.eof()\ ||\ fd.fail()\ )}}
+\DoxyCodeLine{00617\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \{}}
+\DoxyCodeLine{00618\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00619\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((y444\&mask\_y\_src)==0)}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ top\ \ \ \ +=\ stride\_src;}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ bottom\ +=\ stride\_src;}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \ \ \ \ \}}
+\DoxyCodeLine{00629\ \ \ \}}
+\DoxyCodeLine{00630\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00631\ \}}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00649\ Bool\ TVideoIOYuvMem::read\ (\ TComPicYuv*\ \ pPicYuvUser,\ TComPicYuv*\ pPicYuvTrueOrg,\ \textcolor{keyword}{const}\ InputColourSpaceConversion\ ipcsc,\ Int\ aiPad[2],\ ChromaFormat\ format,\ \textcolor{keyword}{const}\ Bool\ bClipToRec709\ )}
+\DoxyCodeLine{00650\ \{}
+\DoxyCodeLine{00651\ \ \ \textcolor{comment}{//\ check\ end-\/of-\/file}}
+\DoxyCodeLine{00652\ \ \ \textcolor{keywordflow}{if}\ (\ isEof()\ )}
+\DoxyCodeLine{00653\ \ \ \{}
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00655\ \ \ \}}
+\DoxyCodeLine{00656\ \ \ TComPicYuv\ *pPicYuv=pPicYuvTrueOrg;}
+\DoxyCodeLine{00657\ \ \ \textcolor{keywordflow}{if}\ (format>=NUM\_CHROMA\_FORMAT)}
+\DoxyCodeLine{00658\ \ \ \{}
+\DoxyCodeLine{00659\ \ \ \ \ format=pPicYuv-\/>getChromaFormat();}
+\DoxyCodeLine{00660\ \ \ \}}
+\DoxyCodeLine{00661\ }
+\DoxyCodeLine{00662\ \ \ Bool\ is16bit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00663\ }
+\DoxyCodeLine{00664\ \ \ \textcolor{keywordflow}{for}(UInt\ ch=0;\ ch<MAX\_NUM\_CHANNEL\_TYPE;\ ch++)}
+\DoxyCodeLine{00665\ \ \ \{}
+\DoxyCodeLine{00666\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fileBitdepth[ch]\ >\ 8)}
+\DoxyCodeLine{00667\ \ \ \ \ \{}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ is16bit=\textcolor{keyword}{true};}
+\DoxyCodeLine{00669\ \ \ \ \ \}}
+\DoxyCodeLine{00670\ \ \ \}}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ \ \ \textcolor{keyword}{const}\ UInt\ stride444\ \ \ \ \ \ =\ pPicYuv-\/>getStride(COMPONENT\_Y);}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \textcolor{comment}{//\ compute\ actual\ YUV\ width\ \&\ height\ excluding\ padding\ size}}
+\DoxyCodeLine{00675\ \ \ \textcolor{keyword}{const}\ UInt\ pad\_h444\ \ \ \ \ \ \ =\ aiPad[0];}
+\DoxyCodeLine{00676\ \ \ \textcolor{keyword}{const}\ UInt\ pad\_v444\ \ \ \ \ \ \ =\ aiPad[1];}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \textcolor{keyword}{const}\ UInt\ width\_full444\ \ =\ pPicYuv-\/>getWidth(COMPONENT\_Y);}
+\DoxyCodeLine{00679\ \ \ \textcolor{keyword}{const}\ UInt\ height\_full444\ =\ pPicYuv-\/>getHeight(COMPONENT\_Y);}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \ \ \textcolor{keyword}{const}\ UInt\ width444\ \ \ \ \ \ \ =\ width\_full444\ -\/\ pad\_h444;}
+\DoxyCodeLine{00682\ \ \ \textcolor{keyword}{const}\ UInt\ height444\ \ \ \ \ \ =\ height\_full444\ -\/\ pad\_v444;}
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<MAX\_NUM\_COMPONENT;\ comp++)}
+\DoxyCodeLine{00685\ \ \ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{00687\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType=toChannelType(compID);}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \ \ \ \ \textcolor{keyword}{const}\ Int\ desired\_bitdepth\ =\ m\_MSBExtendedBitDepth[chType]\ +\ m\_bitdepthShift[chType];}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \textcolor{keyword}{const}\ Bool\ b709Compliance=(bClipToRec709)\ \&\&\ (m\_bitdepthShift[chType]\ <\ 0\ \&\&\ desired\_bitdepth\ >=\ 8);\ \ \ \ \ \textcolor{comment}{/*\ ITU-\/R\ BT.709\ compliant\ clipping\ for\ converting\ say\ 10b\ to\ 8b\ */}}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keyword}{const}\ Pel\ minval\ =\ b709Compliance?\ ((\ \ \ 1\ <<\ (desired\_bitdepth\ -\/\ 8))\ \ \ )\ :\ 0;}
+\DoxyCodeLine{00693\ \ \ \ \ \textcolor{keyword}{const}\ Pel\ maxval\ =\ b709Compliance?\ ((0xff\ <<\ (desired\_bitdepth\ -\/\ 8))\ -\/1)\ :\ (1\ <<\ desired\_bitdepth)\ -\/\ 1;}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \textcolor{preprocessor}{\#if\ 0\ \ \ }}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ readPlane(pPicYuv-\/>getAddr(compID),\ m\_cHandle,\ is16bit,\ stride444,\ width444,\ height444,\ pad\_h444,\ pad\_v444,\ compID,\ pPicYuv-\/>getChromaFormat(),\ format,\ m\_fileBitdepth[chType]))}
+\DoxyCodeLine{00697\ \ \ \ \ \{}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00699\ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00701\ \ \ \ \ \textcolor{keywordflow}{if}\ (compID\ <\ pPicYuv-\/>getNumberValidComponents()\ )}
+\DoxyCodeLine{00702\ \ \ \ \ \{}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csx=getComponentScaleX(compID,\ pPicYuv-\/>getChromaFormat());}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csy=getComponentScaleY(compID,\ pPicYuv-\/>getChromaFormat());}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ scalePlane(pPicYuv-\/>getAddr(compID),\ stride444>>csx,\ width\_full444>>csx,\ height\_full444>>csy,\ m\_bitdepthShift[chType],\ minval,\ maxval);}
+\DoxyCodeLine{00706\ \ \ \ \ \}}
+\DoxyCodeLine{00707\ \ \ \}}
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \textcolor{keywordflow}{if}(pPicYuvUser)}
+\DoxyCodeLine{00710\ \ \ \{}
+\DoxyCodeLine{00711\ \ \ \ \ ColourSpaceConvert(*pPicYuvTrueOrg,\ *pPicYuvUser,\ ipcsc,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00712\ \ \ \}}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00715\ \}}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00730\ Bool\ TVideoIOYuvMem::write(\ TComPicYuv*\ pPicYuvUser,\ \textcolor{keyword}{const}\ InputColourSpaceConversion\ ipCSC,\ Int\ confLeft,\ Int\ confRight,\ Int\ confTop,\ Int\ confBottom,\ ChromaFormat\ format,\ \textcolor{keyword}{const}\ Bool\ bClipToRec709\ )}
+\DoxyCodeLine{00731\ \{}
+\DoxyCodeLine{00732\ \ \ TComPicYuv\ cPicYuvCSCd;}
+\DoxyCodeLine{00733\ \ \ \textcolor{keywordflow}{if}\ (ipCSC!=IPCOLOURSPACE\_UNCHANGED)}
+\DoxyCodeLine{00734\ \ \ \{}
+\DoxyCodeLine{00735\ \ \ \ \ cPicYuvCSCd.createWithoutCUInfo(pPicYuvUser-\/>getWidth(COMPONENT\_Y),\ pPicYuvUser-\/>getHeight(COMPONENT\_Y),\ pPicYuvUser-\/>getChromaFormat()\ );}
+\DoxyCodeLine{00736\ \ \ \ \ ColourSpaceConvert(*pPicYuvUser,\ cPicYuvCSCd,\ ipCSC,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00737\ \ \ \}}
+\DoxyCodeLine{00738\ \ \ TComPicYuv\ *pPicYuv=(ipCSC==IPCOLOURSPACE\_UNCHANGED)\ ?\ pPicYuvUser\ :\ \&cPicYuvCSCd;}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \textcolor{comment}{//\ compute\ actual\ YUV\ frame\ size\ excluding\ padding\ size}}
+\DoxyCodeLine{00741\ \ \ Bool\ is16bit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00742\ \ \ Bool\ nonZeroBitDepthShift=\textcolor{keyword}{false};}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \ \ \textcolor{keywordflow}{for}(UInt\ ch=0;\ ch<MAX\_NUM\_CHANNEL\_TYPE;\ ch++)}
+\DoxyCodeLine{00745\ \ \ \{}
+\DoxyCodeLine{00746\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fileBitdepth[ch]\ >\ 8)}
+\DoxyCodeLine{00747\ \ \ \ \ \{}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ is16bit=\textcolor{keyword}{true};}
+\DoxyCodeLine{00749\ \ \ \ \ \}}
+\DoxyCodeLine{00750\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_bitdepthShift[ch]\ !=\ 0)}
+\DoxyCodeLine{00751\ \ \ \ \ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ nonZeroBitDepthShift=\textcolor{keyword}{true};}
+\DoxyCodeLine{00753\ \ \ \ \ \}}
+\DoxyCodeLine{00754\ \ \ \}}
+\DoxyCodeLine{00755\ }
+\DoxyCodeLine{00756\ \ \ TComPicYuv\ *dstPicYuv\ =\ NULL;}
+\DoxyCodeLine{00757\ \ \ Bool\ retval\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00758\ \ \ \textcolor{keywordflow}{if}\ (format>=NUM\_CHROMA\_FORMAT)}
+\DoxyCodeLine{00759\ \ \ \{}
+\DoxyCodeLine{00760\ \ \ \ \ format=pPicYuv-\/>getChromaFormat();}
+\DoxyCodeLine{00761\ \ \ \}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ \ \ \textcolor{keywordflow}{if}\ (nonZeroBitDepthShift)}
+\DoxyCodeLine{00764\ \ \ \{}
+\DoxyCodeLine{00765\ \ \ \ \ dstPicYuv\ =\ \textcolor{keyword}{new}\ TComPicYuv;}
+\DoxyCodeLine{00766\ \ \ \ \ dstPicYuv-\/>createWithoutCUInfo(\ pPicYuv-\/>getWidth(COMPONENT\_Y),\ pPicYuv-\/>getHeight(COMPONENT\_Y),\ pPicYuv-\/>getChromaFormat()\ );}
+\DoxyCodeLine{00767\ }
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<dstPicYuv-\/>getNumberValidComponents();\ comp++)}
+\DoxyCodeLine{00769\ \ \ \ \ \{}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID=ComponentID(comp);}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ ch=toChannelType(compID);}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Bool\ b709Compliance\ =\ bClipToRec709\ \&\&\ (-\/m\_bitdepthShift[ch]\ <\ 0\ \&\&\ m\_MSBExtendedBitDepth[ch]\ >=\ 8);\ \ \ \ \ \textcolor{comment}{/*\ ITU-\/R\ BT.709\ compliant\ clipping\ for\ converting\ say\ 10b\ to\ 8b\ */}}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ minval\ =\ b709Compliance?\ ((\ \ \ 1\ <<\ (m\_MSBExtendedBitDepth[ch]\ -\/\ 8))\ \ \ )\ :\ 0;}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ maxval\ =\ b709Compliance?\ ((0xff\ <<\ (m\_MSBExtendedBitDepth[ch]\ -\/\ 8))\ -\/1)\ :\ (1\ <<\ m\_MSBExtendedBitDepth[ch])\ -\/\ 1;}
+\DoxyCodeLine{00775\ }
+\DoxyCodeLine{00776\ \ \ \ \ \ \ copyPlane(*pPicYuv,\ compID,\ *dstPicYuv,\ compID);}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ scalePlane(dstPicYuv-\/>getAddr(compID),\ dstPicYuv-\/>getStride(compID),\ dstPicYuv-\/>getWidth(compID),\ dstPicYuv-\/>getHeight(compID),\ -\/m\_bitdepthShift[ch],\ minval,\ maxval);}
+\DoxyCodeLine{00778\ \ \ \ \ \}}
+\DoxyCodeLine{00779\ \ \ \}}
+\DoxyCodeLine{00780\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00781\ \ \ \{}
+\DoxyCodeLine{00782\ \ \ \ \ dstPicYuv\ =\ pPicYuv;}
+\DoxyCodeLine{00783\ \ \ \}}
+\DoxyCodeLine{00784\ }
+\DoxyCodeLine{00785\ \ \ \textcolor{keyword}{const}\ Int\ \ stride444\ =\ dstPicYuv-\/>getStride(COMPONENT\_Y);}
+\DoxyCodeLine{00786\ \ \ \textcolor{keyword}{const}\ UInt\ width444\ \ =\ dstPicYuv-\/>getWidth(COMPONENT\_Y)\ -\/\ confLeft\ -\/\ confRight;}
+\DoxyCodeLine{00787\ \ \ \textcolor{keyword}{const}\ UInt\ height444\ =\ dstPicYuv-\/>getHeight(COMPONENT\_Y)\ -\/\ \ confTop\ \ -\/\ confBottom;}
+\DoxyCodeLine{00788\ }
+\DoxyCodeLine{00789\ \ \ \textcolor{keywordflow}{if}\ ((width444\ ==\ 0)\ ||\ (height444\ ==\ 0))}
+\DoxyCodeLine{00790\ \ \ \{}
+\DoxyCodeLine{00791\ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}\(\backslash\)nWarning:\ writing\ \%d\ x\ \%d\ luma\ sample\ output\ picture!"{}},\ width444,\ height444);}
+\DoxyCodeLine{00792\ \ \ \}}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \ \ m\_writer-\/>picture\_begin(is16bit,\ width444,\ height444,\ dstPicYuv-\/>getChromaFormat());}
+\DoxyCodeLine{00795\ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ retval\ \&\&\ comp<dstPicYuv-\/>getNumberValidComponents();\ comp++)}
+\DoxyCodeLine{00796\ \ \ \{}
+\DoxyCodeLine{00797\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{00798\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ ch=toChannelType(compID);}
+\DoxyCodeLine{00799\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csx\ =\ dstPicYuv-\/>getComponentScaleX(compID);}
+\DoxyCodeLine{00800\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csy\ =\ dstPicYuv-\/>getComponentScaleY(compID);}
+\DoxyCodeLine{00801\ \ \ \ \ \textcolor{keyword}{const}\ Int\ planeOffset\ =\ \ (confLeft>>csx)\ +\ (confTop>>csy)\ *\ dstPicYuv-\/>getStride(compID);}
+\DoxyCodeLine{00802\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ writePlane(m\_writer,\ dstPicYuv-\/>getAddr(compID)\ +\ planeOffset,\ is16bit,\ stride444,\ width444,\ height444,\ compID,\ dstPicYuv-\/>getChromaFormat(),\ format,\ m\_fileBitdepth[ch]))}
+\DoxyCodeLine{00803\ \ \ \ \ \{}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ retval=\textcolor{keyword}{false};}
+\DoxyCodeLine{00805\ \ \ \ \ \}}
+\DoxyCodeLine{00806\ \ \ \}}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \ \ m\_writer-\/>picture\_end();}
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \textcolor{keywordflow}{if}\ (nonZeroBitDepthShift)}
+\DoxyCodeLine{00811\ \ \ \{}
+\DoxyCodeLine{00812\ \ \ \ \ dstPicYuv-\/>destroy();}
+\DoxyCodeLine{00813\ \ \ \ \ \textcolor{keyword}{delete}\ dstPicYuv;}
+\DoxyCodeLine{00814\ \ \ \}}
+\DoxyCodeLine{00815\ }
+\DoxyCodeLine{00816\ \ \ cPicYuvCSCd.destroy();}
+\DoxyCodeLine{00817\ }
+\DoxyCodeLine{00818\ \ \ \textcolor{keywordflow}{return}\ retval;}
+\DoxyCodeLine{00819\ \}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ Bool\ TVideoIOYuvMem::write(\ TComPicYuv*\ pPicYuvUserTop,\ TComPicYuv*\ pPicYuvUserBottom,\ \textcolor{keyword}{const}\ InputColourSpaceConversion\ ipCSC,\ Int\ confLeft,\ Int\ confRight,\ Int\ confTop,\ Int\ confBottom,\ ChromaFormat\ format,\ \textcolor{keyword}{const}\ Bool\ isTff,\ \textcolor{keyword}{const}\ Bool\ bClipToRec709\ )}
+\DoxyCodeLine{00822\ \{}
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ \ \ TComPicYuv\ cPicYuvTopCSCd;}
+\DoxyCodeLine{00825\ \ \ TComPicYuv\ cPicYuvBottomCSCd;}
+\DoxyCodeLine{00826\ \ \ \textcolor{keywordflow}{if}\ (ipCSC!=IPCOLOURSPACE\_UNCHANGED)}
+\DoxyCodeLine{00827\ \ \ \{}
+\DoxyCodeLine{00828\ \ \ \ \ cPicYuvTopCSCd\ \ \ .createWithoutCUInfo(pPicYuvUserTop\ \ \ -\/>getWidth(COMPONENT\_Y),\ pPicYuvUserTop\ \ \ -\/>getHeight(COMPONENT\_Y),\ pPicYuvUserTop\ \ \ -\/>getChromaFormat()\ );}
+\DoxyCodeLine{00829\ \ \ \ \ cPicYuvBottomCSCd.createWithoutCUInfo(pPicYuvUserBottom-\/>getWidth(COMPONENT\_Y),\ pPicYuvUserBottom-\/>getHeight(COMPONENT\_Y),\ pPicYuvUserBottom-\/>getChromaFormat()\ );}
+\DoxyCodeLine{00830\ \ \ \ \ ColourSpaceConvert(*pPicYuvUserTop,\ \ \ \ cPicYuvTopCSCd,\ \ \ \ ipCSC,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00831\ \ \ \ \ ColourSpaceConvert(*pPicYuvUserBottom,\ cPicYuvBottomCSCd,\ ipCSC,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00832\ \ \ \}}
+\DoxyCodeLine{00833\ \ \ TComPicYuv\ *pPicYuvTop\ \ \ \ =\ (ipCSC==IPCOLOURSPACE\_UNCHANGED)\ ?\ pPicYuvUserTop\ \ \ \ :\ \&cPicYuvTopCSCd;}
+\DoxyCodeLine{00834\ \ \ TComPicYuv\ *pPicYuvBottom\ =\ (ipCSC==IPCOLOURSPACE\_UNCHANGED)\ ?\ pPicYuvUserBottom\ :\ \&cPicYuvBottomCSCd;}
+\DoxyCodeLine{00835\ }
+\DoxyCodeLine{00836\ \ \ Bool\ is16bit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00837\ \ \ Bool\ nonZeroBitDepthShift=\textcolor{keyword}{false};}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \ \ \textcolor{keywordflow}{for}(UInt\ ch=0;\ ch<MAX\_NUM\_CHANNEL\_TYPE;\ ch++)}
+\DoxyCodeLine{00840\ \ \ \{}
+\DoxyCodeLine{00841\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_fileBitdepth[ch]\ >\ 8)}
+\DoxyCodeLine{00842\ \ \ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ is16bit=\textcolor{keyword}{true};}
+\DoxyCodeLine{00844\ \ \ \ \ \}}
+\DoxyCodeLine{00845\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_bitdepthShift[ch]\ !=\ 0)}
+\DoxyCodeLine{00846\ \ \ \ \ \{}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ nonZeroBitDepthShift=\textcolor{keyword}{true};}
+\DoxyCodeLine{00848\ \ \ \ \ \}}
+\DoxyCodeLine{00849\ \ \ \}}
+\DoxyCodeLine{00850\ }
+\DoxyCodeLine{00851\ \ \ TComPicYuv\ *dstPicYuvTop\ \ \ \ =\ NULL;}
+\DoxyCodeLine{00852\ \ \ TComPicYuv\ *dstPicYuvBottom\ =\ NULL;}
+\DoxyCodeLine{00853\ }
+\DoxyCodeLine{00854\ \ \ \textcolor{keywordflow}{for}\ (UInt\ field\ =\ 0;\ field\ <\ 2;\ field++)}
+\DoxyCodeLine{00855\ \ \ \{}
+\DoxyCodeLine{00856\ \ \ \ \ TComPicYuv\ *pPicYuv\ =\ (field\ ==\ 0)\ ?\ pPicYuvTop\ :\ pPicYuvBottom;}
+\DoxyCodeLine{00857\ }
+\DoxyCodeLine{00858\ \ \ \ \ \textcolor{keywordflow}{if}\ (format>=NUM\_CHROMA\_FORMAT)}
+\DoxyCodeLine{00859\ \ \ \ \ \{}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ format=pPicYuv-\/>getChromaFormat();}
+\DoxyCodeLine{00861\ \ \ \ \ \}}
+\DoxyCodeLine{00862\ }
+\DoxyCodeLine{00863\ \ \ \ \ TComPicYuv*\ \&dstPicYuv\ =\ (field\ ==\ 0)\ ?\ dstPicYuvTop\ :\ dstPicYuvBottom;}
+\DoxyCodeLine{00864\ }
+\DoxyCodeLine{00865\ \ \ \ \ \textcolor{keywordflow}{if}\ (nonZeroBitDepthShift)}
+\DoxyCodeLine{00866\ \ \ \ \ \{}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ dstPicYuv\ =\ \textcolor{keyword}{new}\ TComPicYuv;}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ dstPicYuv-\/>createWithoutCUInfo(\ pPicYuv-\/>getWidth(COMPONENT\_Y),\ pPicYuv-\/>getHeight(COMPONENT\_Y),\ pPicYuv-\/>getChromaFormat()\ );}
+\DoxyCodeLine{00869\ }
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<dstPicYuv-\/>getNumberValidComponents();\ comp++)}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID=ComponentID(comp);}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ ch=toChannelType(compID);}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Bool\ b709Compliance=bClipToRec709\ \&\&\ (-\/m\_bitdepthShift[ch]\ <\ 0\ \&\&\ m\_MSBExtendedBitDepth[ch]\ >=\ 8);\ \ \ \ \ \textcolor{comment}{/*\ ITU-\/R\ BT.709\ compliant\ clipping\ for\ converting\ say\ 10b\ to\ 8b\ */}}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ minval\ =\ b709Compliance?\ ((\ \ \ 1\ <<\ (m\_MSBExtendedBitDepth[ch]\ -\/\ 8))\ \ \ )\ :\ 0;}
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ maxval\ =\ b709Compliance?\ ((0xff\ <<\ (m\_MSBExtendedBitDepth[ch]\ -\/\ 8))\ -\/1)\ :\ (1\ <<\ m\_MSBExtendedBitDepth[ch])\ -\/\ 1;}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ copyPlane(*pPicYuv,\ compID,\ *dstPicYuv,\ compID);}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ scalePlane(dstPicYuv-\/>getAddr(compID),\ dstPicYuv-\/>getStride(compID),\ dstPicYuv-\/>getWidth(compID),\ dstPicYuv-\/>getHeight(compID),\ -\/m\_bitdepthShift[ch],\ minval,\ maxval);}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00881\ \ \ \ \ \}}
+\DoxyCodeLine{00882\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00883\ \ \ \ \ \{}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ dstPicYuv\ =\ pPicYuv;}
+\DoxyCodeLine{00885\ \ \ \ \ \}}
+\DoxyCodeLine{00886\ \ \ \}}
+\DoxyCodeLine{00887\ }
+\DoxyCodeLine{00888\ \ \ Bool\ retval\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00889\ }
+\DoxyCodeLine{00890\ \ \ assert(dstPicYuvTop-\/>getNumberValidComponents()\ ==\ dstPicYuvBottom-\/>getNumberValidComponents());}
+\DoxyCodeLine{00891\ \ \ assert(dstPicYuvTop-\/>getChromaFormat()\ \ \ \ \ \ \ \ \ \ ==\ dstPicYuvBottom-\/>getChromaFormat()\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00892\ }
+\DoxyCodeLine{00893\ \ \ \{}
+\DoxyCodeLine{00894\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ width444\ \ \ =\ dstPicYuvTop-\/>getWidth(COMPONENT\_Y)\ \ -\/\ (confLeft\ +\ confRight);}
+\DoxyCodeLine{00895\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ height444\ \ =\ dstPicYuvTop-\/>getHeight(COMPONENT\_Y)\ -\/\ (confTop\ +\ confBottom);}
+\DoxyCodeLine{00896\ }
+\DoxyCodeLine{00897\ \ \ \ \ m\_writer-\/>picture\_begin(is16bit,\ width444,\ height444,\ dstPicYuvTop-\/>getChromaFormat());}
+\DoxyCodeLine{00898\ \ \ \}}
+\DoxyCodeLine{00899\ }
+\DoxyCodeLine{00900\ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ retval\ \&\&\ comp<dstPicYuvTop-\/>getNumberValidComponents();\ comp++)}
+\DoxyCodeLine{00901\ \ \ \{}
+\DoxyCodeLine{00902\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(comp);}
+\DoxyCodeLine{00903\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ ch=toChannelType(compID);}
+\DoxyCodeLine{00904\ }
+\DoxyCodeLine{00905\ \ \ \ \ assert(dstPicYuvTop-\/>getWidth\ \ \ \ \ \ \ \ \ \ (compID)\ ==\ dstPicYuvBottom-\/>getWidth\ \ \ \ \ \ \ \ \ \ (compID));}
+\DoxyCodeLine{00906\ \ \ \ \ assert(dstPicYuvTop-\/>getHeight\ \ \ \ \ \ \ \ \ (compID)\ ==\ dstPicYuvBottom-\/>getHeight\ \ \ \ \ \ \ \ \ (compID));}
+\DoxyCodeLine{00907\ \ \ \ \ assert(dstPicYuvTop-\/>getComponentScaleX(compID)\ ==\ dstPicYuvBottom-\/>getComponentScaleX(compID));}
+\DoxyCodeLine{00908\ \ \ \ \ assert(dstPicYuvTop-\/>getComponentScaleY(compID)\ ==\ dstPicYuvBottom-\/>getComponentScaleY(compID));}
+\DoxyCodeLine{00909\ \ \ \ \ assert(dstPicYuvTop-\/>getStride\ \ \ \ \ \ \ \ \ (compID)\ ==\ dstPicYuvBottom-\/>getStride\ \ \ \ \ \ \ \ \ (compID));}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ width444\ \ \ =\ dstPicYuvTop-\/>getWidth(COMPONENT\_Y)\ \ -\/\ (confLeft\ +\ confRight);}
+\DoxyCodeLine{00912\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ height444\ \ =\ dstPicYuvTop-\/>getHeight(COMPONENT\_Y)\ -\/\ (confTop\ +\ confBottom);}
+\DoxyCodeLine{00913\ }
+\DoxyCodeLine{00914\ \ \ \ \ \textcolor{keywordflow}{if}\ ((width444\ ==\ 0)\ ||\ (height444\ ==\ 0))}
+\DoxyCodeLine{00915\ \ \ \ \ \{}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}\(\backslash\)nWarning:\ writing\ \%d\ x\ \%d\ luma\ sample\ output\ picture!"{}},\ width444,\ height444);}
+\DoxyCodeLine{00917\ \ \ \ \ \}}
+\DoxyCodeLine{00918\ }
+\DoxyCodeLine{00919\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csx\ =\ dstPicYuvTop-\/>getComponentScaleX(compID);}
+\DoxyCodeLine{00920\ \ \ \ \ \textcolor{keyword}{const}\ UInt\ csy\ =\ dstPicYuvTop-\/>getComponentScaleY(compID);}
+\DoxyCodeLine{00921\ \ \ \ \ \textcolor{keyword}{const}\ Int\ planeOffset\ \ =\ (confLeft>>csx)\ +\ (\ confTop>>csy)\ *\ dstPicYuvTop-\/>getStride(compID);\ \textcolor{comment}{//offset\ is\ for\ entire\ frame\ -\/\ round\ up\ for\ top\ field\ and\ down\ for\ bottom\ field}}
+\DoxyCodeLine{00922\ }
+\DoxyCodeLine{00923\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ writeField(m\_writer,}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (dstPicYuvTop\ \ \ -\/>getAddr(compID)\ +\ planeOffset),}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (dstPicYuvBottom-\/>getAddr(compID)\ +\ planeOffset),}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is16bit,}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dstPicYuvTop-\/>getStride(COMPONENT\_Y),}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ width444,\ height444,\ compID,\ dstPicYuvTop-\/>getChromaFormat(),\ format,\ m\_fileBitdepth[ch],\ isTff))}
+\DoxyCodeLine{00929\ \ \ \ \ \{}
+\DoxyCodeLine{00930\ \ \ \ \ \ \ retval=\textcolor{keyword}{false};}
+\DoxyCodeLine{00931\ \ \ \ \ \}}
+\DoxyCodeLine{00932\ \ \ \}}
+\DoxyCodeLine{00933\ }
+\DoxyCodeLine{00934\ \ \ m\_writer-\/>picture\_end();}
+\DoxyCodeLine{00935\ \ }
+\DoxyCodeLine{00936\ \ \ \textcolor{keywordflow}{if}\ (nonZeroBitDepthShift)}
+\DoxyCodeLine{00937\ \ \ \{}
+\DoxyCodeLine{00938\ \ \ \ \ dstPicYuvTop-\/>destroy();}
+\DoxyCodeLine{00939\ \ \ \ \ dstPicYuvBottom-\/>destroy();}
+\DoxyCodeLine{00940\ \ \ \ \ \textcolor{keyword}{delete}\ dstPicYuvTop;}
+\DoxyCodeLine{00941\ \ \ \ \ \textcolor{keyword}{delete}\ dstPicYuvBottom;}
+\DoxyCodeLine{00942\ \ \ \}}
+\DoxyCodeLine{00943\ }
+\DoxyCodeLine{00944\ \ \ cPicYuvTopCSCd.destroy();}
+\DoxyCodeLine{00945\ \ \ cPicYuvBottomCSCd.destroy();}
+\DoxyCodeLine{00946\ }
+\DoxyCodeLine{00947\ \ \ \textcolor{keywordflow}{return}\ retval;}
+\DoxyCodeLine{00948\ \}}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \textcolor{keyword}{static}\ Void}
+\DoxyCodeLine{00951\ copyPlane(\textcolor{keyword}{const}\ TComPicYuv\ \&src,\ \textcolor{keyword}{const}\ ComponentID\ srcPlane,\ TComPicYuv\ \&dest,\ \textcolor{keyword}{const}\ ComponentID\ destPlane)}
+\DoxyCodeLine{00952\ \{}
+\DoxyCodeLine{00953\ \ \ \textcolor{keyword}{const}\ UInt\ width=src.getWidth(srcPlane);}
+\DoxyCodeLine{00954\ \ \ \textcolor{keyword}{const}\ UInt\ height=src.getHeight(srcPlane);}
+\DoxyCodeLine{00955\ \ \ assert(dest.getWidth(destPlane)\ ==\ width);}
+\DoxyCodeLine{00956\ \ \ assert(dest.getHeight(destPlane)\ ==\ height);}
+\DoxyCodeLine{00957\ \ \ \textcolor{keyword}{const}\ Pel\ *pSrc=src.getAddr(srcPlane);}
+\DoxyCodeLine{00958\ \ \ Pel\ *pDest=dest.getAddr(destPlane);}
+\DoxyCodeLine{00959\ \ \ \textcolor{keyword}{const}\ UInt\ strideSrc=src.getStride(srcPlane);}
+\DoxyCodeLine{00960\ \ \ \textcolor{keyword}{const}\ UInt\ strideDest=dest.getStride(destPlane);}
+\DoxyCodeLine{00961\ \ \ \textcolor{keywordflow}{for}(UInt\ y=0;\ y<height;\ y++,\ pSrc+=strideSrc,\ pDest+=strideDest)}
+\DoxyCodeLine{00962\ \ \ \{}
+\DoxyCodeLine{00963\ \ \ \ \ memcpy(pDest,\ pSrc,\ width*\textcolor{keyword}{sizeof}(Pel));}
+\DoxyCodeLine{00964\ \ \ \}}
+\DoxyCodeLine{00965\ \}}
+\DoxyCodeLine{00966\ }
+\DoxyCodeLine{00967\ \textcolor{comment}{//\ static\ member}}
+\DoxyCodeLine{00968\ Void\ TVideoIOYuvMem::ColourSpaceConvert(\textcolor{keyword}{const}\ TComPicYuv\ \&src,\ TComPicYuv\ \&dest,\ \textcolor{keyword}{const}\ InputColourSpaceConversion\ conversion,\ Bool\ bIsForwards)}
+\DoxyCodeLine{00969\ \{}
+\DoxyCodeLine{00970\ \ \ \textcolor{keyword}{const}\ ChromaFormat\ \ format=src.getChromaFormat();}
+\DoxyCodeLine{00971\ \ \ \textcolor{keyword}{const}\ UInt\ \ \ \ \ \ \ \ \ \ numValidComp=src.getNumberValidComponents();}
+\DoxyCodeLine{00972\ }
+\DoxyCodeLine{00973\ \ \ \textcolor{keywordflow}{switch}\ (conversion)}
+\DoxyCodeLine{00974\ \ \ \{}
+\DoxyCodeLine{00975\ \ \ \ \ \textcolor{keywordflow}{case}\ IPCOLOURSPACE\_YCbCrtoYYY:}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format!=CHROMA\_444)}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ 444\ is\ handled.}}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ assert(format==CHROMA\_444);}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ exit(1);}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00982\ }
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<numValidComp;\ comp++)}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00986\ \ \ \ \ \ \ \ \ \ \ copyPlane(src,\ ComponentID(bIsForwards?0:comp),\ dest,\ ComponentID(comp));}
+\DoxyCodeLine{00987\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00990\ \ \ \ \ \textcolor{keywordflow}{case}\ IPCOLOURSPACE\_YCbCrtoYCrCb:}
+\DoxyCodeLine{00991\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<numValidComp;\ comp++)}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00994\ \ \ \ \ \ \ \ \ \ \ copyPlane(src,\ ComponentID(comp),\ dest,\ ComponentID((numValidComp-\/comp)\%numValidComp));}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ \ \ \ \ \textcolor{keywordflow}{case}\ IPCOLOURSPACE\_RGBtoGBR:}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format!=CHROMA\_444)}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ 444\ is\ handled.}}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \ \ assert(format==CHROMA\_444);}
+\DoxyCodeLine{01005\ \ \ \ \ \ \ \ \ \ \ exit(1);}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01007\ }
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ channel\ re-\/mapping}}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<numValidComp;\ comp++)}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compIDsrc=ComponentID((comp+1)\%numValidComp);}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compIDdst=ComponentID(comp);}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \ \ copyPlane(src,\ bIsForwards?compIDsrc:compIDdst,\ dest,\ bIsForwards?compIDdst:compIDsrc);}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01017\ }
+\DoxyCodeLine{01018\ \ \ \ \ \textcolor{keywordflow}{case}\ IPCOLOURSPACE\_UNCHANGED:}
+\DoxyCodeLine{01019\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(UInt\ comp=0;\ comp<numValidComp;\ comp++)}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \ \ copyPlane(src,\ ComponentID(comp),\ dest,\ ComponentID(comp));}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01026\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01027\ \ \ \}}
+\DoxyCodeLine{01028\ \}}
+
+\end{DoxyCode}

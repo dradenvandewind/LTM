@@ -1,0 +1,718 @@
+\doxysection{output.\+c}
+\label{output_8c_source}\index{deps/base\_avc/src/output.c@{deps/base\_avc/src/output.c}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Tweaked\ for\ LCEVC\ to\ suppress\ file\ output}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}contributors.h"{}}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}global.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}mbuffer.h"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}image.h"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}memalloc.h"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}sei.h"{}}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#include\ "{}input.h"{}}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#include\ "{}fast\_memory.h"{}}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ write\_out\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ p\_out);}
+\DoxyCodeLine{00028\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_byte\ \ \ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride);}
+\DoxyCodeLine{00029\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_normal\ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride);}
+\DoxyCodeLine{00030\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_endian\ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{void}\ init\_output(CodingParameters\ *p\_cps,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes)}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00043\ \ \ \textcolor{keywordflow}{if}\ ((\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char})\ ==\ \textcolor{keyword}{sizeof}\ (imgpel)))}
+\DoxyCodeLine{00044\ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{char})\ ==\ symbol\_size\_in\_bytes)}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ p\_cps-\/>img2buf\ =\ img2buf\_byte;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ p\_cps-\/>img2buf\ =\ img2buf\_normal;}
+\DoxyCodeLine{00049\ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00051\ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ (testEndian())}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ p\_cps-\/>img2buf\ =\ img2buf\_endian;}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ p\_cps-\/>img2buf\ =\ img2buf\_normal;}
+\DoxyCodeLine{00056\ \ \ \}}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_normal\ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordtype}{int}\ i,j;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordtype}{int}\ twidth\ \ =\ size\_x\ -\/\ crop\_left\ -\/\ crop\_right;}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{int}\ theight\ =\ size\_y\ -\/\ crop\_top\ -\/\ crop\_bottom;}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordtype}{int}\ size\ =\ 0;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \textcolor{comment}{//\ sizeof\ (imgpel)\ >\ sizeof(char)}}
+\DoxyCodeLine{00093\ \ \ \textcolor{comment}{//\ little\ endian}}
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}\ (imgpel)\ <\ symbol\_size\_in\_bytes)}
+\DoxyCodeLine{00095\ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ this\ should\ not\ happen.\ we\ should\ not\ have\ smaller\ imgpel\ than\ our\ source\ material.}}
+\DoxyCodeLine{00097\ \ \ \ \ size\ =\ \textcolor{keyword}{sizeof}\ (imgpel);}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ clear\ buffer}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{for}(j=0;\ j<theight;\ j++)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ memset\ (buf+j*iOutStride,\ 0,\ (twidth\ *\ symbol\_size\_in\_bytes));}
+\DoxyCodeLine{00101\ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00103\ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ size\ =\ symbol\_size\_in\_bytes;}
+\DoxyCodeLine{00105\ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \textcolor{keywordflow}{if}\ ((crop\_top\ ||\ crop\_bottom\ ||\ crop\_left\ ||\ crop\_right)\ ||\ (size\ !=\ 1))}
+\DoxyCodeLine{00108\ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{for}(i=crop\_top;\ i<size\_y-\/crop\_bottom;\ i++)}
+\DoxyCodeLine{00110\ \ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ipos\ =\ (i\ -\/\ crop\_top)\ *\ iOutStride;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j=crop\_left;\ j<size\_x-\/crop\_right;\ j++)}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ memcpy(buf+(ipos+(j-\/crop\_left)*symbol\_size\_in\_bytes),\&(imgX[i][j]),\ size);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00119\ \ \ \{}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#if\ (IMGTYPE\ ==\ 0)}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{//if\ (sizeof(imgpel)\ ==\ sizeof(char))}}
+\DoxyCodeLine{00122\ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \textcolor{comment}{//memcpy(buf,\ \&(imgX[0][0]),\ size\_y\ *\ size\_x\ *\ sizeof(imgpel));}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j=0;\ j<size\_y;\ j++)}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ memcpy(buf+j*iOutStride,\ imgX[j],\ size\_x*\textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00126\ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//else}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00129\ \ \ \ \ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ imgpel\ *cur\_pixel;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *pDst;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j\ =\ 0;\ j\ <\ size\_y;\ j++)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ cur\_pixel\ =\ imgX[j];}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ pDst\ =\ buf\ +j*iOutStride;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(i=0;\ i\ <\ size\_x;\ i++)}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ *(pDst++)=(\textcolor{keywordtype}{unsigned}\ char)*(cur\_pixel++);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00141\ \ \ \}}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00168\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_byte\ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride)}
+\DoxyCodeLine{00169\ \{}
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordtype}{int}\ twidth\ \ =\ size\_x\ -\/\ crop\_left\ -\/\ crop\_right;}
+\DoxyCodeLine{00171\ \ \ \textcolor{keywordtype}{int}\ theight\ =\ size\_y\ -\/\ crop\_top\ -\/\ crop\_bottom;}
+\DoxyCodeLine{00172\ \ \ imgpel\ **img\ =\ \&imgX[crop\_top];}
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordflow}{for}(i\ =\ 0;\ i\ <\ theight;\ i++)\ }
+\DoxyCodeLine{00175\ \ \ \{}
+\DoxyCodeLine{00176\ \ \ \ \ memcpy(buf,\ *img++\ +\ crop\_left,\ twidth);}
+\DoxyCodeLine{00177\ \ \ \ \ buf\ +=\ iOutStride;}
+\DoxyCodeLine{00178\ \ \ \}}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00205\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ img2buf\_endian\ (imgpel**\ imgX,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ size\_x,\ \textcolor{keywordtype}{int}\ size\_y,\ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes,\ \textcolor{keywordtype}{int}\ crop\_left,\ \textcolor{keywordtype}{int}\ crop\_right,\ \textcolor{keywordtype}{int}\ crop\_top,\ \textcolor{keywordtype}{int}\ crop\_bottom,\ \textcolor{keywordtype}{int}\ iOutStride)}
+\DoxyCodeLine{00206\ \{}
+\DoxyCodeLine{00207\ \ \ \textcolor{keywordtype}{int}\ i,j;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ \ ui8;}
+\DoxyCodeLine{00209\ \ \ uint16\ tmp16,\ ui16;}
+\DoxyCodeLine{00210\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \ tmp32,\ ui32;}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \textcolor{comment}{//int\ twidth\ \ =\ size\_x\ -\/\ crop\_left\ -\/\ crop\_right;}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \textcolor{comment}{//\ big\ endian}}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{switch}\ (symbol\_size\_in\_bytes)}
+\DoxyCodeLine{00216\ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00218\ \ \ \ \ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(i=crop\_top;i<size\_y-\/crop\_bottom;i++)}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j=crop\_left;j<size\_x-\/crop\_right;j++)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ ui8\ =\ (\textcolor{keywordtype}{unsigned}\ char)\ (imgX[i][j]);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ buf[(j-\/crop\_left+((i-\/crop\_top)*iOutStride))]\ =\ ui8;}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00228\ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00230\ \ \ \ \ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(i=crop\_top;i<size\_y-\/crop\_bottom;i++)}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j=crop\_left;j<size\_x-\/crop\_right;j++)}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ tmp16\ =\ (uint16)\ (imgX[i][j]);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ ui16\ \ =\ (uint16)\ ((tmp16\ >>\ 8)\ |\ ((tmp16\&0xFF)<<8));}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ memcpy(buf+((j-\/crop\_left+((i-\/crop\_top)*iOutStride))*2),\&(ui16),\ 2);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00241\ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00243\ \ \ \ \ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(i=crop\_top;i<size\_y-\/crop\_bottom;i++)}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j=crop\_left;j<size\_x-\/crop\_right;j++)}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ tmp32\ =\ (\textcolor{keywordtype}{unsigned}\ long)\ (imgX[i][j]);}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ ui32\ \ =\ (\textcolor{keywordtype}{unsigned}\ long)\ (((tmp32\&0xFF00)<<8)\ |\ ((tmp32\&0xFF)<<24)\ |\ ((tmp32\&0xFF0000)>>8)\ |\ ((tmp32\&0xFF000000)>>24));}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ memcpy(buf+((j-\/crop\_left+((i-\/crop\_top)*iOutStride))*4),\&(ui32),\ 4);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00254\ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00256\ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}writing\ only\ to\ formats\ of\ 8,\ 16\ or\ 32\ bit\ allowed\ on\ big\ endian\ architecture"{}},\ 500);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00259\ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \ \ \}}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{preprocessor}{\#if\ (PAIR\_FIELDS\_IN\_OUTPUT)}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \textcolor{keywordtype}{void}\ clear\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p);}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00276\ \textcolor{keywordtype}{void}\ flush\_pending\_output(VideoParameters\ *p\_Vid,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00277\ \{}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>pending\_output\_state\ !=\ FRAME)}
+\DoxyCodeLine{00279\ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ write\_out\_picture(p\_Vid,\ p\_Vid-\/>pending\_output,\ p\_out);}
+\DoxyCodeLine{00281\ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>pending\_output-\/>imgY)}
+\DoxyCodeLine{00284\ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ free\_mem2Dpel\ (p\_Vid-\/>pending\_output-\/>imgY);}
+\DoxyCodeLine{00286\ \ \ \ \ p\_Vid-\/>pending\_output-\/>imgY=NULL;}
+\DoxyCodeLine{00287\ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>pending\_output-\/>imgUV)}
+\DoxyCodeLine{00289\ \ \ \{}
+\DoxyCodeLine{00290\ \ \ \ \ free\_mem3Dpel\ (p\_Vid-\/>pending\_output-\/>imgUV);}
+\DoxyCodeLine{00291\ \ \ \ \ p\_Vid-\/>pending\_output-\/>imgUV=NULL;}
+\DoxyCodeLine{00292\ \ \ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ p\_Vid-\/>pending\_output\_state\ =\ FRAME;}
+\DoxyCodeLine{00295\ \}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00310\ \textcolor{keywordtype}{void}\ write\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ p\_out,\ \textcolor{keywordtype}{int}\ real\_structure)}
+\DoxyCodeLine{00311\ \{}
+\DoxyCodeLine{00312\ \ \ \ \textcolor{keywordtype}{int}\ i,\ add;}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \textcolor{keywordflow}{if}\ (real\_structure==FRAME)}
+\DoxyCodeLine{00315\ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ }
+\DoxyCodeLine{00317\ \ \ \ \ flush\_pending\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00318\ \ \ \ \ write\_out\_picture(p\_Vid,\ p,\ p\_out);}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00320\ \ \ \}}
+\DoxyCodeLine{00321\ \ \ \textcolor{keywordflow}{if}\ (real\_structure\ ==\ p\_Vid-\/>pending\_output\_state)}
+\DoxyCodeLine{00322\ \ \ \{}
+\DoxyCodeLine{00323\ \ \ \ \ flush\_pending\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00324\ \ \ \ \ write\_picture(p\_Vid,\ p,\ p\_out,\ real\_structure);}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00326\ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>pending\_output\_state\ ==\ FRAME)}
+\DoxyCodeLine{00329\ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ p\_Vid-\/>pending\_output-\/>size\_x\ =\ p-\/>size\_x;}
+\DoxyCodeLine{00331\ \ \ \ \ p\_Vid-\/>pending\_output-\/>size\_y\ =\ p-\/>size\_y;}
+\DoxyCodeLine{00332\ \ \ \ \ p\_Vid-\/>pending\_output-\/>size\_x\_cr\ =\ p-\/>size\_x\_cr;}
+\DoxyCodeLine{00333\ \ \ \ \ p\_Vid-\/>pending\_output-\/>size\_y\_cr\ =\ p-\/>size\_y\_cr;}
+\DoxyCodeLine{00334\ \ \ \ \ p\_Vid-\/>pending\_output-\/>chroma\_format\_idc\ =\ p-\/>chroma\_format\_idc;}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_mbs\_only\_flag\ =\ p-\/>frame\_mbs\_only\_flag;}
+\DoxyCodeLine{00337\ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_cropping\_flag\ =\ p-\/>frame\_cropping\_flag;}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>pending\_output-\/>frame\_cropping\_flag)}
+\DoxyCodeLine{00339\ \ \ \ \ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_crop\_left\_offset\ =\ p-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_crop\_right\_offset\ =\ p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_crop\_top\_offset\ =\ p-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ p\_Vid-\/>pending\_output-\/>frame\_crop\_bottom\_offset\ =\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00344\ \ \ \ \ \}}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \ get\_mem2Dpel\ (\&(p\_Vid-\/>pending\_output-\/>imgY),\ p\_Vid-\/>pending\_output-\/>size\_y,\ p\_Vid-\/>pending\_output-\/>size\_x);}
+\DoxyCodeLine{00347\ \ \ \ \ get\_mem3Dpel\ (\&(p\_Vid-\/>pending\_output-\/>imgUV),\ 2,\ p\_Vid-\/>pending\_output-\/>size\_y\_cr,\ p\_Vid-\/>pending\_output-\/>size\_x\_cr);}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ clear\_picture(p\_Vid,\ p\_Vid-\/>pending\_output);}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ copy\ first\ field}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{if}\ (real\_structure\ ==\ TOP\_FIELD)}
+\DoxyCodeLine{00353\ \ \ \ \ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ add\ =\ 0;}
+\DoxyCodeLine{00355\ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00357\ \ \ \ \ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ add\ =\ 1;}
+\DoxyCodeLine{00359\ \ \ \ \ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<p\_Vid-\/>pending\_output-\/>size\_y;\ i+=2)}
+\DoxyCodeLine{00362\ \ \ \ \ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgY[(i+add)],\ p-\/>imgY[(i+add)],\ p-\/>size\_x\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00364\ \ \ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<p\_Vid-\/>pending\_output-\/>size\_y\_cr;\ i+=2)}
+\DoxyCodeLine{00366\ \ \ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgUV[0][(i+add)],\ p-\/>imgUV[0][(i+add)],\ p-\/>size\_x\_cr\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgUV[1][(i+add)],\ p-\/>imgUV[1][(i+add)],\ p-\/>size\_x\_cr\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00369\ \ \ \ \ \}}
+\DoxyCodeLine{00370\ \ \ \ \ p\_Vid-\/>pending\_output\_state\ =\ real\_structure;}
+\DoxyCodeLine{00371\ \ \ \}}
+\DoxyCodeLine{00372\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00373\ \ \ \{}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \ (p\_Vid-\/>pending\_output-\/>size\_x!=p-\/>size\_x)\ ||\ (p\_Vid-\/>pending\_output-\/>size\_y!=\ p-\/>size\_y)}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ ||\ (p\_Vid-\/>pending\_output-\/>frame\_mbs\_only\_flag\ !=\ p-\/>frame\_mbs\_only\_flag)}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ ||\ (p\_Vid-\/>pending\_output-\/>frame\_cropping\_flag\ !=\ p-\/>frame\_cropping\_flag)}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ ||\ (\ p\_Vid-\/>pending\_output-\/>frame\_cropping\_flag\ \&\&}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ (\ \ (p\_Vid-\/>pending\_output-\/>frame\_crop\_left\_offset\ \ \ !=\ p-\/>frame\_crop\_left\_offset)}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ ||(p\_Vid-\/>pending\_output-\/>frame\_crop\_right\_offset\ \ !=\ p-\/>frame\_crop\_right\_offset)}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ ||(p\_Vid-\/>pending\_output-\/>frame\_crop\_top\_offset\ \ \ \ !=\ p-\/>frame\_crop\_top\_offset)}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ ||(p\_Vid-\/>pending\_output-\/>frame\_crop\_bottom\_offset\ !=\ p-\/>frame\_crop\_bottom\_offset)}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00385\ \ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ flush\_pending\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ write\_picture\ (p\_Vid,\ p,\ p\_out,\ real\_structure);}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{comment}{//\ copy\ second\ field}}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{if}\ (real\_structure\ ==\ TOP\_FIELD)}
+\DoxyCodeLine{00392\ \ \ \ \ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ add\ =\ 0;}
+\DoxyCodeLine{00394\ \ \ \ \ \}}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00396\ \ \ \ \ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ add\ =\ 1;}
+\DoxyCodeLine{00398\ \ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<p\_Vid-\/>pending\_output-\/>size\_y;\ i+=2)}
+\DoxyCodeLine{00401\ \ \ \ \ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgY[(i+add)],\ p-\/>imgY[(i+add)],\ p-\/>size\_x\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00403\ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<p\_Vid-\/>pending\_output-\/>size\_y\_cr;\ i+=2)}
+\DoxyCodeLine{00405\ \ \ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgUV[0][(i+add)],\ p-\/>imgUV[0][(i+add)],\ p-\/>size\_x\_cr\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ memcpy(p\_Vid-\/>pending\_output-\/>imgUV[1][(i+add)],\ p-\/>imgUV[1][(i+add)],\ p-\/>size\_x\_cr\ *\ \textcolor{keyword}{sizeof}(imgpel));}
+\DoxyCodeLine{00408\ \ \ \ \ \}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \ flush\_pending\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00411\ \ \ \}}
+\DoxyCodeLine{00412\ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00431\ \textcolor{keywordtype}{void}\ write\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ p\_out,\ \textcolor{keywordtype}{int}\ real\_structure)}
+\DoxyCodeLine{00432\ \{}
+\DoxyCodeLine{00433\ \ \ write\_out\_picture(p\_Vid,\ p,\ p\_out);}
+\DoxyCodeLine{00434\ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ allocate\_p\_dec\_pic(VideoParameters\ *p\_Vid,\ DecodedPicList\ *pDecPic,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ iLumaSize,\ \textcolor{keywordtype}{int}\ iFrameSize,\ \textcolor{keywordtype}{int}\ iLumaSizeX,\ \textcolor{keywordtype}{int}\ iLumaSizeY,\ \textcolor{keywordtype}{int}\ iChromaSizeX,\ \textcolor{keywordtype}{int}\ iChromaSizeY)}
+\DoxyCodeLine{00440\ \{}
+\DoxyCodeLine{00441\ \ \ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes\ =\ ((p\_Vid-\/>pic\_unit\_bitsize\_on\_disk+7)\ >>\ 3);}
+\DoxyCodeLine{00442\ \ \ }
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordflow}{if}(pDecPic-\/>pY)}
+\DoxyCodeLine{00444\ \ \ \ \ mem\_free(pDecPic-\/>pY);}
+\DoxyCodeLine{00445\ \ \ pDecPic-\/>iBufSize\ =\ iFrameSize;}
+\DoxyCodeLine{00446\ \ \ pDecPic-\/>pY\ =\ mem\_malloc(pDecPic-\/>iBufSize);}
+\DoxyCodeLine{00447\ \ \ pDecPic-\/>pU\ =\ pDecPic-\/>pY+iLumaSize;}
+\DoxyCodeLine{00448\ \ \ pDecPic-\/>pV\ =\ pDecPic-\/>pU\ +\ ((iFrameSize-\/iLumaSize)>>1);}
+\DoxyCodeLine{00449\ \ \ \textcolor{comment}{//init;}}
+\DoxyCodeLine{00450\ \ \ pDecPic-\/>iYUVFormat\ =\ p-\/>chroma\_format\_idc;}
+\DoxyCodeLine{00451\ \ \ pDecPic-\/>iYUVStorageFormat\ =\ 0;}
+\DoxyCodeLine{00452\ \ \ pDecPic-\/>iBitDepth\ =\ p\_Vid-\/>pic\_unit\_bitsize\_on\_disk;}
+\DoxyCodeLine{00453\ \ \ pDecPic-\/>iWidth\ =\ iLumaSizeX;\ \textcolor{comment}{//p-\/>size\_x;}}
+\DoxyCodeLine{00454\ \ \ pDecPic-\/>iHeight\ =\ iLumaSizeY;\ \textcolor{comment}{//p-\/>size\_y;}}
+\DoxyCodeLine{00455\ \ \ pDecPic-\/>iYBufStride\ =\ iLumaSizeX*symbol\_size\_in\_bytes;\ \textcolor{comment}{//p-\/>size\_x\ *symbol\_size\_in\_bytes;}}
+\DoxyCodeLine{00456\ \ \ pDecPic-\/>iUVBufStride\ =\ iChromaSizeX*symbol\_size\_in\_bytes;\ \textcolor{comment}{//p-\/>size\_x\_cr*symbol\_size\_in\_bytes;}}
+\DoxyCodeLine{00457\ \}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00472\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ write\_out\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00473\ \{}
+\DoxyCodeLine{00474\ \ \ InputParameters\ *p\_Inp\ =\ p\_Vid-\/>p\_Inp;}
+\DoxyCodeLine{00475\ \ \ DecodedPicList\ *pDecPic;}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ SubWidthC\ \ [4]=\ \{\ 1,\ 2,\ 2,\ 1\};}
+\DoxyCodeLine{00478\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ SubHeightC\ [4]=\ \{\ 1,\ 2,\ 1,\ 1\};}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \textcolor{keywordtype}{int}\ crop\_left,\ crop\_right,\ crop\_top,\ crop\_bottom;}
+\DoxyCodeLine{00481\ \ \ \textcolor{keywordtype}{int}\ symbol\_size\_in\_bytes\ =\ ((p\_Vid-\/>pic\_unit\_bitsize\_on\_disk+7)\ >>\ 3);}
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordtype}{int}\ rgb\_output\ =\ \ p\_Vid-\/>p\_EncodePar[p-\/>layer\_id]-\/>rgb\_output;\ \textcolor{comment}{//(p\_Vid-\/>active\_sps-\/>vui\_seq\_parameters.matrix\_coefficients==0);}}
+\DoxyCodeLine{00483\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *buf;}
+\DoxyCodeLine{00484\ \ \ \textcolor{comment}{//int\ iPicSizeTab[4]\ =\ \{2,\ 3,\ 4,\ 6\};}}
+\DoxyCodeLine{00485\ \ \ \textcolor{keywordtype}{int}\ iLumaSize,\ iFrameSize;}
+\DoxyCodeLine{00486\ \ \ \textcolor{keywordtype}{int}\ iLumaSizeX,\ iLumaSizeY;}
+\DoxyCodeLine{00487\ \ \ \textcolor{keywordtype}{int}\ iChromaSizeX,\ iChromaSizeY;}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \ \ \textcolor{keywordtype}{int}\ ret;}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \ \ \textcolor{keywordflow}{if}\ (p-\/>non\_existing)}
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \textcolor{preprocessor}{\#if\ (ENABLE\_OUTPUT\_TONEMAPPING)}}
+\DoxyCodeLine{00495\ \ \ \textcolor{comment}{//\ note:\ this\ tone-\/mapping\ is\ working\ for\ RGB\ format\ only.\ Sharp}}
+\DoxyCodeLine{00496\ \ \ \textcolor{keywordflow}{if}\ (p-\/>seiHasTone\_mapping\ \&\&\ rgb\_output)}
+\DoxyCodeLine{00497\ \ \ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{comment}{//printf("{}output\ frame\ \%d\ with\ tone\ model\ id\ \%d\(\backslash\)n"{},\ \ p-\/>frame\_num,\ p-\/>tone\_mapping\_model\_id);}}
+\DoxyCodeLine{00499\ \ \ \ \ symbol\_size\_in\_bytes\ =\ (p-\/>tonemapped\_bit\_depth>8)?\ 2\ :\ 1;}
+\DoxyCodeLine{00500\ \ \ \ \ tone\_map(p-\/>imgY,\ p-\/>tone\_mapping\_lut,\ p-\/>size\_x,\ p-\/>size\_y);}
+\DoxyCodeLine{00501\ \ \ \ \ tone\_map(p-\/>imgUV[0],\ p-\/>tone\_mapping\_lut,\ p-\/>size\_x\_cr,\ p-\/>size\_y\_cr);}
+\DoxyCodeLine{00502\ \ \ \ \ tone\_map(p-\/>imgUV[1],\ p-\/>tone\_mapping\_lut,\ p-\/>size\_x\_cr,\ p-\/>size\_y\_cr);}
+\DoxyCodeLine{00503\ \ \ \}}
+\DoxyCodeLine{00504\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \textcolor{comment}{//\ should\ this\ be\ done\ only\ once?}}
+\DoxyCodeLine{00507\ \ \ \textcolor{keywordflow}{if}\ (p-\/>frame\_cropping\_flag)}
+\DoxyCodeLine{00508\ \ \ \{}
+\DoxyCodeLine{00509\ \ \ \ \ crop\_left\ \ \ =\ SubWidthC\ [p-\/>chroma\_format\_idc]\ *\ p-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00510\ \ \ \ \ crop\_right\ \ =\ SubWidthC\ [p-\/>chroma\_format\_idc]\ *\ p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00511\ \ \ \ \ crop\_top\ \ \ \ =\ SubHeightC[p-\/>chroma\_format\_idc]\ *\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00512\ \ \ \ \ crop\_bottom\ =\ SubHeightC[p-\/>chroma\_format\_idc]\ *\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00513\ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00515\ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ crop\_left\ =\ crop\_right\ =\ crop\_top\ =\ crop\_bottom\ =\ 0;}
+\DoxyCodeLine{00517\ \ \ \}}
+\DoxyCodeLine{00518\ \ \ iChromaSizeX\ =\ \ p-\/>size\_x\_cr-\/\ p-\/>frame\_crop\_left\_offset\ -\/p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00519\ \ \ iChromaSizeY\ =\ p-\/>size\_y\_cr\ -\/\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_top\_offset\ -\/(\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00520\ \ \ iLumaSizeX\ =\ p-\/>size\_x\ -\/\ crop\_left-\/crop\_right;}
+\DoxyCodeLine{00521\ \ \ iLumaSizeY\ =\ p-\/>size\_y\ -\/\ crop\_top\ -\/\ crop\_bottom;}
+\DoxyCodeLine{00522\ \ \ iLumaSize\ \ =\ iLumaSizeX\ *\ iLumaSizeY\ *\ symbol\_size\_in\_bytes;}
+\DoxyCodeLine{00523\ \ \ iFrameSize\ =\ (iLumaSizeX\ *\ iLumaSizeY\ +\ 2\ *\ (iChromaSizeX\ *\ iChromaSizeY))\ *\ symbol\_size\_in\_bytes;\ \textcolor{comment}{//iLumaSize*iPicSizeTab[p-\/>chroma\_format\_idc]/2;}}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \textcolor{comment}{//printf\ ("{}write\ frame\ size:\ \%dx\%d\(\backslash\)n"{},\ p-\/>size\_x-\/crop\_left-\/crop\_right,p-\/>size\_y-\/crop\_top-\/crop\_bottom\ );}}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \textcolor{preprocessor}{\#if\ 0\ }\textcolor{comment}{//\ Build\ the\ decoded\ picture\ in\ memeory\ for\ LCEVC}}
+\DoxyCodeLine{00528\ \ \ \textcolor{comment}{//\ We\ need\ to\ further\ cleanup\ this\ function}}
+\DoxyCodeLine{00529\ \ \ \textcolor{keywordflow}{if}\ (p\_out\ ==\ -\/1)}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00531\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \textcolor{comment}{//\ KS:\ this\ buffer\ should\ actually\ be\ allocated\ only\ once,\ but\ this\ is\ still\ much\ faster\ than\ the\ previous\ version}}
+\DoxyCodeLine{00534\ \ \ pDecPic\ =\ get\_one\_avail\_dec\_pic\_from\_list(p\_Vid-\/>pDecOuputPic,\ 0,\ 0);}
+\DoxyCodeLine{00535\ \ \ \textcolor{keywordflow}{if}(\ (pDecPic-\/>pY\ ==\ NULL)}
+\DoxyCodeLine{00536\ \ \ \ \ ||\ (pDecPic-\/>iBufSize\ <\ iFrameSize)}
+\DoxyCodeLine{00537\ \ \ \ \ )}
+\DoxyCodeLine{00538\ \ \ \ \ allocate\_p\_dec\_pic(p\_Vid,\ pDecPic,\ p,\ iLumaSize,\ iFrameSize,\ iLumaSizeX,\ iLumaSizeY,\ iChromaSizeX,\ iChromaSizeY);}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#if\ (MVC\_EXTENSION\_ENABLE)}}
+\DoxyCodeLine{00540\ \ \ \{}
+\DoxyCodeLine{00541\ \ \ \ \ pDecPic-\/>bValid\ =\ 1;}
+\DoxyCodeLine{00542\ \ \ \ \ pDecPic-\/>iViewId\ =\ p-\/>view\_id\ >=0\ ?\ p-\/>view\_id\ :\ -\/1;}
+\DoxyCodeLine{00543\ \ \ \}}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00545\ \ \ pDecPic-\/>bValid\ =\ 1;}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00547\ \ \ }
+\DoxyCodeLine{00548\ \ \ pDecPic-\/>iPOC\ =\ p-\/>frame\_poc;}
+\DoxyCodeLine{00549\ \ \ }
+\DoxyCodeLine{00550\ \ \ \textcolor{keywordflow}{if}\ (NULL==pDecPic-\/>pY)}
+\DoxyCodeLine{00551\ \ \ \{}
+\DoxyCodeLine{00552\ \ \ \ \ no\_mem\_exit(\textcolor{stringliteral}{"{}write\_out\_picture:\ buf"{}});}
+\DoxyCodeLine{00553\ \ \ \}}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ }
+\DoxyCodeLine{00556\ \ \ \textcolor{keywordflow}{if}(rgb\_output)}
+\DoxyCodeLine{00557\ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ buf\ =\ malloc\ (p-\/>size\_x\ *\ p-\/>size\_y\ *\ symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00559\ \ \ \ \ crop\_left\ \ \ =\ p-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00560\ \ \ \ \ crop\_right\ \ =\ p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00561\ \ \ \ \ crop\_top\ \ \ \ =\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00562\ \ \ \ \ crop\_bottom\ =\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \ \ \ \ p\_Vid-\/>img2buf\ (p-\/>imgUV[1],\ buf,\ p-\/>size\_x\_cr,\ p-\/>size\_y\_cr,\ symbol\_size\_in\_bytes,\ crop\_left,\ crop\_right,\ crop\_top,\ crop\_bottom,\ pDecPic-\/>iYBufStride);}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_out\ >=\ 0)}
+\DoxyCodeLine{00566\ \ \ \ \ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ (p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ ((p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes))}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ RGB\ file"{}},\ 500);}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00572\ \ \ \ \ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \ \textcolor{keywordflow}{if}\ (p-\/>frame\_cropping\_flag)}
+\DoxyCodeLine{00575\ \ \ \ \ \{}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ crop\_left\ \ \ =\ SubWidthC[p-\/>chroma\_format\_idc]\ *\ p-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ crop\_right\ \ =\ SubWidthC[p-\/>chroma\_format\_idc]\ *\ p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ crop\_top\ \ \ \ =\ SubHeightC[p-\/>chroma\_format\_idc]*(\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ crop\_bottom\ =\ SubHeightC[p-\/>chroma\_format\_idc]*(\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00580\ \ \ \ \ \}}
+\DoxyCodeLine{00581\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00582\ \ \ \ \ \{}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ crop\_left\ =\ crop\_right\ =\ crop\_top\ =\ crop\_bottom\ =\ 0;}
+\DoxyCodeLine{00584\ \ \ \ \ \}}
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{keywordflow}{if}(buf)\ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ free(buf);}
+\DoxyCodeLine{00587\ \ \ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ buf\ =\ (pDecPic-\/>bValid==1)?\ pDecPic-\/>pY:\ pDecPic-\/>pY+iLumaSizeX*symbol\_size\_in\_bytes;}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \ \ p\_Vid-\/>img2buf\ (p-\/>imgY,\ buf,\ p-\/>size\_x,\ p-\/>size\_y,\ symbol\_size\_in\_bytes,\ crop\_left,\ crop\_right,\ crop\_top,\ crop\_bottom,\ pDecPic-\/>iYBufStride);}
+\DoxyCodeLine{00592\ \ \ \textcolor{keywordflow}{if}(p\_out\ >=0)}
+\DoxyCodeLine{00593\ \ \ \{}
+\DoxyCodeLine{00594\ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ (p-\/>size\_y-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ ((p-\/>size\_y-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes))}
+\DoxyCodeLine{00596\ \ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ YUV\ file"{}},\ 500);}
+\DoxyCodeLine{00598\ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \}}
+\DoxyCodeLine{00600\ }
+\DoxyCodeLine{00601\ \ \ \textcolor{keywordflow}{if}\ (p-\/>chroma\_format\_idc!=YUV400)}
+\DoxyCodeLine{00602\ \ \ \{}
+\DoxyCodeLine{00603\ \ \ \ \ crop\_left\ \ \ =\ p-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00604\ \ \ \ \ crop\_right\ \ =\ p-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00605\ \ \ \ \ crop\_top\ \ \ \ =\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00606\ \ \ \ \ crop\_bottom\ =\ (\ 2\ -\/\ p-\/>frame\_mbs\_only\_flag\ )\ *\ p-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00607\ \ \ \ \ buf\ =\ (pDecPic-\/>bValid==1)?\ pDecPic-\/>pU\ :\ pDecPic-\/>pU\ +\ iChromaSizeX*symbol\_size\_in\_bytes;}
+\DoxyCodeLine{00608\ \ \ \ \ p\_Vid-\/>img2buf\ (p-\/>imgUV[0],\ buf,\ p-\/>size\_x\_cr,\ p-\/>size\_y\_cr,\ symbol\_size\_in\_bytes,\ crop\_left,\ crop\_right,\ crop\_top,\ crop\_bottom,\ pDecPic-\/>iUVBufStride);}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{keywordflow}{if}(p\_out\ >=\ 0)}
+\DoxyCodeLine{00610\ \ \ \ \ \{}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ (p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*\ symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ ((p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*\ symbol\_size\_in\_bytes))}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ YUV\ file"{}},\ 500);}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00616\ \ \ \ \ \}}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \ \ \ \ \textcolor{keywordflow}{if}\ (!rgb\_output)}
+\DoxyCodeLine{00619\ \ \ \ \ \{}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ buf\ =\ (pDecPic-\/>bValid==1)?\ pDecPic-\/>pV\ :\ pDecPic-\/>pV\ +\ iChromaSizeX*symbol\_size\_in\_bytes;}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ p\_Vid-\/>img2buf\ (p-\/>imgUV[1],\ buf,\ p-\/>size\_x\_cr,\ p-\/>size\_y\_cr,\ symbol\_size\_in\_bytes,\ crop\_left,\ crop\_right,\ crop\_top,\ crop\_bottom,\ pDecPic-\/>iUVBufStride);}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(p\_out\ >=\ 0)}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ (p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ ((p-\/>size\_y\_cr-\/crop\_bottom-\/crop\_top)*(p-\/>size\_x\_cr-\/crop\_right-\/crop\_left)*symbol\_size\_in\_bytes))}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ YUV\ file"{}},\ 500);}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00631\ \ \ \ \ \}}
+\DoxyCodeLine{00632\ \ \ \}}
+\DoxyCodeLine{00633\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00634\ \ \ \{}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_Inp-\/>write\_uv)}
+\DoxyCodeLine{00636\ \ \ \ \ \{}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ i,j;}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ imgpel\ cr\_val\ =\ (imgpel)\ (1<<(p\_Vid-\/>bitdepth\_luma\ -\/\ 1));}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \ \ \ \ \ \ get\_mem3Dpel\ (\&(p-\/>imgUV),\ 1,\ p-\/>size\_y/2,\ p-\/>size\_x/2);}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j<p-\/>size\_y/2;\ j++)}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<p-\/>size\_x/2;\ i++)}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ p-\/>imgUV[0][j][i]=cr\_val;}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \textcolor{comment}{//\ fake\ out\ U=V=128\ to\ make\ a\ YUV\ 4:2:0\ stream}}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ buf\ =\ malloc\ (p-\/>size\_x*p-\/>size\_y*symbol\_size\_in\_bytes);}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ p\_Vid-\/>img2buf\ (p-\/>imgUV[0],\ buf,\ p-\/>size\_x/2,\ p-\/>size\_y/2,\ symbol\_size\_in\_bytes,\ crop\_left/2,\ crop\_right/2,\ crop\_top/2,\ crop\_bottom/2,\ pDecPic-\/>iYBufStride/2);}
+\DoxyCodeLine{00653\ }
+\DoxyCodeLine{00654\ \ \ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ symbol\_size\_in\_bytes\ *\ (p-\/>size\_y-\/crop\_bottom-\/crop\_top)/2\ *\ (p-\/>size\_x-\/crop\_right-\/crop\_left)/2\ );}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ (symbol\_size\_in\_bytes\ *\ (p-\/>size\_y-\/crop\_bottom-\/crop\_top)/2\ *\ (p-\/>size\_x-\/crop\_right-\/crop\_left)/2))}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ YUV\ file"{}},\ 500);}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ ret\ =\ write(p\_out,\ buf,\ symbol\_size\_in\_bytes\ *\ (p-\/>size\_y-\/crop\_bottom-\/crop\_top)/2\ *\ (p-\/>size\_x-\/crop\_right-\/crop\_left)/2\ );}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ !=\ (symbol\_size\_in\_bytes\ *\ (p-\/>size\_y-\/crop\_bottom-\/crop\_top)/2\ *\ (p-\/>size\_x-\/crop\_right-\/crop\_left)/2))}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}write\_out\_picture:\ error\ writing\ to\ YUV\ file"{}},\ 500);}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ free(buf);}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ free\_mem3Dpel(p-\/>imgUV);}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ p-\/>imgUV=NULL;}
+\DoxyCodeLine{00667\ \ \ \ \ \}}
+\DoxyCodeLine{00668\ \ \ \}}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \ \ \textcolor{comment}{//free(buf);}}
+\DoxyCodeLine{00671\ \ \textcolor{keywordflow}{if}(p\_out\ >=0)}
+\DoxyCodeLine{00672\ \ \ \ pDecPic-\/>bValid\ =\ 0;}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \textcolor{comment}{//\ \ fsync(p\_out);}}
+\DoxyCodeLine{00675\ \}}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00683\ \textcolor{keywordtype}{void}\ init\_out\_buffer(VideoParameters\ *p\_Vid)}
+\DoxyCodeLine{00684\ \{}
+\DoxyCodeLine{00685\ \ \ p\_Vid-\/>out\_buffer\ =\ alloc\_frame\_store();}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \textcolor{preprocessor}{\#if\ (PAIR\_FIELDS\_IN\_OUTPUT)}}
+\DoxyCodeLine{00688\ \ \ p\_Vid-\/>pending\_output\ =\ calloc\ (\textcolor{keyword}{sizeof}(StorablePicture),\ 1);}
+\DoxyCodeLine{00689\ \ \ \textcolor{keywordflow}{if}\ (NULL==p\_Vid-\/>pending\_output)\ no\_mem\_exit(\textcolor{stringliteral}{"{}init\_out\_buffer"{}});}
+\DoxyCodeLine{00690\ \ \ p\_Vid-\/>pending\_output-\/>imgUV\ =\ NULL;}
+\DoxyCodeLine{00691\ \ \ p\_Vid-\/>pending\_output-\/>imgY\ \ =\ NULL;}
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00693\ \}}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00701\ \textcolor{keywordtype}{void}\ uninit\_out\_buffer(VideoParameters\ *p\_Vid)}
+\DoxyCodeLine{00702\ \{}
+\DoxyCodeLine{00703\ \ \ free\_frame\_store(p\_Vid-\/>out\_buffer);}
+\DoxyCodeLine{00704\ \ \ p\_Vid-\/>out\_buffer=NULL;}
+\DoxyCodeLine{00705\ \textcolor{preprocessor}{\#if\ (PAIR\_FIELDS\_IN\_OUTPUT)}}
+\DoxyCodeLine{00706\ \ \ flush\_pending\_output(p\_Vid,\ p\_Vid-\/>p\_out);}
+\DoxyCodeLine{00707\ \ \ free\ (p\_Vid-\/>pending\_output);}
+\DoxyCodeLine{00708\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00709\ \}}
+\DoxyCodeLine{00710\ }
+\DoxyCodeLine{00717\ \textcolor{keywordtype}{void}\ clear\_picture(VideoParameters\ *p\_Vid,\ StorablePicture\ *p)}
+\DoxyCodeLine{00718\ \{}
+\DoxyCodeLine{00719\ \ \ \textcolor{keywordtype}{int}\ i,j;}
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ \ \ \textcolor{keywordflow}{for}(i=0;i<p-\/>size\_y;i++)}
+\DoxyCodeLine{00722\ \ \ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j<p-\/>size\_x;\ j++)}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ p-\/>imgY[i][j]\ =\ (imgpel)\ p\_Vid-\/>dc\_pred\_value\_comp[0];}
+\DoxyCodeLine{00725\ \ \ \}}
+\DoxyCodeLine{00726\ \ \ \textcolor{keywordflow}{for}(i=0;i<p-\/>size\_y\_cr;i++)}
+\DoxyCodeLine{00727\ \ \ \{}
+\DoxyCodeLine{00728\ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j<p-\/>size\_x\_cr;\ j++)}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ p-\/>imgUV[0][i][j]\ =\ (imgpel)\ p\_Vid-\/>dc\_pred\_value\_comp[1];}
+\DoxyCodeLine{00730\ \ \ \}}
+\DoxyCodeLine{00731\ \ \ \textcolor{keywordflow}{for}(i=0;i<p-\/>size\_y\_cr;i++)}
+\DoxyCodeLine{00732\ \ \ \{}
+\DoxyCodeLine{00733\ \ \ \ \ \textcolor{keywordflow}{for}\ (j=0;\ j<p-\/>size\_x\_cr;\ j++)}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ p-\/>imgUV[1][i][j]\ =\ (imgpel)\ p\_Vid-\/>dc\_pred\_value\_comp[2];}
+\DoxyCodeLine{00735\ \ \ \}}
+\DoxyCodeLine{00736\ \}}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00752\ \textcolor{keywordtype}{void}\ write\_unpaired\_field(VideoParameters\ *p\_Vid,\ FrameStore*\ fs,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00753\ \{}
+\DoxyCodeLine{00754\ \ \ StorablePicture\ *p;}
+\DoxyCodeLine{00755\ \ \ assert\ (fs-\/>is\_used<3);}
+\DoxyCodeLine{00756\ }
+\DoxyCodeLine{00757\ \ \ \textcolor{keywordflow}{if}(fs-\/>is\_used\ \&\ 0x01)}
+\DoxyCodeLine{00758\ \ \ \{}
+\DoxyCodeLine{00759\ \ \ \ \ \textcolor{comment}{//\ we\ have\ a\ top\ field}}
+\DoxyCodeLine{00760\ \ \ \ \ \textcolor{comment}{//\ construct\ an\ empty\ bottom\ field}}
+\DoxyCodeLine{00761\ \ \ \ \ p\ =\ fs-\/>top\_field;}
+\DoxyCodeLine{00762\ \ \ \ \ fs-\/>bottom\_field\ =\ alloc\_storable\_picture(p\_Vid,\ BOTTOM\_FIELD,\ p-\/>size\_x,\ 2*p-\/>size\_y,\ p-\/>size\_x\_cr,\ 2*p-\/>size\_y\_cr,\ 1);}
+\DoxyCodeLine{00763\ \ \ \ \ fs-\/>bottom\_field-\/>chroma\_format\_idc\ =\ p-\/>chroma\_format\_idc;}
+\DoxyCodeLine{00764\ \ \ \ \ clear\_picture(p\_Vid,\ fs-\/>bottom\_field);}
+\DoxyCodeLine{00765\ \ \ \ \ dpb\_combine\_field\_yuv(p\_Vid,\ fs);}
+\DoxyCodeLine{00766\ \textcolor{preprocessor}{\#if\ (MVC\_EXTENSION\_ENABLE)}}
+\DoxyCodeLine{00767\ \ \ \ \ fs-\/>frame-\/>view\_id\ =\ fs-\/>view\_id;}
+\DoxyCodeLine{00768\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00769\ \ \ \ \ write\_picture\ (p\_Vid,\ fs-\/>frame,\ p\_out,\ TOP\_FIELD);}
+\DoxyCodeLine{00770\ \ \ \}}
+\DoxyCodeLine{00771\ }
+\DoxyCodeLine{00772\ \ \ \textcolor{keywordflow}{if}(fs-\/>is\_used\ \&\ 0x02)}
+\DoxyCodeLine{00773\ \ \ \{}
+\DoxyCodeLine{00774\ \ \ \ \ \textcolor{comment}{//\ we\ have\ a\ bottom\ field}}
+\DoxyCodeLine{00775\ \ \ \ \ \textcolor{comment}{//\ construct\ an\ empty\ top\ field}}
+\DoxyCodeLine{00776\ \ \ \ \ p\ =\ fs-\/>bottom\_field;}
+\DoxyCodeLine{00777\ \ \ \ \ fs-\/>top\_field\ =\ alloc\_storable\_picture(p\_Vid,\ TOP\_FIELD,\ p-\/>size\_x,\ 2*p-\/>size\_y,\ p-\/>size\_x\_cr,\ 2*p-\/>size\_y\_cr,\ 1);}
+\DoxyCodeLine{00778\ \ \ \ \ fs-\/>top\_field-\/>chroma\_format\_idc\ =\ p-\/>chroma\_format\_idc;}
+\DoxyCodeLine{00779\ \ \ \ \ clear\_picture(p\_Vid,\ fs-\/>top\_field);}
+\DoxyCodeLine{00780\ \ \ \ \ fs\ -\/>top\_field-\/>frame\_cropping\_flag\ =\ fs-\/>bottom\_field-\/>frame\_cropping\_flag;}
+\DoxyCodeLine{00781\ \ \ \ \ \textcolor{keywordflow}{if}(fs\ -\/>top\_field-\/>frame\_cropping\_flag)}
+\DoxyCodeLine{00782\ \ \ \ \ \{}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ fs\ -\/>top\_field-\/>frame\_crop\_top\_offset\ =\ fs-\/>bottom\_field-\/>frame\_crop\_top\_offset;}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ fs\ -\/>top\_field-\/>frame\_crop\_bottom\_offset\ =\ fs-\/>bottom\_field-\/>frame\_crop\_bottom\_offset;}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ fs\ -\/>top\_field-\/>frame\_crop\_left\_offset\ =\ fs-\/>bottom\_field-\/>frame\_crop\_left\_offset;}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ fs\ -\/>top\_field-\/>frame\_crop\_right\_offset\ =\ fs-\/>bottom\_field-\/>frame\_crop\_right\_offset;}
+\DoxyCodeLine{00787\ \ \ \ \ \}}
+\DoxyCodeLine{00788\ \ \ \ \ dpb\_combine\_field\_yuv(p\_Vid,\ fs);}
+\DoxyCodeLine{00789\ \textcolor{preprocessor}{\#if\ (MVC\_EXTENSION\_ENABLE)}}
+\DoxyCodeLine{00790\ \ \ \ \ fs-\/>frame-\/>view\_id\ =\ fs-\/>view\_id;}
+\DoxyCodeLine{00791\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00792\ \ \ \ \ write\_picture\ (p\_Vid,\ fs-\/>frame,\ p\_out,\ BOTTOM\_FIELD);}
+\DoxyCodeLine{00793\ \ \ \}}
+\DoxyCodeLine{00794\ }
+\DoxyCodeLine{00795\ \ \ fs-\/>is\_used\ =\ 3;}
+\DoxyCodeLine{00796\ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00809\ \textcolor{keywordtype}{void}\ flush\_direct\_output(VideoParameters\ *p\_Vid,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00810\ \{}
+\DoxyCodeLine{00811\ \ \ write\_unpaired\_field(p\_Vid,\ p\_Vid-\/>out\_buffer,\ p\_out);}
+\DoxyCodeLine{00812\ }
+\DoxyCodeLine{00813\ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>frame);}
+\DoxyCodeLine{00814\ \ \ p\_Vid-\/>out\_buffer-\/>frame\ =\ NULL;}
+\DoxyCodeLine{00815\ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>top\_field);}
+\DoxyCodeLine{00816\ \ \ p\_Vid-\/>out\_buffer-\/>top\_field\ =\ NULL;}
+\DoxyCodeLine{00817\ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>bottom\_field);}
+\DoxyCodeLine{00818\ \ \ p\_Vid-\/>out\_buffer-\/>bottom\_field\ =\ NULL;}
+\DoxyCodeLine{00819\ \ \ p\_Vid-\/>out\_buffer-\/>is\_used\ =\ 0;}
+\DoxyCodeLine{00820\ \}}
+\DoxyCodeLine{00821\ }
+\DoxyCodeLine{00822\ }
+\DoxyCodeLine{00836\ \textcolor{keywordtype}{void}\ write\_stored\_frame(\ VideoParameters\ *p\_Vid,\ FrameStore\ *fs,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00837\ \{}
+\DoxyCodeLine{00838\ \ \ \textcolor{comment}{//\ make\ sure\ no\ direct\ output\ field\ is\ pending}}
+\DoxyCodeLine{00839\ \ \ flush\_direct\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00840\ }
+\DoxyCodeLine{00841\ \ \ \textcolor{keywordflow}{if}\ (fs-\/>is\_used<3)}
+\DoxyCodeLine{00842\ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ write\_unpaired\_field(p\_Vid,\ fs,\ p\_out);}
+\DoxyCodeLine{00844\ \ \ \}}
+\DoxyCodeLine{00845\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00846\ \ \ \{}
+\DoxyCodeLine{00847\ \ \ \ \ \textcolor{keywordflow}{if}\ (fs-\/>recovery\_frame)}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ p\_Vid-\/>recovery\_flag\ =\ 1;}
+\DoxyCodeLine{00849\ \ \ \ \ \textcolor{keywordflow}{if}\ ((!p\_Vid-\/>non\_conforming\_stream)\ ||\ p\_Vid-\/>recovery\_flag)}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ write\_picture(p\_Vid,\ fs-\/>frame,\ p\_out,\ FRAME);}
+\DoxyCodeLine{00851\ \ \ \}}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \ \ fs-\/>is\_output\ =\ 1;}
+\DoxyCodeLine{00854\ \}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00870\ \textcolor{keywordtype}{void}\ direct\_output(VideoParameters\ *p\_Vid,\ StorablePicture\ *p,\ \textcolor{keywordtype}{int}\ p\_out)}
+\DoxyCodeLine{00871\ \{}
+\DoxyCodeLine{00872\ \ \ InputParameters\ *p\_Inp\ =\ p\_Vid-\/>p\_Inp;}
+\DoxyCodeLine{00873\ \ \ \textcolor{keywordflow}{if}\ (p-\/>structure==FRAME)}
+\DoxyCodeLine{00874\ \ \ \{}
+\DoxyCodeLine{00875\ \ \ \ \ \textcolor{comment}{//\ we\ have\ a\ frame\ (or\ complementary\ field\ pair)}}
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{comment}{//\ so\ output\ it\ directly}}
+\DoxyCodeLine{00877\ \ \ \ \ flush\_direct\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00878\ \ \ \ \ write\_picture\ (p\_Vid,\ p,\ p\_out,\ FRAME);}
+\DoxyCodeLine{00879\ \ \ \ \ calculate\_frame\_no(p\_Vid,\ p);}
+\DoxyCodeLine{00880\ \ \ \ \ \textcolor{keywordflow}{if}\ (-\/1\ !=\ p\_Vid-\/>p\_ref\ \&\&\ !p\_Inp-\/>silent)}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ find\_snr(p\_Vid,\ p,\ \&p\_Vid-\/>p\_ref);}
+\DoxyCodeLine{00882\ \ \ \ \ free\_storable\_picture(p);}
+\DoxyCodeLine{00883\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00884\ \ \ \}}
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \ \ \textcolor{keywordflow}{if}\ (p-\/>structure\ ==\ TOP\_FIELD)}
+\DoxyCodeLine{00887\ \ \ \{}
+\DoxyCodeLine{00888\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>out\_buffer-\/>is\_used\ \&1)}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ flush\_direct\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00890\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>top\_field\ =\ p;}
+\DoxyCodeLine{00891\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>is\_used\ |=\ 1;}
+\DoxyCodeLine{00892\ \ \ \}}
+\DoxyCodeLine{00893\ }
+\DoxyCodeLine{00894\ \ \ \textcolor{keywordflow}{if}\ (p-\/>structure\ ==\ BOTTOM\_FIELD)}
+\DoxyCodeLine{00895\ \ \ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>out\_buffer-\/>is\_used\ \&2)}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ flush\_direct\_output(p\_Vid,\ p\_out);}
+\DoxyCodeLine{00898\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>bottom\_field\ =\ p;}
+\DoxyCodeLine{00899\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>is\_used\ |=\ 2;}
+\DoxyCodeLine{00900\ \ \ \}}
+\DoxyCodeLine{00901\ }
+\DoxyCodeLine{00902\ \ \ \textcolor{keywordflow}{if}\ (p\_Vid-\/>out\_buffer-\/>is\_used\ ==\ 3)}
+\DoxyCodeLine{00903\ \ \ \{}
+\DoxyCodeLine{00904\ \ \ \ \ \textcolor{comment}{//\ we\ have\ both\ fields,\ so\ output\ them}}
+\DoxyCodeLine{00905\ \ \ \ \ dpb\_combine\_field\_yuv(p\_Vid,\ p\_Vid-\/>out\_buffer);}
+\DoxyCodeLine{00906\ \textcolor{preprocessor}{\#if\ (MVC\_EXTENSION\_ENABLE)}}
+\DoxyCodeLine{00907\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>frame-\/>view\_id\ =\ p\_Vid-\/>out\_buffer-\/>view\_id;}
+\DoxyCodeLine{00908\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00909\ \ \ \ \ write\_picture\ (p\_Vid,\ p\_Vid-\/>out\_buffer-\/>frame,\ p\_out,\ FRAME);}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \ \ \ \ calculate\_frame\_no(p\_Vid,\ p);}
+\DoxyCodeLine{00912\ \ \ \ \ \textcolor{keywordflow}{if}\ (-\/1\ !=\ p\_Vid-\/>p\_ref\ \&\&\ !p\_Inp-\/>silent)}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ find\_snr(p\_Vid,\ p\_Vid-\/>out\_buffer-\/>frame,\ \&p\_Vid-\/>p\_ref);}
+\DoxyCodeLine{00914\ \ \ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>frame);}
+\DoxyCodeLine{00915\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>frame\ =\ NULL;}
+\DoxyCodeLine{00916\ \ \ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>top\_field);}
+\DoxyCodeLine{00917\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>top\_field\ =\ NULL;}
+\DoxyCodeLine{00918\ \ \ \ \ free\_storable\_picture(p\_Vid-\/>out\_buffer-\/>bottom\_field);}
+\DoxyCodeLine{00919\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>bottom\_field\ =\ NULL;}
+\DoxyCodeLine{00920\ \ \ \ \ p\_Vid-\/>out\_buffer-\/>is\_used\ =\ 0;}
+\DoxyCodeLine{00921\ \ \ \}}
+\DoxyCodeLine{00922\ \}}
+\DoxyCodeLine{00923\ }
+
+\end{DoxyCode}

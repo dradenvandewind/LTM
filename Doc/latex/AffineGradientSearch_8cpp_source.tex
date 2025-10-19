@@ -1,0 +1,172 @@
+\doxysection{Affine\+Gradient\+Search.\+cpp}
+\label{AffineGradientSearch_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/AffineGradientSearch.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/AffineGradientSearch.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ Includes}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}AffineGradientSearch.h"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Private\ member\ functions}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ AffineGradientSearch::AffineGradientSearch()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ m\_HorizontalSobelFilter\ =\ xHorizontalSobelFilter;}
+\DoxyCodeLine{00056\ \ \ m\_VerticalSobelFilter\ =\ xVerticalSobelFilter;}
+\DoxyCodeLine{00057\ \ \ m\_EqualCoeffComputer\ =\ xEqualCoeffComputer;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_AFFINE\_ME}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#ifdef\ TARGET\_SIMD\_X86}}
+\DoxyCodeLine{00061\ \ \ initAffineGradientSearchX86();}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keywordtype}{void}\ AffineGradientSearch::xHorizontalSobelFilter(\ Pel\ *\textcolor{keyword}{const}\ pPred,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ predStride,\ \textcolor{keywordtype}{int}\ *\textcolor{keyword}{const}\ pDerivate,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ derivateBufStride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height\ )}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ height\ -\/\ 1;\ j++\ )}
+\DoxyCodeLine{00069\ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ k\ =\ 1;\ k\ <\ width\ -\/\ 1;\ k++\ )}
+\DoxyCodeLine{00071\ \ \ \ \ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iCenter\ =\ j\ *\ predStride\ +\ k;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ pDerivate[j\ *\ derivateBufStride\ +\ k]\ =}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ (pPred[iCenter\ +\ 1\ -\/\ predStride]\ -\/}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ -\/\ 1\ -\/\ predStride]\ +}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ (pPred[iCenter\ +\ 1]\ <<\ 1)\ -\/}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ (pPred[iCenter\ -\/\ 1]\ <<\ 1)\ +}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ +\ 1\ +\ predStride]\ -\/}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ -\/\ 1\ +\ predStride]);}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ pDerivate[j\ *\ derivateBufStride]\ =\ pDerivate[j\ *\ derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00084\ \ \ \ \ pDerivate[j\ *\ derivateBufStride\ +\ width\ -\/\ 1]\ =\ pDerivate[j\ *\ derivateBufStride\ +\ width\ -\/\ 2];}
+\DoxyCodeLine{00085\ \ \ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ pDerivate[0]\ =\ pDerivate[derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00088\ \ \ pDerivate[width\ -\/\ 1]\ =\ pDerivate[derivateBufStride\ +\ width\ -\/\ 2];}
+\DoxyCodeLine{00089\ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00090\ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride\ +\ width\ -\/\ 1]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ (width\ -\/\ 2)];}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ width\ -\/\ 1;\ j++\ )}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ pDerivate[j]\ =\ pDerivate[derivateBufStride\ +\ j];}
+\DoxyCodeLine{00095\ \ \ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride\ +\ j]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ j];}
+\DoxyCodeLine{00096\ \ \ \}}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keywordtype}{void}\ AffineGradientSearch::xVerticalSobelFilter(\ Pel\ *\textcolor{keyword}{const}\ pPred,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ predStride,\ \textcolor{keywordtype}{int}\ *\textcolor{keyword}{const}\ pDerivate,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ derivateBufStride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height\ )}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ k\ =\ 1;\ k\ <\ width\ -\/\ 1;\ k++\ )}
+\DoxyCodeLine{00102\ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ height\ -\/\ 1;\ j++\ )}
+\DoxyCodeLine{00104\ \ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iCenter\ =\ j\ *\ predStride\ +\ k;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ pDerivate[j\ *\ derivateBufStride\ +\ k]\ =}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ (pPred[iCenter\ +\ predStride\ -\/\ 1]\ -\/}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ -\/\ predStride\ -\/\ 1]\ +}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ (pPred[iCenter\ +\ predStride]\ <<\ 1)\ -\/}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ (pPred[iCenter\ -\/\ predStride]\ <<\ 1)\ +}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ +\ predStride\ +\ 1]\ -\/}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ pPred[iCenter\ -\/\ predStride\ +\ 1]);}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ pDerivate[k]\ =\ pDerivate[derivateBufStride\ +\ k];}
+\DoxyCodeLine{00117\ \ \ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride\ +\ k]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ k];}
+\DoxyCodeLine{00118\ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ pDerivate[0]\ =\ pDerivate[derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00121\ \ \ pDerivate[width\ -\/\ 1]\ =\ pDerivate[derivateBufStride\ +\ width\ -\/\ 2];}
+\DoxyCodeLine{00122\ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00123\ \ \ pDerivate[(height\ -\/\ 1)\ *\ derivateBufStride\ +\ width\ -\/\ 1]\ =\ pDerivate[(height\ -\/\ 2)\ *\ derivateBufStride\ +\ (width\ -\/\ 2)];}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ height\ -\/\ 1;\ j++\ )}
+\DoxyCodeLine{00126\ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ pDerivate[j\ *\ derivateBufStride]\ =\ pDerivate[j\ *\ derivateBufStride\ +\ 1];}
+\DoxyCodeLine{00128\ \ \ \ \ pDerivate[j\ *\ derivateBufStride\ +\ width\ -\/\ 1]\ =\ pDerivate[j\ *\ derivateBufStride\ +\ width\ -\/\ 2];}
+\DoxyCodeLine{00129\ \ \ \}}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{void}\ AffineGradientSearch::xEqualCoeffComputer(\ Pel\ *pResidue,\ \textcolor{keywordtype}{int}\ residueStride,\ \textcolor{keywordtype}{int}\ **ppDerivate,\ \textcolor{keywordtype}{int}\ derivateBufStride,\ int64\_t(\ *pEqualCoeff\ )[7],\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{bool}\ b6Param\ )}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \textcolor{keywordtype}{int}\ affineParamNum\ =\ b6Param\ ?\ 6\ :\ 4;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ !=\ height;\ j++\ )}
+\DoxyCodeLine{00137\ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{int}\ cy\ =\ ((j\ >>\ 2)\ <<\ 2)\ +\ 2;}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ !=\ width;\ k++\ )}
+\DoxyCodeLine{00140\ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iC[6];}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ idx\ =\ j\ *\ derivateBufStride\ +\ k;}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ cx\ =\ ((k\ >>\ 2)\ <<\ 2)\ +\ 2;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !b6Param\ )}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ iC[0]\ =\ ppDerivate[0][idx];}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ iC[1]\ =\ cx\ *\ ppDerivate[0][idx]\ +\ cy\ *\ ppDerivate[1][idx];}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ iC[2]\ =\ ppDerivate[1][idx];}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ iC[3]\ =\ cy\ *\ ppDerivate[0][idx]\ -\/\ cx\ *\ ppDerivate[1][idx];}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ iC[0]\ =\ ppDerivate[0][idx];}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ iC[1]\ =\ cx\ *\ ppDerivate[0][idx];}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ iC[2]\ =\ ppDerivate[1][idx];}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ iC[3]\ =\ cx\ *\ ppDerivate[1][idx];}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ iC[4]\ =\ cy\ *\ ppDerivate[0][idx];}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ iC[5]\ =\ cy\ *\ ppDerivate[1][idx];}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ col\ =\ 0;\ col\ <\ affineParamNum;\ col++\ )}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ row\ =\ 0;\ row\ <\ affineParamNum;\ row++\ )}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ pEqualCoeff[col\ +\ 1][row]\ +=\ (int64\_t)iC[col]\ *\ iC[row];}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ pEqualCoeff[col\ +\ 1][affineParamNum]\ +=\ ((int64\_t)iC[col]\ *\ pResidue[idx])\ <<\ 3;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \}}
+\DoxyCodeLine{00171\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ }
+
+\end{DoxyCode}

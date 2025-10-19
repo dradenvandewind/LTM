@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['r_5fcomp_0',['R_COMP',['../defines_8h.html#aef061403e3c0c9f0c95d44979b80c91aa77c174791d199537f58172753cd8ad16',1,'defines.h']]],
+  ['ref_5fpic_5flist_5f0_1',['REF_PIC_LIST_0',['../namespacevtm.html#a6aa563f369ba59110c899a58b4d15ccdac745007141ab71196bbde7c02efef860',1,'vtm']]],
+  ['ref_5fpic_5flist_5f1_2',['REF_PIC_LIST_1',['../namespacevtm.html#a6aa563f369ba59110c899a58b4d15ccda646199142eec3770ba7b7e5dc5bf152c',1,'vtm']]],
+  ['ref_5fpic_5flist_5fx_3',['REF_PIC_LIST_X',['../namespacevtm.html#a6aa563f369ba59110c899a58b4d15ccda4a59c88e95ba3caec5726dac3bb03c65',1,'vtm']]],
+  ['region_5fwise_5fpacking_4',['REGION_WISE_PACKING',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaad586de482070fa6b28d697c401a8194d',1,'vtm::SEI']]],
+  ['replace_5',['replace',['../namespacenlohmann_1_1detail.html#a5a76b60b26dc8c47256a996d18d967dfa9dde360102c103867bd2f45872f1129c',1,'nlohmann::detail']]],
+  ['reserved_5firap_5fvcl_5f11_6',['RESERVED_IRAP_VCL_11',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa2c6b650f20e476ad369c068a5a2cec03',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5firap_5fvcl_5f12_7',['RESERVED_IRAP_VCL_12',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa5655e74269e89ad7c4fd49daeef6ce04',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5fnvcl_5f26_8',['RESERVED_NVCL_26',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166faace8f7b4bb9842c67cd38cc6bc565941',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5fnvcl_5f27_9',['RESERVED_NVCL_27',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166facecc82c127d4a7c340e2166105b72149',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5fvcl_5f4_10',['RESERVED_VCL_4',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa1ca3b3726f3c677f0738e3ffd43e4d57',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5fvcl_5f5_11',['RESERVED_VCL_5',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa68d5fca30d70369841623b8b9a15da95',1,'vnova::utility::VVCNalType']]],
+  ['reserved_5fvcl_5f6_12',['RESERVED_VCL_6',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fadc6c2962957e996615885315a966fede',1,'vnova::utility::VVCNalType']]],
+  ['reshape_5fsignal_5fhlg_13',['RESHAPE_SIGNAL_HLG',['../namespacevtm.html#a940e5ecccedb7fcf447e1793252555e4af60849aa020213a8c1f59ac9c257b358',1,'vtm']]],
+  ['reshape_5fsignal_5fnull_14',['RESHAPE_SIGNAL_NULL',['../namespacevtm.html#a940e5ecccedb7fcf447e1793252555e4a6415f1f55e85067f67639c026f1414b8',1,'vtm']]],
+  ['reshape_5fsignal_5fpq_15',['RESHAPE_SIGNAL_PQ',['../namespacevtm.html#a940e5ecccedb7fcf447e1793252555e4a904205ae498d77ef7bf6e7f287125b56',1,'vtm']]],
+  ['reshape_5fsignal_5fsdr_16',['RESHAPE_SIGNAL_SDR',['../namespacevtm.html#a940e5ecccedb7fcf447e1793252555e4aa37ccf7055406c99d62073844d172706',1,'vtm']]],
+  ['residual_5fkill_17',['RESIDUAL_KILL',['../namespacelctm.html#ac0931c3062a69d307ffb67991b5de2a8a49085245d6b87e72754c544dd20d21e1',1,'lctm']]],
+  ['residual_5flive_18',['RESIDUAL_LIVE',['../namespacelctm.html#ac0931c3062a69d307ffb67991b5de2a8a3df9d38b5951ac0be5c363d88242b9ca',1,'lctm']]],
+  ['rsv_5firap_5fvcl22_19',['RSV_IRAP_VCL22',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149cad587a486d4569b2771aa19a37c25bafa',1,'vnova::utility::HEVCNalType']]],
+  ['rsv_5firap_5fvcl23_20',['RSV_IRAP_VCL23',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149ca881aa516cb574ada4878b0fa2d05ae71',1,'vnova::utility::HEVCNalType']]],
+  ['rsv_5fvcl_5fn10_21',['RSV_VCL_N10',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149ca96c1cbb71c11cfca7f5272560cc58a72',1,'vnova::utility::HEVCNalType']]],
+  ['rsv_5fvcl_5fn12_22',['RSV_VCL_N12',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149caec842f09d269af849f4ee4ea65393d04',1,'vnova::utility::HEVCNalType']]],
+  ['rsv_5fvcl_5fn14_23',['RSV_VCL_N14',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149ca806dd7f995ca5a0dc90d82147eaa7648',1,'vnova::utility::HEVCNalType']]]
+];

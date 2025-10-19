@@ -1,0 +1,866 @@
+\doxysection{Interpolation\+Filter.\+cpp}
+\label{InterpolationFilter_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/InterpolationFilter.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/InterpolationFilter.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ Includes}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Rom.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}InterpolationFilter.h"{}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}ChromaFormat.h"{}}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#if\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}}
+\DoxyCodeLine{00051\ CacheModel*\ InterpolationFilter::m\_cacheModel;}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ Tables}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_lumaFilter4x4[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00060\ \{}
+\DoxyCodeLine{00061\ \ \ \{\ \ 0,\ 0,\ \ \ 0,\ 64,\ \ 0,\ \ \ 0,\ \ 0,\ \ 0\ \},}
+\DoxyCodeLine{00062\ \ \ \{\ \ 0,\ 1,\ \ -\/3,\ 63,\ \ 4,\ \ -\/2,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00063\ \ \ \{\ \ 0,\ 1,\ \ -\/5,\ 62,\ \ 8,\ \ -\/3,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00064\ \ \ \{\ \ 0,\ 2,\ \ -\/8,\ 60,\ 13,\ \ -\/4,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00065\ \ \ \{\ \ 0,\ 3,\ -\/10,\ 58,\ 17,\ \ -\/5,\ \ 1,\ \ 0\ \},\ \textcolor{comment}{//1/4}}
+\DoxyCodeLine{00066\ \ \ \{\ \ 0,\ 3,\ -\/11,\ 52,\ 26,\ \ -\/8,\ \ 2,\ \ 0\ \},}
+\DoxyCodeLine{00067\ \ \ \{\ \ 0,\ 2,\ \ -\/9,\ 47,\ 31,\ -\/10,\ \ 3,\ \ 0\ \},}
+\DoxyCodeLine{00068\ \ \ \{\ \ 0,\ 3,\ -\/11,\ 45,\ 34,\ -\/10,\ \ 3,\ \ 0\ \},}
+\DoxyCodeLine{00069\ \ \ \{\ \ 0,\ 3,\ -\/11,\ 40,\ 40,\ -\/11,\ \ 3,\ \ 0\ \},\ \textcolor{comment}{//1/2}}
+\DoxyCodeLine{00070\ \ \ \{\ \ 0,\ 3,\ -\/10,\ 34,\ 45,\ -\/11,\ \ 3,\ \ 0\ \},}
+\DoxyCodeLine{00071\ \ \ \{\ \ 0,\ 3,\ -\/10,\ 31,\ 47,\ \ -\/9,\ \ 2,\ \ 0\ \},}
+\DoxyCodeLine{00072\ \ \ \{\ \ 0,\ 2,\ \ -\/8,\ 26,\ 52,\ -\/11,\ \ 3,\ \ 0\ \},}
+\DoxyCodeLine{00073\ \ \ \{\ \ 0,\ 1,\ \ -\/5,\ 17,\ 58,\ -\/10,\ \ 3,\ \ 0\ \},\ \textcolor{comment}{//3/4}}
+\DoxyCodeLine{00074\ \ \ \{\ \ 0,\ 1,\ \ -\/4,\ 13,\ 60,\ \ -\/8,\ \ 2,\ \ 0\ \},}
+\DoxyCodeLine{00075\ \ \ \{\ \ 0,\ 1,\ \ -\/3,\ \ 8,\ 62,\ \ -\/5,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00076\ \ \ \{\ \ 0,\ 1,\ \ -\/2,\ \ 4,\ 63,\ \ -\/3,\ \ 1,\ \ 0\ \}}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_lumaFilter[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \ \ \{\ \ 0,\ 0,\ \ \ 0,\ 64,\ \ 0,\ \ \ 0,\ \ 0,\ \ 0\ \},}
+\DoxyCodeLine{00082\ \ \ \{\ \ 0,\ 1,\ \ -\/3,\ 63,\ \ 4,\ \ -\/2,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00083\ \ \ \{\ -\/1,\ 2,\ \ -\/5,\ 62,\ \ 8,\ \ -\/3,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00084\ \ \ \{\ -\/1,\ 3,\ \ -\/8,\ 60,\ 13,\ \ -\/4,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00085\ \ \ \{\ -\/1,\ 4,\ -\/10,\ 58,\ 17,\ \ -\/5,\ \ 1,\ \ 0\ \},}
+\DoxyCodeLine{00086\ \ \ \{\ -\/1,\ 4,\ -\/11,\ 52,\ 26,\ \ -\/8,\ \ 3,\ -\/1\ \},}
+\DoxyCodeLine{00087\ \ \ \{\ -\/1,\ 3,\ \ -\/9,\ 47,\ 31,\ -\/10,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00088\ \ \ \{\ -\/1,\ 4,\ -\/11,\ 45,\ 34,\ -\/10,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00089\ \ \ \{\ -\/1,\ 4,\ -\/11,\ 40,\ 40,\ -\/11,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00090\ \ \ \{\ -\/1,\ 4,\ -\/10,\ 34,\ 45,\ -\/11,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00091\ \ \ \{\ -\/1,\ 4,\ -\/10,\ 31,\ 47,\ \ -\/9,\ \ 3,\ -\/1\ \},}
+\DoxyCodeLine{00092\ \ \ \{\ -\/1,\ 3,\ \ -\/8,\ 26,\ 52,\ -\/11,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00093\ \ \ \{\ \ 0,\ 1,\ \ -\/5,\ 17,\ 58,\ -\/10,\ \ 4,\ -\/1\ \},}
+\DoxyCodeLine{00094\ \ \ \{\ \ 0,\ 1,\ \ -\/4,\ 13,\ 60,\ \ -\/8,\ \ 3,\ -\/1\ \},}
+\DoxyCodeLine{00095\ \ \ \{\ \ 0,\ 1,\ \ -\/3,\ \ 8,\ 62,\ \ -\/5,\ \ 2,\ -\/1\ \},}
+\DoxyCodeLine{00096\ \ \ \{\ \ 0,\ 1,\ \ -\/2,\ \ 4,\ 63,\ \ -\/3,\ \ 1,\ \ 0\ \}}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ 1.5x}}
+\DoxyCodeLine{00100\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_lumaFilterRPR1[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \{\ -\/1,\ -\/5,\ 17,\ 42,\ 17,\ -\/5,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00103\ \ \ \{\ \ 0,\ -\/5,\ 15,\ 41,\ 19,\ -\/5,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00104\ \ \ \{\ \ 0,\ -\/5,\ 13,\ 40,\ 21,\ -\/4,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00105\ \ \ \{\ \ 0,\ -\/5,\ 11,\ 39,\ 24,\ -\/4,\ -\/2,\ \ 1\ \},}
+\DoxyCodeLine{00106\ \ \ \{\ \ 0,\ -\/5,\ \ 9,\ 38,\ 26,\ -\/3,\ -\/2,\ \ 1\ \},}
+\DoxyCodeLine{00107\ \ \ \{\ \ 0,\ -\/5,\ \ 7,\ 38,\ 28,\ -\/2,\ -\/3,\ \ 1\ \},}
+\DoxyCodeLine{00108\ \ \ \{\ \ 1,\ -\/5,\ \ 5,\ 36,\ 30,\ -\/1,\ -\/3,\ \ 1\ \},}
+\DoxyCodeLine{00109\ \ \ \{\ \ 1,\ -\/4,\ \ 3,\ 35,\ 32,\ \ 0,\ -\/4,\ \ 1\ \},}
+\DoxyCodeLine{00110\ \ \ \{\ \ 1,\ -\/4,\ \ 2,\ 33,\ 33,\ \ 2,\ -\/4,\ \ 1\ \},}
+\DoxyCodeLine{00111\ \ \ \{\ \ 1,\ -\/4,\ \ 0,\ 32,\ 35,\ \ 3,\ -\/4,\ \ 1\ \},}
+\DoxyCodeLine{00112\ \ \ \{\ \ 1,\ -\/3,\ -\/1,\ 30,\ 36,\ \ 5,\ -\/5,\ \ 1\ \},}
+\DoxyCodeLine{00113\ \ \ \{\ \ 1,\ -\/3,\ -\/2,\ 28,\ 38,\ \ 7,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00114\ \ \ \{\ \ 1,\ -\/2,\ -\/3,\ 26,\ 38,\ \ 9,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00115\ \ \ \{\ \ 1,\ -\/2,\ -\/4,\ 24,\ 39,\ 11,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00116\ \ \ \{\ \ 0,\ -\/1,\ -\/4,\ 21,\ 40,\ 13,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00117\ \ \ \{\ \ 0,\ -\/1,\ -\/5,\ 19,\ 41,\ 15,\ -\/5,\ \ 0\ \}}
+\DoxyCodeLine{00118\ \};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ 2x}}
+\DoxyCodeLine{00121\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_lumaFilterRPR2[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00122\ \{}
+\DoxyCodeLine{00123\ \ \ \{\ -\/4,\ \ 2,\ 20,\ 28,\ 20,\ \ 2,\ -\/4,\ \ 0\ \},}
+\DoxyCodeLine{00124\ \ \ \{\ -\/4,\ \ 0,\ 19,\ 29,\ 21,\ \ 5,\ -\/4,\ -\/2\ \},}
+\DoxyCodeLine{00125\ \ \ \{\ -\/4,\ -\/1,\ 18,\ 29,\ 22,\ \ 6,\ -\/4,\ -\/2\ \},}
+\DoxyCodeLine{00126\ \ \ \{\ -\/4,\ -\/1,\ 16,\ 29,\ 23,\ \ 7,\ -\/4,\ -\/2\ \},}
+\DoxyCodeLine{00127\ \ \ \{\ -\/4,\ -\/1,\ 16,\ 28,\ 24,\ \ 7,\ -\/4,\ -\/2\ \},}
+\DoxyCodeLine{00128\ \ \ \{\ -\/4,\ -\/1,\ 14,\ 28,\ 25,\ \ 8,\ -\/4,\ -\/2\ \},}
+\DoxyCodeLine{00129\ \ \ \{\ -\/3,\ -\/3,\ 14,\ 27,\ 26,\ \ 9,\ -\/3,\ -\/3\ \},}
+\DoxyCodeLine{00130\ \ \ \{\ -\/3,\ -\/1,\ 12,\ 28,\ 25,\ 10,\ -\/4,\ -\/3\ \},}
+\DoxyCodeLine{00131\ \ \ \{\ -\/3,\ -\/3,\ 11,\ 27,\ 27,\ 11,\ -\/3,\ -\/3\ \},}
+\DoxyCodeLine{00132\ \ \ \{\ -\/3,\ -\/4,\ 10,\ 25,\ 28,\ 12,\ -\/1,\ -\/3\ \},}
+\DoxyCodeLine{00133\ \ \ \{\ -\/3,\ -\/3,\ \ 9,\ 26,\ 27,\ 14,\ -\/3,\ -\/3\ \},}
+\DoxyCodeLine{00134\ \ \ \{\ -\/2,\ -\/4,\ \ 8,\ 25,\ 28,\ 14,\ -\/1,\ -\/4\ \},}
+\DoxyCodeLine{00135\ \ \ \{\ -\/2,\ -\/4,\ \ 7,\ 24,\ 28,\ 16,\ -\/1,\ -\/4\ \},}
+\DoxyCodeLine{00136\ \ \ \{\ -\/2,\ -\/4,\ \ 7,\ 23,\ 29,\ 16,\ -\/1,\ -\/4\ \},}
+\DoxyCodeLine{00137\ \ \ \{\ -\/2,\ -\/4,\ \ 6,\ 22,\ 29,\ 18,\ -\/1,\ -\/4\ \},}
+\DoxyCodeLine{00138\ \ \ \{\ -\/2,\ -\/4,\ \ 5,\ 21,\ 29,\ 19,\ \ 0,\ -\/4\ \}}
+\DoxyCodeLine{00139\ \};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ 1.5x}}
+\DoxyCodeLine{00142\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_affineLumaFilterRPR1[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00143\ \{}
+\DoxyCodeLine{00144\ \ \ \{\ \ 0,\ -\/6,\ 17,\ 42,\ 17,\ -\/5,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00145\ \ \ \{\ \ 0,\ -\/5,\ 15,\ 41,\ 19,\ -\/5,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00146\ \ \ \{\ \ 0,\ -\/5,\ 13,\ 40,\ 21,\ -\/4,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00147\ \ \ \{\ \ 0,\ -\/5,\ 11,\ 39,\ 24,\ -\/4,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00148\ \ \ \{\ \ 0,\ -\/5,\ \ 9,\ 38,\ 26,\ -\/3,\ -\/1,\ \ 0\ \},}
+\DoxyCodeLine{00149\ \ \ \{\ \ 0,\ -\/5,\ \ 7,\ 38,\ 28,\ -\/2,\ -\/2,\ \ 0\ \},}
+\DoxyCodeLine{00150\ \ \ \{\ \ 0,\ -\/4,\ \ 5,\ 36,\ 30,\ -\/1,\ -\/2,\ \ 0\ \},}
+\DoxyCodeLine{00151\ \ \ \{\ \ 0,\ -\/3,\ \ 3,\ 35,\ 32,\ \ 0,\ -\/3,\ \ 0\ \},}
+\DoxyCodeLine{00152\ \ \ \{\ \ 0,\ -\/3,\ \ 2,\ 33,\ 33,\ \ 2,\ -\/3,\ \ 0\ \},}
+\DoxyCodeLine{00153\ \ \ \{\ \ 0,\ -\/3,\ \ 0,\ 32,\ 35,\ \ 3,\ -\/3,\ \ 0\ \},}
+\DoxyCodeLine{00154\ \ \ \{\ \ 0,\ -\/2,\ -\/1,\ 30,\ 36,\ \ 5,\ -\/4,\ \ 0\ \},}
+\DoxyCodeLine{00155\ \ \ \{\ \ 0,\ -\/2,\ -\/2,\ 28,\ 38,\ \ 7,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00156\ \ \ \{\ \ 0,\ -\/1,\ -\/3,\ 26,\ 38,\ \ 9,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00157\ \ \ \{\ \ 0,\ -\/1,\ -\/4,\ 24,\ 39,\ 11,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00158\ \ \ \{\ \ 0,\ -\/1,\ -\/4,\ 21,\ 40,\ 13,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00159\ \ \ \{\ \ 0,\ -\/1,\ -\/5,\ 19,\ 41,\ 15,\ -\/5,\ \ 0\ \}}
+\DoxyCodeLine{00160\ \};}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ 2x}}
+\DoxyCodeLine{00163\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_affineLumaFilterRPR2[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_LUMA]\ =}
+\DoxyCodeLine{00164\ \{}
+\DoxyCodeLine{00165\ \ \ \{\ \ 0,\ -\/2,\ 20,\ 28,\ 20,\ \ 2,\ -\/4,\ \ 0\ \},}
+\DoxyCodeLine{00166\ \ \ \{\ \ 0,\ -\/4,\ 19,\ 29,\ 21,\ \ 5,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00167\ \ \ \{\ \ 0,\ -\/5,\ 18,\ 29,\ 22,\ \ 6,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00168\ \ \ \{\ \ 0,\ -\/5,\ 16,\ 29,\ 23,\ \ 7,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00169\ \ \ \{\ \ 0,\ -\/5,\ 16,\ 28,\ 24,\ \ 7,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00170\ \ \ \{\ \ 0,\ -\/5,\ 14,\ 28,\ 25,\ \ 8,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00171\ \ \ \{\ \ 0,\ -\/6,\ 14,\ 27,\ 26,\ \ 9,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00172\ \ \ \{\ \ 0,\ -\/4,\ 12,\ 28,\ 25,\ 10,\ -\/7,\ \ 0\ \},}
+\DoxyCodeLine{00173\ \ \ \{\ \ 0,\ -\/6,\ 11,\ 27,\ 27,\ 11,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00174\ \ \ \{\ \ 0,\ -\/7,\ 10,\ 25,\ 28,\ 12,\ -\/4,\ \ 0\ \},}
+\DoxyCodeLine{00175\ \ \ \{\ \ 0,\ -\/6,\ \ 9,\ 26,\ 27,\ 14,\ -\/6,\ \ 0\ \},}
+\DoxyCodeLine{00176\ \ \ \{\ \ 0,\ -\/6,\ \ 8,\ 25,\ 28,\ 14,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00177\ \ \ \{\ \ 0,\ -\/6,\ \ 7,\ 24,\ 28,\ 16,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00178\ \ \ \{\ \ 0,\ -\/6,\ \ 7,\ 23,\ 29,\ 16,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00179\ \ \ \{\ \ 0,\ -\/6,\ \ 6,\ 22,\ 29,\ 18,\ -\/5,\ \ 0\ \},}
+\DoxyCodeLine{00180\ \ \ \{\ \ 0,\ -\/6,\ \ 5,\ 21,\ 29,\ 19,\ -\/4,\ \ 0\ \}}
+\DoxyCodeLine{00181\ \};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_lumaAltHpelIFilter[NTAPS\_LUMA]\ =\ \{\ \ 0,\ 3,\ 9,\ 20,\ 20,\ 9,\ 3,\ 0\ \};}
+\DoxyCodeLine{00184\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_chromaFilter[CHROMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_CHROMA]\ =}
+\DoxyCodeLine{00185\ \{}
+\DoxyCodeLine{00186\ \ \ \{\ \ 0,\ 64,\ \ 0,\ \ 0\ \},}
+\DoxyCodeLine{00187\ \ \ \{\ -\/1,\ 63,\ \ 2,\ \ 0\ \},}
+\DoxyCodeLine{00188\ \ \ \{\ -\/2,\ 62,\ \ 4,\ \ 0\ \},}
+\DoxyCodeLine{00189\ \ \ \{\ -\/2,\ 60,\ \ 7,\ -\/1\ \},}
+\DoxyCodeLine{00190\ \ \ \{\ -\/2,\ 58,\ 10,\ -\/2\ \},}
+\DoxyCodeLine{00191\ \ \ \{\ -\/3,\ 57,\ 12,\ -\/2\ \},}
+\DoxyCodeLine{00192\ \ \ \{\ -\/4,\ 56,\ 14,\ -\/2\ \},}
+\DoxyCodeLine{00193\ \ \ \{\ -\/4,\ 55,\ 15,\ -\/2\ \},}
+\DoxyCodeLine{00194\ \ \ \{\ -\/4,\ 54,\ 16,\ -\/2\ \},}
+\DoxyCodeLine{00195\ \ \ \{\ -\/5,\ 53,\ 18,\ -\/2\ \},}
+\DoxyCodeLine{00196\ \ \ \{\ -\/6,\ 52,\ 20,\ -\/2\ \},}
+\DoxyCodeLine{00197\ \ \ \{\ -\/6,\ 49,\ 24,\ -\/3\ \},}
+\DoxyCodeLine{00198\ \ \ \{\ -\/6,\ 46,\ 28,\ -\/4\ \},}
+\DoxyCodeLine{00199\ \ \ \{\ -\/5,\ 44,\ 29,\ -\/4\ \},}
+\DoxyCodeLine{00200\ \ \ \{\ -\/4,\ 42,\ 30,\ -\/4\ \},}
+\DoxyCodeLine{00201\ \ \ \{\ -\/4,\ 39,\ 33,\ -\/4\ \},}
+\DoxyCodeLine{00202\ \ \ \{\ -\/4,\ 36,\ 36,\ -\/4\ \},}
+\DoxyCodeLine{00203\ \ \ \{\ -\/4,\ 33,\ 39,\ -\/4\ \},}
+\DoxyCodeLine{00204\ \ \ \{\ -\/4,\ 30,\ 42,\ -\/4\ \},}
+\DoxyCodeLine{00205\ \ \ \{\ -\/4,\ 29,\ 44,\ -\/5\ \},}
+\DoxyCodeLine{00206\ \ \ \{\ -\/4,\ 28,\ 46,\ -\/6\ \},}
+\DoxyCodeLine{00207\ \ \ \{\ -\/3,\ 24,\ 49,\ -\/6\ \},}
+\DoxyCodeLine{00208\ \ \ \{\ -\/2,\ 20,\ 52,\ -\/6\ \},}
+\DoxyCodeLine{00209\ \ \ \{\ -\/2,\ 18,\ 53,\ -\/5\ \},}
+\DoxyCodeLine{00210\ \ \ \{\ -\/2,\ 16,\ 54,\ -\/4\ \},}
+\DoxyCodeLine{00211\ \ \ \{\ -\/2,\ 15,\ 55,\ -\/4\ \},}
+\DoxyCodeLine{00212\ \ \ \{\ -\/2,\ 14,\ 56,\ -\/4\ \},}
+\DoxyCodeLine{00213\ \ \ \{\ -\/2,\ 12,\ 57,\ -\/3\ \},}
+\DoxyCodeLine{00214\ \ \ \{\ -\/2,\ 10,\ 58,\ -\/2\ \},}
+\DoxyCodeLine{00215\ \ \ \{\ -\/1,\ \ 7,\ 60,\ -\/2\ \},}
+\DoxyCodeLine{00216\ \ \ \{\ \ 0,\ \ 4,\ 62,\ -\/2\ \},}
+\DoxyCodeLine{00217\ \ \ \{\ \ 0,\ \ 2,\ 63,\ -\/1\ \},}
+\DoxyCodeLine{00218\ \};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{comment}{//1.5x}}
+\DoxyCodeLine{00221\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_chromaFilterRPR1[CHROMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_CHROMA]\ =}
+\DoxyCodeLine{00222\ \{}
+\DoxyCodeLine{00223\ \ \ \{\ 12,\ 40,\ 12,\ \ 0\ \},}
+\DoxyCodeLine{00224\ \ \ \{\ 11,\ 40,\ 13,\ \ 0\ \},}
+\DoxyCodeLine{00225\ \ \ \{\ 10,\ 40,\ 15,\ -\/1\ \},}
+\DoxyCodeLine{00226\ \ \ \{\ \ 9,\ 40,\ 16,\ -\/1\ \},}
+\DoxyCodeLine{00227\ \ \ \{\ \ 8,\ 40,\ 17,\ -\/1\ \},}
+\DoxyCodeLine{00228\ \ \ \{\ \ 8,\ 39,\ 18,\ -\/1\ \},}
+\DoxyCodeLine{00229\ \ \ \{\ \ 7,\ 39,\ 19,\ -\/1\ \},}
+\DoxyCodeLine{00230\ \ \ \{\ \ 6,\ 38,\ 21,\ -\/1\ \},}
+\DoxyCodeLine{00231\ \ \ \{\ \ 5,\ 38,\ 22,\ -\/1\ \},}
+\DoxyCodeLine{00232\ \ \ \{\ \ 4,\ 38,\ 23,\ -\/1\ \},}
+\DoxyCodeLine{00233\ \ \ \{\ \ 4,\ 37,\ 24,\ -\/1\ \},}
+\DoxyCodeLine{00234\ \ \ \{\ \ 3,\ 36,\ 25,\ \ 0\ \},}
+\DoxyCodeLine{00235\ \ \ \{\ \ 3,\ 35,\ 26,\ \ 0\ \},}
+\DoxyCodeLine{00236\ \ \ \{\ \ 2,\ 34,\ 28,\ \ 0\ \},}
+\DoxyCodeLine{00237\ \ \ \{\ \ 2,\ 33,\ 29,\ \ 0\ \},}
+\DoxyCodeLine{00238\ \ \ \{\ \ 1,\ 33,\ 30,\ \ 0\ \},}
+\DoxyCodeLine{00239\ \ \ \{\ \ 1,\ 31,\ 31,\ \ 1\ \},}
+\DoxyCodeLine{00240\ \ \ \{\ \ 0,\ 30,\ 33,\ \ 1\ \},}
+\DoxyCodeLine{00241\ \ \ \{\ \ 0,\ 29,\ 33,\ \ 2\ \},}
+\DoxyCodeLine{00242\ \ \ \{\ \ 0,\ 28,\ 34,\ \ 2\ \},}
+\DoxyCodeLine{00243\ \ \ \{\ \ 0,\ 26,\ 35,\ \ 3\ \},}
+\DoxyCodeLine{00244\ \ \ \{\ \ 0,\ 25,\ 36,\ \ 3\ \},}
+\DoxyCodeLine{00245\ \ \ \{\ -\/1,\ 24,\ 37,\ \ 4\ \},}
+\DoxyCodeLine{00246\ \ \ \{\ -\/1,\ 23,\ 38,\ \ 4\ \},}
+\DoxyCodeLine{00247\ \ \ \{\ -\/1,\ 22,\ 38,\ \ 5\ \},}
+\DoxyCodeLine{00248\ \ \ \{\ -\/1,\ 21,\ 38,\ \ 6\ \},}
+\DoxyCodeLine{00249\ \ \ \{\ -\/1,\ 19,\ 39,\ \ 7\ \},}
+\DoxyCodeLine{00250\ \ \ \{\ -\/1,\ 18,\ 39,\ \ 8\ \},}
+\DoxyCodeLine{00251\ \ \ \{\ -\/1,\ 17,\ 40,\ \ 8\ \},}
+\DoxyCodeLine{00252\ \ \ \{\ -\/1,\ 16,\ 40,\ \ 9\ \},}
+\DoxyCodeLine{00253\ \ \ \{\ -\/1,\ 15,\ 40,\ 10\ \},}
+\DoxyCodeLine{00254\ \ \ \{\ \ 0,\ 13,\ 40,\ 11\ \},}
+\DoxyCodeLine{00255\ \};}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{comment}{//2x}}
+\DoxyCodeLine{00258\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_chromaFilterRPR2[CHROMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_CHROMA]\ =}
+\DoxyCodeLine{00259\ \{}
+\DoxyCodeLine{00260\ \ \ \{\ 17,\ 30,\ 17,\ \ 0\ \},}
+\DoxyCodeLine{00261\ \ \ \{\ 17,\ 30,\ 18,\ -\/1\ \},}
+\DoxyCodeLine{00262\ \ \ \{\ 16,\ 30,\ 18,\ \ 0\ \},}
+\DoxyCodeLine{00263\ \ \ \{\ 16,\ 30,\ 18,\ \ 0\ \},}
+\DoxyCodeLine{00264\ \ \ \{\ 15,\ 30,\ 18,\ \ 1\ \},}
+\DoxyCodeLine{00265\ \ \ \{\ 14,\ 30,\ 18,\ \ 2\ \},}
+\DoxyCodeLine{00266\ \ \ \{\ 13,\ 29,\ 19,\ \ 3\ \},}
+\DoxyCodeLine{00267\ \ \ \{\ 13,\ 29,\ 19,\ \ 3\ \},}
+\DoxyCodeLine{00268\ \ \ \{\ 12,\ 29,\ 20,\ \ 3\ \},}
+\DoxyCodeLine{00269\ \ \ \{\ 11,\ 28,\ 21,\ \ 4\ \},}
+\DoxyCodeLine{00270\ \ \ \{\ 10,\ 28,\ 22,\ \ 4\ \},}
+\DoxyCodeLine{00271\ \ \ \{\ 10,\ 27,\ 22,\ \ 5\ \},}
+\DoxyCodeLine{00272\ \ \ \{\ \ 9,\ 27,\ 23,\ \ 5\ \},}
+\DoxyCodeLine{00273\ \ \ \{\ \ 9,\ 26,\ 24,\ \ 5\ \},}
+\DoxyCodeLine{00274\ \ \ \{\ \ 8,\ 26,\ 24,\ \ 6\ \},}
+\DoxyCodeLine{00275\ \ \ \{\ \ 7,\ 26,\ 25,\ \ 6\ \},}
+\DoxyCodeLine{00276\ \ \ \{\ \ 7,\ 25,\ 25,\ \ 7\ \},}
+\DoxyCodeLine{00277\ \ \ \{\ \ 6,\ 25,\ 26,\ \ 7\ \},}
+\DoxyCodeLine{00278\ \ \ \{\ \ 6,\ 24,\ 26,\ \ 8\ \},}
+\DoxyCodeLine{00279\ \ \ \{\ \ 5,\ 24,\ 26,\ \ 9\ \},}
+\DoxyCodeLine{00280\ \ \ \{\ \ 5,\ 23,\ 27,\ \ 9\ \},}
+\DoxyCodeLine{00281\ \ \ \{\ \ 5,\ 22,\ 27,\ 10\ \},}
+\DoxyCodeLine{00282\ \ \ \{\ \ 4,\ 22,\ 28,\ 10\ \},}
+\DoxyCodeLine{00283\ \ \ \{\ \ 4,\ 21,\ 28,\ 11\ \},}
+\DoxyCodeLine{00284\ \ \ \{\ \ 3,\ 20,\ 29,\ 12\ \},}
+\DoxyCodeLine{00285\ \ \ \{\ \ 3,\ 19,\ 29,\ 13\ \},}
+\DoxyCodeLine{00286\ \ \ \{\ \ 3,\ 19,\ 29,\ 13\ \},}
+\DoxyCodeLine{00287\ \ \ \{\ \ 2,\ 18,\ 30,\ 14\ \},}
+\DoxyCodeLine{00288\ \ \ \{\ \ 1,\ 18,\ 30,\ 15\ \},}
+\DoxyCodeLine{00289\ \ \ \{\ \ 0,\ 18,\ 30,\ 16\ \},}
+\DoxyCodeLine{00290\ \ \ \{\ \ 0,\ 18,\ 30,\ 16\ \},}
+\DoxyCodeLine{00291\ \ \ \{\ -\/1,\ 18,\ 30,\ 17\ \}}
+\DoxyCodeLine{00292\ \};}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_bilinearFilter[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_BILINEAR]\ =}
+\DoxyCodeLine{00295\ \{}
+\DoxyCodeLine{00296\ \ \ \{\ 64,\ \ 0,\ \},}
+\DoxyCodeLine{00297\ \ \ \{\ 60,\ \ 4,\ \},}
+\DoxyCodeLine{00298\ \ \ \{\ 56,\ \ 8,\ \},}
+\DoxyCodeLine{00299\ \ \ \{\ 52,\ 12,\ \},}
+\DoxyCodeLine{00300\ \ \ \{\ 48,\ 16,\ \},}
+\DoxyCodeLine{00301\ \ \ \{\ 44,\ 20,\ \},}
+\DoxyCodeLine{00302\ \ \ \{\ 40,\ 24,\ \},}
+\DoxyCodeLine{00303\ \ \ \{\ 36,\ 28,\ \},}
+\DoxyCodeLine{00304\ \ \ \{\ 32,\ 32,\ \},}
+\DoxyCodeLine{00305\ \ \ \{\ 28,\ 36,\ \},}
+\DoxyCodeLine{00306\ \ \ \{\ 24,\ 40,\ \},}
+\DoxyCodeLine{00307\ \ \ \{\ 20,\ 44,\ \},}
+\DoxyCodeLine{00308\ \ \ \{\ 16,\ 48,\ \},}
+\DoxyCodeLine{00309\ \ \ \{\ 12,\ 52,\ \},}
+\DoxyCodeLine{00310\ \ \ \{\ 8,\ 56,\ \},}
+\DoxyCodeLine{00311\ \ \ \{\ 4,\ 60,\ \},}
+\DoxyCodeLine{00312\ \};}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{keyword}{const}\ TFilterCoeff\ InterpolationFilter::m\_bilinearFilterPrec4[LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS][NTAPS\_BILINEAR]\ =}
+\DoxyCodeLine{00315\ \{}
+\DoxyCodeLine{00316\ \ \ \{\ 16,\ \ 0,\ \},}
+\DoxyCodeLine{00317\ \ \ \{\ 15,\ \ 1,\ \},}
+\DoxyCodeLine{00318\ \ \ \{\ 14,\ \ 2,\ \},}
+\DoxyCodeLine{00319\ \ \ \{\ 13,\ 3,\ \},}
+\DoxyCodeLine{00320\ \ \ \{\ 12,\ 4,\ \},}
+\DoxyCodeLine{00321\ \ \ \{\ 11,\ 5,\ \},}
+\DoxyCodeLine{00322\ \ \ \{\ 10,\ 6,\ \},}
+\DoxyCodeLine{00323\ \ \ \{\ 9,\ 7,\ \},}
+\DoxyCodeLine{00324\ \ \ \{\ 8,\ 8,\ \},}
+\DoxyCodeLine{00325\ \ \ \{\ 7,\ 9,\ \},}
+\DoxyCodeLine{00326\ \ \ \{\ 6,\ 10,\ \},}
+\DoxyCodeLine{00327\ \ \ \{\ 5,\ 11,\ \},}
+\DoxyCodeLine{00328\ \ \ \{\ 4,\ 12,\ \},}
+\DoxyCodeLine{00329\ \ \ \{\ 3,\ 13,\ \},}
+\DoxyCodeLine{00330\ \ \ \{\ 2,\ 14,\ \},}
+\DoxyCodeLine{00331\ \ \ \{\ 1,\ 15,\ \}}
+\DoxyCodeLine{00332\ \};}
+\DoxyCodeLine{00333\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00334\ \textcolor{comment}{//\ Private\ member\ functions}}
+\DoxyCodeLine{00335\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ InterpolationFilter::InterpolationFilter()}
+\DoxyCodeLine{00338\ \{}
+\DoxyCodeLine{00339\ \ \ m\_filterHor[0][0][0]\ =\ filter<8,\ false,\ false,\ false>;}
+\DoxyCodeLine{00340\ \ \ m\_filterHor[0][0][1]\ =\ filter<8,\ false,\ false,\ true>;}
+\DoxyCodeLine{00341\ \ \ m\_filterHor[0][1][0]\ =\ filter<8,\ false,\ true,\ false>;}
+\DoxyCodeLine{00342\ \ \ m\_filterHor[0][1][1]\ =\ filter<8,\ false,\ true,\ true>;}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ m\_filterHor[1][0][0]\ =\ filter<4,\ false,\ false,\ false>;}
+\DoxyCodeLine{00345\ \ \ m\_filterHor[1][0][1]\ =\ filter<4,\ false,\ false,\ true>;}
+\DoxyCodeLine{00346\ \ \ m\_filterHor[1][1][0]\ =\ filter<4,\ false,\ true,\ false>;}
+\DoxyCodeLine{00347\ \ \ m\_filterHor[1][1][1]\ =\ filter<4,\ false,\ true,\ true>;}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ m\_filterHor[2][0][0]\ =\ filter<2,\ false,\ false,\ false>;}
+\DoxyCodeLine{00350\ \ \ m\_filterHor[2][0][1]\ =\ filter<2,\ false,\ false,\ true>;}
+\DoxyCodeLine{00351\ \ \ m\_filterHor[2][1][0]\ =\ filter<2,\ false,\ true,\ false>;}
+\DoxyCodeLine{00352\ \ \ m\_filterHor[2][1][1]\ =\ filter<2,\ false,\ true,\ true>;}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ m\_filterVer[0][0][0]\ =\ filter<8,\ true,\ false,\ false>;}
+\DoxyCodeLine{00355\ \ \ m\_filterVer[0][0][1]\ =\ filter<8,\ true,\ false,\ true>;}
+\DoxyCodeLine{00356\ \ \ m\_filterVer[0][1][0]\ =\ filter<8,\ true,\ true,\ false>;}
+\DoxyCodeLine{00357\ \ \ m\_filterVer[0][1][1]\ =\ filter<8,\ true,\ true,\ true>;}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ m\_filterVer[1][0][0]\ =\ filter<4,\ true,\ false,\ false>;}
+\DoxyCodeLine{00360\ \ \ m\_filterVer[1][0][1]\ =\ filter<4,\ true,\ false,\ true>;}
+\DoxyCodeLine{00361\ \ \ m\_filterVer[1][1][0]\ =\ filter<4,\ true,\ true,\ false>;}
+\DoxyCodeLine{00362\ \ \ m\_filterVer[1][1][1]\ =\ filter<4,\ true,\ true,\ true>;}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ m\_filterVer[2][0][0]\ =\ filter<2,\ true,\ false,\ false>;}
+\DoxyCodeLine{00365\ \ \ m\_filterVer[2][0][1]\ =\ filter<2,\ true,\ false,\ true>;}
+\DoxyCodeLine{00366\ \ \ m\_filterVer[2][1][0]\ =\ filter<2,\ true,\ true,\ false>;}
+\DoxyCodeLine{00367\ \ \ m\_filterVer[2][1][1]\ =\ filter<2,\ true,\ true,\ true>;}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ m\_filterCopy[0][0]\ \ \ =\ filterCopy<false,\ false>;}
+\DoxyCodeLine{00370\ \ \ m\_filterCopy[0][1]\ \ \ =\ filterCopy<false,\ true>;}
+\DoxyCodeLine{00371\ \ \ m\_filterCopy[1][0]\ \ \ =\ filterCopy<true,\ false>;}
+\DoxyCodeLine{00372\ \ \ m\_filterCopy[1][1]\ \ \ =\ filterCopy<true,\ true>;}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ m\_weightedGeoBlk\ =\ xWeightedGeoBlk;}
+\DoxyCodeLine{00375\ \}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00392\ \textcolor{comment}{//}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//\ !!!\ NOTE\ !!!}}
+\DoxyCodeLine{00394\ \textcolor{comment}{//}}
+\DoxyCodeLine{00395\ \textcolor{comment}{//\ \ This\ is\ the\ scalar\ version\ of\ the\ function.}}
+\DoxyCodeLine{00396\ \textcolor{comment}{//\ \ If\ you\ change\ the\ functionality\ here,\ consider\ to\ switch\ off\ the\ SIMD\ implementation\ of\ this\ function.}}
+\DoxyCodeLine{00397\ \textcolor{comment}{//}}
+\DoxyCodeLine{00399\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ isFirst,\ \textcolor{keywordtype}{bool}\ isLast>}
+\DoxyCodeLine{00400\ \textcolor{keywordtype}{void}\ InterpolationFilter::filterCopy(\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ \textcolor{keyword}{const}\ Pel\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{bool}\ biMCForDMVR)}
+\DoxyCodeLine{00401\ \{}
+\DoxyCodeLine{00402\ \ \ \textcolor{keywordtype}{int}\ row,\ col;}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \ \ \textcolor{keywordflow}{if}\ (\ isFirst\ ==\ isLast\ )}
+\DoxyCodeLine{00405\ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00407\ \ \ \ \ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ dst[col]\ =\ src[col];}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[col],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00416\ \ \ \ \ \}}
+\DoxyCodeLine{00417\ \ \ \}}
+\DoxyCodeLine{00418\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ isFirst\ )}
+\DoxyCodeLine{00419\ \ \ \{}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ =\ IF\_INTERNAL\_FRAC\_BITS(clpRng.bd);}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keywordflow}{if}\ (biMCForDMVR)}
+\DoxyCodeLine{00423\ \ \ \ \ \{}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift10BitOut,\ offset;}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((clpRng.bd\ -\/\ IF\_INTERNAL\_PREC\_BILINEAR)\ >\ 0)}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ shift10BitOut\ =\ (clpRng.bd\ -\/\ IF\_INTERNAL\_PREC\_BILINEAR);}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ offset\ =\ (1\ <<\ (shift10BitOut\ -\/\ 1));}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ dst[col]\ =\ (src[col]\ +\ offset)\ >>\ shift10BitOut;}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ shift10BitOut\ =\ (IF\_INTERNAL\_PREC\_BILINEAR\ -\/\ clpRng.bd);}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ dst[col]\ =\ src[col]\ <<\ shift10BitOut;}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00452\ \ \ \ \ \}}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00455\ \ \ \ \ \{}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ Pel\ val\ =\ leftShift\_round(src[col],\ shift);}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ dst[col]\ =\ val\ -\/\ (Pel)IF\_INTERNAL\_OFFS;}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[col],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00465\ \ \ \ \ \}}
+\DoxyCodeLine{00466\ \ \ \}}
+\DoxyCodeLine{00467\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00468\ \ \ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ =\ IF\_INTERNAL\_FRAC\_BITS(clpRng.bd);}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordflow}{if}\ (biMCForDMVR)}
+\DoxyCodeLine{00472\ \ \ \ \ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ shift10BitOut,\ offset;}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((clpRng.bd\ -\/\ IF\_INTERNAL\_PREC\_BILINEAR)\ >\ 0)}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ shift10BitOut\ =\ (clpRng.bd\ -\/\ IF\_INTERNAL\_PREC\_BILINEAR);}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ offset\ =\ (1\ <<\ (shift10BitOut\ -\/\ 1));}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ dst[col]\ =\ (src[col]\ +\ offset)\ >>\ shift10BitOut;}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ shift10BitOut\ =\ (IF\_INTERNAL\_PREC\_BILINEAR\ -\/\ clpRng.bd);}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ dst[col]\ =\ src[col]\ <<\ shift10BitOut;}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00501\ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00503\ \ \ \ \ \{}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ Pel\ val\ =\ src[col];}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ val\ \ \ \ \ =\ rightShift\_round((val\ +\ IF\_INTERNAL\_OFFS),\ shift);}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ dst[col]\ =\ ClipPel(val,\ clpRng);}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\&src[col],\ \_\_FILE\_\_,\ \_\_LINE\_\_);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00518\ \ \ \ \ \}}
+\DoxyCodeLine{00519\ \ \ \}}
+\DoxyCodeLine{00520\ \}}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00539\ \textcolor{comment}{//}}
+\DoxyCodeLine{00540\ \textcolor{comment}{//\ !!!\ NOTE\ !!!}}
+\DoxyCodeLine{00541\ \textcolor{comment}{//}}
+\DoxyCodeLine{00542\ \textcolor{comment}{//\ \ This\ is\ the\ scalar\ version\ of\ the\ function.}}
+\DoxyCodeLine{00543\ \textcolor{comment}{//\ \ If\ you\ change\ the\ functionality\ here,\ consider\ to\ switch\ off\ the\ SIMD\ implementation\ of\ this\ function.}}
+\DoxyCodeLine{00544\ \textcolor{comment}{//}}
+\DoxyCodeLine{00546\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N,\ \textcolor{keywordtype}{bool}\ isVertical,\ \textcolor{keywordtype}{bool}\ isFirst,\ \textcolor{keywordtype}{bool}\ isLast>}
+\DoxyCodeLine{00547\ \textcolor{keywordtype}{void}\ InterpolationFilter::filter(\textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ Pel\ \textcolor{keyword}{const}\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ TFilterCoeff\ \textcolor{keyword}{const}\ *coeff,\ \textcolor{keywordtype}{bool}\ biMCForDMVR)}
+\DoxyCodeLine{00548\ \{}
+\DoxyCodeLine{00549\ \ \ \textcolor{keywordtype}{int}\ row,\ col;}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ Pel\ c[8];}
+\DoxyCodeLine{00552\ \ \ c[0]\ =\ coeff[0];}
+\DoxyCodeLine{00553\ \ \ c[1]\ =\ coeff[1];}
+\DoxyCodeLine{00554\ \ \ \textcolor{keywordflow}{if}\ (\ N\ >=\ 4\ )}
+\DoxyCodeLine{00555\ \ \ \{}
+\DoxyCodeLine{00556\ \ \ \ \ c[2]\ =\ coeff[2];}
+\DoxyCodeLine{00557\ \ \ \ \ c[3]\ =\ coeff[3];}
+\DoxyCodeLine{00558\ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \textcolor{keywordflow}{if}\ (\ N\ >=\ 6\ )}
+\DoxyCodeLine{00560\ \ \ \{}
+\DoxyCodeLine{00561\ \ \ \ \ c[4]\ =\ coeff[4];}
+\DoxyCodeLine{00562\ \ \ \ \ c[5]\ =\ coeff[5];}
+\DoxyCodeLine{00563\ \ \ \}}
+\DoxyCodeLine{00564\ \ \ \textcolor{keywordflow}{if}\ (\ N\ ==\ 8\ )}
+\DoxyCodeLine{00565\ \ \ \{}
+\DoxyCodeLine{00566\ \ \ \ \ c[6]\ =\ coeff[6];}
+\DoxyCodeLine{00567\ \ \ \ \ c[7]\ =\ coeff[7];}
+\DoxyCodeLine{00568\ \ \ \}}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \ \ \textcolor{keywordtype}{int}\ cStride\ =\ (\ isVertical\ )\ ?\ srcStride\ :\ 1;}
+\DoxyCodeLine{00571\ \ \ src\ -\/=\ (\ N/2\ -\/\ 1\ )\ *\ cStride;}
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \ \ \textcolor{keywordtype}{int}\ offset;}
+\DoxyCodeLine{00574\ \ \ \textcolor{keywordtype}{int}\ headRoom\ =\ IF\_INTERNAL\_FRAC\_BITS(clpRng.bd);}
+\DoxyCodeLine{00575\ \ \ \textcolor{keywordtype}{int}\ shift\ \ \ \ =\ IF\_FILTER\_PREC;}
+\DoxyCodeLine{00576\ \ \ \textcolor{comment}{//\ with\ the\ current\ settings\ (IF\_INTERNAL\_PREC\ =\ 14\ and\ IF\_FILTER\_PREC\ =\ 6),\ though\ headroom\ can\ be}}
+\DoxyCodeLine{00577\ \ \ \textcolor{comment}{//\ negative\ for\ bit\ depths\ greater\ than\ 14,\ shift\ will\ remain\ non-\/negative\ for\ bit\ depths\ of\ 8-\/>20}}
+\DoxyCodeLine{00578\ \ \ CHECK(shift\ <\ 0,\ \textcolor{stringliteral}{"{}Negative\ shift"{}});}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ \ \ \textcolor{keywordflow}{if}\ (\ isLast\ )}
+\DoxyCodeLine{00581\ \ \ \{}
+\DoxyCodeLine{00582\ \ \ \ \ shift\ +=\ (isFirst)\ ?\ 0\ :\ headRoom;}
+\DoxyCodeLine{00583\ \ \ \ \ offset\ =\ 1\ <<\ (shift\ -\/\ 1);}
+\DoxyCodeLine{00584\ \ \ \ \ offset\ +=\ (isFirst)\ ?\ 0\ :\ IF\_INTERNAL\_OFFS\ <<\ IF\_FILTER\_PREC;}
+\DoxyCodeLine{00585\ \ \ \}}
+\DoxyCodeLine{00586\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00587\ \ \ \{}
+\DoxyCodeLine{00588\ \ \ \ \ shift\ -\/=\ (isFirst)\ ?\ headRoom\ :\ 0;}
+\DoxyCodeLine{00589\ \ \ \ \ offset\ =\ (isFirst)\ ?\ -\/IF\_INTERNAL\_OFFS\ <<\ shift\ :\ 0;}
+\DoxyCodeLine{00590\ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \textcolor{keywordflow}{if}\ (biMCForDMVR)}
+\DoxyCodeLine{00593\ \ \ \{}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keywordflow}{if}(\ isFirst\ )}
+\DoxyCodeLine{00595\ \ \ \ \ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ shift\ =\ IF\_FILTER\_PREC\_BILINEAR\ -\/\ (IF\_INTERNAL\_PREC\_BILINEAR\ -\/\ clpRng.bd);}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ offset\ =\ 1\ <<\ (shift\ -\/\ 1);}
+\DoxyCodeLine{00598\ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00600\ \ \ \ \ \{}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ shift\ =\ 4;}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ offset\ =\ 1\ <<\ (shift\ -\/\ 1);}
+\DoxyCodeLine{00603\ \ \ \ \ \}}
+\DoxyCodeLine{00604\ \ \ \}}
+\DoxyCodeLine{00605\ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0;\ row\ <\ height;\ row++)}
+\DoxyCodeLine{00606\ \ \ \{}
+\DoxyCodeLine{00607\ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0;\ col\ <\ width;\ col++)}
+\DoxyCodeLine{00608\ \ \ \ \ \{}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sum;}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ sum\ \ =\ src[\ col\ +\ 0\ *\ cStride]\ *\ c[0];}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 1\ *\ cStride]\ *\ c[1];}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 0\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 1\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ N\ >=\ 4\ )}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 2\ *\ cStride]\ *\ c[2];}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 3\ *\ cStride]\ *\ c[3];}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 2\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 3\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ N\ >=\ 6\ )}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 4\ *\ cStride]\ *\ c[4];}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 5\ *\ cStride]\ *\ c[5];}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 4\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 5\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ N\ ==\ 8\ )}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 6\ *\ cStride]\ *\ c[6];}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ sum\ +=\ src[\ col\ +\ 7\ *\ cStride]\ *\ c[7];}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 6\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ JVET\_J0090\_CACHE\_ACCESS(\ \&src[\ col\ +\ 7\ *\ cStride],\ \_\_FILE\_\_,\ \_\_LINE\_\_\ );}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \ \ \ \ Pel\ val\ =\ (\ sum\ +\ offset\ )\ >>\ shift;}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ isLast\ )}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ val\ =\ ClipPel(\ val,\ clpRng\ );}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ dst[col]\ =\ val;}
+\DoxyCodeLine{00643\ \ \ \ \ \}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \ \ \ \ src\ +=\ srcStride;}
+\DoxyCodeLine{00646\ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{00647\ \ \ \}}
+\DoxyCodeLine{00648\ \}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00664\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>}
+\DoxyCodeLine{00665\ \textcolor{keywordtype}{void}\ InterpolationFilter::filterHor(\textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ Pel\ \textcolor{keyword}{const}\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{bool}\ isLast,\ TFilterCoeff\ \textcolor{keyword}{const}\ *coeff,\ \textcolor{keywordtype}{bool}\ biMCForDMVR)}
+\DoxyCodeLine{00666\ \{}
+\DoxyCodeLine{00667\ \textcolor{comment}{//\#if\ ENABLE\_SIMD\_OPT\_MCIF}}
+\DoxyCodeLine{00668\ \ \ \textcolor{keywordflow}{if}(\ N\ ==\ 8\ )}
+\DoxyCodeLine{00669\ \ \ \{}
+\DoxyCodeLine{00670\ \ \ \ \ m\_filterHor[0][1][isLast](clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00671\ \ \ \}}
+\DoxyCodeLine{00672\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ N\ ==\ 4\ )}
+\DoxyCodeLine{00673\ \ \ \{}
+\DoxyCodeLine{00674\ \ \ \ \ m\_filterHor[1][1][isLast](clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00675\ \ \ \}}
+\DoxyCodeLine{00676\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ N\ ==\ 2\ )}
+\DoxyCodeLine{00677\ \ \ \{}
+\DoxyCodeLine{00678\ \ \ \ \ m\_filterHor[2][1][isLast](clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00679\ \ \ \}}
+\DoxyCodeLine{00680\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00681\ \ \ \{}
+\DoxyCodeLine{00682\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Invalid\ tap\ number"{}}\ );}
+\DoxyCodeLine{00683\ \ \ \}}
+\DoxyCodeLine{00684\ \}}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00701\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>}
+\DoxyCodeLine{00702\ \textcolor{keywordtype}{void}\ InterpolationFilter::filterVer(\textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ Pel\ \textcolor{keyword}{const}\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{bool}\ isFirst,\ \textcolor{keywordtype}{bool}\ isLast,\ TFilterCoeff\ \textcolor{keyword}{const}\ *coeff,\ \textcolor{keywordtype}{bool}\ biMCForDMVR)}
+\DoxyCodeLine{00703\ \{}
+\DoxyCodeLine{00704\ \textcolor{comment}{//\#if\ ENABLE\_SIMD\_OPT\_MCIF}}
+\DoxyCodeLine{00705\ \ \ \textcolor{keywordflow}{if}(\ N\ ==\ 8\ )}
+\DoxyCodeLine{00706\ \ \ \{}
+\DoxyCodeLine{00707\ \ \ \ \ m\_filterVer[0][isFirst][isLast](\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00708\ \ \ \}}
+\DoxyCodeLine{00709\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ N\ ==\ 4\ )}
+\DoxyCodeLine{00710\ \ \ \{}
+\DoxyCodeLine{00711\ \ \ \ \ m\_filterVer[1][isFirst][isLast](\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00712\ \ \ \}}
+\DoxyCodeLine{00713\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ N\ ==\ 2\ )}
+\DoxyCodeLine{00714\ \ \ \{}
+\DoxyCodeLine{00715\ \ \ \ \ m\_filterVer[2][isFirst][isLast](\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ coeff,\ biMCForDMVR);}
+\DoxyCodeLine{00716\ \ \ \}}
+\DoxyCodeLine{00717\ \ \ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00718\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Invalid\ tap\ number"{}}\ );}
+\DoxyCodeLine{00719\ \ \ \}}
+\DoxyCodeLine{00720\ \}}
+\DoxyCodeLine{00721\ }
+\DoxyCodeLine{00722\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00723\ \textcolor{comment}{//\ Public\ member\ functions}}
+\DoxyCodeLine{00724\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00725\ }
+\DoxyCodeLine{00741\ \textcolor{keywordtype}{void}\ InterpolationFilter::filterHor(\textcolor{keyword}{const}\ ComponentID\ compID,\ Pel\ \textcolor{keyword}{const}\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ frac,\ \textcolor{keywordtype}{bool}\ isLast,\ \textcolor{keyword}{const}\ ChromaFormat\ fmt,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ \textcolor{keywordtype}{int}\ nFilterIdx,\ \textcolor{keywordtype}{bool}\ biMCForDMVR,\ \textcolor{keywordtype}{bool}\ useAltHpelIf)}
+\DoxyCodeLine{00742\ \{}
+\DoxyCodeLine{00743\ \ \ \textcolor{keywordflow}{if}(\ frac\ ==\ 0\ \&\&\ nFilterIdx\ <\ 2\ )}
+\DoxyCodeLine{00744\ \ \ \{}
+\DoxyCodeLine{00745\ \ \ \ \ m\_filterCopy[\textcolor{keyword}{true}][isLast](\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ biMCForDMVR\ );}
+\DoxyCodeLine{00746\ \ \ \}}
+\DoxyCodeLine{00747\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ isLuma(\ compID\ )\ )}
+\DoxyCodeLine{00748\ \ \ \{}
+\DoxyCodeLine{00749\ \ \ \ \ CHECK(\ frac\ <\ 0\ ||\ frac\ >=\ LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS,\ \textcolor{stringliteral}{"{}Invalid\ fraction"{}}\ );}
+\DoxyCodeLine{00750\ \ \ \ \ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 1\ )}
+\DoxyCodeLine{00751\ \ \ \ \ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ filterHor<NTAPS\_BILINEAR>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_bilinearFilterPrec4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00753\ \ \ \ \ \}}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 2\ )}
+\DoxyCodeLine{00755\ \ \ \ \ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaFilter4x4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00757\ \ \ \ \ \}}
+\DoxyCodeLine{00758\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 3\ )}
+\DoxyCodeLine{00759\ \ \ \ \ \{}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaFilterRPR1[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00761\ \ \ \ \ \}}
+\DoxyCodeLine{00762\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 4\ )}
+\DoxyCodeLine{00763\ \ \ \ \ \{}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaFilterRPR2[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00765\ \ \ \ \ \}}
+\DoxyCodeLine{00766\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (nFilterIdx\ ==\ 5)}
+\DoxyCodeLine{00767\ \ \ \ \ \{}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_affineLumaFilterRPR1[frac],\ biMCForDMVR);}
+\DoxyCodeLine{00769\ \ \ \ \ \}}
+\DoxyCodeLine{00770\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (nFilterIdx\ ==\ 6)}
+\DoxyCodeLine{00771\ \ \ \ \ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_affineLumaFilterRPR2[frac],\ biMCForDMVR);}
+\DoxyCodeLine{00773\ \ \ \ \ \}}
+\DoxyCodeLine{00774\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ frac\ ==\ 8\ \&\&\ useAltHpelIf\ )}
+\DoxyCodeLine{00775\ \ \ \ \ \{}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaAltHpelIFilter,\ biMCForDMVR\ );}
+\DoxyCodeLine{00777\ \ \ \ \ \}}
+\DoxyCodeLine{00778\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ width\ ==\ 4\ \&\&\ height\ ==\ 4\ )\ ||\ (\ width\ ==\ 4\ \&\&\ height\ ==\ (\ 4\ +\ NTAPS\_LUMA\ -\/\ 1\ )\ )\ )}
+\DoxyCodeLine{00779\ \ \ \ \ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaFilter4x4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00783\ \ \ \ \ \{}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ filterHor<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_lumaFilter[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00785\ \ \ \ \ \}}
+\DoxyCodeLine{00786\ \ \ \}}
+\DoxyCodeLine{00787\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00788\ \ \ \{}
+\DoxyCodeLine{00789\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ csx\ =\ getComponentScaleX(\ compID,\ fmt\ );}
+\DoxyCodeLine{00790\ \ \ \ \ CHECK(\ frac\ <\ 0\ ||\ csx\ >=\ 2\ ||\ (\ frac\ <<\ (\ 1\ -\/\ csx\ )\ )\ >=\ CHROMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS,\ \textcolor{stringliteral}{"{}Invalid\ fraction"{}}\ );}
+\DoxyCodeLine{00791\ \ \ \ \ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 3\ )}
+\DoxyCodeLine{00792\ \ \ \ \ \{}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ filterHor<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_chromaFilterRPR1[frac\ <<\ (\ 1\ -\/\ csx\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00794\ \ \ \ \ \}}
+\DoxyCodeLine{00795\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 4\ )}
+\DoxyCodeLine{00796\ \ \ \ \ \{}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ filterHor<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_chromaFilterRPR2[frac\ <<\ (\ 1\ -\/\ csx\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00798\ \ \ \ \ \}}
+\DoxyCodeLine{00799\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00800\ \ \ \ \ \{}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ filterHor<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isLast,\ m\_chromaFilter[frac\ <<\ (\ 1\ -\/\ csx\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00802\ \ \ \ \ \}}
+\DoxyCodeLine{00803\ \ \ \}}
+\DoxyCodeLine{00804\ \}}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ }
+\DoxyCodeLine{00823\ \textcolor{keywordtype}{void}\ InterpolationFilter::filterVer(\textcolor{keyword}{const}\ ComponentID\ compID,\ Pel\ \textcolor{keyword}{const}\ *src,\ \textcolor{keywordtype}{int}\ srcStride,\ Pel\ *dst,\ \textcolor{keywordtype}{int}\ dstStride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ frac,\ \textcolor{keywordtype}{bool}\ isFirst,\ \textcolor{keywordtype}{bool}\ isLast,\ \textcolor{keyword}{const}\ ChromaFormat\ fmt,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng,\ \textcolor{keywordtype}{int}\ nFilterIdx,\ \textcolor{keywordtype}{bool}\ biMCForDMVR,\ \textcolor{keywordtype}{bool}\ useAltHpelIf)}
+\DoxyCodeLine{00824\ \{}
+\DoxyCodeLine{00825\ \ \ \textcolor{keywordflow}{if}(\ frac\ ==\ 0\ \&\&\ nFilterIdx\ <\ 2\ )}
+\DoxyCodeLine{00826\ \ \ \{}
+\DoxyCodeLine{00827\ \ \ \ \ m\_filterCopy[isFirst][isLast](\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ biMCForDMVR\ );}
+\DoxyCodeLine{00828\ \ \ \}}
+\DoxyCodeLine{00829\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ isLuma(\ compID\ )\ )}
+\DoxyCodeLine{00830\ \ \ \{}
+\DoxyCodeLine{00831\ \ \ \ \ CHECK(\ frac\ <\ 0\ ||\ frac\ >=\ LUMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS,\ \textcolor{stringliteral}{"{}Invalid\ fraction"{}}\ );}
+\DoxyCodeLine{00832\ \ \ \ \ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 1\ )}
+\DoxyCodeLine{00833\ \ \ \ \ \{}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ filterVer<NTAPS\_BILINEAR>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_bilinearFilterPrec4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00835\ \ \ \ \ \}}
+\DoxyCodeLine{00836\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 2\ )}
+\DoxyCodeLine{00837\ \ \ \ \ \{}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaFilter4x4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00839\ \ \ \ \ \}}
+\DoxyCodeLine{00840\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 3\ )}
+\DoxyCodeLine{00841\ \ \ \ \ \{}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaFilterRPR1[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00843\ \ \ \ \ \}}
+\DoxyCodeLine{00844\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 4\ )}
+\DoxyCodeLine{00845\ \ \ \ \ \{}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaFilterRPR2[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00847\ \ \ \ \ \}}
+\DoxyCodeLine{00848\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (nFilterIdx\ ==\ 5)}
+\DoxyCodeLine{00849\ \ \ \ \ \{}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_affineLumaFilterRPR1[frac],\ biMCForDMVR);}
+\DoxyCodeLine{00851\ \ \ \ \ \}}
+\DoxyCodeLine{00852\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (nFilterIdx\ ==\ 6)}
+\DoxyCodeLine{00853\ \ \ \ \ \{}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_affineLumaFilterRPR2[frac],\ biMCForDMVR);}
+\DoxyCodeLine{00855\ \ \ \ \ \}}
+\DoxyCodeLine{00856\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ frac\ ==\ 8\ \&\&\ useAltHpelIf\ )}
+\DoxyCodeLine{00857\ \ \ \ \ \{}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaAltHpelIFilter,\ biMCForDMVR\ );}
+\DoxyCodeLine{00859\ \ \ \ \ \}}
+\DoxyCodeLine{00860\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ width\ ==\ 4\ \&\&\ height\ ==\ 4\ )}
+\DoxyCodeLine{00861\ \ \ \ \ \{}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaFilter4x4[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00863\ \ \ \ \ \}}
+\DoxyCodeLine{00864\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00865\ \ \ \ \ \{}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ filterVer<NTAPS\_LUMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_lumaFilter[frac],\ biMCForDMVR\ );}
+\DoxyCodeLine{00867\ \ \ \ \ \}}
+\DoxyCodeLine{00868\ \ \ \}}
+\DoxyCodeLine{00869\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00870\ \ \ \{}
+\DoxyCodeLine{00871\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ csy\ =\ getComponentScaleY(\ compID,\ fmt\ );}
+\DoxyCodeLine{00872\ \ \ \ \ CHECK(\ frac\ <\ 0\ ||\ csy\ >=\ 2\ ||\ (\ frac\ <<\ (\ 1\ -\/\ csy\ )\ )\ >=\ CHROMA\_INTERPOLATION\_FILTER\_SUB\_SAMPLE\_POSITIONS,\ \textcolor{stringliteral}{"{}Invalid\ fraction"{}}\ );}
+\DoxyCodeLine{00873\ \ \ \ \ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 3\ )}
+\DoxyCodeLine{00874\ \ \ \ \ \{}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ filterVer<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_chromaFilterRPR1[frac\ <<\ (\ 1\ -\/\ csy\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00876\ \ \ \ \ \}}
+\DoxyCodeLine{00877\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ nFilterIdx\ ==\ 4\ )}
+\DoxyCodeLine{00878\ \ \ \ \ \{}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ filterVer<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_chromaFilterRPR2[frac\ <<\ (\ 1\ -\/\ csy\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00880\ \ \ \ \ \}}
+\DoxyCodeLine{00881\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00882\ \ \ \ \ \{}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ filterVer<NTAPS\_CHROMA>(\ clpRng,\ src,\ srcStride,\ dst,\ dstStride,\ width,\ height,\ isFirst,\ isLast,\ m\_chromaFilter[frac\ <<\ (\ 1\ -\/\ csy\ )],\ biMCForDMVR\ );}
+\DoxyCodeLine{00884\ \ \ \ \ \}}
+\DoxyCodeLine{00885\ \ \ \}}
+\DoxyCodeLine{00886\ \}}
+\DoxyCodeLine{00887\ }
+\DoxyCodeLine{00888\ \textcolor{keywordtype}{void}\ InterpolationFilter::weightedGeoBlk(\textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ \textcolor{keyword}{const}\ uint32\_t\ width,\ \textcolor{keyword}{const}\ uint32\_t\ height,\ \textcolor{keyword}{const}\ ComponentID\ compIdx,\ \textcolor{keyword}{const}\ uint8\_t\ splitDir,\ PelUnitBuf\&\ predDst,\ PelUnitBuf\&\ predSrc0,\ PelUnitBuf\&\ predSrc1)}
+\DoxyCodeLine{00889\ \{}
+\DoxyCodeLine{00890\ \ \ m\_weightedGeoBlk(pu,\ width,\ height,\ compIdx,\ splitDir,\ predDst,\ predSrc0,\ predSrc1);}
+\DoxyCodeLine{00891\ \}}
+\DoxyCodeLine{00892\ }
+\DoxyCodeLine{00893\ \textcolor{keywordtype}{void}\ InterpolationFilter::xWeightedGeoBlk(\textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ \textcolor{keyword}{const}\ uint32\_t\ width,\ \textcolor{keyword}{const}\ uint32\_t\ height,\ \textcolor{keyword}{const}\ ComponentID\ compIdx,\ \textcolor{keyword}{const}\ uint8\_t\ splitDir,\ PelUnitBuf\&\ predDst,\ PelUnitBuf\&\ predSrc0,\ PelUnitBuf\&\ predSrc1)}
+\DoxyCodeLine{00894\ \{}
+\DoxyCodeLine{00895\ \ \ Pel*\ \ \ \ dst\ =\ predDst.get(compIdx).buf;}
+\DoxyCodeLine{00896\ \ \ Pel*\ \ \ \ src0\ =\ predSrc0.get(compIdx).buf;}
+\DoxyCodeLine{00897\ \ \ Pel*\ \ \ \ src1\ =\ predSrc1.get(compIdx).buf;}
+\DoxyCodeLine{00898\ \ \ int32\_t\ strideDst\ =\ predDst.get(compIdx).stride\ -\/\ width;}
+\DoxyCodeLine{00899\ \ \ int32\_t\ strideSrc0\ =\ predSrc0.get(compIdx).stride\ -\/\ width;}
+\DoxyCodeLine{00900\ \ \ int32\_t\ strideSrc1\ =\ predSrc1.get(compIdx).stride\ -\/\ width;}
+\DoxyCodeLine{00901\ }
+\DoxyCodeLine{00902\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ \ \ \ log2WeightBase\ =\ 3;}
+\DoxyCodeLine{00903\ \ \ \textcolor{keyword}{const}\ ClpRng\ \ clipRng\ =\ pu.cu-\/>slice-\/>clpRngs().comp[compIdx];}
+\DoxyCodeLine{00904\ \ \ \textcolor{keyword}{const}\ int32\_t\ clipbd\ =\ clipRng.bd;}
+\DoxyCodeLine{00905\ \ \ \textcolor{keyword}{const}\ int32\_t\ shiftWeighted\ =\ IF\_INTERNAL\_FRAC\_BITS(clipbd)\ +\ log2WeightBase;}
+\DoxyCodeLine{00906\ \ \ \textcolor{keyword}{const}\ int32\_t\ offsetWeighted\ =\ (1\ <<\ (shiftWeighted\ -\/\ 1))\ +\ (IF\_INTERNAL\_OFFS\ <<\ log2WeightBase);}
+\DoxyCodeLine{00907\ \ \ \textcolor{keyword}{const}\ uint32\_t\ scaleX\ =\ getComponentScaleX(compIdx,\ pu.chromaFormat);}
+\DoxyCodeLine{00908\ \ \ \textcolor{keyword}{const}\ uint32\_t\ scaleY\ =\ getComponentScaleY(compIdx,\ pu.chromaFormat);}
+\DoxyCodeLine{00909\ }
+\DoxyCodeLine{00910\ \ \ int16\_t\ angle\ =\ g\_GeoParams[splitDir][0];}
+\DoxyCodeLine{00911\ \ \ int16\_t\ wIdx\ =\ floorLog2(pu.lwidth())\ -\/\ GEO\_MIN\_CU\_LOG2;}
+\DoxyCodeLine{00912\ \ \ int16\_t\ hIdx\ =\ floorLog2(pu.lheight())\ -\/\ GEO\_MIN\_CU\_LOG2;}
+\DoxyCodeLine{00913\ \ \ int16\_t\ stepX\ =\ 1\ <<\ scaleX;}
+\DoxyCodeLine{00914\ \ \ int16\_t\ stepY\ =\ 0;}
+\DoxyCodeLine{00915\ \ \ int16\_t*\ weight\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00916\ \ \ \textcolor{keywordflow}{if}\ (g\_angle2mirror[angle]\ ==\ 2)}
+\DoxyCodeLine{00917\ \ \ \{}
+\DoxyCodeLine{00918\ \ \ \ \ stepY\ =\ -\/(int)((GEO\_WEIGHT\_MASK\_SIZE\ <<\ scaleY)\ +\ pu.lwidth());}
+\DoxyCodeLine{00919\ \ \ \ \ weight\ =\ \&g\_globalGeoWeights[g\_angle2mask[angle]][(GEO\_WEIGHT\_MASK\_SIZE\ -\/\ 1\ -\/\ g\_weightOffset[splitDir][hIdx][wIdx][1])\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ g\_weightOffset[splitDir][hIdx][wIdx][0]];}
+\DoxyCodeLine{00920\ \ \ \}}
+\DoxyCodeLine{00921\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (g\_angle2mirror[angle]\ ==\ 1)}
+\DoxyCodeLine{00922\ \ \ \{}
+\DoxyCodeLine{00923\ \ \ \ \ stepX\ =\ -\/1\ <<\ scaleX;}
+\DoxyCodeLine{00924\ \ \ \ \ stepY\ =\ (GEO\_WEIGHT\_MASK\_SIZE\ <<\ scaleY)\ +\ pu.lwidth();}
+\DoxyCodeLine{00925\ \ \ \ \ weight\ =\ \&g\_globalGeoWeights[g\_angle2mask[angle]][g\_weightOffset[splitDir][hIdx][wIdx][1]\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ (GEO\_WEIGHT\_MASK\_SIZE\ -\/\ 1\ -\/\ g\_weightOffset[splitDir][hIdx][wIdx][0])];}
+\DoxyCodeLine{00926\ \ \ \}}
+\DoxyCodeLine{00927\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00928\ \ \ \{}
+\DoxyCodeLine{00929\ \ \ \ \ stepY\ =\ (GEO\_WEIGHT\_MASK\_SIZE\ <<\ scaleY)\ -\/\ pu.lwidth();}
+\DoxyCodeLine{00930\ \ \ \ \ weight\ =\ \&g\_globalGeoWeights[g\_angle2mask[angle]][g\_weightOffset[splitDir][hIdx][wIdx][1]\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ g\_weightOffset[splitDir][hIdx][wIdx][0]];}
+\DoxyCodeLine{00931\ \ \ \}}
+\DoxyCodeLine{00932\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++\ )}
+\DoxyCodeLine{00933\ \ \ \{}
+\DoxyCodeLine{00934\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width;\ x++\ )}
+\DoxyCodeLine{00935\ \ \ \ \ \{}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ *dst++\ \ =\ ClipPel(rightShift((*weight*(*src0++)\ +\ ((8\ -\/\ *weight)\ *\ (*src1++))\ +\ offsetWeighted),\ shiftWeighted),\ clipRng);}
+\DoxyCodeLine{00937\ \ \ \ \ \ \ weight\ +=\ stepX;}
+\DoxyCodeLine{00938\ \ \ \ \ \}}
+\DoxyCodeLine{00939\ \ \ \ \ dst\ \ \ \ +=\ strideDst;}
+\DoxyCodeLine{00940\ \ \ \ \ src0\ \ \ +=\ strideSrc0;}
+\DoxyCodeLine{00941\ \ \ \ \ src1\ \ \ +=\ strideSrc1;}
+\DoxyCodeLine{00942\ \ \ \ \ weight\ +=\ stepY;}
+\DoxyCodeLine{00943\ \ \ \}}
+\DoxyCodeLine{00944\ \}}
+\DoxyCodeLine{00945\ }
+\DoxyCodeLine{00951\ \textcolor{keywordtype}{void}\ InterpolationFilter::initInterpolationFilter(\ \textcolor{keywordtype}{bool}\ enable\ )}
+\DoxyCodeLine{00952\ \{}
+\DoxyCodeLine{00953\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_MCIF}}
+\DoxyCodeLine{00954\ \textcolor{preprocessor}{\#ifdef\ TARGET\_SIMD\_X86}}
+\DoxyCodeLine{00955\ \ \ \textcolor{keywordflow}{if}\ (\ enable\ )}
+\DoxyCodeLine{00956\ \ \ \{}
+\DoxyCodeLine{00957\ \ \ \ \ initInterpolationFilterX86();}
+\DoxyCodeLine{00958\ \ \ \}}
+\DoxyCodeLine{00959\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00960\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00961\ \}}
+\DoxyCodeLine{00962\ }
+\DoxyCodeLine{00964\ }
+\DoxyCodeLine{00965\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{00966\ }
+
+\end{DoxyCode}

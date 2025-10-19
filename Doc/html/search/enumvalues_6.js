@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['fastintersearch_5fdisabled_0',['FASTINTERSEARCH_DISABLED',['../namespacevtm.html#a920d85ab57e3e1b1f0e2efb8efaed0dea58cbecd5b1c34533a92d9c442071d793',1,'vtm']]],
+  ['fastintersearch_5fmode1_1',['FASTINTERSEARCH_MODE1',['../namespacevtm.html#a920d85ab57e3e1b1f0e2efb8efaed0dea7bdc882bff1dd62583b3cf153c5529b7',1,'vtm']]],
+  ['fastintersearch_5fmode2_2',['FASTINTERSEARCH_MODE2',['../namespacevtm.html#a920d85ab57e3e1b1f0e2efb8efaed0dea9d20953c8ecb2d106fcc85b9f37edbaa',1,'vtm']]],
+  ['fastintersearch_5fmode3_3',['FASTINTERSEARCH_MODE3',['../namespacevtm.html#a920d85ab57e3e1b1f0e2efb8efaed0dea6210ce179955a0174a9157429232729b',1,'vtm']]],
+  ['fd_4',['FD',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa3b22d9682ca706e2d7792834d5c747ee',1,'vnova::utility::VVCNalType']]],
+  ['fd_5fnut_5',['FD_NUT',['../structvnova_1_1utility_1_1EVCNalType.html#a8036262c8f9d72abaf42314ad61785acaedfbaf88b01ccbf05991a86c36ba845e',1,'vnova::utility::EVCNalType']]],
+  ['fieldtype_5fbottom_6',['FieldType_Bottom',['../namespacelctm.html#a7e5305ead9a4b464d347628d4796d035a9cdfaf1b558eaeb57acff2ab593684d0',1,'lctm']]],
+  ['fieldtype_5ftop_7',['FieldType_Top',['../namespacelctm.html#a7e5305ead9a4b464d347628d4796d035a01e7a2718aa68827b509cfef0d84a8ef',1,'lctm']]],
+  ['filler_8',['Filler',['../structvnova_1_1utility_1_1BaseDecNalUnitType.html#ad28aef580e10ec96462b1220aef380ceadc69c9bf9fa16fdc74044e67896f40dd',1,'vnova::utility::BaseDecNalUnitType']]],
+  ['filler_5fpayload_9',['FILLER_PAYLOAD',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaa56593037f8aa8ab96e61c026015d7c48',1,'vtm::SEI']]],
+  ['fillerdata_10',['fillerdata',['../structvnova_1_1utility_1_1HEVCNalType.html#a72d1edf5ac058be4fa0a97f7ac36149caf3b96467d594a4d44f715818daebea26',1,'vnova::utility::HEVCNalType::FillerData'],['../structvnova_1_1utility_1_1AVCNalType.html#a6020889cdd0460ffc2445fb7ed31e603ae1bf8c08316dd164a60e82eb819c9a70',1,'vnova::utility::AVCNalType::FillerData']]],
+  ['film_5fgrain_5fcharacteristics_11',['FILM_GRAIN_CHARACTERISTICS',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaa598a016d14d7b621b200943ca9578b66',1,'vtm::SEI']]],
+  ['frame_5ffield_5finfo_12',['FRAME_FIELD_INFO',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaa55148a9c5c6f4bd15d1288eedae4dd70',1,'vtm::SEI']]],
+  ['frame_5fpacking_13',['FRAME_PACKING',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaacd98a31758602d39c955ef54c01b90d6',1,'vtm::SEI']]],
+  ['frext_5fcavlc444_14',['FREXT_CAVLC444',['../defines_8h.html#a64069e606788bb171f2ebc19fce87b26ac5fc0eac5404beebe4c19b3657f5138e',1,'defines.h']]],
+  ['frext_5fhi10p_15',['FREXT_Hi10P',['../defines_8h.html#a64069e606788bb171f2ebc19fce87b26a5e1a6f60dc9c462a40c898af1e60a50a',1,'defines.h']]],
+  ['frext_5fhi422_16',['FREXT_Hi422',['../defines_8h.html#a64069e606788bb171f2ebc19fce87b26a1450dd971ac85cd7f52194e80cad8119',1,'defines.h']]],
+  ['frext_5fhi444_17',['FREXT_Hi444',['../defines_8h.html#a64069e606788bb171f2ebc19fce87b26abebb1847e97fd60c00b00695ac8d6ff4',1,'defines.h']]],
+  ['frext_5fhp_18',['FREXT_HP',['../defines_8h.html#a64069e606788bb171f2ebc19fce87b26a00b370fdc0e00d6944c1fe4cb5de1c71',1,'defines.h']]]
+];

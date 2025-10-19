@@ -1,0 +1,282 @@
+\doxysection{MCTS.\+cpp}
+\label{MCTS_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/MCTS.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/MCTS.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}MCTS.h"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Buffer.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}UnitTools.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ initialize}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ MCTSInfo::init(\ CodingStructure*\ cs,\ \textcolor{keywordtype}{int}\ ctuAddr\ )}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \textcolor{comment}{//\ TODO:\ Tile\ area\ calculation\ can\ be\ a\ part\ of\ TileMap\ or\ some\ other\ high-\/level-\/part\ where\ tiles\ are\ managed}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ m\_tileArea\ =\ MCTSHelper::getTileArea(\ cs,\ ctuAddr\ );}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ Area\ MCTSInfo::getTileAreaSubPelRestricted(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ )}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offLT\ =\ 3;}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offRB\ =\ 4;}
+\DoxyCodeLine{00066\ \ \ \textcolor{keywordflow}{return}\ MCTSHelper::getTileAreaRestricted(\ m\_tileArea,\ offLT,\ offRB\ );}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ Area\ MCTSInfo::getTileAreaIntPelRestricted(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ )}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offLT\ =\ 0;}
+\DoxyCodeLine{00072\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offRB\ =\ 0;}
+\DoxyCodeLine{00073\ \ \ \textcolor{keywordflow}{return}\ MCTSHelper::getTileAreaRestricted(\ m\_tileArea,\ offLT,\ offRB\ );}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ Area\ MCTSHelper::getTileAreaRestricted(\ \textcolor{keyword}{const}\ Area\&\ tileArea,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offLT,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offRB\ )}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordflow}{return}\ Area(\ tileArea.x\ +\ offLT,\ tileArea.y\ +\ offLT,\ tileArea.width\ -\/\ (\ offLT\ +\ offRB\ ),\ tileArea.height\ -\/\ (\ offLT\ +\ offRB\ )\ );}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}\ MCTSHelper::clipMvToArea(\ Mv\&\ rcMv,\ \textcolor{keyword}{const}\ Area\&\ block,\ \textcolor{keyword}{const}\ Area\&\ clipArea,\ \textcolor{keyword}{const}\ SPS\&\ sps,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ mvFracBits\ )}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iHorMax\ =\ (\ clipArea.x\ +\ clipArea.width\ -\/\ (int)block.x\ -\/\ (\textcolor{keywordtype}{int})block.width\ )\ <<\ mvFracBits;}
+\DoxyCodeLine{00084\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iHorMin\ =\ (\ clipArea.x\ -\/\ (int)block.x\ )\ <<\ mvFracBits;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iVerMax\ =\ (\ clipArea.y\ +\ clipArea.height\ -\/\ (int)block.y\ -\/\ (\textcolor{keywordtype}{int})block.height\ )\ <<\ mvFracBits;}
+\DoxyCodeLine{00087\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iVerMin\ =\ (\ clipArea.y\ -\/\ (int)block.y\ )\ <<\ mvFracBits;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ rcMv.setHor(\ Clip3(\ iHorMin,\ iHorMax,\ rcMv.getHor()\ )\ );}
+\DoxyCodeLine{00090\ \ \ rcMv.setVer(\ Clip3(\ iVerMin,\ iVerMax,\ rcMv.getVer()\ )\ );}
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ Area\ MCTSHelper::getTileArea(\ \textcolor{keyword}{const}\ CodingStructure*\ cs,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ ctuAddr\ )}
+\DoxyCodeLine{00094\ \{}
+\DoxyCodeLine{00095\ \ \ \textcolor{keyword}{const}\ PPS\ *pps\ =\ cs-\/>pps;}
+\DoxyCodeLine{00096\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ maxCUWidth\ \ =\ cs-\/>pcv-\/>maxCUWidth;}
+\DoxyCodeLine{00097\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ maxCUHeight\ =\ cs-\/>pcv-\/>maxCUHeight;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \textcolor{keyword}{const}\ uint32\_t\ tileIdx\ =\ pps-\/>getTileIdx(\ (uint32\_t)ctuAddr\ );}
+\DoxyCodeLine{00100\ \ \ \textcolor{keyword}{const}\ uint32\_t\ tileX\ =\ tileIdx\ \%\ pps-\/>getNumTileColumns();}
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{const}\ uint32\_t\ tileY\ =\ tileIdx\ /\ pps-\/>getNumTileColumns();}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileWidthtInCtus\ =\ pps-\/>getTileColumnWidth(\ tileX\ );}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileHeightInCtus\ =\ pps-\/>getTileRowHeight\ \ (\ tileY\ );}
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileXPosInCtus\ \ \ =\ pps-\/>getTileColumnBd(\ tileX\ );}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileYPosInCtus\ \ \ =\ pps-\/>getTileRowBd(\ tileY\ );}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileLeftTopPelPosX\ =\ maxCUWidth\ *\ tileXPosInCtus;}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileLeftTopPelPosY\ =\ maxCUHeight\ *\ tileYPosInCtus;}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileRightBottomPelPosX\ =\ std::min<int>(\ (\ (\ tileWidthtInCtus\ +\ tileXPosInCtus\ )\ *\ maxCUWidth\ ),\ (\textcolor{keywordtype}{int})cs-\/>picture-\/>lwidth()\ )\ -\/\ 1;}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ tileRightBottomPelPosY\ =\ std::min<int>(\ (\ (\ tileHeightInCtus\ +\ tileYPosInCtus\ )\ *\ maxCUHeight\ ),\ (\textcolor{keywordtype}{int})cs-\/>picture-\/>lheight()\ )\ -\/\ 1;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{return}\ Area(\ tileLeftTopPelPosX,\ tileLeftTopPelPosY,\ tileRightBottomPelPosX\ -\/\ tileLeftTopPelPosX\ +\ 1,\ tileRightBottomPelPosY\ -\/\ tileLeftTopPelPosY\ +\ 1\ );}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{bool}\ MCTSHelper::isRefBlockAtRestrictedTileBoundary(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ )}
+\DoxyCodeLine{00117\ \{}
+\DoxyCodeLine{00118\ \ \ \textcolor{keyword}{const}\ Area\&\ tileArea\ =\ pu.cs-\/>picture-\/>mctsInfo.getTileArea();}
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ mvPrecBits\ =\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ refList\ =\ 0;\ refList\ <\ NUM\_REF\_PIC\_LIST\_01;\ refList++\ )}
+\DoxyCodeLine{00122\ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{if}(\ pu.refIdx[refList]\ >=\ 0\ )}
+\DoxyCodeLine{00124\ \ \ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\&\ mv\ =\ pu.mv[refList];}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ Area\ targetBlock(\ pu.Y().offset(\ mv.getHor()\ >>\ mvPrecBits,\ mv.getVer()\ >>\ mvPrecBits\ ),\ pu.Y().size()\ );}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ at\ boundary\ take\ sub-\/pel\ filter\ samples\ into\ account}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ targetBlock.x\ <\ tileArea.x\ +\ 3\ ||}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ targetBlock.y\ <\ tileArea.y\ +\ 3\ ||}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ targetBlock.bottomRight().x\ >\ tileArea.bottomRight().x\ -\/\ 4\ ||}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ targetBlock.bottomRight().y\ >\ tileArea.bottomRight().y\ -\/\ 4\ )}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ getMotInfoBlockPartPos(\ \textcolor{keyword}{const}\ PredictionUnit\&\ pu,\ \textcolor{keywordtype}{int}\ xOff,\ \textcolor{keywordtype}{int}\ yOff,\ \textcolor{keyword}{const}\ Mv\&\ mv,\ \textcolor{keywordtype}{int}\&\ ruiPredXLeft,\ \textcolor{keywordtype}{int}\&\ ruiPredYTop,\ \textcolor{keywordtype}{int}\&\ ruiPredXRight,\ \textcolor{keywordtype}{int}\&\ ruiPredYBottom\ )}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ mvFracBits\ =\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ ruiPredXLeft\ \ \ =\ (\ mv.getHor()\ >>\ mvFracBits\ )\ +\ pu.lx()\ +\ xOff;}
+\DoxyCodeLine{00146\ \ \ ruiPredYTop\ \ \ \ =\ (\ mv.getVer()\ >>\ mvFracBits\ )\ +\ pu.ly()\ +\ yOff;}
+\DoxyCodeLine{00147\ \ \ ruiPredXRight\ \ =\ ruiPredXLeft\ +\ (\ 1\ <<\ g\_miScaling.posx\ )\ -\/\ 1;}
+\DoxyCodeLine{00148\ \ \ ruiPredYBottom\ =\ ruiPredYTop\ +\ (\ 1\ <<\ g\_miScaling.posy\ )\ -\/\ 1;}
+\DoxyCodeLine{00149\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ checkMVRange(\ \textcolor{keyword}{const}\ Mv\&\ mv,\ \textcolor{keyword}{const}\ Area\&\ tileArea,\ \textcolor{keywordtype}{int}\ predXLeft,\ \textcolor{keywordtype}{int}\ predXRight,\ \textcolor{keywordtype}{int}\ predYTop,\ \textcolor{keywordtype}{int}\ predYBottom,\ ChromaFormat\ chromaFormat,\ \textcolor{keywordtype}{bool}\ isLuma,\ \textcolor{keywordtype}{bool}\ msgFlag\ )}
+\DoxyCodeLine{00152\ \{}
+\DoxyCodeLine{00153\ \ \ \textcolor{comment}{//\ Filter\ length\ of\ sub-\/sample\ generation\ filter\ to\ be\ considered}}
+\DoxyCodeLine{00154\ \ \ \textcolor{keywordtype}{int}\ sampleOffsetLT,\ sampleOffsetRB,\ fracDiv;}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \textcolor{keywordflow}{if}(\ isLuma\ )}
+\DoxyCodeLine{00157\ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ sampleOffsetLT\ =\ 3;}
+\DoxyCodeLine{00159\ \ \ \ \ sampleOffsetRB\ =\ 4;}
+\DoxyCodeLine{00160\ \ \ \ \ fracDiv\ =\ 1\ <<\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00161\ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00163\ \ \ \{}
+\DoxyCodeLine{00164\ \ \ \ \ sampleOffsetLT\ =\ 2;\ \textcolor{comment}{//1;\ //\ 2\ in\ luma\ coordinates!}}
+\DoxyCodeLine{00165\ \ \ \ \ sampleOffsetRB\ =\ 3;\ \textcolor{comment}{//2;\ //\ 3\ in\ luma\ coordinates!}}
+\DoxyCodeLine{00166\ \ \ \ \ fracDiv\ =\ 1\ <<\ (\ MV\_FRACTIONAL\_BITS\_INTERNAL\ +\ 1\ );}
+\DoxyCodeLine{00167\ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ leftTopPelPosX\ =\ tileArea.topLeft().x;}
+\DoxyCodeLine{00170\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ leftTopPelPosY\ =\ tileArea.topLeft().y;}
+\DoxyCodeLine{00171\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rightBottomPelPosX\ =\ tileArea.bottomRight().x;}
+\DoxyCodeLine{00172\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rightBottomPelPosY\ =\ tileArea.bottomRight().y;}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isFullPelHor\ =\ (\ mv.getHor()\ \%\ fracDiv\ ==\ 0\ );}
+\DoxyCodeLine{00175\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isFullPelVer\ =\ (\ mv.getVer()\ \%\ fracDiv\ ==\ 0\ );}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rangeXLeft\ \ \ =\ leftTopPelPosX\ +\ (\ isFullPelHor\ ?\ 0\ :\ sampleOffsetLT\ );}
+\DoxyCodeLine{00178\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rangeYTop\ \ \ \ =\ leftTopPelPosY\ +\ (\ isFullPelVer\ ?\ 0\ :\ sampleOffsetLT\ );}
+\DoxyCodeLine{00179\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rangeXRight\ \ =\ rightBottomPelPosX\ -\/\ (\ isFullPelHor\ ?\ 0\ :\ sampleOffsetRB\ );}
+\DoxyCodeLine{00180\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rangeYBottom\ =\ rightBottomPelPosY\ -\/\ (\ isFullPelVer\ ?\ 0\ :\ sampleOffsetRB\ );}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \textcolor{keywordflow}{if}(\ !(\ predXLeft\ >=\ rangeXLeft\ \&\&\ predXLeft\ <=\ rangeXRight\ )\ ||\ !(\ predXRight\ >=\ rangeXLeft\ \&\&\ predXRight\ <=\ rangeXRight\ )\ )}
+\DoxyCodeLine{00183\ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordflow}{if}(\ msgFlag\ )}
+\DoxyCodeLine{00185\ \ \ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ msg(\ WARNING,\ \textcolor{stringliteral}{"{}\%s:\ pu\ motion\ vector\ across\ tile\ boundaries\ MV(\%d,\%d)\ RangeLR(\%d,\%d)\ PredLR(\%d,\%d)\(\backslash\)n"{}},\ (isLuma\ ?\ \textcolor{stringliteral}{"{}LUMA"{}}:\ \textcolor{stringliteral}{"{}CHROMA"{}}),\ mv.getHor(),\ mv.getVer(),\ rangeXLeft,\ rangeXRight,\ predXLeft,\ predXRight\ );}
+\DoxyCodeLine{00187\ \ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00189\ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !(\ predYTop\ >=\ rangeYTop\ \&\&\ predYTop\ <=\ rangeYBottom\ )\ ||\ !(\ predYBottom\ >=\ rangeYTop\ \&\&\ predYBottom\ <=\ rangeYBottom\ )\ )}
+\DoxyCodeLine{00191\ \ \ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordflow}{if}(\ msgFlag\ )}
+\DoxyCodeLine{00193\ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ msg(\ WARNING,\ \textcolor{stringliteral}{"{}\%s:\ pu\ motion\ vector\ across\ tile\ boundaries\ MV(\%d,\%d)\ RangeTB(\%d,\%d)\ PredTB(\%d,\%d)\(\backslash\)n"{}},\ (isLuma\ ?\ \textcolor{stringliteral}{"{}LUMA"{}}\ :\ \textcolor{stringliteral}{"{}CHROMA"{}}),\ mv.getHor(),\ mv.getVer(),\ rangeYTop,\ rangeYBottom,\ predYTop,\ predYBottom\ );}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00197\ \ \ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keywordtype}{bool}\ MCTSHelper::checkMvBufferForMCTSConstraint(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ \textcolor{keywordtype}{bool}\ msgFlag\ )}
+\DoxyCodeLine{00203\ \{}
+\DoxyCodeLine{00204\ \ \ \textcolor{keyword}{const}\ Area\&\ tileArea\ =\ pu.cs-\/>picture-\/>mctsInfo.getTileArea();}
+\DoxyCodeLine{00205\ \ \ \textcolor{keyword}{const}\ ChromaFormat\ chromaFormat\ =\ pu.cs-\/>sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ CMotionBuf\ mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ blkW\ =\ 1\ <<\ (\ g\_miScaling.posx\ );}
+\DoxyCodeLine{00210\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ blkH\ =\ 1\ <<\ (\ g\_miScaling.posy\ );}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ mb.height;\ y++\ )}
+\DoxyCodeLine{00213\ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ mb.width;\ x++\ )}
+\DoxyCodeLine{00215\ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MotionInfo\ \&mi\ =\ mb.at(\ x,\ y\ );}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ xOff\ =\ x\ <<\ g\_miScaling.posx;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ yOff\ =\ y\ <<\ g\_miScaling.posy;}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ refList\ =\ 0;\ refList\ <\ NUM\_REF\_PIC\_LIST\_01;\ refList++\ )}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pu.refIdx[refList]\ >=\ 0\ ||\ mi.refIdx[refList]\ >=\ 0\ )}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\&\ mv\ =\ mi.mv[refList];}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ predXLeft,\ predYTop,\ predXRight,\ predYBottom;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ getMotInfoBlockPartPos(\ pu,\ xOff,\ yOff,\ mv,\ predXLeft,\ predYTop,\ predXRight,\ predYBottom\ );}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !checkMVRange(\ mv,\ tileArea,\ predXLeft,\ predXRight,\ predYTop,\ predYBottom,\ chromaFormat,\ \textcolor{keyword}{true},\ msgFlag\ )\ )}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Chroma}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !pu.cu-\/>affine\ )}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !checkMVRange(\ mv,\ tileArea,\ predXLeft,\ predXRight,\ predYTop,\ predYBottom,\ chromaFormat,\ \textcolor{keyword}{false},\ msgFlag\ )\ )}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ x\ \%\ 2\ ==\ 0\ \&\&\ y\ \%\ 2\ ==\ 0\ )}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ MotionInfo\ \&miA\ =\ mi;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ MotionInfo\ \&miB\ =\ mb.at(\ x\ +\ 1,\ y\ +\ 1\ );}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mvAff\ =\ miA.mv[refList]\ +\ miB.mv[refList];}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ roundAffineMv(\ mvAff.hor,\ mvAff.ver,\ 1\ );}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getMotInfoBlockPartPos(\ pu,\ xOff,\ yOff,\ mvAff,\ predXLeft,\ predYTop,\ predXRight,\ predYBottom\ );}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !checkMVRange(\ mvAff,\ tileArea,\ predXLeft,\ predXRight\ +\ blkW,\ predYTop,\ predYBottom\ +\ blkH,\ chromaFormat,\ \textcolor{keyword}{false},\ msgFlag\ )\ )}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ \textcolor{keywordtype}{bool}\ MCTSHelper::checkMvIsNotInRestrictedArea(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ \textcolor{keyword}{const}\ Mv\&\ mv,\ \textcolor{keyword}{const}\ Area\&\ restrArea,\ \textcolor{keyword}{const}\ MvPrecision\ mvPrec\ )}
+\DoxyCodeLine{00263\ \{}
+\DoxyCodeLine{00264\ \ \ CHECKD(\ mvPrec\ <\ MV\_PRECISION\_INT,\ \textcolor{stringliteral}{"{}Wrong\ MV\ precision!"{}}\ );}
+\DoxyCodeLine{00265\ \ \ Mv\ testMv\ =\ mv;}
+\DoxyCodeLine{00266\ \ \ testMv\ >>=\ mvPrec\ -\/\ MV\_PRECISION\_INT;}
+\DoxyCodeLine{00267\ \ \ Area\ targetArea\ =\ pu.Y();}
+\DoxyCodeLine{00268\ \ \ targetArea.repositionTo(\ targetArea.offset(\ testMv.getHor(),\ testMv.getVer()\ )\ );}
+\DoxyCodeLine{00269\ \ \ \textcolor{keywordflow}{if}(\ !restrArea.contains(\ targetArea\ )\ )}
+\DoxyCodeLine{00270\ \ \ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ Skip\ this\ pos}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00273\ \ \ \}}
+\DoxyCodeLine{00274\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00275\ \}}
+\DoxyCodeLine{00276\ \textcolor{keywordtype}{bool}\ MCTSHelper::checkMvForMCTSConstraint(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ \textcolor{keyword}{const}\ Mv\&\ mv,\ \textcolor{keyword}{const}\ MvPrecision\ mvPrec\ )}
+\DoxyCodeLine{00277\ \{}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordflow}{return}\ checkMvIsNotInRestrictedArea(\ pu,\ mv,\ pu.cs-\/>picture-\/>mctsInfo.getTileAreaSubPelRestricted(\ pu\ ),\ mvPrec\ );}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+
+\end{DoxyCode}

@@ -1,0 +1,111 @@
+\doxysection{Codec.\+cpp}
+\label{Codec_8cpp_source}\index{util/src/Codec.cpp@{util/src/Codec.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}Codec.hpp"{}}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Platform.hpp"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}SharedLibrary.hpp"{}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}CodecApi.h"{}}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{typedef}\ uint32\_t\ (*codec\_api\_version\_fn\_t)();}
+\DoxyCodeLine{00053\ \textcolor{keyword}{typedef}\ uint32\_t\ (*codec\_api\_query\_fn\_t)(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size);}
+\DoxyCodeLine{00054\ \textcolor{keyword}{typedef}\ Codec*\ (*codec\_api\_create\_fn\_t)(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ Codec*\ CodecCreate(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&create\_options)\ \{}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ Try\ to\ load\ a\ library\ of\ form\ "{}<program>/external\_codecs/libs/base\_<name>.so"{}}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{string}\ library\_file\ =\ get\_program\_directory(format(\textcolor{stringliteral}{"{}external\_codecs/libs/\%sbase\_\%s.\%s"{}},\ SHARED\_PREFIX,\ name.c\_str(),\ SHARED\_SUFFIX));}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}(file\_size(library\_file)\ <\ 0)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ find\ base\ codec\ library:\ \(\backslash\)"{}\%s\(\backslash\)"{}"{}},\ library\_file.c\_str());}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00065\ \ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ codec\_api\_version\_fn\_t\ version\_fn;}
+\DoxyCodeLine{00068\ \ \ \ \ codec\_api\_query\_fn\_t\ query\_fn;}
+\DoxyCodeLine{00069\ \ \ \ \ codec\_api\_create\_fn\_t\ create\_fn;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ shared\_handle\_t\ h\ =\ CHECK(SHARED\_LOAD(library\_file.c\_str()));}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{if}(!h)}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ version\_fn\ =\ (codec\_api\_version\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Version"{}}));}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ version\ =\ version\_fn();}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{if}(version\ !=\ LOADABLE\_CODEC\_API\_VERSION)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Base\ codec\ library\ \(\backslash\)"{}\%s\(\backslash\)"{}\ has\ wrong\ version:\ \%d"{}},\ library\_file.c\_str(),\ version);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00082\ \ \ \ \ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ query\_fn\ =\ (codec\_api\_query\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Query"{}}));}
+\DoxyCodeLine{00085\ \ \ \ \ create\_fn\ =\ (codec\_api\_create\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Create"{}}));}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ Codec*\ codec\ =\ create\_fn(name.c\_str(),\ operation,\ create\_options.c\_str());}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{keywordtype}{void}\ CodecRelease(Codec*\ codec)\ \{}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Convert\ a\ codec\ error\ to\ a\ user\ string}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//}}
+\DoxyCodeLine{00097\ \textcolor{keywordtype}{string}\ CodecErrorToString(Codec*\ codec,\ CodecError\ error)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ buffer\_len\ =\ codec-\/>get\_error\_message(error,\ 0,\ 0);}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{char}\ *buffer\ =\ CHECK((\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(alloca(buffer\_len))));}
+\DoxyCodeLine{00100\ \ \ \ \ codec-\/>get\_error\_message(error,\ buffer,\ buffer\_len);}
+\DoxyCodeLine{00101\ \ \ \ \ codec-\/>release\_error(error);}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{return}\ string(buffer,\ buffer\ +\ buffer\_len);}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

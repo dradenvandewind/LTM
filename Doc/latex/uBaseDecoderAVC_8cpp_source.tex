@@ -1,0 +1,1016 @@
+\doxysection{u\+Base\+Decoder\+AVC.\+cpp}
+\label{uBaseDecoderAVC_8cpp_source}\index{src/uBaseDecoderAVC.cpp@{src/uBaseDecoderAVC.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <climits>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}uBaseDecoderAVC.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ Parsing\ short\_term\_ref\_pic\_sets\ according\ to\ standard\ seems\ to\ fail\ very\ occasionally\ when\ given\ HM\ output}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ Notably,\ HM\ decoder\ uses\ a\ different\ mechanism\ to\ that\ described\ in\ standard\ to\ maintain\ short\ term\ RPS.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ We\ don't\ actually\ need\ this\ for\ LCEVC\ embedding\ so\ bail\ for\ the\ momement}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ NO\_STRPS}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ NO\_VUIPARAMS}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ push}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ push}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/but-\/set-\/variable"{}}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00064\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{const}\ uint32\_t\ kNalHeaderLength\ =\ 3;}
+\DoxyCodeLine{00069\ \textcolor{keyword}{const}\ uint8\_t\ kNalHeader[kNalHeaderLength]\ =\ \{0,\ 0,\ 1\};}
+\DoxyCodeLine{00070\ \textcolor{keyword}{const}\ uint32\_t\ kNalEscapeLength\ =\ 3;}
+\DoxyCodeLine{00071\ \textcolor{keyword}{const}\ uint8\_t\ kNalEscape[kNalEscapeLength]\ =\ \{0,\ 0,\ 3\};}
+\DoxyCodeLine{00072\ \textcolor{keyword}{const}\ uint8\_t\ kBitCountByteMask[9]\ =\ \{0,\ 128,\ 192,\ 224,\ 240,\ 248,\ 252,\ 254,\ 255\};}
+\DoxyCodeLine{00073\ \textcolor{keyword}{const}\ uint8\_t\ kMaxNumRefFramesAllowed\ =\ 16;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ uint32\_t\ GetBitCountFromMax(uint32\_t\ maxValue)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ Bit\ count\ is\ determined\ by\ ceil(log2(maxRepresentation);}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Because\ log2\ is\ c99\ which\ is\ not\ so\ widely\ available\ we\ can\ use\ standard\ log\ with\ a\ divide.}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ log2(x)\ =\ logY(x)\ /\ logY(2)}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ Alternatively\ we\ want\ to\ find\ the\ highest\ bit\ set\ in\ maxValue.}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ logBase\ =\ log(2.0f);}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{float}\ log2Value\ =\ log(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(maxValue))\ /\ logBase;}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(ceil(log2Value));}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ BaseDecNalUnitType::Enum\ uFromAVC(uint8\_t\ type)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{switch}\ (type)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::Unspecified:}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_NonIDR:}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_A:}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_B:}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_C:}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_IDR:}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_Aux:}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_Ext:}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::CodedSlice\_DepthExt:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Slice;}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::SEI:}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SEI;}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::SPSExt:}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::SubsetSPS:}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::SPS:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SPS;}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::PPS:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::PPS;}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::AUD:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::AUD;}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::EndOfSequence:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::EOS;}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::EndOfStream:}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::EOB;}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::FillerData:}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Filler;}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::Prefix:}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{case}\ AVCNalType::DPS:}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00117\ \ \ \ \ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ uint32\_t\ uOffsetForNalUnitHeader(\textcolor{keyword}{const}\ uint8\_t\ *nal)\ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(nal,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength;}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (!nal[0]\ \&\&\ memcmp(nal\ +\ 1,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength\ +\ 1;}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ A.3.1}}
+\DoxyCodeLine{00133\ \textcolor{keyword}{const}\ std::map<BaseDecoderAVC::Level::Enum,\ BaseDecoderAVC::Level::Limit>\ BaseDecoderAVC::Level::limits\{}
+\DoxyCodeLine{00134\ \ \ \ \ \{Number\_1b,\ \{396\}\},\ \ \ \ \ \{Number\_1,\ \{396\}\},\ \ \ \ \ \ \{Number\_1\_1,\ \{900\}\},\ \ \ \{Number\_1\_2,\ \{2376\}\},\ \ \ \{Number\_1\_3,\ \{2376\}\},}
+\DoxyCodeLine{00135\ \ \ \ \ \{Number\_2,\ \{2376\}\},\ \ \ \ \ \{Number\_2\_1,\ \{4752\}\},\ \ \ \{Number\_2\_2,\ \{8100\}\},\ \ \{Number\_3,\ \{8100\}\},\ \ \ \ \ \{Number\_3\_1,\ \{18000\}\},}
+\DoxyCodeLine{00136\ \ \ \ \ \{Number\_3\_2,\ \{20480\}\},\ \ \{Number\_4,\ \{32768\}\},\ \ \ \ \{Number\_4\_1,\ \{32768\}\},\ \{Number\_4\_2,\ \{34816\}\},\ \ \{Number\_5,\ \{110400\}\},}
+\DoxyCodeLine{00137\ \ \ \ \ \{Number\_5\_1,\ \{184320\}\},\ \{Number\_5\_2,\ \{184320\}\},\ \{Number\_6,\ \{696320\}\},\ \ \{Number\_6\_1,\ \{696320\}\},\ \{Number\_6\_2,\ \{696320\}\}\};}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ AVC}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ BaseDecoderAVC::SPS::SPS()\ \{\ memset(\textcolor{keyword}{this},\ 0,\ \textcolor{keyword}{sizeof}(SPS));\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ BaseDecoderAVC::PPS::PPS()\ \{\ memset(\textcolor{keyword}{this},\ 0,\ \textcolor{keyword}{sizeof}(PPS));\ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ BaseDecoderAVC::SliceHeader::SliceHeader()}
+\DoxyCodeLine{00148\ \ \ \ \ :\ m\_bIDR(\textcolor{keyword}{false}),\ m\_firstMBInSlice(0),\ m\_sliceType(SliceType::Unknown),\ m\_ppsID(0),\ m\_colourPlaneID(0),\ m\_frameNum(0),}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ m\_bFieldPic(\textcolor{keyword}{false}),\ m\_bBottomField(\textcolor{keyword}{false}),\ m\_idrPicID(0),\ m\_picOrderCntLSB(0),}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ m\_deltaPicOrderCntBottom(0),\ m\_deltaPicOrderCnt\{0\},\ m\_redundantPicCnt(0),\ m\_bDirectSpatialMVPred(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ m\_bNumRefIDXActiveOverrideFlag(\textcolor{keyword}{false}),\ m\_numRefIDXL0Active(0),\ m\_numRefIDXL1Active(0),\ m\_cabacInitIDC(0),\ m\_sliceQPDelta(0),}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ m\_bSPForSwitch(\textcolor{keyword}{false}),\ m\_sliceQSDelta(0),\ m\_disableDeblockingFilterIDC(0),\ m\_sliceAlphaC0OffsetDiv2(0),}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ m\_sliceBetaOffsetDiv2(0),\ m\_memManagementControlOp\{0\},\ m\_pps(\textcolor{keyword}{nullptr}),\ m\_sps(\textcolor{keyword}{nullptr})\ \{\}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ BaseDecoderAVC::SliceType::Enum\ BaseDecoderAVC::SliceHeader::GetType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sliceType;\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ BaseDecoderAVC::RefPic::RefPic()}
+\DoxyCodeLine{00158\ \ \ \ \ :\ m\_topFieldOrderCnt(0),\ m\_bottomFieldOrderCnt(0),\ m\_picOrderCntMsb(0),\ m\_frameNum(0),\ m\_frameNumOffset(0)\ \{\}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ BaseDecoderAVC::BaseDecoderAVC()\ :\ m\_currentNalType(0),\ m\_activeSPS(nullptr),\ m\_activePPS(nullptr)\ \{\}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::ParseNalUnit(\textcolor{keyword}{const}\ uint8\_t\ *nal,\ uint32\_t\ nalLength)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{bool}\ bSuccess\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Account\ for\ AnnexB\ nal\ unit\ header\ ([0],0,0,1)}}
+\DoxyCodeLine{00166\ \ \ \ \ uint32\_t\ offset\ =\ uOffsetForNalUnitHeader(nal);}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ [forbidden-\/zero:1,\ nal\_ref\_idc:2,\ nal\_type:5]}}
+\DoxyCodeLine{00169\ \ \ \ \ m\_currentNalType\ =\ (nal[offset]\ \&\ 0x1F);}
+\DoxyCodeLine{00170\ \ \ \ \ m\_currentNalRefIDC\ =\ ((nal[offset]\ >>\ 5)\ \&\ 0x3);}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ offset\ +=\ 1;}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ BaseDecNalUnitType::Enum\ nalType\ =\ uFromAVC(m\_currentNalType);}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalType\ ==\ BaseDecNalUnitType::SPS)\ ||\ (nalType\ ==\ BaseDecNalUnitType::PPS)\ ||\ (nalType\ ==\ BaseDecNalUnitType::SEI)\ ||}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ (nalType\ ==\ BaseDecNalUnitType::Slice))\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ nal\ +=\ offset;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ nalLength\ -\/=\ offset;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ Unencapsulate(nal,\ nalLength,\ m\_currentNalPayload);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ m\_currentBits\ =\ *m\_currentNalPayload.data();}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ m\_remainingBits\ =\ 8;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ m\_byteOffset\ =\ 0;}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (nalType)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::PPS:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ bSuccess\ =\ ParsePPS();}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::SPS:}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseSPS();}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::Slice:}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((bSuccess\ =\ ParseSliceHeader()))\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HandlePictureOrderCount();}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{return}\ bSuccess;}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ uint8\_t\ *BaseDecoderAVC::GetDataBuffer()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (uint8\_t\ *)m\_currentNalPayload.data();\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ BaseDecPictType::Enum\ BaseDecoderAVC::GetBasePictureType()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_bIDR)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::IDR;}
+\DoxyCodeLine{00211\ \ \ \ \ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{switch}\ (m\_activeSlice.m\_sliceType)\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{case}\ SliceType::P:}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::P;}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{case}\ SliceType::B:}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::B;}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordflow}{case}\ SliceType::I:}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::I;}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{case}\ SliceType::SP:}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::P;}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{case}\ SliceType::SI:}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::I;}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00226\ \ \ \ \ \};}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::Unknown;}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ BaseDecNalUnitType::Enum\ BaseDecoderAVC::GetBaseNalUnitType()\textcolor{keyword}{\ const\ }\{\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{return}\ uFromAVC(m\_currentNalType);}
+\DoxyCodeLine{00233\ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ int32\_t\ BaseDecoderAVC::GetQP()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (m\_activeSlice.m\_pps-\/>m\_picInitQP\ +\ m\_activeSlice.m\_sliceQPDelta);\ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ uint32\_t\ BaseDecoderAVC::GetNalType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_currentNalType;\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ uint32\_t\ BaseDecoderAVC::GetPictureWidth()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSPS)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00242\ \ \ \ \ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ uint32\_t\ cropUnitX\ =\ 1;\ \textcolor{comment}{//\ (7-\/19)}}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_chromaArrayType\ !=\ 0\ \&\&\ m\_activeSPS-\/>m\_chromaArrayType\ <=\ 2)\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ subWidthC}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ cropUnitX\ =\ 2;\ \textcolor{comment}{//\ (7-\/21)}}
+\DoxyCodeLine{00248\ \ \ \ \ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_picWidthInMBs\ *\ 16\ -\/}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ cropUnitX\ *\ (m\_activeSPS-\/>m\_frameCropLeftOffset\ +\ m\_activeSPS-\/>m\_frameCropRightOffset);\ \textcolor{comment}{//\ (D-\/30)}}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ uint32\_t\ BaseDecoderAVC::GetPictureHeight()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSPS)\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ uint32\_t\ twoMinusFrameMBsFlag\ =\ 2\ -\/\ m\_activeSPS-\/>m\_bFrameMBsOnly;}
+\DoxyCodeLine{00260\ \ \ \ \ uint32\_t\ cropUnitY\ =\ twoMinusFrameMBsFlag;\ \textcolor{comment}{//\ (7-\/20)}}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_chromaArrayType\ !=\ 0)\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ subHeightC\ *\ (2\ -\/\ frame\_mbs\_only\_flag)}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ cropUnitY\ =\ (1\ +\ (m\_activeSPS-\/>m\_chromaArrayType\ <=\ 1))\ *\ (twoMinusFrameMBsFlag);\ \textcolor{comment}{//\ (7-\/22)}}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordflow}{return}\ twoMinusFrameMBsFlag\ *\ m\_activeSPS-\/>m\_picHeightInMapUnits\ *\ 16\ -\/}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ cropUnitY\ *\ (m\_activeSPS-\/>m\_frameCropTopOffset\ +\ m\_activeSPS-\/>m\_frameCropBottomOffset);\ \textcolor{comment}{//\ (D-\/31)}}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ Sections\ 8.2.5.1\ \&\ C.2.3\ of\ Standard}}
+\DoxyCodeLine{00271\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::GetDPBCanRefresh()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_activeSlice.m\_memManagementControlOp[5]\ ||\ m\_activeSlice.m\_bIDR;\ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ int64\_t\ BaseDecoderAVC::GetPictureOrderCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_currentPictureOrderCount;\ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{comment}{//\ Section\ E.2.1\ of\ Standard}}
+\DoxyCodeLine{00276\ uint8\_t\ BaseDecoderAVC::GetMaxNumberOfReorderFrames()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSPS)\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kMaxNumRefFramesAllowed;}
+\DoxyCodeLine{00279\ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bVUIParametersPresent)\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_vui.m\_maxNumReorderFrames;}
+\DoxyCodeLine{00283\ \ \ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bConstraintSet3\ \&\&}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ (m\_activeSPS-\/>m\_profileIDC\ ==\ 44\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 86\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 100\ ||}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ ==\ 110\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 122\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 244))\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00289\ \ \ \ \ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ A.3.1}}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keyword}{auto}\ levelLimit\ =\ GetLevelLimit(m\_activeSPS);}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{if}\ (!levelLimit)\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kMaxNumRefFramesAllowed;}
+\DoxyCodeLine{00295\ \ \ \ \ \}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ uint32\_t\ frameHeightInMbs\ =\ (2\ -\/\ m\_activeSPS-\/>m\_bFrameMBsOnly)\ *\ m\_activeSPS-\/>m\_picHeightInMapUnits;}
+\DoxyCodeLine{00298\ \ \ \ \ uint8\_t\ calculatedMaxNumRefFrames\ =\ levelLimit-\/>m\_maxDpbMbs\ /\ (m\_activeSPS-\/>m\_picWidthInMBs\ *\ frameHeightInMbs);}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordflow}{return}\ std::min(calculatedMaxNumRefFrames,\ kMaxNumRefFramesAllowed);}
+\DoxyCodeLine{00300\ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ uint32\_t\ BaseDecoderAVC::GetFrameRate()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSPS\ ||\ !m\_activeSPS-\/>m\_bVUIParametersPresent\ ||\ !m\_activeSPS-\/>m\_vui.m\_bTimingInfoPresent)\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00305\ \ \ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_vui.m\_timeScale\ /\ m\_activeSPS-\/>m\_vui.m\_numUnitsInTick\ /\ 2;}
+\DoxyCodeLine{00307\ \}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ uint32\_t\ BaseDecoderAVC::GetBitDepthLuma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_bitDepthLuma;}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00314\ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ uint32\_t\ BaseDecoderAVC::GetBitDepthChroma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS)}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_bitDepthChroma;}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00321\ \}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ uint32\_t\ BaseDecoderAVC::GetChromaFormatIDC()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS)}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_activeSPS-\/>m\_chromaFormatIDC;}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00328\ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ uint32\_t\ BaseDecoderAVC::GetTemporalId()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \textcolor{comment}{//\ Section\ 8.2.1\ of\ Standard}}
+\DoxyCodeLine{00335\ \textcolor{keywordtype}{void}\ BaseDecoderAVC::HandlePictureOrderCount()\ \{}
+\DoxyCodeLine{00336\ \ \ \ \ assert(!m\_activeSlice.m\_bFieldPic);}
+\DoxyCodeLine{00337\ \ \ \ \ assert((m\_activeSPS-\/>m\_picOrderCntType\ ==\ 0)\ ||\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 2));}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ uint32\_t\ topFieldOrderCnt\ =\ 0;}
+\DoxyCodeLine{00340\ \ \ \ \ uint32\_t\ bottomFieldOrderCnt\ =\ 0;}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{comment}{//\ 8.2.1.1}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 0)\ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ uint32\_t\ prevPicOrderCntMsb\ =\ 0;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ uint32\_t\ prevPicOrderCntLsb\ =\ 0;}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ uint32\_t\ picOrderCntMsb\ =\ 0;}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ uint32\_t\ maxPicOrderCntLsb\ =\ 1\ <<\ m\_activeSPS-\/>m\_log2MaxPicOrderCntLSB;}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ AVCNalType::CodedSlice\_IDR)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntMsb\ =\ 0;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntLsb\ =\ 0;}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_refPic.m\_header.m\_memManagementControlOp[5])\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntMsb\ =\ 0;}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntLsb\ =\ m\_refPic.m\_header.m\_bBottomField\ ?\ 0\ :\ m\_refPic.m\_topFieldOrderCnt;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntMsb\ =\ m\_refPic.m\_picOrderCntMsb;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ prevPicOrderCntLsb\ =\ m\_refPic.m\_header.m\_picOrderCntLSB;}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/3)}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_picOrderCntLSB\ <\ prevPicOrderCntLsb\ \&\&}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ ((prevPicOrderCntLsb\ -\/\ m\_activeSlice.m\_picOrderCntLSB)\ >=\ (maxPicOrderCntLsb\ /\ 2)))\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ picOrderCntMsb\ =\ prevPicOrderCntMsb\ +\ maxPicOrderCntLsb;}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_picOrderCntLSB\ >\ prevPicOrderCntLsb\ \&\&}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((m\_activeSlice.m\_picOrderCntLSB\ -\/\ prevPicOrderCntLsb)\ >\ (maxPicOrderCntLsb\ /\ 2)))\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ picOrderCntMsb\ =\ prevPicOrderCntMsb\ -\/\ maxPicOrderCntLsb;}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ picOrderCntMsb\ =\ prevPicOrderCntMsb;}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/4),\ (8-\/5)}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ bottomFieldOrderCnt\ =\ picOrderCntMsb\ +\ m\_activeSlice.m\_picOrderCntLSB;}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ topFieldOrderCnt\ =\ bottomFieldOrderCnt;}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSlice.m\_bFieldPic)}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ bottomFieldOrderCnt\ +=\ m\_activeSlice.m\_deltaPicOrderCntBottom;}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalRefIDC\ !=\ 0)\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ m\_refPic.m\_picOrderCntMsb\ =\ picOrderCntMsb;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ m\_refPic.m\_header\ =\ m\_activeSlice;}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ m\_refPic.m\_topFieldOrderCnt\ =\ topFieldOrderCnt;}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ m\_refPic.m\_bottomFieldOrderCnt\ =\ bottomFieldOrderCnt;}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ uint32\_t\ maxFrameNum\ =\ 1\ <<\ m\_sps-\/>m\_log2MaxFrameNum;}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ uint32\_t\ frameNumOffset\ =\ 0;}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/6),\ (8-\/11)\ Calculate\ frame\ num\ offset.}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ AVCNalType::CodedSlice\_IDR)}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ frameNumOffset\ =\ 0;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_refPic.m\_frameNum\ >\ m\_activeSlice.m\_frameNum)}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ frameNumOffset\ =\ m\_refPic.m\_frameNumOffset\ +\ maxFrameNum;}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ frameNumOffset\ =\ m\_refPic.m\_frameNumOffset;}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 1)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ absFrameNum\ =\ 0;}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ expectedPicOrderCnt\ =\ 0;}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/7)}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle\ !=\ 0)}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ absFrameNum\ =\ frameNumOffset\ +\ m\_activeSlice.m\_frameNum;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ absFrameNum\ =\ 0;}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalRefIDC\ ==\ 0\ \&\&\ absFrameNum\ >\ 0)}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ absFrameNum\ -\/=\ 1;}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/9)}}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (absFrameNum\ >\ 0)\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/8)}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ picOrderCntCycleCnt\ =\ (absFrameNum\ -\/\ 1)\ /\ m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle;}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ frameNumInPicOrderCntCycle\ =\ (absFrameNum\ -\/\ 1)\ \%\ m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle;}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (7-\/12)}}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ expectedDeltaPerPicOrderCntCycle\ =\ 0;}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle;\ ++i)}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expectedDeltaPerPicOrderCntCycle\ +=\ m\_activeSPS-\/>m\_offsetForRefFrame[i];}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expectedPicOrderCnt\ =\ picOrderCntCycleCnt\ *\ expectedDeltaPerPicOrderCntCycle;}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <=\ frameNumInPicOrderCntCycle;\ ++i)}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expectedPicOrderCnt\ +=\ m\_activeSPS-\/>m\_offsetForRefFrame[i];}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expectedPicOrderCnt\ =\ 0;}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalRefIDC\ ==\ 0)}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expectedPicOrderCnt\ +=\ m\_activeSPS-\/>m\_offsetForNonRefPic;}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/10)}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ topFieldOrderCnt\ =\ expectedPicOrderCnt\ +\ m\_activeSlice.m\_deltaPicOrderCnt[0];}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ bottomFieldOrderCnt\ =\ topFieldOrderCnt\ +\ m\_activeSPS-\/>m\_offsetForTopToBottomField;}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSlice.m\_bFieldPic)}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bottomFieldOrderCnt\ +=\ m\_activeSlice.m\_deltaPicOrderCnt[1];}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 2)\ \{}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ tempPicOrderCnt\ =\ 0;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/12)\ Calculate\ temp\ pic\ order\ count.}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ AVCNalType::CodedSlice\_IDR)}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tempPicOrderCnt\ =\ 0;}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_currentNalRefIDC\ ==\ 0)}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tempPicOrderCnt\ =\ 2\ *\ (frameNumOffset\ +\ m\_activeSlice.m\_frameNum)\ -\/\ 1;}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tempPicOrderCnt\ =\ 2\ *\ (frameNumOffset\ +\ m\_activeSlice.m\_frameNum);}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (8-\/13)}}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ topFieldOrderCnt\ =\ tempPicOrderCnt;}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ bottomFieldOrderCnt\ =\ tempPicOrderCnt;}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ m\_refPic.m\_frameNum\ =\ m\_activeSlice.m\_frameNum;}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ m\_refPic.m\_frameNumOffset\ =\ m\_activeSlice.m\_memManagementControlOp[5]\ ?\ 0\ :\ frameNumOffset;}
+\DoxyCodeLine{00451\ \ \ \ \ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//\ (8-\/1)}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_activeSlice.m\_bFieldPic)}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ m\_currentPictureOrderCount\ =\ std::min(topFieldOrderCnt,\ bottomFieldOrderCnt);}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ m\_currentPictureOrderCount\ =\ m\_activeSlice.m\_bBottomField\ ?\ bottomFieldOrderCnt\ :\ topFieldOrderCnt;}
+\DoxyCodeLine{00458\ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::ParseSPS()\ \{}
+\DoxyCodeLine{00461\ \ \ \ \ uint8\_t\ profileIDC\ =\ ReadBits(8);}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet0\ =\ ReadFlag();}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet1\ =\ ReadFlag();}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet2\ =\ ReadFlag();}
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet3\ =\ ReadFlag();}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet4\ =\ ReadFlag();}
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordtype}{bool}\ bConstraintSet5\ =\ ReadFlag();}
+\DoxyCodeLine{00468\ \ \ \ \ uint8\_t\ reservedZero2Bits\ =\ ReadBits(2);}
+\DoxyCodeLine{00469\ \ \ \ \ uint8\_t\ levelIDC\ =\ ReadBits(8);}
+\DoxyCodeLine{00470\ \ \ \ \ uint32\_t\ spsID\ =\ ReadUE();}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keywordflow}{if}\ (spsID\ >=\ AVCMaxSPSCount)\ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}ERROR\ -\/-\/\ spsID\ out\ of\ range"{}});}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}spsID\ out\ of\ range"{}});}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00476\ \ \ \ \ \}}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordflow}{if}\ (reservedZero2Bits\ !=\ 0)\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}malformed\ sps,\ expected\ 2\ reserved\ zero\ bits\ to\ be\ 0"{}});}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}malformed\ sps,\ expected\ 2\ reserved\ zero\ bits\ to\ be\ 0\(\backslash\)n"{}});}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00482\ \ \ \ \ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ m\_activeSPS\ =\ \&m\_sps[spsID];}
+\DoxyCodeLine{00485\ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ =\ profileIDC;}
+\DoxyCodeLine{00486\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet0\ =\ bConstraintSet0;}
+\DoxyCodeLine{00487\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet1\ =\ bConstraintSet1;}
+\DoxyCodeLine{00488\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet2\ =\ bConstraintSet2;}
+\DoxyCodeLine{00489\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet3\ =\ bConstraintSet3;}
+\DoxyCodeLine{00490\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet4\ =\ bConstraintSet4;}
+\DoxyCodeLine{00491\ \ \ \ \ m\_activeSPS-\/>m\_bConstraintSet5\ =\ bConstraintSet5;}
+\DoxyCodeLine{00492\ \ \ \ \ m\_activeSPS-\/>m\_levelIDC\ =\ levelIDC;}
+\DoxyCodeLine{00493\ \ \ \ \ m\_activeSPS-\/>m\_spsID\ =\ spsID;}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_profileIDC\ ==\ 100\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 110\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 122\ ||}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ ==\ 244\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 44\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 83\ ||}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ ==\ 86\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 118\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 128\ ||}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ ==\ 138\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 139\ ||\ m\_activeSPS-\/>m\_profileIDC\ ==\ 134\ ||}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_profileIDC\ ==\ 135)\ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_chromaFormatIDC\ =\ ReadUE();}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_chromaFormatIDC\ ==\ 3)\ \{}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bSeparateColourPlane\ =\ ReadFlag();}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bSeparateColourPlane\ ==\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_chromaArrayType\ =\ m\_activeSPS-\/>m\_chromaFormatIDC;}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_chromaArrayType\ =\ 0;}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bitDepthLuma\ =\ ReadUE()\ +\ 8;}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bitDepthChroma\ =\ ReadUE()\ +\ 8;}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bQPPrimeYZeroTransformBypass\ =\ ReadFlag();}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ seq\_scaling\_matrix\_present\_flag}}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ loopCount\ =\ (m\_activeSPS-\/>m\_chromaFormatIDC\ !=\ 3)\ ?\ 8\ :\ 12;}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ HandleScalingList(loopCount);}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00521\ \ \ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \ m\_activeSPS-\/>m\_log2MaxFrameNum\ =\ ReadUE()\ +\ 4;}
+\DoxyCodeLine{00524\ \ \ \ \ m\_activeSPS-\/>m\_picOrderCntType\ =\ ReadUE();}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 0)\ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_log2MaxPicOrderCntLSB\ =\ ReadUE()\ +\ 4;}
+\DoxyCodeLine{00528\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_picOrderCntType\ ==\ 1)\ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bDeltaPicOrderAlwaysZero\ =\ ReadFlag();}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_offsetForNonRefPic\ =\ ReadSE();}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_offsetForTopToBottomField\ =\ ReadSE();}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle\ =\ ReadUE();}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ m\_activeSPS-\/>m\_numRefFramesInPicOrderCntCycle;\ ++i)\ \{}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_offsetForRefFrame[i]\ =\ ReadSE();}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00537\ \ \ \ \ \}}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \ \ m\_activeSPS-\/>m\_numRefFrames\ =\ ReadUE();}
+\DoxyCodeLine{00540\ \ \ \ \ m\_activeSPS-\/>m\_bGapsInFrameNumValueAllowed\ =\ ReadFlag();}
+\DoxyCodeLine{00541\ \ \ \ \ m\_activeSPS-\/>m\_picWidthInMBs\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00542\ \ \ \ \ m\_activeSPS-\/>m\_picHeightInMapUnits\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00543\ \ \ \ \ m\_activeSPS-\/>m\_bFrameMBsOnly\ =\ ReadFlag();}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bFrameMBsOnly\ ==\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_bMBAdaptiveFrameField\ =\ ReadFlag();}
+\DoxyCodeLine{00547\ \ \ \ \ \}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ m\_activeSPS-\/>m\_bDirect8x8Inference\ =\ ReadFlag();}
+\DoxyCodeLine{00550\ \ \ \ \ m\_activeSPS-\/>m\_bFrameCropping\ =\ ReadFlag();}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bFrameCropping)\ \{}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_frameCropLeftOffset\ =\ ReadUE();}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_frameCropRightOffset\ =\ ReadUE();}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_frameCropTopOffset\ =\ ReadUE();}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_frameCropBottomOffset\ =\ ReadUE();}
+\DoxyCodeLine{00557\ \ \ \ \ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \ \ m\_activeSPS-\/>m\_bVUIParametersPresent\ =\ ReadFlag();}
+\DoxyCodeLine{00560\ \textcolor{preprocessor}{\#if\ !defined(NO\_VUIPARAMS)}}
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSPS-\/>m\_bVUIParametersPresent)}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ HandleVUIParameters();}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00565\ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::ParsePPS()\ \{}
+\DoxyCodeLine{00568\ \ \ \ \ uint32\_t\ ppsID\ =\ ReadUE();}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \ \ \ \ \textcolor{keywordflow}{if}\ (ppsID\ >=\ AVCMaxPPSCount)\ \{}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}ppsID\ out\ of\ range"{}});}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}ppsID\ out\ of\ range"{}});}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00574\ \ \ \ \ \}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \ \ \ \ m\_activePPS\ =\ \&m\_pps[ppsID];}
+\DoxyCodeLine{00577\ \ \ \ \ m\_activePPS-\/>m\_ppsID\ =\ ppsID;}
+\DoxyCodeLine{00578\ \ \ \ \ m\_activePPS-\/>m\_spsID\ =\ ReadUE();}
+\DoxyCodeLine{00579\ \ \ \ \ m\_activePPS-\/>m\_bEntropyCodingMode\ =\ ReadFlag();}
+\DoxyCodeLine{00580\ \ \ \ \ m\_activePPS-\/>m\_bBottomFieldPicOrderInFramePresent\ =\ ReadFlag();}
+\DoxyCodeLine{00581\ \ \ \ \ m\_activePPS-\/>m\_numSliceGroups\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00583\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activePPS-\/>m\_numSliceGroups\ >\ 1)\ \{}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_sliceGroupMapType\ =\ ReadUE();}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (m\_activePPS-\/>m\_sliceGroupMapType)\ \{}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0:\ \{}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ group\ =\ 0;\ group\ <\ m\_activePPS-\/>m\_numSliceGroups;\ ++group)\ \{}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_runLength[group]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 2:\ \{}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ group\ =\ 0;\ group\ <\ m\_activePPS-\/>m\_numSliceGroups;\ ++group)\ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_topLeft[group]\ =\ ReadUE();}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_bottomRight[group]\ =\ ReadUE();}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 5:\ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_bSliceGroupChangeDirection\ =\ ReadFlag();}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activePPS-\/>m\_sliceGroupChangeRate\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 6:\ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Unsupported\ slice\ group\ map\ type"{}});}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}Unsupported\ slice\ group\ map\ type"{}});}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00615\ \ \ \ \ \}}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ \ \ \ \ m\_activePPS-\/>m\_numRefIDXL0Active\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00618\ \ \ \ \ m\_activePPS-\/>m\_numRefIDXL1Active\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00619\ \ \ \ \ m\_activePPS-\/>m\_bWeightedPred\ =\ ReadFlag();}
+\DoxyCodeLine{00620\ \ \ \ \ m\_activePPS-\/>m\_weightedBipredIDC\ =\ ReadBits(2);}
+\DoxyCodeLine{00621\ \ \ \ \ m\_activePPS-\/>m\_picInitQP\ =\ ReadSE()\ +\ 26;}
+\DoxyCodeLine{00622\ \ \ \ \ m\_activePPS-\/>m\_picInitQS\ =\ ReadSE()\ +\ 26;}
+\DoxyCodeLine{00623\ \ \ \ \ m\_activePPS-\/>m\_chromaQPIndexOffset\ =\ ReadSE();}
+\DoxyCodeLine{00624\ \ \ \ \ m\_activePPS-\/>m\_bDeblockingFilterControlPresent\ =\ ReadFlag();}
+\DoxyCodeLine{00625\ \ \ \ \ m\_activePPS-\/>m\_bConstraintedIntraPred\ =\ ReadFlag();}
+\DoxyCodeLine{00626\ \ \ \ \ m\_activePPS-\/>m\_bRedundantPicCntPresent\ =\ ReadFlag();}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00629\ \}}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::ParseSliceHeader()\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ m\_activeSlice.m\_firstMBInSlice\ =\ ReadUE();}
+\DoxyCodeLine{00633\ }
+\DoxyCodeLine{00634\ \ \ \ \ uint32\_t\ sliceType\ =\ ReadUE();}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keywordflow}{if}\ (sliceType\ >\ 4)}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ sliceType\ -\/=\ 5;}
+\DoxyCodeLine{00637\ }
+\DoxyCodeLine{00638\ \ \ \ \ m\_activeSlice.m\_sliceType\ =\ \textcolor{keyword}{static\_cast<}SliceType::Enum\textcolor{keyword}{>}(sliceType);}
+\DoxyCodeLine{00639\ \ \ \ \ m\_activeSlice.m\_ppsID\ =\ ReadUE();}
+\DoxyCodeLine{00640\ \ \ \ \ m\_activeSlice.m\_pps\ =\ \&m\_pps[m\_activeSlice.m\_ppsID];}
+\DoxyCodeLine{00641\ \ \ \ \ m\_activeSlice.m\_sps\ =\ \&m\_sps[m\_activeSlice.m\_pps-\/>m\_spsID];}
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00643\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_bSeparateColourPlane)\ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_colourPlaneID\ =\ ReadBits(2);}
+\DoxyCodeLine{00645\ \ \ \ \ \}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ \ \ m\_activeSlice.m\_frameNum\ =\ ReadBits(m\_activeSlice.m\_sps-\/>m\_log2MaxFrameNum);}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_bFrameMBsOnly\ ==\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bFieldPic\ =\ ReadFlag();}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_bFieldPic)\ \{}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bBottomField\ =\ ReadFlag();}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00655\ \ \ \ \ \}}
+\DoxyCodeLine{00656\ }
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ 5)\ \textcolor{comment}{//\ if(IdrPicFlag)}}
+\DoxyCodeLine{00658\ \ \ \ \ \{}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_idrPicID\ =\ ReadUE();}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bIDR\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00661\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bIDR\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00663\ \ \ \ \ \}}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_picOrderCntType\ ==\ 0)\ \{}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_picOrderCntLSB\ =\ ReadBits(m\_activeSlice.m\_sps-\/>m\_log2MaxPicOrderCntLSB);}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_pps-\/>m\_bBottomFieldPicOrderInFramePresent\ \&\&\ (m\_activeSlice.m\_bFieldPic\ ==\ \textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_deltaPicOrderCntBottom\ =\ ReadSE();}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00671\ \ \ \ \ \}}
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_picOrderCntType\ ==\ 1\ \&\&\ (m\_activeSlice.m\_sps-\/>m\_bDeltaPicOrderAlwaysZero\ ==\ \textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_deltaPicOrderCnt[0]\ =\ ReadSE();}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_pps-\/>m\_bBottomFieldPicOrderInFramePresent\ \&\&\ (m\_activeSlice.m\_bFieldPic\ ==\ \textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_deltaPicOrderCnt[1]\ =\ ReadSE();}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00679\ \ \ \ \ \}}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_pps-\/>m\_bRedundantPicCntPresent)\ \{}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_redundantPicCnt\ =\ ReadUE();}
+\DoxyCodeLine{00683\ \ \ \ \ \}}
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::B)\ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bDirectSpatialMVPred\ =\ ReadFlag();}
+\DoxyCodeLine{00687\ \ \ \ \ \}}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \ \ \ \ m\_activeSlice.m\_numRefIDXL0Active\ =\ m\_activeSlice.m\_pps-\/>m\_numRefIDXL0Active;}
+\DoxyCodeLine{00690\ \ \ \ \ m\_activeSlice.m\_numRefIDXL1Active\ =\ m\_activeSlice.m\_pps-\/>m\_numRefIDXL1Active;}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_activeSlice.m\_sliceType\ ==\ SliceType::P)\ ||\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::SP)\ ||}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ (m\_activeSlice.m\_sliceType\ ==\ SliceType::B))\ \{}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bNumRefIDXActiveOverrideFlag\ =\ ReadFlag();}
+\DoxyCodeLine{00695\ }
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_bNumRefIDXActiveOverrideFlag)\ \{}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_numRefIDXL0Active\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00698\ }
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::B)\ \{}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_numRefIDXL1Active\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00703\ \ \ \ \ \}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \ \ \ \ HandleRefPicListReordering();}
+\DoxyCodeLine{00706\ }
+\DoxyCodeLine{00707\ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_activeSlice.m\_pps-\/>m\_bWeightedPred\ \&\&}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ (m\_activeSlice.m\_sliceType\ ==\ SliceType::P\ ||\ m\_activeSlice.m\_sliceType\ ==\ SliceType::SP))\ ||}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ (m\_activeSlice.m\_pps-\/>m\_weightedBipredIDC\ ==\ 1\ \&\&\ m\_activeSlice.m\_sliceType\ ==\ SliceType::B))\ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ HandlePredWeightTable();}
+\DoxyCodeLine{00711\ \ \ \ \ \}}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalRefIDC\ !=\ 0)\ \{}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ HandleDecRefPicMarking();}
+\DoxyCodeLine{00715\ \ \ \ \ \}}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_pps-\/>m\_bEntropyCodingMode\ \&\&\ (m\_activeSlice.m\_sliceType\ !=\ SliceType::I)\ \&\&}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ (m\_activeSlice.m\_sliceType\ !=\ SliceType::SI))\ \{}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_cabacInitIDC\ =\ ReadUE();}
+\DoxyCodeLine{00720\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_cabacInitIDC\ =\ 0;}
+\DoxyCodeLine{00722\ \ \ \ \ \}}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ \ \ \ \ m\_activeSlice.m\_sliceQPDelta\ =\ ReadSE();}
+\DoxyCodeLine{00725\ \ \ \ \ \textcolor{comment}{//\ m\_activeSlice.m\_pps-\/>m\_picInitQP\ +=\ m\_activeSlice.m\_sliceQPDelta;}}
+\DoxyCodeLine{00726\ }
+\DoxyCodeLine{00727\ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_activeSlice.m\_sliceType\ ==\ SliceType::SP)\ ||\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::SI))\ \{}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::SP)\ \{}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_bSPForSwitch\ =\ ReadFlag();}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00731\ }
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_sliceQSDelta\ =\ ReadSE();}
+\DoxyCodeLine{00733\ \ \ \ \ \}}
+\DoxyCodeLine{00734\ }
+\DoxyCodeLine{00735\ \ \ \ \ m\_activeSlice.m\_disableDeblockingFilterIDC\ =\ 0;}
+\DoxyCodeLine{00736\ \ \ \ \ m\_activeSlice.m\_sliceAlphaC0OffsetDiv2\ =\ 0;}
+\DoxyCodeLine{00737\ \ \ \ \ m\_activeSlice.m\_sliceBetaOffsetDiv2\ =\ 0;}
+\DoxyCodeLine{00738\ }
+\DoxyCodeLine{00739\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_pps-\/>m\_bDeblockingFilterControlPresent)\ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ m\_activeSlice.m\_disableDeblockingFilterIDC\ =\ ReadUE();}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_disableDeblockingFilterIDC\ !=\ 1)\ \{}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_sliceAlphaC0OffsetDiv2\ =\ ReadSE();}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_sliceBetaOffsetDiv2\ =\ ReadSE();}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00746\ \ \ \ \ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00749\ \}}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ \textcolor{keywordtype}{void}\ BaseDecoderAVC::HandleVUIParameters()\ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ aspect\_ratio\_info\_present\_flag}}
+\DoxyCodeLine{00753\ \ \ \ \ \{}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadBits(8)\ ==\ 255)\ \textcolor{comment}{//\ aspect\_ratio\_idc\ ==\ Extended\_SAR}}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ \ \ \ ReadBits(16);\ \textcolor{comment}{//\ sar\_width}}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \ \ \ \ ReadBits(16);\ \textcolor{comment}{//\ sar\_height}}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00759\ \ \ \ \ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ overscan\_info\_present\_flag}}
+\DoxyCodeLine{00762\ \ \ \ \ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ overscan\_appropriate\_flag}}
+\DoxyCodeLine{00764\ \ \ \ \ \}}
+\DoxyCodeLine{00765\ }
+\DoxyCodeLine{00766\ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ video\_signal\_type\_present\_flag}}
+\DoxyCodeLine{00767\ \ \ \ \ \{}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ ReadBits(3);\ \ \ \ \textcolor{comment}{//\ video\_format}}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ ReadFlag();\ \ \ \ \ \textcolor{comment}{//\ video\_full\_range\_flag}}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ colour\_description\_present\_flag}}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ ReadBits(8);\ \textcolor{comment}{//\ colour\_primaries}}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ \ \ \ ReadBits(8);\ \textcolor{comment}{//\ transfer\_characteristics}}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ \ \ \ ReadBits(8);\ \textcolor{comment}{//\ matrix\_coefficients}}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00776\ \ \ \ \ \}}
+\DoxyCodeLine{00777\ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ chroma\_loc\_info\_present\_flag}}
+\DoxyCodeLine{00778\ \ \ \ \ \{}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ chroma\_sample\_loc\_type\_top\_field}}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ chroma\_sample\_loc\_type\_bottom\_field}}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_activeSPS-\/>m\_vui.m\_bTimingInfoPresent\ =\ ReadFlag()))\ \{}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_vui.m\_numUnitsInTick\ =\ ReadBits(32);}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_vui.m\_timeScale\ =\ ReadBits(32);}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ fixed\_frame\_rate\_flag}}
+\DoxyCodeLine{00786\ \ \ \ \ \}}
+\DoxyCodeLine{00787\ \ \ \ \ \textcolor{keywordtype}{bool}\ nalHRDParametersPresentFlag\ =\ ReadFlag();}
+\DoxyCodeLine{00788\ \ \ \ \ \textcolor{keywordflow}{if}\ (nalHRDParametersPresentFlag)\ \{}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ HandleHRDParameters();}
+\DoxyCodeLine{00790\ \ \ \ \ \}}
+\DoxyCodeLine{00791\ \ \ \ \ \textcolor{keywordtype}{bool}\ vclHRDParametersPresentFlag\ =\ ReadFlag();}
+\DoxyCodeLine{00792\ \ \ \ \ \textcolor{keywordflow}{if}\ (vclHRDParametersPresentFlag)\ \{}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ HandleHRDParameters();}
+\DoxyCodeLine{00794\ \ \ \ \ \}}
+\DoxyCodeLine{00795\ \ \ \ \ \textcolor{keywordflow}{if}\ (nalHRDParametersPresentFlag\ ||\ vclHRDParametersPresentFlag)\ \{}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ low\_delay\_hrd\_flag}}
+\DoxyCodeLine{00797\ \ \ \ \ \}}
+\DoxyCodeLine{00798\ \ \ \ \ ReadFlag();\ \ \ \ \ \textcolor{comment}{//\ pic\_struct\_present\_flag}}
+\DoxyCodeLine{00799\ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ bitstream\_restriction\_flag}}
+\DoxyCodeLine{00800\ \ \ \ \ \{}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ motion\_vectors\_over\_pic\_boundaries\_flag}}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ max\_bytes\_per\_pic\_denom}}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ max\_bits\_per\_mb\_denom}}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ log2\_max\_mv\_length\_horizontal}}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ log2\_max\_mv\_length\_vertical}}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ m\_activeSPS-\/>m\_vui.m\_maxNumReorderFrames\ =\ ReadUE();}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ max\_dec\_frame\_buffering}}
+\DoxyCodeLine{00808\ \ \ \ \ \}}
+\DoxyCodeLine{00809\ \}}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \textcolor{keywordtype}{void}\ BaseDecoderAVC::HandleHRDParameters()\ \{}
+\DoxyCodeLine{00812\ \ \ \ \ uint32\_t\ cpbCnt\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00813\ \ \ \ \ ReadBits(4);\ \textcolor{comment}{//\ bit\_rate\_scale}}
+\DoxyCodeLine{00814\ \ \ \ \ ReadBits(4);\ \textcolor{comment}{//\ cpb\_size\_scale}}
+\DoxyCodeLine{00815\ }
+\DoxyCodeLine{00816\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ cpbCnt;\ i++)\ \{}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ bit\_rate\_value\_minus1[i]}}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ ReadUE();\ \ \ \textcolor{comment}{//\ cpb\_size\_value\_minus1[i]}}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ cbr\_flag[i]}}
+\DoxyCodeLine{00820\ \ \ \ \ \}}
+\DoxyCodeLine{00821\ \ \ \ \ ReadBits(5);\ \textcolor{comment}{//\ initial\_cpb\_removal\_delay\_length\_minus1}}
+\DoxyCodeLine{00822\ \ \ \ \ ReadBits(5);\ \textcolor{comment}{//\ cpb\_removal\_delay\_length\_minus1}}
+\DoxyCodeLine{00823\ \ \ \ \ ReadBits(5);\ \textcolor{comment}{//\ dpb\_output\_delay\_length\_minus1}}
+\DoxyCodeLine{00824\ \ \ \ \ ReadBits(5);\ \textcolor{comment}{//\ time\_offset\_length}}
+\DoxyCodeLine{00825\ \}}
+\DoxyCodeLine{00826\ }
+\DoxyCodeLine{00827\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::HandleRefPicListReordering()\ \{}
+\DoxyCodeLine{00828\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ !=\ SliceType::I\ \&\&\ m\_activeSlice.m\_sliceType\ !=\ SliceType::SI)\ \{}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ bRefPicListReorderingFlagL0\ =\ ReadFlag();}
+\DoxyCodeLine{00830\ }
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bRefPicListReorderingFlagL0)\ \{}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ reorderingOfPicNumsIDC;}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ reorderingOfPicNumsIDC\ =\ ReadUE();}
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((reorderingOfPicNumsIDC\ ==\ 0)\ ||\ (reorderingOfPicNumsIDC\ ==\ 1))\ \{}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ abs\_diff\_pic\_num\_minus1}}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (reorderingOfPicNumsIDC\ ==\ 2)\ \{}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ long\_term\_pic\_num}}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00842\ }
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (reorderingOfPicNumsIDC\ !=\ 3);}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00845\ \ \ \ \ \}}
+\DoxyCodeLine{00846\ }
+\DoxyCodeLine{00847\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::B)\ \{}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ bRefPicListReorderingFlagL1\ =\ ReadFlag();}
+\DoxyCodeLine{00849\ }
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bRefPicListReorderingFlagL1)\ \{}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ reorderingOfPicNumsIDC;}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ reorderingOfPicNumsIDC\ =\ ReadUE();}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((reorderingOfPicNumsIDC\ ==\ 0)\ ||\ (reorderingOfPicNumsIDC\ ==\ 1))\ \{}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ abs\_diff\_pic\_num\_minus1}}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (reorderingOfPicNumsIDC\ ==\ 2)\ \{}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ long\_term\_pic\_num}}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00861\ }
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (reorderingOfPicNumsIDC\ !=\ 3);}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00864\ \ \ \ \ \}}
+\DoxyCodeLine{00865\ }
+\DoxyCodeLine{00866\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00867\ \}}
+\DoxyCodeLine{00868\ }
+\DoxyCodeLine{00869\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::HandlePredWeightTable()\ \{}
+\DoxyCodeLine{00870\ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ luma\_log2\_weight\_dneom}}
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_chromaArrayType\ !=\ 0)\ \{}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ chroma\_log2\_weight\_denom}}
+\DoxyCodeLine{00874\ \ \ \ \ \}}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ m\_activeSlice.m\_numRefIDXL0Active;\ ++i)\ \{}
+\DoxyCodeLine{00877\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ luma\_weight\_l0\_flag}}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ luma\_weight\_l0[i]}}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ luma\_offset\_l0[i]}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00882\ }
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_chromaArrayType\ !=\ 0)\ \{}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ chroma\_weight\_l0\_flag}}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ j\ =\ 0;\ j\ <\ 2;\ ++j)\ \{}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ chroma\_weight\_l0[i][j]}}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ chroma\_offset\_l0[i][j]}}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00892\ \ \ \ \ \}}
+\DoxyCodeLine{00893\ }
+\DoxyCodeLine{00894\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sliceType\ ==\ SliceType::B)\ \{}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ m\_activeSlice.m\_numRefIDXL1Active;\ ++i)\ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ luma\_weight\_l1\_flag}}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ luma\_weight\_l1[i]}}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ luma\_offset\_l1[i]}}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00901\ }
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_activeSlice.m\_sps-\/>m\_chromaArrayType\ !=\ 0)\ \{}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ chroma\_weight\_l1\_flag}}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ j\ =\ 0;\ j\ <\ 2;\ ++j)\ \{}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ chroma\_weight\_l1[i][j]}}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadSE();\ \textcolor{comment}{//\ chroma\_offset\_l1[i][j]}}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00912\ \ \ \ \ \}}
+\DoxyCodeLine{00913\ }
+\DoxyCodeLine{00914\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00915\ \}}
+\DoxyCodeLine{00916\ }
+\DoxyCodeLine{00917\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::HandleDecRefPicMarking()\ \{}
+\DoxyCodeLine{00918\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ 5)\ \{}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ no\_output\_of\_prior\_pics\_flag}}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \ \ ReadFlag();\ \textcolor{comment}{//\ long\_term\_reference\_flag}}
+\DoxyCodeLine{00921\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ adaptive\_ref\_pic\_marking\_mode\_flag}}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ memManagementControlOp;}
+\DoxyCodeLine{00925\ }
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memManagementControlOp\ =\ ReadUE();}
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memManagementControlOp\ <\ AVCNumMMCO)}
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_activeSlice.m\_memManagementControlOp[memManagementControlOp]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00931\ }
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((memManagementControlOp\ ==\ 1)\ ||\ (memManagementControlOp\ ==\ 3))\ \{}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ difference\_of\_pic\_nums\_minus1}}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memManagementControlOp\ ==\ 2)\ \{}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ long\_term\_pic\_num}}
+\DoxyCodeLine{00937\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00938\ }
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((memManagementControlOp\ ==\ 3)\ ||\ (memManagementControlOp\ ==\ 6))\ \{}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ long\_term\_frame\_idx}}
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00942\ }
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memManagementControlOp\ ==\ 4)\ \{}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ReadUE();\ \textcolor{comment}{//\ max\_long\_term\_Frame\_idx\_plus1}}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00946\ }
+\DoxyCodeLine{00947\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (memManagementControlOp\ !=\ 0);}
+\DoxyCodeLine{00948\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00949\ \ \ \ \ \}}
+\DoxyCodeLine{00950\ }
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00952\ \}}
+\DoxyCodeLine{00953\ }
+\DoxyCodeLine{00954\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::HandleScalingList(uint32\_t\ loopCount)\ \{}
+\DoxyCodeLine{00955\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ loopCount;\ ++i)\ \{}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ReadFlag())\ \textcolor{comment}{//\ seq\_scaling\_list\_present\_flag}}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ <\ 6)\ \{}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HandleScalingListElement(16);}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ HandleScalingListElement(64);}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00964\ \ \ \ \ \}}
+\DoxyCodeLine{00965\ }
+\DoxyCodeLine{00966\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00967\ \}}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \textcolor{keywordtype}{bool}\ BaseDecoderAVC::HandleScalingListElement(uint32\_t\ listSize)\ \{}
+\DoxyCodeLine{00970\ \ \ \ \ int32\_t\ lastScale\ =\ 8;}
+\DoxyCodeLine{00971\ \ \ \ \ int32\_t\ nextScale\ =\ 8;}
+\DoxyCodeLine{00972\ \ \ \ \ int32\_t\ deltaScale;}
+\DoxyCodeLine{00973\ }
+\DoxyCodeLine{00974\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ j\ =\ 0;\ j\ <\ listSize;\ ++j)\ \{}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nextScale\ !=\ 0)\ \{}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \ \ \ \ deltaScale\ =\ ReadSE();}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \ \ \ \ nextScale\ =\ (lastScale\ +\ deltaScale\ +\ 256)\ \%\ 256;}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ lastScale\ =\ (nextScale\ ==\ 0)\ ?\ lastScale\ :\ nextScale;}
+\DoxyCodeLine{00980\ \ \ \ \ \}}
+\DoxyCodeLine{00981\ }
+\DoxyCodeLine{00982\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00983\ \}}
+\DoxyCodeLine{00984\ }
+\DoxyCodeLine{00985\ \textcolor{comment}{//\ A.3.1}}
+\DoxyCodeLine{00986\ \textcolor{keyword}{const}\ BaseDecoderAVC::Level::Limit\ *BaseDecoderAVC::GetLevelLimit(SPS\ *sps)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00987\ \ \ \ \ \textcolor{keywordflow}{if}\ (!sps)\ \{}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00989\ \ \ \ \ \}}
+\DoxyCodeLine{00990\ }
+\DoxyCodeLine{00991\ \ \ \ \ Level::Enum\ level\ =\ \textcolor{keyword}{static\_cast<}Level::Enum\textcolor{keyword}{>}(sps-\/>m\_levelIDC);}
+\DoxyCodeLine{00992\ \ \ \ \ \textcolor{keywordflow}{if}\ (level\ ==\ Level::Number\_1\_1\ \&\&\ sps-\/>m\_bConstraintSet3)\ \{}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ \ \ level\ =\ Level::Number\_1b;}
+\DoxyCodeLine{00994\ \ \ \ \ \}}
+\DoxyCodeLine{00995\ \ \ \ \ \textcolor{keyword}{auto}\ limits\ =\ Level::limits;}
+\DoxyCodeLine{00996\ \ \ \ \ \textcolor{keywordflow}{return}\ limits.find(level)\ !=\ limits.end()\ ?\ \&Level::limits.at(level)\ :\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00997\ \}}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderAVC()\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>\{\textcolor{keyword}{new}\ BaseDecoderAVC\{\}\};\ \}}
+\DoxyCodeLine{01000\ }
+\DoxyCodeLine{01001\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{01002\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+\DoxyCodeLine{01003\ }
+\DoxyCodeLine{01004\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{01005\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{01006\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ pop}}
+\DoxyCodeLine{01007\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01008\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ pop}}
+\DoxyCodeLine{01009\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01010\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

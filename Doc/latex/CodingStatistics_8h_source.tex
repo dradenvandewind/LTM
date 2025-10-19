@@ -1,0 +1,1018 @@
+\doxysection{Coding\+Statistics.\+h}
+\label{CodingStatistics_8h_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/CodingStatistics.h@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/CodingStatistics.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#ifndef\ \_\_CODINGSTATISTICS\_\_}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#define\ \_\_CODINGSTATISTICS\_\_}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}CommonDef.h"{}}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}ChromaFormat.h"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ int64\_t\ CODINGSTATISTICS\_ENTROPYSCALE\ =\ 32768;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{enum}\ CodingStatisticsType}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ STATS\_\_NAL\_UNIT\_TOTAL\_BODY,\textcolor{comment}{//\ This\ is\ a\ special\ case\ and\ is\ not\ included\ in\ the\ total\ sums.}}
+\DoxyCodeLine{00051\ \ \ STATS\_\_NAL\_UNIT\_PACKING,}
+\DoxyCodeLine{00052\ \ \ STATS\_\_EMULATION\_PREVENTION\_3\_BYTES,}
+\DoxyCodeLine{00053\ \ \ STATS\_\_NAL\_UNIT\_HEADER\_BITS,}
+\DoxyCodeLine{00054\ \ \ STATS\_\_CABAC\_INITIALISATION,}
+\DoxyCodeLine{00055\ \ \ STATS\_\_CABAC\_BITS\_\_TQ\_BYPASS\_FLAG,}
+\DoxyCodeLine{00056\ \ \ STATS\_\_CABAC\_BITS\_\_SKIP\_FLAG,}
+\DoxyCodeLine{00057\ \ \ STATS\_\_CABAC\_BITS\_\_MERGE\_FLAG,}
+\DoxyCodeLine{00058\ \ \ STATS\_\_CABAC\_BITS\_\_MERGE\_INDEX,}
+\DoxyCodeLine{00059\ \ \ STATS\_\_CABAC\_BITS\_\_MVP\_IDX,}
+\DoxyCodeLine{00060\ \ \ STATS\_\_CABAC\_BITS\_\_SPLIT\_FLAG,}
+\DoxyCodeLine{00061\ \ \ STATS\_\_CABAC\_BITS\_\_MODE\_CONSTRAINT\_FLAG,}
+\DoxyCodeLine{00062\ \ \ STATS\_\_CABAC\_BITS\_\_PART\_SIZE,}
+\DoxyCodeLine{00063\ \ \ STATS\_\_CABAC\_BITS\_\_PRED\_MODE,}
+\DoxyCodeLine{00064\ \ \ STATS\_\_CABAC\_BITS\_\_INTRA\_DIR\_ANG,}
+\DoxyCodeLine{00065\ \ \ STATS\_\_CABAC\_BITS\_\_INTRA\_PDPC\_FLAG,}
+\DoxyCodeLine{00066\ \ \ STATS\_\_CABAC\_BITS\_\_INTER\_DIR,}
+\DoxyCodeLine{00067\ \ \ STATS\_\_CABAC\_BITS\_\_REF\_FRM\_IDX,}
+\DoxyCodeLine{00068\ \ \ STATS\_\_CABAC\_BITS\_\_MVD,}
+\DoxyCodeLine{00069\ \ \ STATS\_\_CABAC\_BITS\_\_MVD\_EP,}
+\DoxyCodeLine{00070\ \ \ STATS\_\_CABAC\_BITS\_\_AFFINE\_FLAG,}
+\DoxyCodeLine{00071\ \ \ STATS\_\_CABAC\_BITS\_\_AFFINE\_TYPE,}
+\DoxyCodeLine{00072\ \ \ STATS\_\_CABAC\_BITS\_\_ISP\_MODE\_FLAG,}
+\DoxyCodeLine{00073\ \ \ STATS\_\_CABAC\_BITS\_\_ISP\_SPLIT\_FLAG,}
+\DoxyCodeLine{00074\ \ \ STATS\_\_CABAC\_BITS\_\_TRANSFORM\_SUBDIV\_FLAG,}
+\DoxyCodeLine{00075\ \ \ STATS\_\_CABAC\_BITS\_\_QT\_ROOT\_CBF,}
+\DoxyCodeLine{00076\ \ \ STATS\_\_CABAC\_BITS\_\_DELTA\_QP\_EP,}
+\DoxyCodeLine{00077\ \ \ STATS\_\_CABAC\_BITS\_\_CHROMA\_QP\_ADJUSTMENT,}
+\DoxyCodeLine{00078\ \ \ STATS\_\_CABAC\_BITS\_\_QT\_CBF,}
+\DoxyCodeLine{00079\ \ \ STATS\_\_CABAC\_BITS\_\_CROSS\_COMPONENT\_PREDICTION,}
+\DoxyCodeLine{00080\ \ \ STATS\_\_CABAC\_BITS\_\_JOINT\_CB\_CR,}
+\DoxyCodeLine{00081\ \ \ STATS\_\_CABAC\_BITS\_\_MTS\_FLAGS,}
+\DoxyCodeLine{00082\ \ \ STATS\_\_CABAC\_BITS\_\_LAST\_SIG\_X\_Y,}
+\DoxyCodeLine{00083\ \ \ STATS\_\_CABAC\_BITS\_\_SIG\_COEFF\_GROUP\_FLAG,}
+\DoxyCodeLine{00084\ \ \ STATS\_\_CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG,}
+\DoxyCodeLine{00085\ \ \ STATS\_\_CABAC\_BITS\_\_PAR\_FLAG,}
+\DoxyCodeLine{00086\ \ \ STATS\_\_CABAC\_BITS\_\_GT1\_FLAG,}
+\DoxyCodeLine{00087\ \ \ STATS\_\_CABAC\_BITS\_\_GT2\_FLAG,}
+\DoxyCodeLine{00088\ \ \ STATS\_\_CABAC\_BITS\_\_SIGN\_BIT,}
+\DoxyCodeLine{00089\ \ \ STATS\_\_CABAC\_BITS\_\_ESCAPE\_BITS,}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#if\ TR\_ONLY\_COEFF\_STATS}}
+\DoxyCodeLine{00091\ \ \ STATS\_\_CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG\_TS,}
+\DoxyCodeLine{00092\ \ \ STATS\_\_CABAC\_BITS\_\_PAR\_FLAG\_TS,}
+\DoxyCodeLine{00093\ \ \ STATS\_\_CABAC\_BITS\_\_GT1\_FLAG\_TS,}
+\DoxyCodeLine{00094\ \ \ STATS\_\_CABAC\_BITS\_\_GT2\_FLAG\_TS,}
+\DoxyCodeLine{00095\ \ \ STATS\_\_CABAC\_BITS\_\_SIGN\_BIT\_TS,}
+\DoxyCodeLine{00096\ \ \ STATS\_\_CABAC\_BITS\_\_ESCAPE\_BITS\_TS,}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00098\ \ \ STATS\_\_CABAC\_BITS\_\_SAO,}
+\DoxyCodeLine{00099\ \ \ STATS\_\_CABAC\_BITS\_\_LFNST,}
+\DoxyCodeLine{00100\ \ \ STATS\_\_CABAC\_BITS\_\_ALF,}
+\DoxyCodeLine{00101\ \ \ STATS\_\_CABAC\_TRM\_BITS,}
+\DoxyCodeLine{00102\ \ \ STATS\_\_CABAC\_FIXED\_BITS,}
+\DoxyCodeLine{00103\ \ \ STATS\_\_BYTE\_ALIGNMENT\_BITS,}
+\DoxyCodeLine{00104\ \ \ STATS\_\_TRAILING\_BITS,}
+\DoxyCodeLine{00105\ \ \ STATS\_\_CABAC\_EP\_BIT\_ALIGNMENT,}
+\DoxyCodeLine{00106\ \ \ STATS\_\_CABAC\_BITS\_\_ALIGNED\_SIGN\_BIT,}
+\DoxyCodeLine{00107\ \ \ STATS\_\_CABAC\_BITS\_\_ALIGNED\_ESCAPE\_BITS,}
+\DoxyCodeLine{00108\ \ \ STATS\_\_CABAC\_BITS\_\_OTHER,}
+\DoxyCodeLine{00109\ \ \ STATS\_\_CABAC\_BITS\_\_INVALID,}
+\DoxyCodeLine{00110\ \ \ STATS\_\_CABAC\_BITS\_\_IMV\_FLAG,}
+\DoxyCodeLine{00111\ \ \ STATS\_\_CABAC\_BITS\_\_BCW\_IDX,}
+\DoxyCodeLine{00112\ \ \ STATS\_\_CABAC\_BITS\_\_SBT\_MODE,}
+\DoxyCodeLine{00113\ \ \ STATS\_\_CABAC\_BITS\_\_MH\_INTRA\_FLAG,}
+\DoxyCodeLine{00114\ \ \ STATS\_\_CABAC\_BITS\_\_GEO\_FLAG,}
+\DoxyCodeLine{00115\ \ \ STATS\_\_CABAC\_BITS\_\_GEO\_INDEX,}
+\DoxyCodeLine{00116\ \ \ STATS\_\_CABAC\_BITS\_\_MULTI\_REF\_LINE,}
+\DoxyCodeLine{00117\ \ \ STATS\_\_CABAC\_BITS\_\_SYMMVD\_FLAG,}
+\DoxyCodeLine{00118\ \ \ STATS\_\_CABAC\_BITS\_\_BDPCM\_MODE,}
+\DoxyCodeLine{00119\ \ \ STATS\_\_CABAC\_BITS\_\_PLT\_MODE,}
+\DoxyCodeLine{00120\ \ \ STATS\_\_CABAC\_BITS\_\_ACT,}
+\DoxyCodeLine{00121\ \ \ STATS\_\_CABAC\_BITS\_\_CROSS\_COMPONENT\_ALF\_BLOCK\_LEVEL\_IDC,}
+\DoxyCodeLine{00122\ \ \ STATS\_\_TOOL\_TOTAL\_FRAME,\textcolor{comment}{//\ This\ is\ a\ special\ case\ and\ is\ not\ included\ in\ the\ report.}}
+\DoxyCodeLine{00123\ \ \ STATS\_\_TOOL\_AFF,}
+\DoxyCodeLine{00124\ \ \ STATS\_\_TOOL\_EMT,}
+\DoxyCodeLine{00125\ \ \ STATS\_\_TOOL\_LFNST,}
+\DoxyCodeLine{00126\ \ \ STATS\_\_TOOL\_TOTAL,}
+\DoxyCodeLine{00127\ \ \ STATS\_\_NUM\_STATS}
+\DoxyCodeLine{00128\ \};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{enum}\ CodingStatisticsMode}
+\DoxyCodeLine{00131\ \{}
+\DoxyCodeLine{00132\ \ \ STATS\_\_MODE\_NONE\ \ =\ 0,}
+\DoxyCodeLine{00133\ \ \ STATS\_\_MODE\_BITS\ \ =\ 1,}
+\DoxyCodeLine{00134\ \ \ STATS\_\_MODE\_TOOLS\ =\ 2,}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ STATS\_\_MODE\_ALL\ \ \ =}
+\DoxyCodeLine{00137\ \ \ \ \ STATS\_\_MODE\_BITS\ |\ STATS\_\_MODE\_TOOLS}
+\DoxyCodeLine{00138\ \};}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getName(CodingStatisticsType\ name)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *statNames[]=}
+\DoxyCodeLine{00143\ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{stringliteral}{"{}NAL\_UNIT\_TOTAL\_BODY"{}},\ \textcolor{comment}{//\ This\ is\ a\ special\ case\ and\ is\ not\ included\ in\ the\ total\ sums.}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{stringliteral}{"{}NAL\_UNIT\_PACKING"{}},}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{stringliteral}{"{}EMULATION\_PREVENTION\_3\_BYTES"{}},}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{stringliteral}{"{}NAL\_UNIT\_HEADER\_BITS"{}},}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_INITIALISATION-\/and-\/rounding"{}},}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_TQ\_BYPASS\_FLAG"{}},}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SKIP\_FLAG"{}},}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MERGE\_FLAG"{}},}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MERGE\_INDEX"{}},}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MVP\_IDX"{}},}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SPLIT\_FLAG"{}},}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MODE\_CONSTRAINT\_FLAG"{}},}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_PART\_SIZE"{}},}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_PRED\_MODE"{}},}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_INTRA\_DIR\_ANG"{}},}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_INTRA\_PDPC\_FLAG"{}},}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_INTER\_DIR"{}},}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_REF\_FRM\_IDX"{}},}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MVD"{}},}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MVD\_EP"{}},}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_AFFINE\_FLAG"{}},}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_AFFINE\_TYPE"{}},}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ISP\_MODE\_FLAG"{}},}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ISP\_SPLIT\_FLAG"{}},}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_TRANSFORM\_SUBDIV\_FLAG"{}},}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_QT\_ROOT\_CBF"{}},}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_DELTA\_QP\_EP"{}},}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_CHROMA\_QP\_ADJUSTMENT"{}},}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_QT\_CBF"{}},}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_CROSS\_COMPONENT\_PREDICTION"{}},}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_JOINT\_CB\_CR"{}},}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MTS\_FLAGS"{}},}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_LAST\_SIG\_X\_Y"{}},}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SIG\_COEFF\_GROUP\_FLAG"{}},}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG"{}},}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_PAR\_FLAG"{}},}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GT1\_FLAG"{}},}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GT2\_FLAG"{}},}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SIGN\_BIT"{}},}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ESCAPE\_BITS"{}},}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\#if\ TR\_ONLY\_COEFF\_STATS}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG\_TS"{}},}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_PAR\_FLAG\_TS"{}},}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GT1\_FLAG\_TS"{}},}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GT2\_FLAG\_TS"{}},}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SIGN\_BIT\_TS"{}},}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ESCAPE\_BITS\_TS"{}},}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SAO"{}},}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_LFNST"{}},}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ALF"{}},}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_TRM\_BITS"{}},}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_FIXED\_BITS"{}},}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{stringliteral}{"{}BYTE\_ALIGNMENT\_BITS"{}},}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{stringliteral}{"{}TRAILING\_BITS"{}},}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_EP\_BIT\_ALIGNMENT"{}},}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ALIGNED\_SIGN\_BIT"{}},}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ALIGNED\_ESCAPE\_BITS"{}},}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_OTHER"{}},}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_INVALID"{}},}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_IMV\_FLAG"{}},}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_BCW\_IDX"{}},}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SBT\_MODE"{}},}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MH\_INTRA\_FLAG"{}},}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GEO\_FLAG"{}},}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_GEO\_INDEX"{}},}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_MULTI\_REF\_LINE"{}},}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_SYMMVD\_FLAG"{}},}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_BDPCM\_MODE"{}},}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_PLT\_MODE"{}},}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_ACT"{}},}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{stringliteral}{"{}CABAC\_BITS\_\_CROSS\_COMPONENT\_ALF\_BLOCK\_LEVEL\_IDC"{}},}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{stringliteral}{"{}TOOL\_FRAME"{}},}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{stringliteral}{"{}TOOL\_AFFINE"{}},}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{stringliteral}{"{}TOOL\_EMT"{}},}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{stringliteral}{"{}TOOL\_LFNST"{}},}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{stringliteral}{"{}TOOL\_TOTAL"{}}}
+\DoxyCodeLine{00221\ \ \ \};}
+\DoxyCodeLine{00222\ \ \ CHECK(\ STATS\_\_NUM\_STATS\ !=\ \textcolor{keyword}{sizeof}(\ statNames\ )\ /\ \textcolor{keyword}{sizeof}(\ \textcolor{keywordtype}{char}*\ )\ ||\ name\ >=\ STATS\_\_NUM\_STATS,\ \textcolor{stringliteral}{"{}stats\ out\ of\ range"{}}\ );}
+\DoxyCodeLine{00223\ \ \ \textcolor{keywordflow}{return}\ statNames[name];}
+\DoxyCodeLine{00224\ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ isAlignedBins(\ CodingStatisticsType\ statT\ )\ \{\ \textcolor{keywordflow}{return}\ statT\ ==\ STATS\_\_CABAC\_BITS\_\_ALIGNED\_SIGN\_BIT\ ||\ statT\ ==\ STATS\_\_CABAC\_BITS\_\_ALIGNED\_ESCAPE\_BITS;\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ CODING\_STATS\_NUM\_WIDTHS\ \ \ \ \ =\ 20;\ \textcolor{comment}{//\ just\ define\ the\ number\ of\ widths\ and\ heigts\ as\ 15}}
+\DoxyCodeLine{00229\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ CODING\_STATS\_NUM\_HEIGHTS\ \ \ \ =\ 20;}
+\DoxyCodeLine{00230\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ CODING\_STATS\_NUM\_SIZES\ \ \ \ \ \ =\ CODING\_STATS\_NUM\_HEIGHTS\ *\ CODING\_STATS\_NUM\_WIDTHS;}
+\DoxyCodeLine{00231\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ CODING\_STATS\_NUM\_SUBCLASSES\ =\ CODING\_STATS\_NUM\_SIZES\ *\ (1\ +\ MAX\_NUM\_COMPONENT\ +\ MAX\_NUM\_CHANNEL\_TYPE);}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{class\ }CodingStatisticsClassType}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t\ )\ :\ type(\ t\ ),\ subClass(\ 0\ )}
+\DoxyCodeLine{00238\ \ \ \{}
+\DoxyCodeLine{00239\ \ \ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ uint32\_t\ width,\ \textcolor{keyword}{const}\ uint32\_t\ height\ )\ :\ type(\ t\ ),\ subClass(\ gp\_sizeIdxInfo-\/>idxFrom(\ height\ )\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ width\ )\ )}
+\DoxyCodeLine{00242\ \ \ \{}
+\DoxyCodeLine{00243\ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height\ )\ :\ type(\ t\ ),\ subClass(\ gp\_sizeIdxInfo-\/>idxFrom(\ height\ )\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ width\ )\ )}
+\DoxyCodeLine{00246\ \ \ \{}
+\DoxyCodeLine{00247\ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ ComponentID\ cid\ )\ :\ type(\ t\ ),\ subClass(\ (\ cid\ +\ 1\ )\ *\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00250\ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ ChannelType\ chid\ )\ :\ type(\ t\ ),\ subClass(\ (\ chid\ +\ MAX\_NUM\_COMPONENT\ +\ 1\ )\ *\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00254\ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ uint32\_t\ width,\ \textcolor{keyword}{const}\ uint32\_t\ height,\ \textcolor{keyword}{const}\ ComponentID\ cid\ )\ :\ type(\ t\ ),\ subClass(\ (\ cid\ +\ 1\ )\ *\ CODING\_STATS\_NUM\_SIZES\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ height\ )\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ width\ )\ )}
+\DoxyCodeLine{00258\ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ CodingStatisticsClassType(\ \textcolor{keyword}{const}\ CodingStatisticsType\ t,\ \textcolor{keyword}{const}\ uint32\_t\ width,\ \textcolor{keyword}{const}\ uint32\_t\ height,\ \textcolor{keyword}{const}\ ChannelType\ chid\ )\ :\ type(\ t\ ),\ subClass(\ (\ chid\ +\ MAX\_NUM\_COMPONENT\ +\ 1\ )\ *\ CODING\_STATS\_NUM\_SIZES\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ height\ )\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ gp\_sizeIdxInfo-\/>idxFrom(\ width\ )\ )}
+\DoxyCodeLine{00262\ \ \ \{}
+\DoxyCodeLine{00263\ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \string~CodingStatisticsClassType()}
+\DoxyCodeLine{00266\ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ should\ not\ be\ relevant,\ but\ it\ looks\ like\ some\ instances\ are\ used\ after\ they\ are\ destroyed}}
+\DoxyCodeLine{00268\ \ \ \ \ type\ =\ STATS\_\_CABAC\_BITS\_\_INVALID;}
+\DoxyCodeLine{00269\ \ \ \ \ subClass\ =\ 0;}
+\DoxyCodeLine{00270\ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \textcolor{keyword}{static}\ uint32\_t\ GetSubClassWidth(\ \textcolor{keyword}{const}\ uint32\_t\ subClass\ )}
+\DoxyCodeLine{00273\ \ \ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordflow}{return}\ subClass\ \%\ CODING\_STATS\_NUM\_WIDTHS;}
+\DoxyCodeLine{00275\ \ \ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{static}\ uint32\_t\ GetSubClassHeight(\ \textcolor{keyword}{const}\ uint32\_t\ subClass\ )}
+\DoxyCodeLine{00278\ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ subClass\ \%\ CODING\_STATS\_NUM\_SIZES\ )\ /\ CODING\_STATS\_NUM\_WIDTHS;}
+\DoxyCodeLine{00280\ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *GetSubClassString(\ \textcolor{keyword}{const}\ uint32\_t\ subClass\ )}
+\DoxyCodeLine{00283\ \ \ \{}
+\DoxyCodeLine{00284\ \ \ \ \ CHECK(\ subClass\ >=\ CODING\_STATS\_NUM\_SUBCLASSES,\ \textcolor{stringliteral}{"{}Subclass\ does\ not\ exist"{}}\ );}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *strings[1\ +\ MAX\_NUM\_COMPONENT\ +\ MAX\_NUM\_CHANNEL\_TYPE]\ =\ \{\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}Y"{}},\ \textcolor{stringliteral}{"{}Cb"{}},\ \textcolor{stringliteral}{"{}Cr"{}},\ \textcolor{stringliteral}{"{}Luma"{}},\ \textcolor{stringliteral}{"{}Chroma"{}}\ \};}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{return}\ strings[subClass\ /\ CODING\_STATS\_NUM\_SIZES];}
+\DoxyCodeLine{00287\ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ CodingStatisticsType\ type;}
+\DoxyCodeLine{00290\ \ \ uint32\_t\ subClass;}
+\DoxyCodeLine{00291\ \};}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \textcolor{keyword}{class\ }CodingStatistics}
+\DoxyCodeLine{00296\ \{}
+\DoxyCodeLine{00297\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{struct\ }StatLogValue}
+\DoxyCodeLine{00300\ \ \ \{}
+\DoxyCodeLine{00301\ \ \ \ \ uint32\_t\ values[512\ +\ 1];}
+\DoxyCodeLine{00302\ \ \ \ \ StatLogValue()}
+\DoxyCodeLine{00303\ \ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ es\ =\ double(\ CODINGSTATISTICS\_ENTROPYSCALE\ );}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ values[0]\ =\ 0;}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ i\ =\ 1;\ i\ <\ \textcolor{keyword}{sizeof}(\ values\ )\ /\ \textcolor{keyword}{sizeof}(\ uint32\_t\ );\ i++\ )}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ values[i]\ =\ uint32\_t(\ log(\ \textcolor{keywordtype}{double}(\ i\ )\ )*es\ /\ log(\ 2.0\ )\ );}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \};}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \textcolor{keyword}{struct\ }SStat}
+\DoxyCodeLine{00316\ \ \ \{}
+\DoxyCodeLine{00317\ \ \ \ \ SStat()\ :\ bits(\ 0\ ),\ count(\ 0\ ),\ sum(\ 0\ ),\ classCount(\ 0\ )\ \{\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ int64\_t\ bits;}
+\DoxyCodeLine{00320\ \ \ \ \ int64\_t\ count;}
+\DoxyCodeLine{00321\ \ \ \ \ int64\_t\ sum;}
+\DoxyCodeLine{00322\ \ \ \ \ int64\_t\ classCount;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordtype}{void}\ clear()\ \{\ bits\ =\ 0;\ count\ =\ 0;\ sum\ =\ 0;\ classCount\ =\ 0;\ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ SStat\ \&operator+=(\ \textcolor{keyword}{const}\ SStat\ \&src\ )}
+\DoxyCodeLine{00327\ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ bits\ +=\ src.bits;\ count\ +=\ src.count;\ sum\ +=\ src.sum;\ classCount\ +=\ src.classCount;\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00332\ \ \ \ \ SStat\ \&operator-\/=(\textcolor{keyword}{const}\ SStat\ \&src)}
+\DoxyCodeLine{00333\ \ \ \ \ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ bits\ -\/=\ src.bits;\ count\ -\/=\ src.count;\ sum\ -\/=\ src.sum;\ classCount\ -\/=\ src.classCount;\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00335\ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00337\ \ \ \};}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \textcolor{keyword}{struct\ }StatTool}
+\DoxyCodeLine{00340\ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ StatTool()\ :\ count(\ 0\ ),\ pixels(\ 0\ ),\ classCount(\ 0\ )\ \{\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ int64\_t\ \ count;}
+\DoxyCodeLine{00344\ \ \ \ \ int64\_t\ \ pixels;}
+\DoxyCodeLine{00345\ \ \ \ \ int64\_t\ \ classCount;}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{void}\ clear()\ \{\ count\ =\ 0;\ pixels\ =\ 0;\ classCount\ =\ 0;\ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ StatTool\ \&operator+=(\ \textcolor{keyword}{const}\ StatTool\ \&src\ )}
+\DoxyCodeLine{00350\ \ \ \ \ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ count\ +=\ src.count;\ pixels\ +=\ src.pixels;\ classCount\ +=\ src.classCount;\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00352\ \ \ \ \ \}}
+\DoxyCodeLine{00353\ \ \ \};}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{struct\ }SStat\_max}
+\DoxyCodeLine{00357\ \ \ \{}
+\DoxyCodeLine{00358\ \ \ \ \ SStat\ \ \ max\_CABAC\_state;}
+\DoxyCodeLine{00359\ \ \ \ \ SStat\ \ \ max\_EP\_state;}
+\DoxyCodeLine{00360\ \ \ \ \ SStat\ trf\_CABAC\_state;}
+\DoxyCodeLine{00361\ \ \ \ \ SStat\ trf\_EP\_state;}
+\DoxyCodeLine{00362\ \ \ \ \ SStat\ acc\_trf\_CABAC\_state;}
+\DoxyCodeLine{00363\ \ \ \ \ SStat\ acc\_trf\_EP\_state;}
+\DoxyCodeLine{00364\ \ \ \ \ SStat\ \ \ prev\_CABAC\_state;}
+\DoxyCodeLine{00365\ \ \ \ \ SStat\ \ \ prev\_EP\_state;}
+\DoxyCodeLine{00366\ \ \ \ \ SStat\ prev\_trf\_CABAC\_state;}
+\DoxyCodeLine{00367\ \ \ \ \ SStat\ prev\_trf\_EP\_state;}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ clear()}
+\DoxyCodeLine{00370\ \ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ max\_CABAC\_state.clear();}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ max\_EP\_state.clear();}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ trf\_CABAC\_state.clear();}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ trf\_EP\_state.clear();}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ acc\_trf\_CABAC\_state.clear();}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ acc\_trf\_EP\_state.clear();}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ prev\_CABAC\_state.clear();}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ prev\_EP\_state.clear();}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ prev\_trf\_CABAC\_state.clear();}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ prev\_trf\_EP\_state.clear();}
+\DoxyCodeLine{00381\ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \};}
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{class\ }CodingStatisticsData}
+\DoxyCodeLine{00386\ \ \ \{}
+\DoxyCodeLine{00387\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00388\ \ \ \ \ SStat\ statistics\ \ \ \ \ \ \ \ \ [STATS\_\_NUM\_STATS\ +\ 1][CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00389\ \ \ \ \ SStat\ statistics\_ep\ \ \ \ \ \ [STATS\_\_NUM\_STATS\ +\ 1][CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00390\ \ \ \ \ StatTool\ statistics\_tool\ [STATS\_\_NUM\_STATS\ +\ 1][CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00392\ \ \ \ \ SStat\_max\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ statistics\_max;}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00394\ \ \ \ \ std::map<std::string,\ SStat>\ mappings\_ep;}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }CodingStatistics;}
+\DoxyCodeLine{00396\ \ \ \};}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \ \ \textcolor{keywordtype}{int}\ m\_mode;}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ CodingStatisticsData\ data;}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \ \ CodingStatistics()\ :\ m\_mode(STATS\_\_MODE\_ALL),\ data()}
+\DoxyCodeLine{00405\ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ sep,\ uint32\_t\ wIdx,\ uint32\_t\ hIdx,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pSubClassStr,\ \textcolor{keyword}{const}\ SStat\ \&sCABAC,\ \textcolor{keyword}{const}\ SStat\ \&sEP\ )}
+\DoxyCodeLine{00409\ \ \ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}(\ wIdx\ ==\ 0\ \&\&\ hIdx\ ==\ 0\ )}
+\DoxyCodeLine{00411\ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ OutputLine(\ pName,\ sep,\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}-\/"{}},\ pSubClassStr,\ sCABAC,\ sEP\ );}
+\DoxyCodeLine{00413\ \ \ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00415\ \ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%c\%-\/45s\%c\ \ \%6d\ \%6d\ \%6s\ "{}},\ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{'['}\ :\ \textcolor{stringliteral}{'\ '},\ pName,\ sep,\ gp\_sizeIdxInfo-\/>sizeFrom(\ wIdx\ ),\ gp\_sizeIdxInfo-\/>sizeFrom(\ hIdx\ ),\ pSubClassStr\ );}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ sCABAC.count\ >\ 0\ )}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ quote\ =\ 100.0\ *\ sCABAC.count\ /\ (\ double\ )\ sCABAC.classCount;}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ ratio\ =\ 100.0\ *\ sCABAC.bits\ /\ (\ double\ )\ sCABAC.count;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%11.2f\%\%\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%11.2f\%\%"{}},\ quote,\ sCABAC.count,\ sCABAC.sum,\ sCABAC.bits,\ ratio\ );}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ -\//-\/\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ -\//-\/"{}},\ sCABAC.count,\ sCABAC.sum,\ sCABAC.bits\ );}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ (\%12"{}}\ PRId64\ \textcolor{stringliteral}{"{})\%c\(\backslash\)n"{}},\ sEP.count,\ sEP.sum,\ sEP.bits,\ sCABAC.bits\ +\ sEP.bits,\ (\ sCABAC.bits\ +\ sEP.bits\ )\ /\ 8,\ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{']'}\ :\ \textcolor{stringliteral}{'\ '}\ );}
+\DoxyCodeLine{00428\ \ \ \ \ \}}
+\DoxyCodeLine{00429\ \ \ \}}
+\DoxyCodeLine{00430\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ sep,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pWidthString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pHeightString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pSubClassStr,\ \textcolor{keyword}{const}\ SStat\ \&sCABAC,\ \textcolor{keyword}{const}\ SStat\ \&sEP\ )}
+\DoxyCodeLine{00431\ \ \ \{}
+\DoxyCodeLine{00432\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%c\%-\/45s\%c\ \ \%6s\ \%6s\ \%6s\ "{}},\ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{'['}\ :\ \textcolor{stringliteral}{'\ '},\ pName,\ sep,\ pWidthString,\ pHeightString,\ pSubClassStr\ );}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{if}(\ sCABAC.count\ >\ 0\ )}
+\DoxyCodeLine{00434\ \ \ \ \ \{}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ quote\ =\ 100.0\ *\ sCABAC.count\ /\ (\ double\ )\ sCABAC.classCount;}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ ratio\ =\ 100.0\ *\ sCABAC.bits\ /\ (\ double\ )\ sCABAC.count;}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%11.2f\%\%\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%11.2f\%\%"{}},\ quote,\ sCABAC.count,\ sCABAC.sum,\ sCABAC.bits,\ ratio\ );}
+\DoxyCodeLine{00438\ \ \ \ \ \}}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00440\ \ \ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ -\//-\/\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ -\//-\/"{}},\ sCABAC.count,\ sCABAC.sum,\ sCABAC.bits\ );}
+\DoxyCodeLine{00442\ \ \ \ \ \}}
+\DoxyCodeLine{00443\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ (\%12"{}}\ PRId64\ \textcolor{stringliteral}{"{})\%c\(\backslash\)n"{}},\ sEP.count,\ sEP.sum,\ sEP.bits,\ sCABAC.bits\ +\ sEP.bits,\ (\ sCABAC.bits\ +\ sEP.bits\ )\ /\ 8,\ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{']'}\ :\ \textcolor{stringliteral}{'\ '}\ );}
+\DoxyCodeLine{00444\ \ \ \}}
+\DoxyCodeLine{00445\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ sep,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pWidthString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pHeightString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pSubClassStr,\ \textcolor{keyword}{const}\ SStat\ \&sEP\ )}
+\DoxyCodeLine{00446\ \ \ \{}
+\DoxyCodeLine{00447\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%c\%-\/45s\%c\ \ \%6s\ \%6s\ \%6s\ \ \ \ \ \ \ \ \ \ -\//-\/\ \%12s\ \%12s\ \%12s\ \%9s-\//-\/\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ (\%12"{}}\ PRId64\ \textcolor{stringliteral}{"{})\%c\(\backslash\)n"{}},}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{'['}\ :\ \textcolor{stringliteral}{'\ '},\ pName,\ sep,\ pWidthString,\ pHeightString,\ pSubClassStr,}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}},\ \textcolor{stringliteral}{"{}"{}},\ \textcolor{stringliteral}{"{}"{}},\ \textcolor{stringliteral}{"{}"{}},\ sEP.count,\ sEP.sum,\ sEP.bits,\ sEP.bits,\ (\ sEP.bits\ )\ /\ 8,\ sep\ ==\ \textcolor{stringliteral}{'\string~'}\ ?\ \textcolor{stringliteral}{']'}\ :\ \textcolor{stringliteral}{'\ '}\ );}
+\DoxyCodeLine{00450\ \ \ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ sep,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pWidthString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pHeightString,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pSubClassStr,\ \textcolor{keyword}{const}\ StatTool\ \&sTool,\ uint64\_t\ totalPixels\ )}
+\DoxyCodeLine{00453\ \ \ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ ratio\ =\ 100.0\ *\ sTool.pixels\ /\ (\ double\ )\ totalPixels;}
+\DoxyCodeLine{00455\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%c\%-\/45s\%c\ \ \%6s\ \%6s\ \%6s\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \%11.2f\%\%\%c\(\backslash\)n"{}},}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{'['}\ :\ \textcolor{stringliteral}{'\ '},\ pName,\ sep,\ pWidthString,\ pHeightString,\ pSubClassStr,}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ sTool.count,\ sTool.pixels,\ ratio,\ sep\ ==\ \textcolor{stringliteral}{'\string~'}\ ?\ \textcolor{stringliteral}{']'}\ :\ \textcolor{stringliteral}{'\ '}\ );}
+\DoxyCodeLine{00458\ \ \ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ sep,\ uint32\_t\ wIdx,\ uint32\_t\ hIdx,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pSubClassStr,\ \textcolor{keyword}{const}\ StatTool\ \&sTool,\ uint64\_t\ totalPixels\ )}
+\DoxyCodeLine{00461\ \ \ \{}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ ratio\ =\ 100.0\ *\ sTool.pixels\ /\ (\ double\ )\ totalPixels;}
+\DoxyCodeLine{00463\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\%c\%-\/45s\%c\ \ \%6d\ \%6d\ \%6s\ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \%12"{}}\ PRId64\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \%11.2f\%\%\%c\(\backslash\)n"{}},}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ sep\ ==\ \textcolor{charliteral}{'\string~'}\ ?\ \textcolor{charliteral}{'['}\ :\ \textcolor{stringliteral}{'\ '},\ pName,\ sep,\ gp\_sizeIdxInfo-\/>sizeFrom(\ wIdx\ ),\ gp\_sizeIdxInfo-\/>sizeFrom(\ hIdx\ ),\ pSubClassStr,}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ sTool.count,\ sTool.pixels,\ ratio,\ sep\ ==\ \textcolor{stringliteral}{'\string~'}\ ?\ \textcolor{stringliteral}{']'}\ :\ \textcolor{stringliteral}{'\ '}\ );}
+\DoxyCodeLine{00466\ \ \ \}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ OutputDashedLine(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pText\ )}
+\DoxyCodeLine{00469\ \ \ \{}
+\DoxyCodeLine{00470\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}-\/-\/\%s"{}},\ pText\ );}
+\DoxyCodeLine{00471\ \ \ \ \ uint32\_t\ tot\ =\ 0;}
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keywordflow}{for}(\ ;\ pText[tot]\ !=\ 0;\ tot++\ );}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ tot\ +=\ 2;}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordflow}{for}(\ ;\ tot\ <\ 202;\ tot++\ )}
+\DoxyCodeLine{00476\ \ \ \ \ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}-\/"{}}\ );}
+\DoxyCodeLine{00478\ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00480\ \ \ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordtype}{void}\ OutputBitStats()}
+\DoxyCodeLine{00483\ \ \ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keyword}{const}\ int64\_t\ es\ =\ CODINGSTATISTICS\_ENTROPYSCALE;}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ int64\_t\ countTotal\ =\ 0;}
+\DoxyCodeLine{00487\ \ \ \ \ int64\_t\ classCounts[STATS\_\_NUM\_STATS];}
+\DoxyCodeLine{00488\ \ \ \ \ std::fill\_n(\ classCounts,\ (\ \textcolor{keywordtype}{size\_t}\ )\ STATS\_\_NUM\_STATS,\ 0\ );}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00491\ \ \ \ \ SStat\_max\ \&max\ =\ GetStatisticMax();}
+\DoxyCodeLine{00492\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ int64\_t\ cr\ =\ 0;\ \textcolor{comment}{//\ CABAC\ remainder,\ which\ is\ added\ to\ "{}STATS\_\_CABAC\_INITIALISATION"{}}}
+\DoxyCodeLine{00495\ \ \ \ \ \{}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ int64\_t\ totalCABACbits\ =\ 0,\ roundedCABACbits\ =\ 0;}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ STATS\_\_NAL\_UNIT\_PACKING;\ i\ <\ STATS\_\_NUM\_STATS;\ i++\ )}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ int64\_t\ classCount\ =\ 0;}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++\ )}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ totalCABACbits\ \ \ \ +=\ data.statistics[i][c].bits;}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ roundedCABACbits\ \ +=\ data.statistics[i][c].bits\ /\ es;}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ classCount\ \ \ \ \ \ \ \ +=\ data.statistics[i][c].count;}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++\ )}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ data.statistics[i][c].classCount\ =\ classCount;}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ classCounts[i]\ =\ classCount;}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ countTotal\ \ \ \ +=\ classCount;}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ int64\_t\ remainder\ =\ totalCABACbits\ -\/\ roundedCABACbits\ *\ es;}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ cr\ =\ (\ remainder\ +\ es\ /\ 2\ )\ /\ es;}
+\DoxyCodeLine{00518\ \ \ \ \ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \ \ classCounts[0]\ =\ countTotal;}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}Note\ \%s\ will\ be\ excluded\ from\ the\ total\ as\ it\ should\ be\ the\ sum\ of\ all\ the\ other\ entries\ (except\ for\ \%s)\(\backslash\)n"{}},\ getName(\ STATS\_\_NAL\_UNIT\_TOTAL\_BODY\ ),\ getName(\ STATS\_\_NAL\_UNIT\_PACKING\ )\ );}
+\DoxyCodeLine{00523\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \%-\/45s-\/\ \ \ Width\ Height\ \ \ Type\ \ CABAC\ quote\ \ CABAC\ count\ \ \ \ CABAC\ Sum\ \ \ CABAC\ bits\ \ CABAC\ ratio\ \ \ \ \ EP\ Count\ \ \ \ \ \ \ EP\ Sum\ \ \ \ \ \ EP\ bits\ \ \ Total\ bits\ (\ Total\ bytes)\(\backslash\)n"{}},\ \textcolor{stringliteral}{"{}Decoder\ statistics"{}}\ );}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00526\ \ \ \ \ SStat\ cabacTotalBits,\ epTotalBits;}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ cabacTotalBits.classCount\ =\ countTotal;}
+\DoxyCodeLine{00529\ \ \ \ \ epTotalBits\ \ \ .classCount\ =\ countTotal;}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ SStat\ statTotals\_cabac[CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00532\ \ \ \ \ SStat\ statTotals\_ep\ \ \ [CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ STATS\_\_NUM\_STATS;\ i++\ )}
+\DoxyCodeLine{00535\ \ \ \ \ \{}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ SStat\ cabacSubTotal,\ epSubTotal;}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ cabacSubTotal.classCount\ =\ classCounts[i];}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ epSubTotal\ \ \ .classCount\ =\ classCounts[i];}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ bHadClassifiedEntry\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName\ =\ getName(\ CodingStatisticsType(\ i\ )\ );}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++\ )}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ SStat\ \&sCABACorig\ =\ data.statistics[i][c];}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ SStat\ \&sEP\ \ \ \ \ \ \ \ =\ data.statistics\_ep[i][c];}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ sCABACorig.bits\ ==\ 0\ \&\&\ sEP.bits\ ==\ 0\ )}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ SStat\ sCABAC;}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ int64\_t\ thisCABACbits\ =\ sCABACorig.bits\ /\ es;}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ STATS\_\_CABAC\_INITIALISATION\ \&\&\ sCABACorig.bits\ !=\ 0\ )}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ thisCABACbits\ +=\ cr;}
+\DoxyCodeLine{00559\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ sCABACorig.count\ =\ 0;}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ cr\ =\ 0;}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ sCABAC.bits\ \ \ \ \ \ \ =\ thisCABACbits;}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ sCABAC.count\ \ \ \ \ \ =\ sCABACorig.count;}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ sCABAC.sum\ \ \ \ \ \ \ \ =\ sCABACorig.sum;}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ sCABAC.classCount\ =\ classCounts[i];}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00569\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ STATS\_\_BYTE\_ALIGNMENT\_BITS\ ||\ i\ ==\ STATS\_\_TRAILING\_BITS\ ||\ i\ ==\ STATS\_\_NAL\_UNIT\_HEADER\_BITS\ ||\ i\ ==\ STATS\_\_EMULATION\_PREVENTION\_3\_BYTES)}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ sEP.count\ =\ 0;}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00574\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ uint32\_t\ wIdx\ =\ CodingStatisticsClassType::GetSubClassWidth(\ c\ );}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ uint32\_t\ hIdx\ =\ CodingStatisticsClassType::GetSubClassHeight(\ c\ );}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ OutputLine(\ pName,\ \textcolor{charliteral}{':'},\ wIdx,\ hIdx,\ CodingStatisticsClassType::GetSubClassString(\ c\ ),\ sCABAC,\ sEP\ );}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ cabacSubTotal\ +=\ sCABAC;}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ epSubTotal\ \ \ \ +=\ sEP;}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ !=\ STATS\_\_NAL\_UNIT\_TOTAL\_BODY\ )}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ cabacTotalBits\ \ \ \ \ \ +=\ sCABAC;}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ epTotalBits\ \ \ \ \ \ \ \ \ +=\ sEP;}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ statTotals\_cabac[c]\ +=\ sCABAC;}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ statTotals\_ep[c]\ \ \ \ +=\ sEP;}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ bHadClassifiedEntry\ =\ bHadClassifiedEntry\ ||\ (\ c\ !=\ 0\ );}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ bHadClassifiedEntry\ )}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ cabacSubTotal.classCount\ =\ classCounts[i];}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ OutputLine(\ pName,\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ cabacSubTotal,\ epSubTotal\ );}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ TRF}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((i\ ==\ STATS\_\_CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG)\ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_PAR\_FLAG)}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_GT1\_FLAG)\ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_GT2\_FLAG)}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_ESCAPE\_BITS))}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ max.acc\_trf\_CABAC\_state\ +=\ cabacSubTotal;}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ max.acc\_trf\_EP\_state\ +=\ epSubTotal;}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00606\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ ==\ STATS\_\_NAL\_UNIT\_TOTAL\_BODY\ )}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00613\ \ \ \ \ \}}
+\DoxyCodeLine{00614\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00615\ \ \ \ \ OutputLine(\ \textcolor{stringliteral}{"{}CABAC\ Sub-\/total"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ cabacTotalBits,\ epTotalBits\ );}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}CAVLC\ HEADER\ BITS"{}}\ );}
+\DoxyCodeLine{00618\ \ \ \ \ SStat\ cavlcTotalBits;}
+\DoxyCodeLine{00619\ \ \ \ \ \textcolor{keywordflow}{for}(\ std::map<std::string,\ SStat>::iterator\ it\ =\ data.mappings\_ep.begin();\ it\ !=\ data.mappings\_ep.end();\ it++\ )}
+\DoxyCodeLine{00620\ \ \ \ \ \{}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ SStat\ s\ =\ it-\/>second;}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ cavlcTotalBits\ +=\ s;}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ OutputLine(\ it-\/>first.c\_str(),\ \textcolor{charliteral}{':'},\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}-\/"{}},\ s\ );}
+\DoxyCodeLine{00624\ \ \ \ \ \}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00627\ \ \ \ \ OutputLine(\ \textcolor{stringliteral}{"{}CAVLC\ Header\ Sub-\/total"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ cavlcTotalBits\ );}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \ \ \textcolor{comment}{//\ Now\ output\ the\ breakdowns}}
+\DoxyCodeLine{00630\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}CABAC\ Break\ down\ by\ size"{}}\ );}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ w\ =\ 0;\ w\ <\ CODING\_STATS\_NUM\_WIDTHS;\ w++\ )}
+\DoxyCodeLine{00632\ \ \ \ \ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ h\ =\ 0;\ h\ <\ CODING\_STATS\_NUM\_HEIGHTS;\ h++\ )}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ SStat\ subTotalCabac,\ subTotalEP;}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c\ +=\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ subTotalCabac\ +=\ statTotals\_cabac[c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ subTotalEP\ \ \ \ +=\ statTotals\_ep\ \ \ [c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ subTotalCabac.bits\ !=\ 0\ ||\ subTotalEP.bits\ !=\ 0\ )}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ OutputLine(\ \textcolor{stringliteral}{"{}CABAC\ by\ size\ Sub-\/total"{}},\ \textcolor{charliteral}{'='},\ w,\ h,\ \textcolor{stringliteral}{"{}All"{}},\ subTotalCabac,\ subTotalEP\ );}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00646\ \ \ \ \ \}}
+\DoxyCodeLine{00647\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}Break\ down\ by\ component/Channel\ type"{}}\ );}
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c\ +=\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00649\ \ \ \ \ \{}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ SStat\ subTotalCabac,\ subTotalEP;}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ w\ =\ 0;\ w\ <\ CODING\_STATS\_NUM\_WIDTHS;\ w++\ )}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ h\ =\ 0;\ h\ <\ CODING\_STATS\_NUM\_HEIGHTS;\ h++\ )}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ \ subTotalCabac\ +=\ statTotals\_cabac[c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ subTotalEP\ \ \ \ +=\ statTotals\_ep\ \ \ [c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ subTotalCabac.bits\ !=\ 0\ ||\ subTotalEP.bits\ !=\ 0\ )}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ OutputLine(\ \textcolor{stringliteral}{"{}CABAC\ by\ type\ Sub-\/total"{}},\ \textcolor{charliteral}{'='},\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}-\/"{}},\ CodingStatisticsClassType::GetSubClassString(\ c\ ),\ subTotalCabac,\ subTotalEP\ );}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00663\ \ \ \ \ \}}
+\DoxyCodeLine{00664\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}Break\ down\ by\ size\ and\ component/Channel\ type"{}}\ );}
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c\ +=\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00666\ \ \ \ \ \{}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ w\ =\ 0;\ w\ <\ CODING\_STATS\_NUM\_WIDTHS;\ w++\ )}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ h\ =\ 0;\ h\ <\ CODING\_STATS\_NUM\_HEIGHTS;\ h++\ )}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ SStat\ subTotalCabac,\ subTotalEP;}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ subTotalCabac\ +=\ statTotals\_cabac[c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ subTotalEP\ \ \ \ +=\ statTotals\_ep\ \ \ [c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ subTotalCabac.bits\ !=\ 0\ ||\ subTotalEP.bits\ !=\ 0\ )}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ OutputLine(\ \textcolor{stringliteral}{"{}CABAC\ by\ size\ and\ type\ Sub-\/total"{}},\ \textcolor{charliteral}{'='},\ w,\ h,\ CodingStatisticsClassType::GetSubClassString(\ c\ ),\ subTotalCabac,\ subTotalEP\ );}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00681\ \ \ \ \ \}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00684\ \ \ \ \ cabacTotalBits.classCount\ =\ countTotal;}
+\DoxyCodeLine{00685\ \ \ \ \ OutputLine\ \ \ \ \ \ (\ \textcolor{stringliteral}{"{}CABAC\ Sub-\/total"{}},\ \ \ \ \ \ \ \ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ cabacTotalBits,\ epTotalBits\ );}
+\DoxyCodeLine{00686\ \ \ \ \ OutputLine\ \ \ \ \ \ (\ \textcolor{stringliteral}{"{}CAVLC\ Header\ Sub-\/total"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ cavlcTotalBits\ );}
+\DoxyCodeLine{00687\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}GRAND\ TOTAL"{}}\ );}
+\DoxyCodeLine{00688\ \ \ \ \ epTotalBits\ +=\ cavlcTotalBits;}
+\DoxyCodeLine{00689\ \ \ \ \ OutputLine\ \ \ \ \ \ (\ \textcolor{stringliteral}{"{}TOTAL"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~GT\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~GT\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~GT\string~\string~"{}},\ cabacTotalBits,\ epTotalBits\ );}
+\DoxyCodeLine{00690\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00691\ \ \ \ \ OutputDashedLine(\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00692\ \ \ \ \ OutputLine(\textcolor{stringliteral}{"{}CABAC\ MAX\ FRAME\ stat"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ max.max\_CABAC\_state,\ max.max\_EP\_state);}
+\DoxyCodeLine{00693\ \ \ \ \ OutputLine(\textcolor{stringliteral}{"{}CABAC\ MAX\ FRAME\ TRF\ stat"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ max.trf\_CABAC\_state,\ max.trf\_EP\_state);}
+\DoxyCodeLine{00694\ \ \ \ \ OutputLine(\textcolor{stringliteral}{"{}CABAC\ Accumulated\ TRF\ stat"{}},\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ max.acc\_trf\_CABAC\_state,\ max.acc\_trf\_EP\_state);}
+\DoxyCodeLine{00695\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00696\ \ \ \}}
+\DoxyCodeLine{00697\ }
+\DoxyCodeLine{00698\ \ \ \textcolor{keywordtype}{void}\ OutputToolStats()}
+\DoxyCodeLine{00699\ \ \ \{}
+\DoxyCodeLine{00700\ \ \ \ \ printf(\textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00701\ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}\ \%-\/45s-\/\ \ \ Width\ Height\ \ \ Type\ \ \ \ \ \ \ \ Count\ \ Impacted\ pixels\ \ \%\%\ Impacted\ pixels\(\backslash\)n"{}},\ \textcolor{stringliteral}{"{}Tools\ statistics"{}}\ );}
+\DoxyCodeLine{00702\ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}"{}}\ );}
+\DoxyCodeLine{00703\ }
+\DoxyCodeLine{00704\ \ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ toolCount\ =\ STATS\_\_TOOL\_TOTAL\ -\/\ (STATS\_\_TOOL\_TOTAL\_FRAME\ +\ 1);}
+\DoxyCodeLine{00705\ \ \ \ \ StatTool\ subTotalTool[toolCount];}
+\DoxyCodeLine{00706\ \ \ \ \ StatTool\ statTotalTool[toolCount][CODING\_STATS\_NUM\_SUBCLASSES];}
+\DoxyCodeLine{00707\ \ \ \ \ uint64\_t\ totalPixels\ =\ GetStatisticTool(\ STATS\_\_TOOL\_TOTAL\_FRAME\ ).pixels;}
+\DoxyCodeLine{00708\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ toolCount;\ i++\ )}
+\DoxyCodeLine{00709\ \ \ \ \ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ type\ =\ i\ +\ (STATS\_\_TOOL\_TOTAL\_FRAME\ +\ 1);}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName\ =\ getName(\ CodingStatisticsType(\ type\ )\ );}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++\ )}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ StatTool\ \&sTool\ \ \ =\ data.statistics\_tool[type][c];}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ sTool.count\ ==\ 0\ )}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ uint32\_t\ wIdx\ =\ CodingStatisticsClassType::GetSubClassWidth(\ c\ );}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ uint32\_t\ hIdx\ =\ CodingStatisticsClassType::GetSubClassHeight(\ c\ );}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ OutputLine(\ pName,\ \textcolor{charliteral}{':'},\ wIdx,\ hIdx,\ CodingStatisticsClassType::GetSubClassString(\ c\ ),\ sTool,\ totalPixels\ );}
+\DoxyCodeLine{00724\ }
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ statTotalTool[i][c]\ +=\ sTool;}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ subTotalTool[i]\ +=\ sTool;}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00728\ }
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (subTotalTool[i].count\ !=\ 0)}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ OutputLine(\ pName,\ \textcolor{charliteral}{'\string~'},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ \textcolor{stringliteral}{"{}\string~\string~ST\string~\string~"{}},\ subTotalTool[i],\ totalPixels\ );}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00733\ \ \ \ \ \}}
+\DoxyCodeLine{00734\ }
+\DoxyCodeLine{00735\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ toolCount;\ i++\ )}
+\DoxyCodeLine{00736\ \ \ \ \ \{}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ type\ =\ i\ +\ (STATS\_\_TOOL\_TOTAL\_FRAME\ +\ 1);}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pName\ =\ getName(\ CodingStatisticsType(\ type\ )\ );}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (subTotalTool[i].count\ !=\ 0)}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ OutputDashedLine(\ \textcolor{stringliteral}{"{}Break\ down\ by\ tool/Channel\ type"{}}\ );}
+\DoxyCodeLine{00742\ }
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c\ +=\ CODING\_STATS\_NUM\_SIZES\ )}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ StatTool\ typeTotalTool;}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ w\ =\ 0;\ w\ <\ CODING\_STATS\_NUM\_WIDTHS;\ w++\ )}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ h\ =\ 0;\ h\ <\ CODING\_STATS\_NUM\_HEIGHTS;\ h++\ )}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \ \ typeTotalTool\ +=\ statTotalTool[i][c\ +\ h\ *\ CODING\_STATS\_NUM\_WIDTHS\ +\ w];}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ typeTotalTool.count\ !=\ 0\ )}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \ \ OutputLine(\ pName,\ \textcolor{charliteral}{'='},\ \textcolor{stringliteral}{"{}-\/"{}},\ \textcolor{stringliteral}{"{}-\/"{}},\ CodingStatisticsClassType::GetSubClassString(\ c\ ),\ typeTotalTool,\ totalPixels\ );}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00757\ \ \ \ \ \}}
+\DoxyCodeLine{00758\ \ \ \}}
+\DoxyCodeLine{00759\ }
+\DoxyCodeLine{00760\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00761\ }
+\DoxyCodeLine{00762\ \ \ \string~CodingStatistics()}
+\DoxyCodeLine{00763\ \ \ \{}
+\DoxyCodeLine{00764\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_BIT\_STATISTICS}}
+\DoxyCodeLine{00765\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_mode\ \&\ STATS\_\_MODE\_BITS)}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ OutputBitStats();}
+\DoxyCodeLine{00767\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//RExt\_\_DECODER\_DEBUG\_BIT\_STATISTICS}}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ \textcolor{preprocessor}{\#ifdef\ RExt\_\_DECODER\_DEBUG\_TOOL\_STATISTICS}}
+\DoxyCodeLine{00770\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_mode\ \&\ STATS\_\_MODE\_TOOLS)}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ OutputToolStats();}
+\DoxyCodeLine{00772\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//RExt\_\_DECODER\_DEBUG\_TOOL\_STATISTICS}}
+\DoxyCodeLine{00773\ \ \ \}}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \ \textcolor{keyword}{static}\ CodingStatistics\&\ GetSingletonInstance()}
+\DoxyCodeLine{00776\ \ \ \{}
+\DoxyCodeLine{00777\ \ \ \ \ \textcolor{keyword}{static}\ CodingStatistics*\ inst\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00778\ \ \ \ \ \textcolor{keywordflow}{if}(\ !inst\ )}
+\DoxyCodeLine{00779\ \ \ \ \ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ inst\ =\ \textcolor{keyword}{new}\ CodingStatistics;}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \ \ \ \ \textcolor{keywordflow}{return}\ *inst;}
+\DoxyCodeLine{00784\ \ \ \}}
+\DoxyCodeLine{00785\ }
+\DoxyCodeLine{00786\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ DestroyInstance()}
+\DoxyCodeLine{00787\ \ \ \{}
+\DoxyCodeLine{00788\ \ \ \ \ CodingStatistics*\ cs\ =\ \&GetSingletonInstance();}
+\DoxyCodeLine{00789\ \ \ \ \ \textcolor{keyword}{delete}\ cs;}
+\DoxyCodeLine{00790\ \ \ \}}
+\DoxyCodeLine{00791\ }
+\DoxyCodeLine{00792\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CodingStatisticsData\ \&GetStatistics()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ GetSingletonInstance().data;\ \}}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ SetStatistics\ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStatisticsData\ \&src\ )\ \ \ \ \ \ \ \{\ GetSingletonInstance().data\ =\ src;\ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \ \ \textcolor{keyword}{static}\ SStat\ \&GetStatisticEP\ \ \ \ (\ \textcolor{keyword}{const}\ CodingStatisticsClassType\ \&stat\ )\ \{\ \textcolor{keywordflow}{return}\ GetSingletonInstance().data.statistics\_ep[stat.type][stat.subClass];\ \}}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \ \ \textcolor{keyword}{static}\ SStat\ \&GetStatisticEP\ \ \ \ (\ \textcolor{keyword}{const}\ std::string\ \&str\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ GetSingletonInstance().data.mappings\_ep[str];\ \}}
+\DoxyCodeLine{00799\ }
+\DoxyCodeLine{00800\ \ \ \textcolor{keyword}{static}\ SStat\ \&GetStatisticEP\ \ \ \ (\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pKey\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ GetStatisticEP(\ std::string(\ pKey\ )\ );\ \}}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \ \ \textcolor{keyword}{static}\ StatTool\ \&GetStatisticTool\ (\ \textcolor{keyword}{const}\ CodingStatisticsClassType\ \&stat\ )\ \{\ \textcolor{keywordflow}{return}\ GetSingletonInstance().data.statistics\_tool[stat.type][stat.subClass];\ \}}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00805\ \ \ \textcolor{keyword}{static}\ SStat\_max\ \&GetStatisticMax()\ \{\ \textcolor{keywordflow}{return}\ GetSingletonInstance().data.statistics\_max;\ \}}
+\DoxyCodeLine{00806\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ getNumOnes(\ \textcolor{keywordtype}{int}\ bins\ )}
+\DoxyCodeLine{00809\ \ \ \{}
+\DoxyCodeLine{00810\ \ \ \ \ CHECK(\ bins\ <\ 0,\ \textcolor{stringliteral}{"{}Bins\ should\ not\ be\ nagative"{}}\ );}
+\DoxyCodeLine{00811\ }
+\DoxyCodeLine{00812\ \ \ \ \ \textcolor{keywordtype}{int}\ count\ =\ 0;}
+\DoxyCodeLine{00813\ \ \ \ \ \textcolor{keywordflow}{while}(\ bins\ )}
+\DoxyCodeLine{00814\ \ \ \ \ \{}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ count\ +=\ bins\ \&\ 1;}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ bins\ >>=\ 1;}
+\DoxyCodeLine{00817\ \ \ \ \ \}}
+\DoxyCodeLine{00818\ \ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00819\ \ \ \}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ IncrementStatisticEP(\ \textcolor{keyword}{const}\ CodingStatisticsClassType\ \&stat,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numBits,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ value\ )}
+\DoxyCodeLine{00822\ \ \ \{}
+\DoxyCodeLine{00823\ \ \ \ \ CHECK(\ stat.type\ ==\ STATS\_\_CABAC\_BITS\_\_INVALID,\ \textcolor{stringliteral}{"{}Should\ never\ be\ used."{}}\ );}
+\DoxyCodeLine{00824\ \ \ \ \ SStat\ \&s\ =\ GetStatisticEP(\ stat\ );}
+\DoxyCodeLine{00825\ \ \ \ \ s.bits\ \ +=\ numBits;}
+\DoxyCodeLine{00826\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00827\ \ \ \ \ s.count\ +=\ numBits;}
+\DoxyCodeLine{00828\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00829\ \ \ \ \ s.count++;}
+\DoxyCodeLine{00830\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00831\ \ \ \ \ s.sum\ \ \ +=\ getNumOnes(\ value\ );}
+\DoxyCodeLine{00832\ \ \ \}}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ IncrementStatisticEP(\ \textcolor{keyword}{const}\ std::string\ \&str,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numBits,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ value\ )}
+\DoxyCodeLine{00835\ \ \ \{}
+\DoxyCodeLine{00836\ \ \ \ \ SStat\ \&s\ =\ GetStatisticEP(\ str\ );}
+\DoxyCodeLine{00837\ \ \ \ \ s.bits\ \ +=\ numBits;}
+\DoxyCodeLine{00838\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00839\ \ \ \ \ s.count\ +=\ numBits;}
+\DoxyCodeLine{00840\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00841\ \ \ \ \ s.count++;}
+\DoxyCodeLine{00842\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00843\ \ \ \ \ s.sum\ \ \ +=\ getNumOnes(\ value\ );}
+\DoxyCodeLine{00844\ \ \ \}}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ IncrementStatisticEP(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *pKey,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numBits,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ value\ )}
+\DoxyCodeLine{00847\ \ \ \{}
+\DoxyCodeLine{00848\ \ \ \ \ SStat\ \&s\ =\ GetStatisticEP(\ pKey\ );}
+\DoxyCodeLine{00849\ \ \ \ \ s.bits\ \ +=\ numBits;}
+\DoxyCodeLine{00850\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00851\ \ \ \ \ s.count\ +=\ numBits;}
+\DoxyCodeLine{00852\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00853\ \ \ \ \ s.count++;}
+\DoxyCodeLine{00854\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00855\ \ \ \ \ s.sum\ \ \ +=\ getNumOnes(\ value\ );}
+\DoxyCodeLine{00856\ \ \ \}}
+\DoxyCodeLine{00857\ }
+\DoxyCodeLine{00858\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ IncrementStatisticTool(\ \textcolor{keyword}{const}\ CodingStatisticsClassType\ \&stat\ )}
+\DoxyCodeLine{00859\ \ \ \{}
+\DoxyCodeLine{00860\ \ \ \ \ CHECK(\ stat.type\ <\ STATS\_\_TOOL\_TOTAL\_FRAME\ ||\ stat.type\ >=\ STATS\_\_TOOL\_TOTAL,\ \textcolor{stringliteral}{"{}Should\ never\ be\ used."{}}\ );}
+\DoxyCodeLine{00861\ \ \ \ \ StatTool\ \&s\ =\ GetStatisticTool(\ stat\ );}
+\DoxyCodeLine{00862\ \ \ \ \ s.count++;}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \ \ \ \ uint32\_t\ wIdx\ =\ CodingStatisticsClassType::GetSubClassWidth(\ stat.subClass\ );}
+\DoxyCodeLine{00865\ \ \ \ \ uint32\_t\ hIdx\ =\ CodingStatisticsClassType::GetSubClassHeight(\ stat.subClass\ );}
+\DoxyCodeLine{00866\ }
+\DoxyCodeLine{00867\ \ \ \ \ s.pixels\ =\ s.count\ *\ gp\_sizeIdxInfo-\/>sizeFrom(\ wIdx\ )\ *\ gp\_sizeIdxInfo-\/>sizeFrom(\ hIdx\ );}
+\DoxyCodeLine{00868\ \ \ \}}
+\DoxyCodeLine{00869\ }
+\DoxyCodeLine{00870\ \ \ StatLogValue\ values;}
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ UpdateCABACStat(\ \textcolor{keyword}{const}\ CodingStatisticsClassType\ \&stat,\ uint32\_t\ uiRangeBefore,\ uint32\_t\ uiRangeAfter,\ \textcolor{keywordtype}{int}\ val\ )}
+\DoxyCodeLine{00873\ \ \ \{}
+\DoxyCodeLine{00874\ \ \ \ \ CHECK(\ stat.type\ ==\ STATS\_\_CABAC\_BITS\_\_INVALID,\ \textcolor{stringliteral}{"{}Should\ never\ be\ used."{}}\ );}
+\DoxyCodeLine{00875\ \ \ \ \ CodingStatistics\ \&inst\ =\ GetSingletonInstance();}
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{comment}{//\ doing\ rangeBefore*p(x)=rangeAfter}}
+\DoxyCodeLine{00877\ \ \ \ \ \textcolor{comment}{//\ p(x)=rangeAfter/rangeBefore}}
+\DoxyCodeLine{00878\ \ \ \ \ \textcolor{comment}{//\ entropy\ =\ -\/log2(p(x))=-\/log(p(x))/log(2)\ =\ -\/(log\ rangeAfter\ -\/\ log\ rangeBefore)\ /\ log(2)\ =\ (log\ rangeBefore\ /\ log\ 2\ -\/\ log\ rangeAfter\ /\ log\ 2)}}
+\DoxyCodeLine{00879\ \ \ \ \ SStat\ \&s\ =\ inst.data.statistics[stat.type][stat.subClass];}
+\DoxyCodeLine{00880\ \ \ \ \ s.bits\ \ +=\ inst.values.values[uiRangeBefore]\ -\/\ inst.values.values[uiRangeAfter];}
+\DoxyCodeLine{00881\ \ \ \ \ s.count++;}
+\DoxyCodeLine{00882\ \ \ \ \ s.sum\ \ \ +=\ val;}
+\DoxyCodeLine{00883\ \ \ \}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_TOOL\_MAX\_FRAME\_STATS}}
+\DoxyCodeLine{00886\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ UpdateMaxStat(CodingStatisticsData\ *data)}
+\DoxyCodeLine{00887\ \ \ \{}
+\DoxyCodeLine{00888\ \ \ \ \ SStat\_max\ \&\ \ \ max\ =\ GetStatisticMax();}
+\DoxyCodeLine{00889\ \ \ \ \ \textcolor{keyword}{const}\ int64\_t\ es\ =\ CODINGSTATISTICS\_ENTROPYSCALE;}
+\DoxyCodeLine{00890\ }
+\DoxyCodeLine{00891\ \ \ \ \ int64\_t\ countTotal\ =\ 0;}
+\DoxyCodeLine{00892\ \ \ \ \ int64\_t\ classCounts[STATS\_\_NUM\_STATS];}
+\DoxyCodeLine{00893\ \ \ \ \ std::fill\_n(classCounts,\ (\textcolor{keywordtype}{size\_t})\ STATS\_\_NUM\_STATS,\ 0);}
+\DoxyCodeLine{00894\ }
+\DoxyCodeLine{00895\ \ \ \ \ int64\_t\ cr\ =\ 0;\ \ \ \textcolor{comment}{//\ CABAC\ remainder,\ which\ is\ added\ to\ "{}STATS\_\_CABAC\_INITIALISATION"{}}}
+\DoxyCodeLine{00896\ }
+\DoxyCodeLine{00897\ \ \ \ \ int64\_t\ totalCABACbits\ =\ 0,\ roundedCABACbits\ =\ 0;}
+\DoxyCodeLine{00898\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ STATS\_\_NAL\_UNIT\_PACKING;\ i\ <\ STATS\_\_NUM\_STATS;\ i++)}
+\DoxyCodeLine{00899\ \ \ \ \ \{}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ int64\_t\ classCount\ =\ 0;}
+\DoxyCodeLine{00901\ }
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++)}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ totalCABACbits\ +=\ data-\/>statistics[i][c].bits;}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ roundedCABACbits\ +=\ data-\/>statistics[i][c].bits\ /\ es;}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ classCount\ +=\ data-\/>statistics[i][c].count;}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00908\ }
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++)}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ data-\/>statistics[i][c].classCount\ =\ classCount;}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00913\ }
+\DoxyCodeLine{00914\ \ \ \ \ \ \ classCounts[i]\ =\ classCount;}
+\DoxyCodeLine{00915\ \ \ \ \ \ \ countTotal\ +=\ classCount;}
+\DoxyCodeLine{00916\ \ \ \ \ \}}
+\DoxyCodeLine{00917\ \ \ \ \ int64\_t\ remainder\ =\ totalCABACbits\ -\/\ roundedCABACbits\ *\ es;}
+\DoxyCodeLine{00918\ \ \ \ \ cr\ =\ (remainder\ +\ es\ /\ 2)\ /\ es;}
+\DoxyCodeLine{00919\ }
+\DoxyCodeLine{00920\ \ \ \ \ classCounts[0]\ =\ countTotal;}
+\DoxyCodeLine{00921\ }
+\DoxyCodeLine{00922\ \ \ \ \ SStat\ cabacTotalBits,\ epTotalBits,\ cabacTrfTotalBits,\ epTrfTotalBits;}
+\DoxyCodeLine{00923\ }
+\DoxyCodeLine{00924\ \ \ \ \ cabacTotalBits.classCount\ =\ countTotal;}
+\DoxyCodeLine{00925\ \ \ \ \ epTotalBits.classCount\ =\ countTotal;}
+\DoxyCodeLine{00926\ \ \ \ \ cabacTrfTotalBits.classCount\ =\ countTotal;}
+\DoxyCodeLine{00927\ \ \ \ \ epTrfTotalBits.classCount\ \ \ \ =\ countTotal;}
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \ \ \ \ \textcolor{comment}{//\ Calculate\ the\ actual\ bin\ and\ bit\ count}}
+\DoxyCodeLine{00930\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ STATS\_\_NUM\_STATS;\ i++)}
+\DoxyCodeLine{00931\ \ \ \ \ \{}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ c\ =\ 0;\ c\ <\ CODING\_STATS\_NUM\_SUBCLASSES;\ c++)}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ SStat\ \&sCABACorig\ =\ data-\/>statistics[i][c];}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ SStat\ \&sEP\ =\ data-\/>statistics\_ep[i][c];}
+\DoxyCodeLine{00936\ }
+\DoxyCodeLine{00937\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sCABACorig.bits\ ==\ 0\ \&\&\ sEP.bits\ ==\ 0)}
+\DoxyCodeLine{00938\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \ \ \ \ \ \ \ \ SStat\ sCABAC;}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \ \ int64\_t\ thisCABACbits\ =\ sCABACorig.bits\ /\ es;}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ ==\ STATS\_\_CABAC\_INITIALISATION\ \&\&\ sCABACorig.bits\ !=\ 0)}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00947\ \ \ \ \ \ \ \ \ \ \ \ \ thisCABACbits\ +=\ cr;}
+\DoxyCodeLine{00948\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00949\ \ \ \ \ \ \ \ \ \ \ \ \ sCABACorig.count\ =\ 0;}
+\DoxyCodeLine{00950\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00951\ \ \ \ \ \ \ \ \ \ \ \ \ cr\ =\ 0;}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ \ \ sCABAC.bits\ =\ thisCABACbits;}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \ \ \ \ sCABAC.count\ =\ sCABACorig.count;}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ \ \ sCABAC.sum\ =\ sCABACorig.sum;}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \ \ \ \ sCABAC.classCount\ =\ classCounts[i];}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00958\ \textcolor{preprocessor}{\#if\ EPBINCOUNT\_FIX}}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ i\ ==\ STATS\_\_BYTE\_ALIGNMENT\_BITS\ ||\ i\ ==\ STATS\_\_TRAILING\_BITS\ ||\ i\ ==\ STATS\_\_NAL\_UNIT\_HEADER\_BITS\ ||\ i\ ==\ STATS\_\_EMULATION\_PREVENTION\_3\_BYTES\ )}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \ \ sEP.count\ =\ 0;}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00963\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00964\ }
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ i\ !=\ STATS\_\_NAL\_UNIT\_TOTAL\_BODY\ )}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00967\ \ \ \ \ \ \ \ \ \ \ cabacTotalBits\ +=\ sCABAC;}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ \ \ epTotalBits\ +=\ sEP;}
+\DoxyCodeLine{00969\ }
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ TRF}}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((i\ ==\ STATS\_\_CABAC\_BITS\_\_SIG\_COEFF\_MAP\_FLAG)\ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_PAR\_FLAG)}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_GT1\_FLAG)\ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_GT2\_FLAG)}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (i\ ==\ STATS\_\_CABAC\_BITS\_\_ESCAPE\_BITS))}
+\DoxyCodeLine{00974\ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ \ \ \ cabacTrfTotalBits\ +=\ sCABAC;}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \ \ \ epTrfTotalBits\ +=\ sEP;}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00980\ \ \ \ \ \}}
+\DoxyCodeLine{00981\ }
+\DoxyCodeLine{00982\ \ \ \ \ SStat\ delta\_CABAC\ =\ cabacTotalBits;}
+\DoxyCodeLine{00983\ \ \ \ \ SStat\ delta\_EP\ =\ epTotalBits;}
+\DoxyCodeLine{00984\ \ \ \ \ SStat\ delta\_trf\_CABAC\ =\ cabacTrfTotalBits;}
+\DoxyCodeLine{00985\ \ \ \ \ SStat\ delta\_trf\_EP\ =\ epTrfTotalBits;}
+\DoxyCodeLine{00986\ }
+\DoxyCodeLine{00987\ \ \ \ \ delta\_CABAC\ -\/=\ max.prev\_CABAC\_state;}
+\DoxyCodeLine{00988\ \ \ \ \ delta\_EP\ -\/=\ max.prev\_EP\_state;}
+\DoxyCodeLine{00989\ }
+\DoxyCodeLine{00990\ \ \ \ \ delta\_trf\_CABAC\ -\/=\ max.prev\_trf\_CABAC\_state;}
+\DoxyCodeLine{00991\ \ \ \ \ delta\_trf\_EP\ -\/=\ max.prev\_trf\_EP\_state;}
+\DoxyCodeLine{00992\ \ \ \ \ int64\_t\ max\_frame\_bins\ =\ EPBIN\_WEIGHT\_FACTOR\ *\ max.max\_CABAC\_state.count\ +\ max.max\_EP\_state.count;}
+\DoxyCodeLine{00993\ \ \ \ \ int64\_t\ cur\_frame\_bins\ =\ EPBIN\_WEIGHT\_FACTOR\ *\ delta\_CABAC.count\ +\ delta\_EP.count;}
+\DoxyCodeLine{00994\ }
+\DoxyCodeLine{00995\ \ \ \ \ \textcolor{keywordflow}{if}\ (cur\_frame\_bins\ >\ max\_frame\_bins)}
+\DoxyCodeLine{00996\ \ \ \ \ \{}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ max.max\_CABAC\_state\ =\ delta\_CABAC;}
+\DoxyCodeLine{00998\ \ \ \ \ \ \ max.max\_EP\_state\ =\ delta\_EP;}
+\DoxyCodeLine{00999\ \ \ \ \ \ \ max.trf\_CABAC\_state\ =\ delta\_trf\_CABAC;}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ max.trf\_EP\_state\ =\ delta\_trf\_EP;}
+\DoxyCodeLine{01001\ \ \ \ \ \}}
+\DoxyCodeLine{01002\ }
+\DoxyCodeLine{01003\ \ \ \ \ max.prev\_CABAC\_state\ =\ cabacTotalBits;}
+\DoxyCodeLine{01004\ \ \ \ \ max.prev\_EP\_state\ =\ epTotalBits;}
+\DoxyCodeLine{01005\ }
+\DoxyCodeLine{01006\ \ \ \ \ max.prev\_trf\_CABAC\_state\ =\ cabacTrfTotalBits;}
+\DoxyCodeLine{01007\ \ \ \ \ max.prev\_trf\_EP\_state\ =\ epTrfTotalBits;}
+\DoxyCodeLine{01008\ \ \ \}}
+\DoxyCodeLine{01009\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01010\ \};}
+\DoxyCodeLine{01011\ }
+\DoxyCodeLine{01012\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

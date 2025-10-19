@@ -1,0 +1,337 @@
+\doxysection{Matrix\+Intra\+Prediction.\+cpp}
+\label{MatrixIntraPrediction_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/MatrixIntraPrediction.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/MatrixIntraPrediction.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}MatrixIntraPrediction.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}dtrace\_next.h"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}UnitTools.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}MipData.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ MatrixIntraPrediction::MatrixIntraPrediction():}
+\DoxyCodeLine{00046\ \ \ m\_component(MAX\_NUM\_COMPONENT),}
+\DoxyCodeLine{00047\ \ \ m\_reducedBoundary\ \ \ \ \ \ \ \ \ \ (MIP\_MAX\_INPUT\_SIZE),}
+\DoxyCodeLine{00048\ \ \ m\_reducedBoundaryTransposed(MIP\_MAX\_INPUT\_SIZE),}
+\DoxyCodeLine{00049\ \ \ m\_inputOffset\ \ \ \ \ \ (\ 0\ ),}
+\DoxyCodeLine{00050\ \ \ m\_inputOffsetTransp(\ 0\ ),}
+\DoxyCodeLine{00051\ \ \ m\_refSamplesTop\ (MIP\_MAX\_WIDTH),}
+\DoxyCodeLine{00052\ \ \ m\_refSamplesLeft(MIP\_MAX\_HEIGHT),}
+\DoxyCodeLine{00053\ \ \ m\_blockSize(\ 0,\ 0\ ),}
+\DoxyCodeLine{00054\ \ \ m\_sizeId(\ 0\ ),}
+\DoxyCodeLine{00055\ \ \ m\_reducedBdrySize(\ 0\ ),}
+\DoxyCodeLine{00056\ \ \ m\_reducedPredSize(\ 0\ ),}
+\DoxyCodeLine{00057\ \ \ m\_upsmpFactorHor(\ 0\ ),}
+\DoxyCodeLine{00058\ \ \ m\_upsmpFactorVer(\ 0\ )}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::prepareInputForPred(\textcolor{keyword}{const}\ CPelBuf\ \&pSrc,\ \textcolor{keyword}{const}\ Area\ \&block,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compId)}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ m\_component\ =\ compId;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \textcolor{comment}{//\ Step\ 1:\ Save\ block\ size\ and\ calculate\ dependent\ values}}
+\DoxyCodeLine{00068\ \ \ initPredBlockParams(block);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \textcolor{comment}{//\ Step\ 2:\ Get\ the\ input\ data\ (left\ and\ top\ reference\ samples)}}
+\DoxyCodeLine{00071\ \ \ m\_refSamplesTop.resize(block.width);}
+\DoxyCodeLine{00072\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ block.width;\ x++)}
+\DoxyCodeLine{00073\ \ \ \{}
+\DoxyCodeLine{00074\ \ \ \ \ m\_refSamplesTop[x]\ =\ pSrc.at(x\ +\ 1,\ 0);}
+\DoxyCodeLine{00075\ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ m\_refSamplesLeft.resize(block.height);}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ block.height;\ y++)}
+\DoxyCodeLine{00079\ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ m\_refSamplesLeft[y]\ =\ pSrc.at(y\ +\ 1,\ 1);}
+\DoxyCodeLine{00081\ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \textcolor{comment}{//\ Step\ 3:\ Compute\ the\ reduced\ boundary\ via\ Haar-\/downsampling\ (input\ for\ the\ prediction)}}
+\DoxyCodeLine{00084\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ inputSize\ =\ 2\ *\ m\_reducedBdrySize;}
+\DoxyCodeLine{00085\ \ \ m\_reducedBoundary\ \ \ \ \ \ \ \ \ \ .resize(\ inputSize\ );}
+\DoxyCodeLine{00086\ \ \ m\_reducedBoundaryTransposed.resize(\ inputSize\ );}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ topReduced\ =\ m\_reducedBoundary.data();}
+\DoxyCodeLine{00089\ \ \ boundaryDownsampling1D(\ topReduced,\ m\_refSamplesTop.data(),\ block.width,\ m\_reducedBdrySize\ );}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ leftReduced\ =\ m\_reducedBoundary.data()\ +\ m\_reducedBdrySize;}
+\DoxyCodeLine{00092\ \ \ boundaryDownsampling1D(\ leftReduced,\ m\_refSamplesLeft.data(),\ block.height,\ m\_reducedBdrySize\ );}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ leftReducedTransposed\ =\ m\_reducedBoundaryTransposed.data();}
+\DoxyCodeLine{00095\ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ topReducedTransposed\ \ =\ m\_reducedBoundaryTransposed.data()\ +\ m\_reducedBdrySize;}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ m\_reducedBdrySize;\ x++\ )}
+\DoxyCodeLine{00097\ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ topReducedTransposed[x]\ =\ topReduced[x];}
+\DoxyCodeLine{00099\ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ m\_reducedBdrySize;\ y++\ )}
+\DoxyCodeLine{00101\ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ leftReducedTransposed[y]\ =\ leftReduced[y];}
+\DoxyCodeLine{00103\ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \textcolor{comment}{//\ Step\ 4:\ Rebase\ the\ reduced\ boundary}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ m\_inputOffset\ \ \ \ \ \ \ =\ m\_reducedBoundary[0];}
+\DoxyCodeLine{00108\ \ \ m\_inputOffsetTransp\ =\ m\_reducedBoundaryTransposed[0];}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ hasFirstCol\ =\ (m\_sizeId\ <\ 2);}
+\DoxyCodeLine{00111\ \ \ m\_reducedBoundary\ \ \ \ \ \ \ \ \ \ [0]\ =\ hasFirstCol\ ?\ ((1\ <<\ (bitDepth\ -\/\ 1))\ -\/\ m\_inputOffset\ \ \ \ \ \ )\ :\ 0;\ \textcolor{comment}{//\ first\ column\ of\ matrix\ not\ needed\ for\ large\ blocks}}
+\DoxyCodeLine{00112\ \ \ m\_reducedBoundaryTransposed[0]\ =\ hasFirstCol\ ?\ ((1\ <<\ (bitDepth\ -\/\ 1))\ -\/\ m\_inputOffsetTransp)\ :\ 0;}
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ inputSize;\ i++)}
+\DoxyCodeLine{00114\ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ m\_reducedBoundary\ \ \ \ \ \ \ \ \ \ [i]\ -\/=\ m\_inputOffset;}
+\DoxyCodeLine{00116\ \ \ \ \ m\_reducedBoundaryTransposed[i]\ -\/=\ m\_inputOffsetTransp;}
+\DoxyCodeLine{00117\ \ \ \}}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::predBlock(\textcolor{keywordtype}{int}\ *\textcolor{keyword}{const}\ result,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ modeIdx,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ transpose,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth,}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compId)}
+\DoxyCodeLine{00122\ \{}
+\DoxyCodeLine{00123\ \ \ CHECK(m\_component\ !=\ compId,\ \textcolor{stringliteral}{"{}Boundary\ has\ not\ been\ prepared\ for\ this\ component."{}});}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ needUpsampling\ =\ (\ m\_upsmpFactorHor\ >\ 1\ )\ ||\ (\ m\_upsmpFactorVer\ >\ 1\ );}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \textcolor{keyword}{const}\ uint8\_t*\ matrix\ =\ getMatrixData(modeIdx);}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ static\_vector<int,\ MIP\_MAX\_REDUCED\_OUTPUT\_SAMPLES>\ bufReducedPred(\ m\_reducedPredSize\ *\ m\_reducedPredSize\ );}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ \ \ \ \ \ \ reducedPred\ \ \ \ \ =\ needUpsampling\ ?\ bufReducedPred.data()\ :\ result;}
+\DoxyCodeLine{00131\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ reducedBoundary\ =\ transpose\ ?\ m\_reducedBoundaryTransposed.data()\ :\ m\_reducedBoundary.data();}
+\DoxyCodeLine{00132\ \ \ computeReducedPred(reducedPred,\ reducedBoundary,\ matrix,\ transpose,\ bitDepth);}
+\DoxyCodeLine{00133\ \ \ \textcolor{keywordflow}{if}(\ needUpsampling\ )}
+\DoxyCodeLine{00134\ \ \ \{}
+\DoxyCodeLine{00135\ \ \ \ \ predictionUpsampling(\ result,\ reducedPred\ );}
+\DoxyCodeLine{00136\ \ \ \}}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::initPredBlockParams(\textcolor{keyword}{const}\ Size\&\ block)}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ m\_blockSize\ =\ block;}
+\DoxyCodeLine{00143\ \ \ \textcolor{comment}{//\ init\ size\ index}}
+\DoxyCodeLine{00144\ \ \ m\_sizeId\ =\ getMipSizeId(\ m\_blockSize\ );}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \textcolor{comment}{//\ init\ reduced\ boundary\ size}}
+\DoxyCodeLine{00147\ \ \ m\_reducedBdrySize\ =\ (m\_sizeId\ ==\ 0)\ ?\ 2\ :\ 4;}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \textcolor{comment}{//\ init\ reduced\ prediction\ size}}
+\DoxyCodeLine{00150\ \ \ m\_reducedPredSize\ =\ (\ m\_sizeId\ <\ 2\ )\ ?\ 4\ :\ 8;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \textcolor{comment}{//\ init\ upsampling\ factors}}
+\DoxyCodeLine{00154\ \ \ m\_upsmpFactorHor\ =\ m\_blockSize.width\ \ /\ m\_reducedPredSize;}
+\DoxyCodeLine{00155\ \ \ m\_upsmpFactorVer\ =\ m\_blockSize.height\ /\ m\_reducedPredSize;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ CHECKD(\ (m\_upsmpFactorHor\ <\ 1)\ ||\ ((m\_upsmpFactorHor\ \&\ (m\_upsmpFactorHor\ -\/\ 1))\ !=\ 0),\ \textcolor{stringliteral}{"{}Need\ power\ of\ two\ horizontal\ upsampling\ factor."{}}\ );}
+\DoxyCodeLine{00158\ \ \ CHECKD(\ (m\_upsmpFactorVer\ <\ 1)\ ||\ ((m\_upsmpFactorVer\ \&\ (m\_upsmpFactorVer\ -\/\ 1))\ !=\ 0),\ \textcolor{stringliteral}{"{}Need\ power\ of\ two\ vertical\ upsampling\ factor."{}}\ );}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::boundaryDownsampling1D(\textcolor{keywordtype}{int}*\ reducedDst,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ fullSrc,\ \textcolor{keyword}{const}\ SizeType\ srcLen,\ \textcolor{keyword}{const}\ SizeType\ dstLen)}
+\DoxyCodeLine{00164\ \{}
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{if}\ (dstLen\ <\ srcLen)}
+\DoxyCodeLine{00166\ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ Create\ reduced\ boundary\ by\ downsampling}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ downsmpFactor\ =\ srcLen\ /\ dstLen;}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ log2DownsmpFactor\ =\ floorLog2(downsmpFactor);}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ roundingOffset\ =\ (1\ <<\ (log2DownsmpFactor\ -\/\ 1));}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ SizeType\ srcIdx\ =\ 0;}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{for}(\ SizeType\ dstIdx\ =\ 0;\ dstIdx\ <\ dstLen;\ dstIdx++\ )}
+\DoxyCodeLine{00174\ \ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sum\ =\ 0;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ downsmpFactor;\ k++\ )}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ sum\ +=\ fullSrc[srcIdx++];}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ reducedDst[dstIdx]\ =\ (sum\ +\ roundingOffset)\ >>\ log2DownsmpFactor;}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00184\ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ Copy\ boundary\ if\ no\ downsampling\ is\ needed}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{for}\ (SizeType\ i\ =\ 0;\ i\ <\ dstLen;\ ++i)}
+\DoxyCodeLine{00187\ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ reducedDst[i]\ =\ fullSrc[i];}
+\DoxyCodeLine{00189\ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \ \ \}}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::predictionUpsampling1D(\textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ dst,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ src,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ bndry,}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ srcSizeUpsmpDim,\ \textcolor{keyword}{const}\ SizeType\ srcSizeOrthDim,}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ srcStep,\ \textcolor{keyword}{const}\ SizeType\ srcStride,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ dstStep,\ \textcolor{keyword}{const}\ SizeType\ dstStride,}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ bndryStep,}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ upsmpFactor\ )}
+\DoxyCodeLine{00200\ \{}
+\DoxyCodeLine{00201\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ log2UpsmpFactor\ =\ floorLog2(\ upsmpFactor\ );}
+\DoxyCodeLine{00202\ \ \ CHECKD(\ upsmpFactor\ <=\ 1,\ \textcolor{stringliteral}{"{}Upsampling\ factor\ must\ be\ at\ least\ 2."{}}\ );}
+\DoxyCodeLine{00203\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ roundingOffset\ =\ 1\ <<\ (log2UpsmpFactor\ -\/\ 1);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ SizeType\ idxOrthDim\ =\ 0;}
+\DoxyCodeLine{00206\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ srcLine\ =\ src;}
+\DoxyCodeLine{00207\ \ \ \textcolor{keywordtype}{int}*\ dstLine\ =\ dst;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ bndryLine\ =\ bndry\ +\ bndryStep\ -\/\ 1;}
+\DoxyCodeLine{00209\ \ \ \textcolor{keywordflow}{while}(\ idxOrthDim\ <\ srcSizeOrthDim\ )}
+\DoxyCodeLine{00210\ \ \ \{}
+\DoxyCodeLine{00211\ \ \ \ \ SizeType\ idxUpsmpDim\ =\ 0;}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ before\ =\ bndryLine;}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ behind\ =\ srcLine;}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordtype}{int}*\ currDst\ =\ dstLine;}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{while}(\ idxUpsmpDim\ <\ srcSizeUpsmpDim\ )}
+\DoxyCodeLine{00216\ \ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ SizeType\ pos\ =\ 1;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scaledBefore\ =\ (\ *before\ )\ <<\ log2UpsmpFactor;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ scaledBehind\ =\ 0;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\ pos\ <=\ upsmpFactor\ )}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ scaledBefore\ -\/=\ *before;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ scaledBehind\ +=\ *behind;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ *currDst\ =\ (scaledBefore\ +\ scaledBehind\ +\ roundingOffset)\ >>\ log2UpsmpFactor;}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ currDst\ +=\ dstStep;}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ idxUpsmpDim++;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ before\ =\ behind;}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ behind\ +=\ srcStep;}
+\DoxyCodeLine{00233\ \ \ \ \ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ idxOrthDim++;}
+\DoxyCodeLine{00236\ \ \ \ \ srcLine\ +=\ srcStride;}
+\DoxyCodeLine{00237\ \ \ \ \ dstLine\ +=\ dstStride;}
+\DoxyCodeLine{00238\ \ \ \ \ bndryLine\ +=\ bndryStep;}
+\DoxyCodeLine{00239\ \ \ \}}
+\DoxyCodeLine{00240\ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::predictionUpsampling(\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ dst,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ src\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00244\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ verSrc\ \ \ \ \ =\ src;}
+\DoxyCodeLine{00246\ \ \ SizeType\ \ \ verSrcStep\ =\ m\_blockSize.width;}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \textcolor{keywordflow}{if}(\ m\_upsmpFactorHor\ >\ 1\ )}
+\DoxyCodeLine{00249\ \ \ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ horDst\ =\ dst\ +\ (m\_upsmpFactorVer\ -\/\ 1)\ *\ m\_blockSize.width;}
+\DoxyCodeLine{00251\ \ \ \ \ verSrc\ =\ horDst;}
+\DoxyCodeLine{00252\ \ \ \ \ verSrcStep\ *=\ m\_upsmpFactorVer;}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ predictionUpsampling1D(\ horDst,\ src,\ m\_refSamplesLeft.data(),}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_reducedPredSize,\ m\_reducedPredSize,}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ m\_reducedPredSize,\ 1,\ verSrcStep,}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_upsmpFactorVer,\ m\_upsmpFactorHor\ );}
+\DoxyCodeLine{00258\ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \textcolor{keywordflow}{if}(\ m\_upsmpFactorVer\ >\ 1\ )}
+\DoxyCodeLine{00261\ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ predictionUpsampling1D(\ dst,\ verSrc,\ m\_refSamplesTop.data(),}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_reducedPredSize,\ m\_blockSize.width,}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ verSrcStep,\ 1,\ m\_blockSize.width,\ 1,}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ m\_upsmpFactorVer\ );}
+\DoxyCodeLine{00266\ \ \ \}}
+\DoxyCodeLine{00267\ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{keyword}{const}\ uint8\_t*\ MatrixIntraPrediction::getMatrixData(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ modeIdx)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00270\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00271\ \ \ \textcolor{keywordflow}{switch}(\ m\_sizeId\ )}
+\DoxyCodeLine{00272\ \ \ \{}
+\DoxyCodeLine{00273\ \ \ \textcolor{keywordflow}{case}\ 0:\ \textcolor{keywordflow}{return}\ \&mipMatrix4x4[modeIdx][0][0];}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \textcolor{keywordflow}{case}\ 1:\ \textcolor{keywordflow}{return}\ \&mipMatrix8x8[modeIdx][0][0];}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \textcolor{keywordflow}{case}\ 2:\ \textcolor{keywordflow}{return}\ \&mipMatrix16x16[modeIdx][0][0];}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \textcolor{keywordflow}{default}:\ THROW(\ \textcolor{stringliteral}{"{}Invalid\ mipSizeId"{}}\ );}
+\DoxyCodeLine{00280\ \ \ \}}
+\DoxyCodeLine{00281\ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \textcolor{keywordtype}{void}\ MatrixIntraPrediction::computeReducedPred(\ \textcolor{keywordtype}{int}*\textcolor{keyword}{const}\ result,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}*\ \textcolor{keyword}{const}\ input,}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t*\ matrix,}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ transpose,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth\ )}
+\DoxyCodeLine{00286\ \{}
+\DoxyCodeLine{00287\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ inputSize\ =\ 2\ *\ m\_reducedBdrySize;}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \textcolor{comment}{//\ use\ local\ buffer\ for\ transposed\ result}}
+\DoxyCodeLine{00290\ \ \ static\_vector<int,\ MIP\_MAX\_REDUCED\_OUTPUT\_SAMPLES>\ resBufTransposed(\ m\_reducedPredSize\ *\ m\_reducedPredSize\ );}
+\DoxyCodeLine{00291\ \ \ \textcolor{keywordtype}{int}*\textcolor{keyword}{const}\ resPtr\ =\ (transpose)\ ?\ resBufTransposed.data()\ :\ result;}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \textcolor{keywordtype}{int}\ sum\ =\ 0;}
+\DoxyCodeLine{00294\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ inputSize;\ i++\ )\ \{\ sum\ +=\ input[i];\ \}}
+\DoxyCodeLine{00295\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ (1\ <<\ (MIP\_SHIFT\_MATRIX\ -\/\ 1))\ -\/\ MIP\_OFFSET\_MATRIX\ *\ sum;}
+\DoxyCodeLine{00296\ \ \ CHECK(\ inputSize\ !=\ 4\ *\ (inputSize\ >>\ 2),\ \textcolor{stringliteral}{"{}Error,\ input\ size\ not\ divisible\ by\ four"{}}\ );}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *weight\ =\ matrix;}
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ inputOffset\ =\ transpose\ ?\ m\_inputOffsetTransp\ :\ m\_inputOffset;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ redSize\ =\ (m\_sizeId\ ==\ 2);}
+\DoxyCodeLine{00302\ \ \ \textcolor{keywordtype}{int}\ posRes\ =\ 0;}
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ m\_reducedPredSize;\ y++\ )}
+\DoxyCodeLine{00304\ \ \ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ m\_reducedPredSize;\ x++\ )}
+\DoxyCodeLine{00306\ \ \ \ \ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ redSize\ )\ weight\ -\/=\ 1;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmp0\ =\ redSize\ ?\ 0\ :\ (input[0]\ *\ weight[0]);}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmp1\ =\ input[1]\ *\ weight[1];}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmp2\ =\ input[2]\ *\ weight[2];}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ tmp3\ =\ input[3]\ *\ weight[3];}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 4;\ i\ <\ inputSize;\ i\ +=\ 4)}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ tmp0\ +=\ input[i]\ \ \ \ \ *\ weight[i];}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ tmp1\ +=\ input[i\ +\ 1]\ *\ weight[i\ +\ 1];}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ tmp2\ +=\ input[i\ +\ 2]\ *\ weight[i\ +\ 2];}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ tmp3\ +=\ input[i\ +\ 3]\ *\ weight[i\ +\ 3];}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ resPtr[posRes++]\ =\ ClipBD<int>(((tmp0\ +\ tmp1\ +\ tmp2\ +\ tmp3\ +\ offset)\ >>\ MIP\_SHIFT\_MATRIX)\ +\ inputOffset,\ bitDepth);}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ weight\ +=\ inputSize;}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \}}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \textcolor{keywordflow}{if}(\ transpose\ )}
+\DoxyCodeLine{00326\ \ \ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ m\_reducedPredSize;\ y++\ )}
+\DoxyCodeLine{00328\ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ m\_reducedPredSize;\ x++\ )}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ result[\ y\ *\ m\_reducedPredSize\ +\ x\ ]\ =\ resPtr[\ x\ *\ m\_reducedPredSize\ +\ y\ ];}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,177 @@
+\doxysection{Buffer.\+cpp}
+\label{util_2src_2Buffer_8cpp_source}\index{util/src/Buffer.cpp@{util/src/Buffer.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Buffer.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Implementation\ of\ underlying\ memory\ mechanism\ for\ packets\ *\ planes.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ This\ version\ uses\ a\ std::vector<uint8\_t>}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ The\ users\ of\ this\ will\ make\ read/write\ intentions\ clear\ using\ map/unmap,\ so\ there}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ is\ the\ means\ to\ store\ the\ data\ in\ some\ other\ mappable\ store.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Buffer.hpp"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ <malloc.h>}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{//}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//}}
+\DoxyCodeLine{00062\ Buffer::Buffer()\ \{\}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ Buffer::\string~Buffer()\ \{\}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{//}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ Default\ Buffer\ implementation\ that\ just\ uses\ a\ std::vector<>}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{class\ }BufferVector\ :\ \textcolor{keyword}{public}\ Buffer\ \{}
+\DoxyCodeLine{00071\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00072\ \ \ \ \ \string~BufferVector()\textcolor{keyword}{\ override\ }\{\}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ BufferVector(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{unsigned}\ size)\ :\ bytes\_(data,\ data\ +\ size)\ \{\}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ BufferVector(\textcolor{keywordtype}{unsigned}\ size)\ :\ bytes\_(size,\ 0)\ \{\}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{void}\ map\_read(\textcolor{keywordtype}{unsigned}\ offset,\ \textcolor{keywordtype}{unsigned}\ size,\ \textcolor{keyword}{const}\ uint8\_t\ *\&mapped\_data,\ \textcolor{keywordtype}{unsigned}\ \&mapped\_size)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ assert(offset\ <=\ bytes\_.size());}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ assert(offset\ +\ size\ <=\ bytes\_.size());}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ mapped\_data\ =\ bytes\_.data()\ +\ offset;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ mapped\_size\ =\ size;}
+\DoxyCodeLine{00084\ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ map\_write(\textcolor{keywordtype}{unsigned}\ offset,\ \textcolor{keywordtype}{unsigned}\ size,\ uint8\_t\ *\&mapped\_data,\ \textcolor{keywordtype}{unsigned}\ \&mapped\_size)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ assert(offset\ <=\ bytes\_.size());}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ assert(offset\ +\ size\ <=\ bytes\_.size());}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ mapped\_data\ =\ bytes\_.data()\ +\ offset;}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ mapped\_size\ =\ size;}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ unmap()\textcolor{keyword}{\ const\ override\ }\{\}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00097\ \ \ \ \ std::vector<uint8\_t>\ bytes\_;}
+\DoxyCodeLine{00098\ \};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ std::unique\_ptr<Buffer>\ CreateBufferVector(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{unsigned}\ size)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<Buffer>(\textcolor{keyword}{new}\ BufferVector(data,\ size));}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ std::unique\_ptr<Buffer>\ CreateBufferVector(\textcolor{keywordtype}{unsigned}\ size)\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<Buffer>(\textcolor{keyword}{new}\ BufferVector(size));\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00107\ \textcolor{comment}{//}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ Create\ page\ aligned\ buffers}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{class\ }BufferAligned\ :\ \textcolor{keyword}{public}\ Buffer\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ ALIGNMENT\ =\ 64;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00115\ \ \ \ \ BufferAligned(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{unsigned}\ size)\ :\ size\_(size)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ size\ =\ (size\ +\ (ALIGNMENT\ -\/\ 1))\ \&\ \string~(ALIGNMENT\ -\/\ 1);}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ bytes\_\ =\ \_aligned\_malloc(size,\ ALIGNMENT);}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ bytes\_\ =\ aligned\_alloc(ALIGNMENT,\ size);}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ memcpy(bytes\_,\ data,\ size);}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ BufferAligned(\textcolor{keywordtype}{unsigned}\ size)\ :\ size\_(size)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ size\ =\ (size\ +\ (ALIGNMENT\ -\/\ 1))\ \&\ \string~(ALIGNMENT\ -\/\ 1);}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ bytes\_\ =\ \_aligned\_malloc(size,\ ALIGNMENT);}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ bytes\_\ =\ aligned\_alloc(ALIGNMENT,\ size);}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \string~BufferAligned()\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bytes\_)\ \{}
+\DoxyCodeLine{00136\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \_aligned\_free(bytes\_);}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ free(bytes\_);}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ bytes\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{void}\ map\_read(\textcolor{keywordtype}{unsigned}\ offset,\ \textcolor{keywordtype}{unsigned}\ size,\ \textcolor{keyword}{const}\ uint8\_t\ *\&mapped\_data,\ \textcolor{keywordtype}{unsigned}\ \&mapped\_size)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ assert(offset\ <=\ size\_);}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ assert(offset\ +\ size\ <=\ size\_);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ mapped\_data\ =\ (uint8\_t\ *)bytes\_;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ mapped\_size\ =\ size;}
+\DoxyCodeLine{00151\ \ \ \ \ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{void}\ map\_write(\textcolor{keywordtype}{unsigned}\ offset,\ \textcolor{keywordtype}{unsigned}\ size,\ uint8\_t\ *\&mapped\_data,\ \textcolor{keywordtype}{unsigned}\ \&mapped\_size)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ assert(offset\ <=\ size\_);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ assert(offset\ +\ size\ <=\ size\_);}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ mapped\_data\ =\ (uint8\_t\ *)bytes\_;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ mapped\_size\ =\ size;}
+\DoxyCodeLine{00159\ \ \ \ \ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{void}\ unmap()\textcolor{keyword}{\ const\ override\ }\{\}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ size\_\ =\ 0;}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ *bytes\_\ =\ 0;}
+\DoxyCodeLine{00166\ \};}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ std::unique\_ptr<Buffer>\ CreateBufferAligned(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{unsigned}\ size)\ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<Buffer>(\textcolor{keyword}{new}\ BufferAligned(data,\ size));}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ std::unique\_ptr<Buffer>\ CreateBufferAligned(\textcolor{keywordtype}{unsigned}\ size)\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<Buffer>(\textcolor{keyword}{new}\ BufferAligned(size));\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['u_5fcomp_0',['U_COMP',['../defines_8h.html#aef061403e3c0c9f0c95d44979b80c91aa566e7f0da7170b8010330706f8252c13',1,'defines.h']]],
+  ['ubjson_1',['ubjson',['../namespacenlohmann_1_1detail.html#aa554fc6a11519e4f347deb25a9f0db40a4537f20910e85437f6d07701864084e8',1,'nlohmann::detail']]],
+  ['unknown_2',['unknown',['../structvnova_1_1utility_1_1BaseDecNalUnitType.html#ad28aef580e10ec96462b1220aef380ceaf83dc3167bd839dc911a66c515915428',1,'vnova::utility::BaseDecNalUnitType::Unknown'],['../structvnova_1_1utility_1_1BaseDecPictType.html#a4932a740f747bf93b0187acfc4641f94a8cac36674e80eac648483255820d7d5a',1,'vnova::utility::BaseDecPictType::Unknown']]],
+  ['unspecified_3',['unspecified',['../structvnova_1_1utility_1_1AVCNalType.html#a6020889cdd0460ffc2445fb7ed31e603a1599a71c4ccadc5af1a922a38795b8f2',1,'vnova::utility::AVCNalType::Unspecified'],['../structvnova_1_1utility_1_1LCEVCNalType.html#a628b625fd4303e74432de318790272fda31a875869f6b7223745d606610721ec4',1,'vnova::utility::LCEVCNalType::Unspecified']]],
+  ['unspecified_5f28_4',['UNSPECIFIED_28',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fafe99168c7482239bd1144f927bca73f6',1,'vnova::utility::VVCNalType']]],
+  ['unspecified_5f29_5',['UNSPECIFIED_29',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166facc3ebb717649a12f1f7cab8f2adf855c',1,'vnova::utility::VVCNalType']]],
+  ['unspecified_5f30_6',['UNSPECIFIED_30',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166faec029ac1523342d3afe7d25759d860b0',1,'vnova::utility::VVCNalType']]],
+  ['unspecified_5f31_7',['UNSPECIFIED_31',['../structvnova_1_1utility_1_1VVCNalType.html#a66fe9912630ced5f10416f54cfef166fa10944068aadfc2c310bea38cbc863c9a',1,'vnova::utility::VVCNalType']]],
+  ['upsample_5fadaptivecubic_8',['Upsample_AdaptiveCubic',['../namespacelctm.html#ae182e52747fb3d8299e41f8d4424658cae1e9692a262ad58dca282bc1c8dd4032',1,'lctm']]],
+  ['upsample_5fcubic_9',['Upsample_Cubic',['../namespacelctm.html#ae182e52747fb3d8299e41f8d4424658cabc9b360df82e7cf2d4e5e74147a96bcf',1,'lctm']]],
+  ['upsample_5flinear_10',['Upsample_Linear',['../namespacelctm.html#ae182e52747fb3d8299e41f8d4424658ca84796979dfa71b75215eb9af6819cdde',1,'lctm']]],
+  ['upsample_5fmodifiedcubic_11',['Upsample_ModifiedCubic',['../namespacelctm.html#ae182e52747fb3d8299e41f8d4424658ca6e4c3847fe76ec30911ca681cb111c12',1,'lctm']]],
+  ['upsample_5fnearest_12',['Upsample_Nearest',['../namespacelctm.html#ae182e52747fb3d8299e41f8d4424658ca3f507aafd38ff78dfa956c38dd3e813e',1,'lctm']]],
+  ['user_5fdata_5fregistered_5fitu_5ft_5ft35_13',['USER_DATA_REGISTERED_ITU_T_T35',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaa6f0c9850c12ce648583aa5fa7f0200bf',1,'vtm::SEI']]],
+  ['user_5fdata_5funregistered_14',['USER_DATA_UNREGISTERED',['../classvtm_1_1SEI.html#a7995ee387d216f6a002191c73e320bdaa21be8bef78b25128be9e1b8ccb7caa63',1,'vtm::SEI']]],
+  ['userdata_5f2bits_15',['UserData_2bits',['../namespacelctm.html#a96b4abe2502e04371b0c0a0de94934a4a187856a95ce1811869509eebbcd75bcc',1,'lctm']]],
+  ['userdata_5f6bits_16',['UserData_6bits',['../namespacelctm.html#a96b4abe2502e04371b0c0a0de94934a4a2dba296607ba8befca6d94277ce90e78',1,'lctm']]],
+  ['userdata_5fnone_17',['UserData_None',['../namespacelctm.html#a96b4abe2502e04371b0c0a0de94934a4a6328335adf9d48a973b8af681db991b0',1,'lctm']]],
+  ['userdatamethod_5ffixedrandom_18',['UserDataMethod_FixedRandom',['../namespacelctm.html#ae98a46efa5c760355b710f47c5f4338da7b752487603e9fa4eff098f92852fc83',1,'lctm']]],
+  ['userdatamethod_5fones_19',['UserDataMethod_Ones',['../namespacelctm.html#ae98a46efa5c760355b710f47c5f4338dae1f2fcc1c4ba1eee5beeb6b3905a2373',1,'lctm']]],
+  ['userdatamethod_5frandom_20',['UserDataMethod_Random',['../namespacelctm.html#ae98a46efa5c760355b710f47c5f4338dae4a134ad40cf51feba506604652f0175',1,'lctm']]],
+  ['userdatamethod_5fzeros_21',['UserDataMethod_Zeros',['../namespacelctm.html#ae98a46efa5c760355b710f47c5f4338dabeba692c82f0a6646d87081adb09ae3b',1,'lctm']]]
+];

@@ -1,0 +1,147 @@
+\doxysection{Entropy\+Decoder.\+hpp}
+\label{EntropyDecoder_8hpp_source}\index{decoder/include/EntropyDecoder.hpp@{decoder/include/EntropyDecoder.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Component.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Surface.hpp"{}}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}BitstreamUnpacker.hpp"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}SignaledConfiguration.hpp"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Surface.hpp"{}}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }SymbolSource;}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }EntropyDecoderResidualsBase\ :\ \textcolor{keyword}{public}\ Component\ \{}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00056\ \ \ \ \ EntropyDecoderResidualsBase()\ :\ Component(\textcolor{stringliteral}{"{}EntropyDecoderResiduals"{}})\ \{\}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ RLE\ residuals\ parser\ -\/\ used\ to\ select\ huffman\ tree}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_ZERO,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{struct\ }rle\_pel\_t\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ int16\_t\ pel;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zero\_runlength;}
+\DoxyCodeLine{00065\ \ \ \ \ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ rle\_pel\_t\ decode\_pel(SymbolSource\ \&source)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{class\ }EntropyDecoderResiduals\ :\ \textcolor{keyword}{protected}\ EntropyDecoderResidualsBase\ \{}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00073\ \ \ \ \ EntropyDecoderResiduals()\ \{\}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Decode\ per-\/surface\ data\ into\ plane\ of\ symbols\ when\ coding\ units\ are\ NOT\ used\ (i.e\ no\ temporal\ and\ tile\_mode=0)}}
+\DoxyCodeLine{00076\ \ \ \ \ Surface\ process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,\ BitstreamUnpacker\ \&b);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00079\ \};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keyword}{class\ }EntropyDecoderResidualsTiled\ :\ \textcolor{keyword}{protected}\ EntropyDecoderResidualsBase\ \{}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00084\ \ \ \ \ EntropyDecoderResidualsTiled()\ \{\}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ Decode\ per-\/surface\ data\ into\ plane\ of\ symbols\ when\ coding\ units\ are\ used\ (i.e\ temporal\ or\ tile\_mode>0)}}
+\DoxyCodeLine{00087\ \ \ \ \ Surface\ process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,\ BitstreamUnpacker\ \&b,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00091\ \};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{class\ }EntropyDecoderTemporal\ :\ \textcolor{keyword}{public}\ Component\ \{}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ RLE\ temporal\ parser\ -\/\ used\ to\ select\ huffman\ tree}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ STATE\_ZERO\_RUN,\ STATE\_ONE\_RUN,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00099\ \ \ \ \ EntropyDecoderTemporal()\ :\ Component(\textcolor{stringliteral}{"{}EntropyDecoderTemporal"{}})\ \{\}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ Decode\ per-\/surface\ data\ into\ plane\ of\ temporal\ flags}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00103\ \ \ \ \ Surface\ process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,\ BitstreamUnpacker\ \&b,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{bool}\ use\_reduced\_signalling);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ decode\_run(SymbolSource\ \&source,\ \textcolor{keywordtype}{bool}\ symbol)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00108\ \};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{class\ }EntropyDecoderFlags\ :\ \textcolor{keyword}{public}\ Component\ \{}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ STATE\_ZERO\_RUN,\ STATE\_ONE\_RUN,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00115\ \ \ \ \ EntropyDecoderFlags()\ :\ Component(\textcolor{stringliteral}{"{}EntropyDecoderFlags"{}})\ \{\}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{//\ Decode\ per-\/surface\ data\ into\ plane\ of\ flags}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00119\ \ \ \ \ Surface\ process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ BitstreamUnpacker\ \&b);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ decode\_run(SymbolSource\ \&source,\ \textcolor{keywordtype}{bool}\ symbol)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00123\ \};}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{keyword}{class\ }EntropyDecoderSizes\ :\ \textcolor{keyword}{public}\ Component\ \{}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00130\ \ \ \ \ EntropyDecoderSizes()\ :\ Component(\textcolor{stringliteral}{"{}EntropyDecoderSizes"{}})\ \{\}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Decode\ per-\/surface\ data\ into\ plane\ of\ sizes}}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \ \ \ \ Surface\ process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ BitstreamUnpacker\ \&b,\ \textcolor{keyword}{const}\ std::vector<bool>\ entropy\_enabled,}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_idx,\ CompressionType\ compression\_type);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00138\ \ \ \ \ uint16\_t\ decode\_size(SymbolSource\ \&source)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00139\ \ \ \ \ int16\_t\ decode\_size\_delta(SymbolSource\ \&source)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00140\ \};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['dci_0',['DCI',['../classvtm_1_1DCI.html',1,'vtm']]],
+  ['deblocking_1',['Deblocking',['../classlctm_1_1Deblocking.html',1,'lctm']]],
+  ['decappmem_2',['DecAppMem',['../classDecAppMem.html',1,'']]],
+  ['decision_3',['Decision',['../structDQIntern_1_1Decision.html',1,'DQIntern']]],
+  ['decodedimage_4',['DecodedImage',['../structDecodedImage.html',1,'']]],
+  ['decoder_5',['Decoder',['../classlctm_1_1Decoder.html',1,'lctm']]],
+  ['decoderapp_6',['DecoderApp',['../classDecoderApp.html',1,'']]],
+  ['depquant_7',['depquant',['../classDQIntern_1_1DepQuant.html',1,'DQIntern::DepQuant'],['../classvtm_1_1DepQuant.html',1,'vtm::DepQuant']]],
+  ['deserializer_8',['Deserializer',['../classlctm_1_1Deserializer.html',1,'lctm']]],
+  ['detector_9',['detector',['../structnlohmann_1_1detail_1_1detector.html',1,'nlohmann::detail']]],
+  ['detector_3c_20default_2c_20void_5ft_3c_20op_3c_20args_2e_2e_2e_20_3e_20_3e_2c_20op_2c_20args_2e_2e_2e_20_3e_10',['detector&lt; Default, void_t&lt; Op&lt; Args... &gt; &gt;, Op, Args... &gt;',['../structnlohmann_1_1detail_1_1detector_3_01Default_00_01void__t_3_01Op_3_01Args_8_8_8_01_4_01_4_00_01Op_00_01Args_8_8_8_01_4.html',1,'nlohmann::detail']]],
+  ['dimensions_11',['Dimensions',['../classlctm_1_1Dimensions.html',1,'lctm']]],
+  ['distparam_12',['DistParam',['../classvtm_1_1DistParam.html',1,'vtm']]],
+  ['dithering_13',['Dithering',['../classlctm_1_1Dithering.html',1,'lctm']]],
+  ['downsamplekernel_14',['DownsampleKernel',['../structlctm_1_1DownsampleKernel.html',1,'lctm']]],
+  ['downsampling_15',['Downsampling',['../classlctm_1_1Downsampling.html',1,'lctm']]],
+  ['downsampling_5f1d_16',['Downsampling_1D',['../classlctm_1_1Downsampling__1D.html',1,'lctm']]],
+  ['dpbparameters_17',['DpbParameters',['../structvtm_1_1DpbParameters.html',1,'vtm']]],
+  ['dtrace_5fchannel_18',['dtrace_channel',['../structvtm_1_1dtrace__channel.html',1,'vtm']]],
+  ['dynamic_5fcache_19',['dynamic_cache',['../classvtm_1_1dynamic__cache.html',1,'vtm']]],
+  ['dynamic_5fcache_3c_20struct_20codingunit_20_3e_20',['dynamic_cache&lt; struct CodingUnit &gt;',['../classvtm_1_1dynamic__cache.html',1,'vtm']]],
+  ['dynamic_5fcache_3c_20struct_20predictionunit_20_3e_21',['dynamic_cache&lt; struct PredictionUnit &gt;',['../classvtm_1_1dynamic__cache.html',1,'vtm']]],
+  ['dynamic_5fcache_3c_20struct_20transformunit_20_3e_22',['dynamic_cache&lt; struct TransformUnit &gt;',['../classvtm_1_1dynamic__cache.html',1,'vtm']]]
+];

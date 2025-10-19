@@ -1,0 +1,183 @@
+\doxysection{Codec\+Utils.\+c}
+\label{CodecUtils_8c_source}\index{util/src/CodecUtils.c@{util/src/CodecUtils.c}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Support\ utils\ for\ codecs}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}CodecUtils.h"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <string.h>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{static}\ int32\_t\ create\_metadata(CodecMetadata\ *metadata,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_context(CodecContext\ c)\ \{}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_error(CodecError\ e)\ \{}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_metadata(CodecMetadata\ m)\ \{}
+\DoxyCodeLine{00057\ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ Properties\ of\ metadata}}
+\DoxyCodeLine{00060\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\ get\_metadata\_property\_name(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00062\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{static}\ uint32\_t\ get\_metadata\_property\_u32(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{static}\ int32\_t\ get\_metadata\_property\_i32(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{static}\ uint64\_t\ get\_metadata\_property\_u64(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{static}\ int64\_t\ get\_metadata\_property\_i64(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{static}\ int8\_t\ get\_metadata\_property\_bool(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ set\_metadata\_property\_u32(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id},\ uint32\_t\ v)\ \{}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ set\_metadata\_property\_i32(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id},\ int32\_t\ v)\ \{}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ set\_metadata\_property\_u64(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id},\ uint64\_t\ v)\ \{}
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ set\_metadata\_property\_i64(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id},\ uint64\_t\ v)\ \{}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ set\_metadata\_property\_bool(CodecMetadata\ metadata,\ uint32\_t\ \textcolor{keywordtype}{id},\ uint8\_t\ v)\ \{}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ Properties\ of\ error}}
+\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ int32\_t\ get\_error\_code(CodecError\ error)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ get\_error\_message(CodecError\ error,\ \textcolor{keywordtype}{char}\ *data,\ \textcolor{keywordtype}{size\_t}\ length)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ get\_error\_file(CodecError\ error,\ \textcolor{keywordtype}{char}\ *filename,\ \textcolor{keywordtype}{size\_t}\ length)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keyword}{static}\ uint32\_t\ get\_error\_line(CodecError\ error)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keyword}{static}\ int32\_t\ push\_packet(CodecContext\ c,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ length,\ CodecMetadata\ metadata,\ int8\_t\ eos,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keyword}{static}\ int32\_t\ pull\_packet(CodecContext\ c,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ length,\ CodecMetadata\ *metadata,\ int8\_t*\ eos,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keyword}{static}\ int32\_t\ push\_image(CodecContext\ c,\ \textcolor{keyword}{const}\ CodecImage*\ image,\ CodecMetadata\ metadata,\ int8\_t\ eos,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keyword}{static}\ int32\_t\ pull\_image(CodecContext\ c,\ CodecImage*\ image,\ CodecMetadata\ *metadata,\ int8\_t*\ eos,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ Codec*\ LTMCodecAllocate(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *version\_string,\ CodecOperation\ operation)\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ Codec\ *codec\ =\ (Codec\ *)calloc(1,\ \textcolor{keyword}{sizeof}(Codec));}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ codec-\/>api\_version\ =\ LOADABLE\_CODEC\_API\_VERSION;}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ codec-\/>name\ =\ strdup(name);}
+\DoxyCodeLine{00138\ \ \ \ \ codec-\/>version\_string\ =\ strdup(name);}
+\DoxyCodeLine{00139\ \ \ \ \ codec-\/>operation\ =\ operation;}
+\DoxyCodeLine{00140\ \ \ \ \ codec-\/>push\_packet\ =\ push\_packet;}
+\DoxyCodeLine{00141\ \ \ \ \ codec-\/>pull\_packet\ =\ pull\_packet;}
+\DoxyCodeLine{00142\ \ \ \ \ codec-\/>push\_image\ =\ push\_image;}
+\DoxyCodeLine{00143\ \ \ \ \ codec-\/>pull\_image\ =\ pull\_image;}
+\DoxyCodeLine{00144\ \ \ \ \ codec-\/>create\_metadata\ =\ create\_metadata;}
+\DoxyCodeLine{00145\ \ \ \ \ codec-\/>release\_context\ =\ release\_context;}
+\DoxyCodeLine{00146\ \ \ \ \ codec-\/>release\_error\ =\ release\_error;}
+\DoxyCodeLine{00147\ \ \ \ \ codec-\/>release\_metadata\ =\ release\_metadata;}
+\DoxyCodeLine{00148\ \ \ \ \ codec-\/>get\_metadata\_property\_name\ =\ get\_metadata\_property\_name;}
+\DoxyCodeLine{00149\ \ \ \ \ codec-\/>get\_metadata\_property\_u32\ =\ get\_metadata\_property\_u32;}
+\DoxyCodeLine{00150\ \ \ \ \ codec-\/>get\_metadata\_property\_i32\ =\ get\_metadata\_property\_i32;}
+\DoxyCodeLine{00151\ \ \ \ \ codec-\/>get\_metadata\_property\_u64\ =\ get\_metadata\_property\_u64;}
+\DoxyCodeLine{00152\ \ \ \ \ codec-\/>get\_metadata\_property\_i64\ =\ get\_metadata\_property\_i64;}
+\DoxyCodeLine{00153\ \ \ \ \ codec-\/>get\_metadata\_property\_bool\ =\ get\_metadata\_property\_bool;}
+\DoxyCodeLine{00154\ \ \ \ \ codec-\/>set\_metadata\_property\_u32\ =\ set\_metadata\_property\_u32;}
+\DoxyCodeLine{00155\ \ \ \ \ codec-\/>set\_metadata\_property\_i32\ =\ set\_metadata\_property\_i32;}
+\DoxyCodeLine{00156\ \ \ \ \ codec-\/>set\_metadata\_property\_u64\ =\ set\_metadata\_property\_u64;}
+\DoxyCodeLine{00157\ \ \ \ \ codec-\/>set\_metadata\_property\_i64\ =\ set\_metadata\_property\_i64;}
+\DoxyCodeLine{00158\ \ \ \ \ codec-\/>set\_metadata\_property\_bool\ =\ set\_metadata\_property\_bool;}
+\DoxyCodeLine{00159\ \ \ \ \ codec-\/>get\_error\_code\ =\ get\_error\_code;}
+\DoxyCodeLine{00160\ \ \ \ \ codec-\/>get\_error\_message\ =\ get\_error\_message;}
+\DoxyCodeLine{00161\ \ \ \ \ codec-\/>get\_error\_file\ =\ get\_error\_file;}
+\DoxyCodeLine{00162\ \ \ \ \ codec-\/>get\_error\_line\ =\ get\_error\_line;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
+\DoxyCodeLine{00165\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{keywordtype}{void}\ LTMCodecFree(Codec\ *codec)\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{if}(!codec)}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{if}(codec-\/>name)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ free((\textcolor{keywordtype}{void}\ *)codec-\/>name);}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{if}(codec-\/>version\_string)}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ free((\textcolor{keywordtype}{void}\ *)codec-\/>name);}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ free(codec);}
+\DoxyCodeLine{00178\ \}}
+
+\end{DoxyCode}

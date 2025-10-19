@@ -1,0 +1,210 @@
+\doxysection{Dimensions.\+cpp}
+\label{Dimensions_8cpp_source}\index{decoder/src/Dimensions.cpp@{decoder/src/Dimensions.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Dimensions.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Dimensions.hpp"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}SignaledConfiguration.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ Dimensions::Dimensions()\ \{\}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ Set\ surface\ dimensions\ for\ one\ plane}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//}}
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ Dimensions::set\_plane\_dimensions(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ scale\_tile\_width,\ \textcolor{keywordtype}{unsigned}\ scale\_tile\_height)\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tbs\ =\ configuration.global\_configuration.transform\_block\_size;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ plane\_width\_[plane][loq]\ =\ width;}
+\DoxyCodeLine{00056\ \ \ \ \ plane\_height\_[plane][loq]\ =\ height;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ layer\_width\_[plane][loq]\ =\ (width\ +\ tbs\ -\/\ 1)\ /\ tbs;}
+\DoxyCodeLine{00059\ \ \ \ \ layer\_height\_[plane][loq]\ =\ (height\ +\ tbs\ -\/\ 1)\ /\ tbs;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ Convert\ signalled\ tile\ size\ (in\ top\ level\ luma\ pels)\ into\ per\ layer\ size}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}(configuration.global\_configuration.tile\_width\ \&\&\ configuration.global\_configuration.tile\_height)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ CHECK(configuration.global\_configuration.tile\_width\ \%\ tbs\ ==\ 0);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ CHECK(configuration.global\_configuration.tile\_height\ \%\ tbs\ ==\ 0);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ tile\_width\_[plane][loq]\ =\ configuration.global\_configuration.tile\_width\ /\ (tbs\ *\ scale\_tile\_width);}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ tile\_height\_[plane][loq]\ =\ configuration.global\_configuration.tile\_height\ /\ (tbs\ *\ scale\_tile\_height);}
+\DoxyCodeLine{00068\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ tile\_width\_[plane][loq]\ =\ 0;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ tile\_height\_[plane][loq]\ =\ 0;}
+\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{comment}{//\ Set\ surface\ dimensions\ for\ all\ planes\ in\ loq}}
+\DoxyCodeLine{00075\ \textcolor{comment}{//}}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{void}\ Dimensions::set\_loq\_dimensions(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//\ Figure\ out\ UV\ dimensions\ from\ Y\ dimensions}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ chroma\_width\ =\ (width\ +\ chroma\_scale\_width\_\ -\/\ 1)\ /\ chroma\_scale\_width\_;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ chroma\_height\ =\ (height\ +\ chroma\_scale\_height\_\ -\/\ 1)\ /\ chroma\_scale\_height\_;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ Y}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration.global\_configuration.num\_image\_planes\ >=\ 1)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ set\_plane\_dimensions(configuration,\ 0,\ loq,\ width,\ height,\ 1,\ 1);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration.global\_configuration.num\_image\_planes\ ==\ 3)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ U}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ set\_plane\_dimensions(configuration,\ 1,\ loq,\ chroma\_width,\ chroma\_height,\ chroma\_scale\_width\_,\ chroma\_scale\_height\_);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ V}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ set\_plane\_dimensions(configuration,\ 2,\ loq,\ chroma\_width,\ chroma\_height,\ chroma\_scale\_width\_,\ chroma\_scale\_height\_);}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ Work\ out\ surface\ dimensions\ from\ configuration}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//}}
+\DoxyCodeLine{00096\ \textcolor{keywordtype}{void}\ Dimensions::set\_dimensions(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ set\_loq\_dimensions(configuration,\ LOQ\_LEVEL\_2,\ width,\ height);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration.global\_configuration.scaling\_mode[LOQ\_LEVEL\_2])\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ set\_loq\_dimensions(configuration,\ LOQ\_LEVEL\_1,\ width,\ height);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ set\_loq\_dimensions(configuration,\ LOQ\_LEVEL\_1,\ (width\ +\ 1)\ /\ 2,\ height);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ set\_loq\_dimensions(configuration,\ LOQ\_LEVEL\_1,\ (width\ +\ 1)\ /\ 2,\ (height\ +\ 1)\ /\ 2);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keywordtype}{void}\ Dimensions::set(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\ \{}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ Figure\ chroma\ scaling}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration.global\_configuration.colourspace)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_Y:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ chroma\_scale\_width\_\ =\ 1;}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ chroma\_scale\_height\_\ =\ 1;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV420:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ chroma\_scale\_width\_\ =\ 2;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ chroma\_scale\_height\_\ =\ 2;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV422:}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ chroma\_scale\_width\_\ =\ 2;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ chroma\_scale\_height\_\ =\ 1;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV444:}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ chroma\_scale\_width\_\ =\ 1;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ chroma\_scale\_height\_\ =\ 1;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00140\ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Try\ with\ given\ dimensions}}
+\DoxyCodeLine{00143\ \ \ \ \ set\_dimensions(configuration,\ width,\ height);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ CHECK(configuration.global\_configuration.num\_image\_planes\ >=\ configuration.global\_configuration.num\_processed\_planes);}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{comment}{//\ Get\ size\ of\ smallest\ enhanced\ plane's\ layers}}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ last\_plane\ =\ std::max(configuration.global\_configuration.num\_processed\_planes,\ 1u)\ -\/\ 1;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ Start\ with\ layer\ size\ in\ pels}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ w\ =\ layer\_width\_[last\_plane][LOQ\_LEVEL\_1]\ *\ configuration.global\_configuration.transform\_block\_size;}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ h\ =\ layer\_height\_[last\_plane][LOQ\_LEVEL\_1]\ *\ configuration.global\_configuration.transform\_block\_size;}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{//\ Scale\ up\ until\ >=\ original\ dimensions}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordflow}{while}\ (w\ <\ width)}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ w\ *=\ 2;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{while}\ (h\ <\ height)}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ h\ *=\ 2;}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{comment}{//\ Use\ conforming\ dimensions}}
+\DoxyCodeLine{00164\ \ \ \ \ set\_dimensions(configuration,\ w,\ h);}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Figure\ out\ sizes\ of\ scaling\ layers}}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration.global\_configuration.scaling\_mode[LOQ\_LEVEL\_2])\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ w\ /=\ 2;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ w\ /=\ 2;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ h\ /=\ 2;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00179\ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ intermediate\_width\_\ =\ w;}
+\DoxyCodeLine{00182\ \ \ \ \ intermediate\_height\_\ =\ h;}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration.global\_configuration.scaling\_mode[LOQ\_LEVEL\_1])\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ w\ /=\ 2;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ w\ /=\ 2;}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ h\ /=\ 2;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ base\_width\_\ =\ w;}
+\DoxyCodeLine{00199\ \ \ \ \ base\_height\_\ =\ h;}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{comment}{//\ where\ is\ the\ frame\ rate\ ???}}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ configuration.global\_configuration.temporal\_fps;}}
+\DoxyCodeLine{00203\ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

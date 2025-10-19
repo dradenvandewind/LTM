@@ -1,0 +1,222 @@
+\doxysection{Quantize.\+cpp}
+\label{Quantize_8cpp_source}\index{encoder/src/Quantize.cpp@{encoder/src/Quantize.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Quantize.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Quantize.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}InverseQuantize.hpp"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ Surface\ Quantize::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ int32\_t\ dirq\_step\_width,\ int32\_t\ deadzone,\ \textcolor{keyword}{const}\ Surface\ \&pixel\_sad\_plane,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{unsigned}\ threshold)\ \{}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ (pixel\_sad\_plane.empty()\ ||\ threshold\ ==\ 5)\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regular\ Quantization}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ step\_width;}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ deadzone;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.view\_as<int16\_t>(),}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ dirq\_step\_width,}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ deadzone,}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ in\ =\ c.src.read(x,\ y);}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ ((in\ >\ 0)\ ?\ 1\ :\ ((in\ <\ 0)\ ?\ (-\/1)\ :\ 0));}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out\ =\ clamp((int16\_t)(sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone)\ /\ c.step\_width))))),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00078\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Motion-\/adaptive\ Quantization}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ CHECK(threshold\ >\ 0\ \&\&\ threshold\ <\ 5);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ pixel\_sad;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ step\_width;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ deadzone;}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ threshold;}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.view\_as<int16\_t>(),}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ pixel\_sad\_plane.view\_as<int16\_t>(),}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ dirq\_step\_width,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ deadzone,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ transform\_block\_size,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ threshold,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ in\ =\ c.src.read(x,\ y);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ sad\ =\ c.pixel\_sad.read(x,\ y);}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ ((in\ >\ 0)\ ?\ 1\ :\ ((in\ <\ 0)\ ?\ (-\/1)\ :\ 0));}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out\ =\ (sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone)\ /\ c.step\_width)))));}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sad\ >\ (c.transform\_block\_size\ ==\ 4\ ?\ 200\ :\ 100))}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(out,\ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\_deadzone\ =\ ((int16\_t)c.threshold\ *\ c.deadzone)\ /\ 5;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ reduction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ r\_deadzone)\ /\ c.step\_width)));}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ correction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ c.deadzone)\ /\ c.step\_width)));}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ out\ +\ reduction\ -\/\ correction;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(out,\ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00120\ \ \ \ \ \}}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ Surface\ Quantize\_SWM::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ int32\_t\ *dirq\_step\_width,\ int32\_t\ *deadzone,}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ \&temporal\_mask,\ \textcolor{keyword}{const}\ Surface\ \&pixel\_sad\_plane,\ \textcolor{keywordtype}{unsigned}\ threshold)\ \{}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{if}\ (pixel\_sad\_plane.empty()\ ||\ threshold\ ==\ 5)\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regular\ Quantization}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ mask;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ d;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ *step\_width;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ *deadzone;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.view\_as<int16\_t>(),\ temporal\_mask.view\_as<uint8\_t>(),\ 32\ /\ transform\_block\_size,\ dirq\_step\_width,\ deadzone,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ tile\_refresh\ =\ c.mask.read((x\ /\ c.d)\ *\ c.d,\ (y\ /\ c.d)\ *\ c.d);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ in\ =\ c.src.read(x,\ y);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ ((in\ >\ 0)\ ?\ 1\ :\ ((in\ <\ 0)\ ?\ (-\/1)\ :\ 0));}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tile\_refresh\ ==\ TEMPORAL\_PRED)}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp((int16\_t)(sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone[0])\ /\ c.step\_width[0]))))),}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ clamp((int16\_t)(sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone[1])\ /\ c.step\_width[1]))))),}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00158\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Motion-\/adaptive\ Quantization}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ CHECK(threshold\ >\ 0\ \&\&\ threshold\ <\ 5);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ pixel\_sad;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ mask;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ d;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ *step\_width;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ *deadzone;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ threshold;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.view\_as<int16\_t>(),}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ pixel\_sad\_plane.view\_as<int16\_t>(),}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_mask.view\_as<uint8\_t>(),}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ 32\ /\ transform\_block\_size,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ dirq\_step\_width,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ deadzone,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ threshold,}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src\_plane.width(),\ src\_plane.height(),}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ tile\_refresh\ =\ c.mask.read((x\ /\ c.d)\ *\ c.d,\ (y\ /\ c.d)\ *\ c.d);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ in\ =\ c.src.read(x,\ y);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ sad\ =\ c.pixel\_sad.read(x,\ y);}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ out;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ sign\ =\ ((in\ >\ 0)\ ?\ 1\ :\ ((in\ <\ 0)\ ?\ (-\/1)\ :\ 0));}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tile\_refresh\ ==\ TEMPORAL\_PRED)}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ (sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone[0])\ /\ c.step\_width[0])))));}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ (sign\ *\ (std::max(0,\ (((sign\ *\ in\ +\ c.deadzone[1])\ /\ c.step\_width[1])))));}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sad\ >\ (c.d\ ==\ 8\ ?\ 200\ :\ 100))}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(out,\ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tile\_refresh\ ==\ TEMPORAL\_PRED)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\_deadzone\ =\ ((int16\_t)c.threshold\ *\ c.deadzone[0])\ /\ 5;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ reduction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ r\_deadzone)\ /\ c.step\_width[0])));}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ correction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ c.deadzone[0])\ /\ c.step\_width[0])));}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ out\ +\ reduction\ -\/\ correction;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\_deadzone\ =\ ((int16\_t)c.threshold\ *\ c.deadzone[1])\ /\ 5;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ reduction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ r\_deadzone)\ /\ c.step\_width[1])));}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ correction\ =\ sign\ *\ (std::min(1,\ std::max(0,\ (sign\ *\ in\ +\ c.deadzone[1])\ /\ c.step\_width[1])));}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ out\ +\ reduction\ -\/\ correction;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(out,\ (int16\_t)-\/8192,\ (int16\_t)8191);}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

@@ -1,0 +1,473 @@
+\doxysection{Model\+Encoder\+App.\+cpp}
+\label{ModelEncoderApp_8cpp_source}\index{src/ModelEncoderApp.cpp@{src/ModelEncoderApp.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Lorenzo\ Ciccarelli\ (lorenzo.ciccarelli@v-\/nova.com)}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ ModelEncoderApp.cpp}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cxxopts.hpp>}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <nlohmann/json.hpp>}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{using\ }json\ =\ nlohmann::json;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}FileEncoder.hpp"{}}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ "{}YUVReader.hpp"{}}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#if\ defined(\_\_linux\_\_)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#include\ "{}git\_version.h"{}}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#ifndef\ GIT\_VERSION}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#define\ GIT\_VERSION\ "{}"{}}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#include\ "{}SignaledConfiguration.hpp"{}}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00075\ BitstreamStatistic\ goStat;}
+\DoxyCodeLine{00076\ FILE\ *goBits\ =\ NULL;}
+\DoxyCodeLine{00077\ PsnrStatistic\ goPsnr;}
+\DoxyCodeLine{00078\ uint8\_t\ gaucMd5Digest[lctm::MAX\_NUM\_PLANES][16];}
+\DoxyCodeLine{00079\ ReportStructure\ goReportStructure;}
+\DoxyCodeLine{00080\ std::priority\_queue<ReportStructure,\ std::vector<ReportStructure,\ std::allocator<ReportStructure>>,\ ReportStructureComp>}
+\DoxyCodeLine{00081\ \ \ \ \ goReportQueue;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{using\ namespace\ }lctm;}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keywordtype}{int}\ main(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}\ *argv[])\ \{}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{auto}\ pb\ =\ Parameters::build();}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ cxxopts::Options\ options\_description(argv[0],\ \textcolor{stringliteral}{"{}LCEVC\ Encoder\ "{}}\ GIT\_VERSION);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ off}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ options\_description.add\_options()}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}i,input\_file"{}},\ \textcolor{stringliteral}{"{}Input\ filename\ for\ raw\ YUV\ video\ frames"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}source.yuv"{}}))}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}o,output\_file"{}},\ \textcolor{stringliteral}{"{}Output\ filename\ for\ elementary\ stream"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}output.lvc"{}}))}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}w,width"{}},\ \textcolor{stringliteral}{"{}Image\ width"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1920"{}}))}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}h,height"{}},\ \textcolor{stringliteral}{"{}Image\ height"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1080"{}}))}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}r,fps"{}},\ \textcolor{stringliteral}{"{}Frame\ rate"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}50"{}}))}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}l,limit"{}},\ \textcolor{stringliteral}{"{}Limit\ number\ of\ frames\ to\ encode"{}},\ cxxopts::value<unsigned>())}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}f,format"{}},\ \textcolor{stringliteral}{"{}Picture\ format\ (yuv420p,\ yuv420p10,\ yuv420p12,\ yuv420p14,\ yuv422p,\ yuv422p10,\ yuv422p12,\ yuv422p14,\ yuv444p,\ yuv444p10,\ yuv444p12,\ yuv444p14,\ y,\ y10,\ y12,\ or\ y14)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}yuv420p"{}}))}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}p,parameters"{}},\ \textcolor{stringliteral}{"{}JSON\ parameters\ for\ encoder\ (path\ to\ .json\ file)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}\{\}"{}}))}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}parameter\_config"{}},\ \textcolor{stringliteral}{"{}Configuration\ with\ default\ parameter\ values\ to\ use\ (default\ or\ conformance)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}default"{}}))}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dump\_surfaces"{}},\ \textcolor{stringliteral}{"{}Dump\ intermediate\ surfaces\ to\ yuv\ files"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}downsample\_only"{}},\ \textcolor{stringliteral}{"{}Downsample\ input\ and\ write\ to\ output."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}upsample\_only"{}},\ \textcolor{stringliteral}{"{}Upsample\ input\ and\ write\ to\ output."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}output\_recon"{}},\ \textcolor{stringliteral}{"{}Output\ filename\ for\ encoder\ yuv\ reconstruction\ (must\ be\ specified\ for\ output)"{}},\ cxxopts::value<string>())}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}encapsulation"{}},\ \textcolor{stringliteral}{"{}Code\ enhancement\ as\ SEI\ or\ NAL"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}nal"{}}))}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}additional\_info\_present"{}},\ \textcolor{stringliteral}{"{}Additional\ Info\ present."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}additional\_info\_type"{}},\ \textcolor{stringliteral}{"{}Additional\ Info\ type."{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}sei\_message\_present"{}},\ \textcolor{stringliteral}{"{}SEI\ Message\ present."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}vui\_message\_present"{}},\ \textcolor{stringliteral}{"{}VUI\ Message\ present."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}version"{}},\ \textcolor{stringliteral}{"{}Show\ version"{}})}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}help"{}},\ \textcolor{stringliteral}{"{}Show\ this\ help"{}});}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ options\_description.add\_options(\textcolor{stringliteral}{"{}Base\ Encoder\ Configuration"{}})}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}b,base\_encoder"{}},\ \textcolor{stringliteral}{"{}Base\ encoder\ plugin\ to\ use\ (avc,\ hevc,\ vvc,\ or\ evc)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}avc"{}}))}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}qp"{}},\ \textcolor{stringliteral}{"{}QP\ value\ to\ be\ used\ by\ the\ specified\ base\ encoder"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}28"{}}))}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}base"{}},\ \textcolor{stringliteral}{"{}Encoded\ base\ bitstream\ if\ base\ encoder\ shall\ be\ skipped"{}},\ cxxopts::value<string>())}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}base\_recon"{}},\ \textcolor{stringliteral}{"{}Decoded\ YUV\ for\ base\ bitstream"{}},\ cxxopts::value<string>())}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}keep\_base"{}},\ \textcolor{stringliteral}{"{}Keep\ the\ encoded\ base\ bitstream\ and\ reconstruction"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}intra\_period"{}},\ \textcolor{stringliteral}{"{}Intra\ Period\ for\ base\ encoding\ (default:\ derived\ from\ framerate)"{}},\ cxxopts::value<unsigned>())}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}base\_depth"{}},\ \textcolor{stringliteral}{"{}Bit\ depth\ of\ base\ encoder"{}},\ cxxopts::value<unsigned>());}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ options\_description.add\_options(\textcolor{stringliteral}{"{}Sequence\ Configuration"{}})}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}profile\_idc"{}},\ \textcolor{stringliteral}{"{}Profile\ (see\ Annex\ A.3)\ (auto,\ main,\ or\ main444)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}auto"{}}))}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}level\_idc"{}},\ \textcolor{stringliteral}{"{}Level\ (see\ Annex\ A.4)\ (0:\ choose\ automatically)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}sublevel\_idc"{}},\ \textcolor{stringliteral}{"{}Sublevel\ (see\ Annex\ A.4)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1"{}}))}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}conformance\_window"{}},\ \textcolor{stringliteral}{"{}Turn\ signalling\ of\ conformance\ cropping\ window\ offset\ parameters\ on"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}extended\_profile\_idc"{}},\ \textcolor{stringliteral}{"{}Extended\ profile\ (see\ Annex\ A)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}extended\_level\_idc"{}},\ \textcolor{stringliteral}{"{}Extended\ level\ (see\ Annex\ A)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}conf\_win\_left\_offset"{}},\ \textcolor{stringliteral}{"{}Left\ offset\ of\ the\ conformance\ window"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}conf\_win\_right\_offset"{}},\ \textcolor{stringliteral}{"{}Right\ offset\ of\ the\ conformance\ window"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}conf\_win\_top\_offset"{}},\ \textcolor{stringliteral}{"{}Top\ offset\ of\ the\ conformance\ window"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}conf\_win\_bottom\_offset"{}},\ \textcolor{stringliteral}{"{}Bottom\ offset\ of\ the\ conformance\ window"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}));}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ options\_description.add\_options(\textcolor{stringliteral}{"{}Global\ Configuration"{}})}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}num\_image\_planes"{}},\ \textcolor{stringliteral}{"{}Number\ of\ planes\ in\ input\ sequence"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}3"{}}))}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}num\_processed\_planes"{}},\ \textcolor{stringliteral}{"{}Number\ of\ planes\ for\ which\ enhancement\ shall\ be\ added\ (1\ or\ 3)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1"{}}))}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}predicted\_residual"{}},\ \textcolor{stringliteral}{"{}Predicted\ average\ after\ the\ upscaling"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}encoding\_transform\_type"{}},\ \textcolor{stringliteral}{"{}Transform\ type\ (dd\ or\ dds)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}dds"{}}))}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}temporal\_enabled"{}},\ \textcolor{stringliteral}{"{}Temporal\ prediction\ for\ enhancement\ sub-\/layer\ 2"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}temporal\_use\_reduced\_signalling"{}},\ \textcolor{stringliteral}{"{}Reduced\ signalling\ (tile\ based)\ for\ temporal"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}encoding\_upsample"{}},\ \textcolor{stringliteral}{"{}Upsample\ filter"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}modifiedcubic"{}}))}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}temporal\_step\_width\_modifier"{}},\ \textcolor{stringliteral}{"{}Temporal\ step\ width\ modifier"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}48"{}}))}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}chroma\_step\_width\_multiplier"{}},\ \textcolor{stringliteral}{"{}Chroma\ step\ width\ multiplier"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}64"{}}))}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}level\_1\_filtering\_first\_coefficient"{}},\ \textcolor{stringliteral}{"{}L-\/1\ filter\ 1st\ coefficient"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}level\_1\_filtering\_second\_coefficient"{}},\ \textcolor{stringliteral}{"{}L-\/1\ filter\ 2nd\ coefficient"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}scaling\_mode\_level1"{}},\ \textcolor{stringliteral}{"{}Scaling\ mode\ between\ encoded\ base\ and\ preliminary\ intermediate\ picture\ (none,\ 1d\ or\ 2d)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}none"{}}))}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}scaling\_mode\_level2"{}},\ \textcolor{stringliteral}{"{}Scaling\ mode\ between\ combined\ intermediate\ picture\ and\ preliminary\ output\ picture\ (none,\ 1d\ or\ 2d)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}2d"{}}))}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}user\_data\_enabled"{}},\ \textcolor{stringliteral}{"{}User\ data\ in\ enhancement\ sub-\/layer\ 1\ (none,\ 2bits\ or\ 6bits)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}none"{}}))}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}level1\_depth\_flag"{}},\ \textcolor{stringliteral}{"{}Flag\ for\ bit\ depth\ of\ enhancement\ sub-\/layer\ 1"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}tile\_width"{}},\ \textcolor{stringliteral}{"{}Width\ of\ a\ tile\ (disable\ tiling\ with\ 0)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}tile\_height"{}},\ \textcolor{stringliteral}{"{}Height\ of\ a\ tile\ (disable\ tiling\ with\ 0)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}compression\_type\_entropy\_enabled\_per\_tile"{}},\ \textcolor{stringliteral}{"{}Use\ compression\ to\ signal\ entropy\_enabled\ when\ tiling\ is\ used"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}},\ \textcolor{stringliteral}{"{}Compression\ type\ per\ tile\ (none,\ prefix\ or\ prefix\_diff)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}none"{}}))}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}upsampling\_coefficients"{}},\ \textcolor{stringliteral}{"{}Custom\ upsampling\ coefficents"{}},\ cxxopts::value<string>());}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ options\_description.add\_options(\textcolor{stringliteral}{"{}Picture\ Configuration"{}})}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_1"{}},\ \textcolor{stringliteral}{"{}Step\ width\ for\ enhancement\ sub-\/layer\ 1\ (range:\ [1,\ 32767])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}32767"{}}))}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_0"{}},\ \textcolor{stringliteral}{"{}Step\ width\ for\ enhancement\ sub-\/layer\ 2\ (range:\ [1,\ 32767])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}32767"{}}))}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}temporal\_signalling\_present"{}},\ \textcolor{stringliteral}{"{}Signal\ temporal\ layer\ although\ no\_enhacement\ is\ enabled"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}picture\_type"{}},\ \textcolor{stringliteral}{"{}Picture\ type\ (frame\ or\ field)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}frame"{}}))}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dithering\_control"{}},\ \textcolor{stringliteral}{"{}Dithering"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}))}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dithering\_type"{}},\ \textcolor{stringliteral}{"{}Dithering\ type\ (none,\ uniform\ or\ uniform\_fixed)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}none"{}}))}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dithering\_strength"{}},\ \textcolor{stringliteral}{"{}Strength\ of\ the\ dithering"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dequant\_offset\_mode"{}},\ \textcolor{stringliteral}{"{}Dequantization\ offset\ mode\ (default\ or\ const\_offset)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}default"{}}))}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dequant\_offset"{}},\ \textcolor{stringliteral}{"{}Offset\ of\ the\ dequantization"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}quant\_matrix\_mode"{}},\ \textcolor{stringliteral}{"{}Quantization\ mode\ (previous,\ default,\ custom,\ custom\_default,\ default\_custom\ or\ custom\_custom)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}previous"{}}))}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}qm\_coefficient\_1"{}},\ \textcolor{stringliteral}{"{}Custom\ quantization\ coefficents\ for\ sub-\/layer\ 1"{}},\ cxxopts::value<string>())}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}qm\_coefficient\_2"{}},\ \textcolor{stringliteral}{"{}Custom\ quantization\ coefficents\ for\ sub-\/layer\ 2"{}},\ cxxopts::value<string>())}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}level\_1\_filtering\_enabled"{}},\ \textcolor{stringliteral}{"{}Enable\ L-\/1\ filter\ (deblocking\ filter)"{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}));}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ options\_description.add\_options(\textcolor{stringliteral}{"{}Encoder\ only\ Configuration"{}})}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}encoding\_downsample\_luma"{}},\ \textcolor{stringliteral}{"{}Downsample\ filter\ for\ y\ plane"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}lanczos3"{}}))}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}encoding\_downsample\_chroma"{}},\ \textcolor{stringliteral}{"{}Downsample\ filter\ for\ u\ and\ v\ planes"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}lanczos3"{}}))}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}temporal\_cq\_sw\_multiplier"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ reduce\ the\ enhancement\ sub-\/layer\ 2\ stepwidth\ of\ an\ IDR\ (range:\ [200,\ 1000])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1000"{}}))}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop08"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ increase\ the\ enhancement\ sub-\/layer\ 2\ stepwidth\ of\ a\ picture\ at\ position\ 8\ (range:\ [1000,\ 2000])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1000"{}}))}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop04"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ increase\ the\ enhancement\ sub-\/layer\ 2\ stepwidth\ of\ a\ picture\ at\ position\ 4\ (range:\ [1000,\ 2000])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1000"{}}))}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop02"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ increase\ the\ enhancement\ sub-\/layer\ 2\ stepwidth\ of\ a\ picture\ at\ position\ 2\ (range:\ [1000,\ 2000])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1000"{}}))}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop01"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ increase\ the\ enhancement\ sub-\/layer\ 2\ stepwidth\ of\ a\ picture\ at\ position\ 1\ (range:\ [1000,\ 2000])"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}1000"{}}))}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}priority\_mode"{}},\ \textcolor{stringliteral}{"{}Priority\ map\ running\ mode"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}mode\_3\_1"{}}))}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}priority\_type\_sl\_1"{}},\ \textcolor{stringliteral}{"{}Priority\ block\ type\ SL-\/1"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}type\_4"{}}))}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}priority\_type\_sl\_2"{}},\ \textcolor{stringliteral}{"{}Priority\ block\ type\ SL-\/2"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}type\_5"{}}))}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}sad\_threshold"{}},\ \textcolor{stringliteral}{"{}Threshold\ of\ SAD\ decision\ for\ removing\ non-\/static\ residuals\ (off:\ 0)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}sad\_coeff\_threshold"{}},\ \textcolor{stringliteral}{"{}Threshold\ of\ coefficients\ for\ removing\ non-\/static\ residuals\ (off:\ 0)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}0"{}}))}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}quant\_reduced\_deadzone"{}},\ \textcolor{stringliteral}{"{}Multiplier\ to\ reduce\ the\ quantization\ deadzone\ (range:\ [1,\ 5])\ (off:\ 5)"{}},\ cxxopts::value<unsigned>()-\/>default\_value(\textcolor{stringliteral}{"{}5"{}}))}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}user\_data\_method"{}},\ \textcolor{stringliteral}{"{}Type\ of\ user\ data\ to\ be\ inserted\ (zeros,\ ones,\ random\ or\ fixed\_random)"{}},\ cxxopts::value<string>()-\/>default\_value(\textcolor{stringliteral}{"{}zeros"{}}))}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{stringliteral}{"{}dump\_configuration"{}},\ \textcolor{stringliteral}{"{}Output\ JSON\ encoded\ contents\ of\ config\ blocks\ that\ are\ written\ enhancement\ stream."{}},\ cxxopts::value<bool>()-\/>default\_value(\textcolor{stringliteral}{"{}false"{}})-\/>implicit\_value(\textcolor{stringliteral}{"{}true"{}}));}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ on}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ show\_help\ =\ argc\ ==\ 1;}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ options\ =\ options\_description.parse(argc,\ argv);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Help}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (show\_help\ ||\ options.count(\textcolor{stringliteral}{"{}help"{}}))\ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ options\_description.help(\{\textcolor{stringliteral}{"{}"{}},\ \textcolor{stringliteral}{"{}Base\ Encoder\ Configuration"{}},\ \textcolor{stringliteral}{"{}Sequence\ Configuration"{}},}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Global\ Configuration"{}},\ \textcolor{stringliteral}{"{}Picture\ Configuration"{}},\ \textcolor{stringliteral}{"{}Encoder\ only\ Configuration"{}}\})}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::endl;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Version}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}version"{}}))\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ INFO(GIT\_VERSION);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ exit(0);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Print\ version}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}LTM\ [\%s]\ "{}}\ GIT\_VERSION,\ get\_program().c\_str());}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Start\ with\ encoder\ parameters\ from\ command\ line\ or\ file}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ s\ =\ options[\textcolor{stringliteral}{"{}parameters"{}}].as<\textcolor{keywordtype}{string}>();}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!s.empty()\ \&\&\ s[0]\ !=\ \textcolor{charliteral}{'\{'})\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ String\ is\ filename\ -\/\ read\ and\ parse}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ f\ =\ lctm::read\_file(s);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (f.empty())}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ read\ parameters\ from\ \(\backslash\)"{}\%s\(\backslash\)"{}\(\backslash\)n"{}},\ s.c\_str());}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set\_json(f);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ String\ is\ json}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set\_json(s);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Override\ any\ settings\ from\ other\ arguments}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}input\_file"{}}))}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}input\_file"{}},\ options[\textcolor{stringliteral}{"{}input\_file"{}}].as<std::string>());}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}output\_file"{}}))}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}output\_file"{}},\ options[\textcolor{stringliteral}{"{}output\_file"{}}].as<std::string>());}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}width"{}}))}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}width"{}},\ options[\textcolor{stringliteral}{"{}width"{}}].as<unsigned>());}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}height"{}}))}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}height"{}},\ options[\textcolor{stringliteral}{"{}height"{}}].as<unsigned>());}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}fps"{}}))}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}fps"{}},\ options[\textcolor{stringliteral}{"{}fps"{}}].as<unsigned>());}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}limit"{}}))}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}limit"{}},\ options[\textcolor{stringliteral}{"{}limit"{}}].as<unsigned>());}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}format"{}}))}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}format"{}},\ options[\textcolor{stringliteral}{"{}format"{}}].as<std::string>());}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}parameter\_config"{}}))}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}parameter\_config"{}},\ options[\textcolor{stringliteral}{"{}parameter\_config"{}}].as<string>());}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dump\_surfaces"{}}))}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dump\_surfaces"{}},\ options[\textcolor{stringliteral}{"{}dump\_surfaces"{}}].as<bool>());}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}output\_recon"{}}))}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}output\_recon"{}},\ options[\textcolor{stringliteral}{"{}output\_recon"{}}].as<std::string>());}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}encapsulation"{}}))}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}encapsulation"{}},\ options[\textcolor{stringliteral}{"{}encapsulation"{}}].as<string>());}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}downsample\_only"{}}))}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}downsample\_only"{}},\ options[\textcolor{stringliteral}{"{}downsample\_only"{}}].as<bool>());}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}upsample\_only"{}}))}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}upsample\_only"{}},\ options[\textcolor{stringliteral}{"{}upsample\_only"{}}].as<bool>());}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ Encoder\ Configuration}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}base\_encoder"{}}))}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}base\_encoder"{}},\ options[\textcolor{stringliteral}{"{}base\_encoder"{}}].as<std::string>());}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}qp"{}}))}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}qp"{}},\ options[\textcolor{stringliteral}{"{}qp"{}}].as<unsigned>());}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}base"{}}))}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}base"{}},\ options[\textcolor{stringliteral}{"{}base"{}}].as<std::string>());}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}base\_recon"{}}))}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}base\_recon"{}},\ options[\textcolor{stringliteral}{"{}base\_recon"{}}].as<std::string>());}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}keep\_base"{}}))}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}keep\_base"{}},\ options[\textcolor{stringliteral}{"{}keep\_base"{}}].as<bool>());}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}intra\_period"{}}))}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}intra\_period"{}},\ options[\textcolor{stringliteral}{"{}intra\_period"{}}].as<unsigned>());}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}base\_depth"{}}))}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}base\_depth"{}},\ options[\textcolor{stringliteral}{"{}base\_depth"{}}].as<unsigned>());}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sequence\ Configuration}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}profile\_idc"{}}))}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}profile\_idc"{}},\ options[\textcolor{stringliteral}{"{}profile\_idc"{}}].as<string>());}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}level\_idc"{}}))}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}level\_idc"{}},\ options[\textcolor{stringliteral}{"{}level\_idc"{}}].as<unsigned>());}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}sublevel\_idc"{}}))}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}sublevel\_idc"{}},\ options[\textcolor{stringliteral}{"{}sublevel\_idc"{}}].as<unsigned>());}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}conformance\_window"{}}))}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}conformance\_window"{}},\ options[\textcolor{stringliteral}{"{}conformance\_window"{}}].as<bool>());}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}extended\_profile\_idc"{}}))}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}extended\_profile\_idc"{}},\ options[\textcolor{stringliteral}{"{}extended\_profile\_idc"{}}].as<unsigned>());}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}extended\_level\_idc"{}}))}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}extended\_level\_idc"{}},\ options[\textcolor{stringliteral}{"{}extended\_level\_idc"{}}].as<unsigned>());}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}conf\_win\_left\_offset"{}}))}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}conf\_win\_left\_offset"{}},\ options[\textcolor{stringliteral}{"{}conf\_win\_left\_offset"{}}].as<unsigned>());}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}conf\_win\_right\_offset"{}}))}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}conf\_win\_right\_offset"{}},\ options[\textcolor{stringliteral}{"{}conf\_win\_right\_offset"{}}].as<unsigned>());}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}conf\_win\_top\_offset"{}}))}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}conf\_win\_top\_offset"{}},\ options[\textcolor{stringliteral}{"{}conf\_win\_top\_offset"{}}].as<unsigned>());}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}conf\_win\_bottom\_offset"{}}))}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}conf\_win\_bottom\_offset"{}},\ options[\textcolor{stringliteral}{"{}conf\_win\_bottom\_offset"{}}].as<unsigned>());}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Global\ Config}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}num\_image\_planes"{}}))}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}num\_image\_planes"{}},\ options[\textcolor{stringliteral}{"{}num\_image\_planes"{}}].as<unsigned>());}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}num\_processed\_planes"{}}))}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}num\_processed\_planes"{}},\ options[\textcolor{stringliteral}{"{}num\_processed\_planes"{}}].as<unsigned>());}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}predicted\_residual"{}}))}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}predicted\_residual"{}},\ options[\textcolor{stringliteral}{"{}predicted\_residual"{}}].as<bool>());}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}encoding\_transform\_type"{}}))}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}encoding\_transform\_type"{}},\ options[\textcolor{stringliteral}{"{}encoding\_transform\_type"{}}].as<string>());}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}temporal\_enabled"{}}))}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}temporal\_enabled"{}},\ options[\textcolor{stringliteral}{"{}temporal\_enabled"{}}].as<bool>());}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}temporal\_use\_reduced\_signalling"{}}))}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}temporal\_use\_reduced\_signalling"{}},\ options[\textcolor{stringliteral}{"{}temporal\_use\_reduced\_signalling"{}}].as<bool>());}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}encoding\_upsample"{}}))}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}encoding\_upsample"{}},\ options[\textcolor{stringliteral}{"{}encoding\_upsample"{}}].as<string>());}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}temporal\_step\_width\_modifier"{}}))}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}temporal\_step\_width\_modifier"{}},\ options[\textcolor{stringliteral}{"{}temporal\_step\_width\_modifier"{}}].as<unsigned>());}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}level\_1\_filtering\_first\_coefficient"{}}))}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}level\_1\_filtering\_first\_coefficient"{}},\ options[\textcolor{stringliteral}{"{}level\_1\_filtering\_first\_coefficient"{}}].as<unsigned>());}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}level\_1\_filtering\_second\_coefficient"{}}))}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}level\_1\_filtering\_second\_coefficient"{}},\ options[\textcolor{stringliteral}{"{}level\_1\_filtering\_second\_coefficient"{}}].as<unsigned>());}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}scaling\_mode\_level1"{}}))}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}scaling\_mode\_level1"{}},\ options[\textcolor{stringliteral}{"{}scaling\_mode\_level1"{}}].as<string>());}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}scaling\_mode\_level2"{}}))}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}scaling\_mode\_level2"{}},\ options[\textcolor{stringliteral}{"{}scaling\_mode\_level2"{}}].as<string>());}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}user\_data\_enabled"{}}))}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}user\_data\_enabled"{}},\ options[\textcolor{stringliteral}{"{}user\_data\_enabled"{}}].as<string>());}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}level1\_depth\_flag"{}}))}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}level1\_depth\_flag"{}},\ options[\textcolor{stringliteral}{"{}level1\_depth\_flag"{}}].as<bool>());}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}tile\_width"{}}))}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}tile\_width"{}},\ options[\textcolor{stringliteral}{"{}tile\_width"{}}].as<unsigned>());}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}tile\_height"{}}))}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}tile\_height"{}},\ options[\textcolor{stringliteral}{"{}tile\_height"{}}].as<unsigned>());}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}compression\_type\_entropy\_enabled\_per\_tile"{}}))}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}compression\_type\_entropy\_enabled\_per\_tile"{}},\ options[\textcolor{stringliteral}{"{}compression\_type\_entropy\_enabled\_per\_tile"{}}].as<bool>());}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}}))}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}},\ options[\textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}}].as<string>());}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}upsampling\_coefficients"{}}))}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}upsampling\_coefficients"{}},\ options[\textcolor{stringliteral}{"{}upsampling\_coefficients"{}}].as<string>());}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}chroma\_step\_width\_modifier"{}}))}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}chroma\_step\_width\_modifier"{}},\ options[\textcolor{stringliteral}{"{}chroma\_step\_width\_modifier"{}}].as<unsigned>());}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Picture\ Configuration}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_1"{}}))}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_1"{}},\ options[\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_1"{}}].as<unsigned>());}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_0"{}}))}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_0"{}},\ options[\textcolor{stringliteral}{"{}cq\_step\_width\_loq\_0"{}}].as<unsigned>());}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}temporal\_signalling\_present"{}}))}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}temporal\_signalling\_present"{}},\ options[\textcolor{stringliteral}{"{}temporal\_signalling\_present"{}}].as<bool>());}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}picture\_type"{}}))}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}picture\_type"{}},\ options[\textcolor{stringliteral}{"{}picture\_type"{}}].as<string>());}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dithering\_control"{}}))}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dithering\_control"{}},\ options[\textcolor{stringliteral}{"{}dithering\_control"{}}].as<bool>());}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dithering\_type"{}}))}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dithering\_type"{}},\ options[\textcolor{stringliteral}{"{}dithering\_type"{}}].as<string>());}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dithering\_strength"{}}))}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dithering\_strength"{}},\ options[\textcolor{stringliteral}{"{}dithering\_strength"{}}].as<unsigned>());}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dequant\_offset\_mode"{}}))}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dequant\_offset\_mode"{}},\ options[\textcolor{stringliteral}{"{}dequant\_offset\_mode"{}}].as<string>());}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}dequant\_offset"{}}))}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}dequant\_offset"{}},\ options[\textcolor{stringliteral}{"{}dequant\_offset"{}}].as<unsigned>());}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}quant\_matrix\_mode"{}}))}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}quant\_matrix\_mode"{}},\ options[\textcolor{stringliteral}{"{}quant\_matrix\_mode"{}}].as<string>());}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}qm\_coefficient\_1"{}}))}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}qm\_coefficient\_1"{}},\ options[\textcolor{stringliteral}{"{}qm\_coefficient\_1"{}}].as<string>());}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}qm\_coefficient\_2"{}}))}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}qm\_coefficient\_2"{}},\ options[\textcolor{stringliteral}{"{}qm\_coefficient\_2"{}}].as<string>());}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}level\_1\_filtering\_enabled"{}}))}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}level\_1\_filtering\_enabled"{}},\ options[\textcolor{stringliteral}{"{}level\_1\_filtering\_enabled"{}}].as<bool>());}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encoder\ only\ Configuration}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}encoding\_downsample\_luma"{}}))}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}encoding\_downsample\_luma"{}},\ options[\textcolor{stringliteral}{"{}encoding\_downsample\_luma"{}}].as<string>());}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}encoding\_downsample\_chroma"{}}))}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}encoding\_downsample\_chroma"{}},\ options[\textcolor{stringliteral}{"{}encoding\_downsample\_chroma"{}}].as<string>());}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}temporal\_cq\_sw\_multiplier"{}}))}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}temporal\_cq\_sw\_multiplier"{}},\ options[\textcolor{stringliteral}{"{}temporal\_cq\_sw\_multiplier"{}}].as<unsigned>());}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop08"{}}))}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop08"{}},\ options[\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop08"{}}].as<unsigned>());}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop04"{}}))}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop04"{}},\ options[\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop04"{}}].as<unsigned>());}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop02"{}}))}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop02"{}},\ options[\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop02"{}}].as<unsigned>());}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop01"{}}))}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop01"{}},\ options[\textcolor{stringliteral}{"{}delta\_sw\_mult\_gop01"{}}].as<unsigned>());}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}user\_data\_method"{}}))}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}user\_data\_method"{}},\ options[\textcolor{stringliteral}{"{}user\_data\_method"{}}].as<string>());}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}priority\_mode"{}}))}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}priority\_mode"{}},\ options[\textcolor{stringliteral}{"{}priority\_mode"{}}].as<string>());}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}priority\_type\_sl\_1"{}}))}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}priority\_type\_sl\_1"{}},\ options[\textcolor{stringliteral}{"{}priority\_type\_sl\_1"{}}].as<string>());}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}priority\_type\_sl\_2"{}}))}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}priority\_type\_sl\_2"{}},\ options[\textcolor{stringliteral}{"{}priority\_type\_sl\_2"{}}].as<string>());}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}sad\_threshold"{}}))}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}sad\_threshold"{}},\ options[\textcolor{stringliteral}{"{}sad\_threshold"{}}].as<unsigned>());}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}sad\_coeff\_threshold"{}}))}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}sad\_coeff\_threshold"{}},\ options[\textcolor{stringliteral}{"{}sad\_coeff\_threshold"{}}].as<unsigned>());}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (options.count(\textcolor{stringliteral}{"{}quant\_reduced\_deadzone"{}}))}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ pb.set(\textcolor{stringliteral}{"{}quant\_reduced\_deadzone"{}},\ options[\textcolor{stringliteral}{"{}quant\_reduced\_deadzone"{}}].as<unsigned>());}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ cxxopts::OptionException\ \&e)\ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}error\ parsing\ options:\ "{}}\ <<\ e.what()\ <<\ std::endl;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ exit(1);}
+\DoxyCodeLine{00402\ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{auto}\ parameters\ =\ pb.finish();}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ After\ parsing\ JSON}}
+\DoxyCodeLine{00406\ \ \ \ \ Surface::set\_dump\_surfaces(parameters[\textcolor{stringliteral}{"{}dump\_surfaces"{}}].get<bool>(\textcolor{keyword}{false}));}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ Figure\ source\ image\ description}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{const}\ ImageFormat\ format\ =\ parameters[\textcolor{stringliteral}{"{}format"{}}].get\_enum<ImageFormat>(IMAGE\_FORMAT\_YUV420P8);}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ parameters[\textcolor{stringliteral}{"{}width"{}}].get<\textcolor{keywordtype}{unsigned}>(1920);}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ parameters[\textcolor{stringliteral}{"{}height"{}}].get<\textcolor{keywordtype}{unsigned}>(1080);}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ image\_description(format,\ width,\ height);}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ fps\ =\ parameters[\textcolor{stringliteral}{"{}fps"{}}].get<\textcolor{keywordtype}{unsigned}>(50);}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ limit\ =\ parameters[\textcolor{stringliteral}{"{}limit"{}}].get<\textcolor{keywordtype}{unsigned}>(INT\_MAX);}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ input\_file\ =\ parameters[\textcolor{stringliteral}{"{}input\_file"{}}].get<\textcolor{keywordtype}{string}>(\textcolor{stringliteral}{"{}source.yuv"{}});}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ output\_recon\ =\ parameters[\textcolor{stringliteral}{"{}output\_recon"{}}].get<\textcolor{keywordtype}{string}>();}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ output\_file\ =\ parameters[\textcolor{stringliteral}{"{}output\_file"{}}].get<\textcolor{keywordtype}{string}>(\textcolor{stringliteral}{"{}output.lvc"{}});}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//\ Are\ we\ just\ scaling?}}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ Base\ encoder\ type}}
+\DoxyCodeLine{00428\ \ \ \ \ BaseCoding\ base\_encoder\_type\ =\ parameters[\textcolor{stringliteral}{"{}base\_encoder"{}}].get\_enum<BaseCoding>(BaseCoding\_AVC);}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ base\_file\ =\ parameters[\textcolor{stringliteral}{"{}base"{}}].get<\textcolor{keywordtype}{string}>();}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ base\_recon\_file\ =\ parameters[\textcolor{stringliteral}{"{}base\_recon"{}}].get<\textcolor{keywordtype}{string}>();}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00434\ \ \ \ \ goStat.Reset();}
+\DoxyCodeLine{00435\ \ \ \ \ goBits\ =\ fopen(\textcolor{stringliteral}{"{}BitstreamEnc.txt"{}},\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{00436\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{auto}\ file\_encoder\ =\ CreateFileEncoder(base\_encoder\_type,\ image\_description,\ fps,\ parameters);}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ clock\_t\ EnhaClock0;}
+\DoxyCodeLine{00440\ \ \ \ \ EnhaClock0\ =\ clock();}
+\DoxyCodeLine{00441\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}****\ Enh.\ start\ \%16d"{}},\ EnhaClock0);}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordflow}{if}\ (parameters[\textcolor{stringliteral}{"{}downsample\_only"{}}].get<bool>())}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Downsample\ only}}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ file\_encoder-\/>downsample\_file(input\_file,\ output\_file,\ limit);}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (parameters[\textcolor{stringliteral}{"{}upsample\_only"{}}].get<bool>())}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Upsample\ only}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ file\_encoder-\/>upsample\_file(input\_file,\ output\_file,\ limit);}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!base\_file.empty()\ \&\&\ !base\_recon\_file.empty())}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ with\ prepared\ base\ and\ recon}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ file\_encoder-\/>encode\_file\_with\_base(input\_file,\ base\_file,\ base\_recon\_file,\ output\_file,\ output\_recon,\ limit);}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!base\_file.empty()\ \&\&\ base\_recon\_file.empty())}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ with\ prepared\ base}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ file\_encoder-\/>encode\_file\_with\_decoder(input\_file,\ base\_file,\ output\_file,\ output\_recon,\ limit);}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ file\_encoder-\/>encode\_file(input\_file,\ output\_file,\ output\_recon,\ limit);}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \ clock\_t\ EnhaClock1;}
+\DoxyCodeLine{00460\ \ \ \ \ EnhaClock1\ =\ clock();}
+\DoxyCodeLine{00461\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}****\ Enh.\ stop.\ \%16d"{}},\ EnhaClock1);}
+\DoxyCodeLine{00462\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}@@@@\ Enh.\ delta\ \%16d"{}},\ EnhaClock1\ -\/\ EnhaClock0);}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00465\ \ \ \ \ goStat.Dump();}
+\DoxyCodeLine{00466\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00467\ \ \ \ \ fclose(goBits);}
+\DoxyCodeLine{00468\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00469\ \}}
+
+\end{DoxyCode}

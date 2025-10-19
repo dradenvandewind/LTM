@@ -1,0 +1,141 @@
+\doxysection{u\+Base\+Decoder\+YUV.\+cpp}
+\label{uBaseDecoderYUV_8cpp_source}\index{src/uBaseDecoderYUV.cpp@{src/uBaseDecoderYUV.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Florian\ Maurer\ (florian.maurer@v-\/nova.com)}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}uBaseDecoderYUV.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00040\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{const}\ uint32\_t\ kNalHeaderLength\ =\ 3;}
+\DoxyCodeLine{00046\ \textcolor{keyword}{const}\ uint8\_t\ kNalHeader[kNalHeaderLength]\ =\ \{0,\ 0,\ 1\};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ BaseDecNalUnitType::Enum\ uFromLCEVC(uint8\_t\ type)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordflow}{switch}\ (type)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordflow}{case}\ LCEVCNalType::LCEVC\_IDR:}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordflow}{case}\ LCEVCNalType::LCEVC\_NonIDR:}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Slice;}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordflow}{case}\ LCEVCNalType::Unspecified:}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00055\ \ \ \ \ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ uint32\_t\ uOffsetForNalUnitHeader(\textcolor{keyword}{const}\ uint8\_t\ *nal)\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(nal,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength;}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{if}\ (!nal[0]\ \&\&\ memcmp(nal\ +\ 1,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength\ +\ 1;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ BaseDecoderYUV::BaseDecoderYUV()\ :\ m\_currentNalTypeNumber(0),\ m\_currentPictureOrderCountPlus1(0)\ \{\}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{bool}\ BaseDecoderYUV::ParseNalUnit(\textcolor{keyword}{const}\ uint8\_t\ *nal,\ uint32\_t\ nalLength)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{bool}\ bSuccess\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ Account\ for\ AnnexB\ nal\ unit\ header\ ([0],0,0,1)}}
+\DoxyCodeLine{00076\ \ \ \ \ uint32\_t\ offset\ =\ uOffsetForNalUnitHeader(nal);}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ [forbidden-\/zero:1,\ forbidden-\/one:1,\ nal\_type:5,\ reserved:9]}}
+\DoxyCodeLine{00079\ \ \ \ \ m\_currentNalTypeNumber\ =\ (nal[offset]\ \&\ 0x3e)\ >>\ 1;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalTypeNumber\ ==\ 28)}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ m\_currentNalType\ =\ LCEVCNalType::LCEVC\_NonIDR;}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_currentNalTypeNumber\ ==\ 29)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ m\_currentNalType\ =\ LCEVCNalType::LCEVC\_IDR;}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_currentNalTypeNumber\ <\ 28\ ||\ m\_currentNalTypeNumber\ ==\ 31)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ m\_currentNalType\ =\ LCEVCNalType::Unspecified;}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \textcolor{comment}{//\ Reserved\ NAL\ Unit\ (30)}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ LCEVCNalType::LCEVC\_IDR\ ||\ m\_currentNalType\ ==\ LCEVCNalType::LCEVC\_NonIDR)}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ m\_currentPictureOrderCountPlus1++;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ offset\ +=\ 1;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ bSuccess;}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ uint8\_t\ *BaseDecoderYUV::GetDataBuffer()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (uint8\_t\ *)m\_currentNalPayload.data();\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ BaseDecPictType::Enum\ BaseDecoderYUV::GetBasePictureType()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_currentNalType\ ==\ LCEVCNalType::LCEVC\_IDR)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::IDR;}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::Unknown;}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ BaseDecNalUnitType::Enum\ BaseDecoderYUV::GetBaseNalUnitType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ uFromLCEVC(m\_currentNalType);\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ int32\_t\ BaseDecoderYUV::GetQP()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ uint32\_t\ BaseDecoderYUV::GetNalType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_currentNalType;\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ uint32\_t\ BaseDecoderYUV::GetPictureWidth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ uint32\_t\ BaseDecoderYUV::GetPictureHeight()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{keywordtype}{bool}\ BaseDecoderYUV::GetDPBCanRefresh()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ int64\_t\ BaseDecoderYUV::GetPictureOrderCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_currentPictureOrderCountPlus1\ -\/\ 1;\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ uint8\_t\ BaseDecoderYUV::GetMaxNumberOfReorderFrames()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ uint32\_t\ BaseDecoderYUV::GetFrameRate()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ uint32\_t\ BaseDecoderYUV::GetBitDepthLuma()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ uint32\_t\ BaseDecoderYUV::GetBitDepthChroma()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ uint32\_t\ BaseDecoderYUV::GetChromaFormatIDC()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ std::numeric\_limits<uint32\_t>::max();\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ uint32\_t\ BaseDecoderYUV::GetTemporalId()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderYUV()\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>\{\textcolor{keyword}{new}\ BaseDecoderYUV\{\}\};\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00135\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+
+\end{DoxyCode}

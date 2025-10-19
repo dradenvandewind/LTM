@@ -1,0 +1,191 @@
+\doxysection{Downsampling.\+cpp}
+\label{Downsampling_8cpp_source}\index{encoder/src/Downsampling.cpp@{encoder/src/Downsampling.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Downsampling.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Downsampling.hpp"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{struct\ }DownsampleKernel\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ uint8\_t\ length;}
+\DoxyCodeLine{00051\ \ \ \ \ int8\_t\ offset;}
+\DoxyCodeLine{00052\ \ \ \ \ int16\_t\ taps[12];}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ DownsampleKernel\ downsample\_kernels[]\ =\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \{2,\ 0,\ \{8192,\ 8192\}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Downsample\_Area}}
+\DoxyCodeLine{00057\ \ \ \ \ \{8,\ -\/3,\ \{-\/383,\ -\/399,\ 2466,\ 6506,\ 6506,\ 2466,\ -\/399,\ -\/383\}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Downsample\_Lanczos}}
+\DoxyCodeLine{00058\ \ \ \ \ \{12,\ -\/5,\ \{60,\ 247,\ -\/557,\ -\/1092,\ 2220,\ 7314,\ 7314,\ 2220,\ -\/1092,\ -\/557,\ 247,\ 60\}\},\ \textcolor{comment}{//\ Downsample\_Lanczos3}}
+\DoxyCodeLine{00059\ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ Apply\ 1D\ kernel\ to\ a\ [src,\ src+size]\ stripe,\ writing\ to\ dest.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ apply\_kernel(int16\_t\ *dest,\ \textcolor{keywordtype}{unsigned}\ dest\_stride,\ \textcolor{keyword}{const}\ int16\_t\ *src,\ \textcolor{keywordtype}{unsigned}\ src\_stride,\ \textcolor{keywordtype}{unsigned}\ size,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ DownsampleKernel\ \&kernel)\ \{}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ s\ =\ 0;\ s\ <\ (int)size;\ ++s,\ dest\ +=\ dest\_stride)\ \{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ int64\_t\ d\ =\ 0;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ kernel.length;\ ++k)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ o\ =\ clamp(s\ *\ 2\ +\ k\ +\ kernel.offset,\ 0,\ (\textcolor{keywordtype}{int})size\ *\ 2\ -\/\ 1);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ d\ +=\ kernel.taps[k]\ *\ (int32\_t)src[src\_stride\ *\ o];}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ *dest\ =\ shift\_clamp\_s16(d,\ 14);}
+\DoxyCodeLine{00075\ \ \ \ \ \}}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ Surface\ Downsampling::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ Downsample\ downsample)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ CHECK(downsample\ >=\ Downsample\_Area\ \&\&\ downsample\ <=\ Downsample\_Lanczos3);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{const}\ DownsampleKernel\ \&kernel\ =\ downsample\_kernels[downsample];}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src\_width\ =\ src\_plane.width();}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src\_height\ =\ src\_plane.height();}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ (src\_width\ +\ 1)\ >>\ 1;}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ (src\_height\ +\ 1)\ >>\ 1;}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ (src\_width\ +\ 1)\ /\ 2;}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ (src\_height\ +\ 1)\ /\ 2;}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ Intermediate\ is\ w/2,h}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{auto}\ h\_src\ =\ src\_plane.view\_as<int16\_t>();}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{auto}\ h\_dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00095\ \ \ \ \ h\_dst.reserve(dst\_width,\ src\_height);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ Horizontal}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_height;\ ++y)}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ apply\_kernel(h\_dst.data(0,\ y),\ 1,\ h\_src.data(0,\ y),\ 1,\ dst\_width,\ kernel);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ Surface\ intermediate\ =\ h\_dst.finish();}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ Final\ is\ w/2,h/2}}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{auto}\ v\_src\ =\ intermediate.view\_as<int16\_t>();}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{auto}\ v\_dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00107\ \ \ \ \ v\_dst.reserve(dst\_width,\ dst\_height);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Vertical}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ dst\_width;\ ++x)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ apply\_kernel(v\_dst.data(x,\ 0),\ dst\_width,\ v\_src.data(x,\ 0),\ dst\_width,\ dst\_height,\ kernel);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordflow}{return}\ v\_dst.finish();}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ Surface\ Downsampling\_1D::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ Downsample\ downsample)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ CHECK(downsample\ >=\ Downsample\_Area\ \&\&\ downsample\ <=\ Downsample\_Lanczos3);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{const}\ DownsampleKernel\ \&kernel\ =\ downsample\_kernels[downsample];}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ src\_width\ =\ src\_plane.width();}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ (src\_width\ +\ 1)\ >>\ 1;}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ (src\_width\ +\ 1)\ /\ 2;}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ src\_plane.height();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Output\ is\ w/2,h}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keyword}{auto}\ src\ =\ src\_plane.view\_as<int16\_t>();}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{auto}\ dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00132\ \ \ \ \ dst.reserve(dst\_width,\ height);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ apply\_kernel(dst.data(0,\ y),\ 1,\ src.data(0,\ y),\ 1,\ dst\_width,\ kernel);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{return}\ dst.finish();}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ Downsample\ image\ according\ to\ current\ settings}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//}}
+\DoxyCodeLine{00142\ Image\ DownsampleImage(\textcolor{keyword}{const}\ Image\ \&src,\ Downsample\ downsample\_luma,\ Downsample\ downsample\_chroma,\ ScalingMode\ scaling\_mode,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ dst\_bit\_depth)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ src\_bit\_depth\ =\ src.description().bit\_depth();}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{if}\ (dst\_bit\_depth\ ==\ 0\ ||\ dst\_bit\_depth\ ==\ src\_bit\_depth)\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scaling\_mode\ ==\ ScalingMode\_None)}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ src;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ dst\_bit\_depth\ =\ src\_bit\_depth;\ \textcolor{comment}{//\ Same\ input/output\ bit\ depths}}
+\DoxyCodeLine{00150\ \ \ \ \ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ vector<Surface>\ downsampled\_surfaces;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ src.description().num\_planes();\ ++p)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (scaling\_mode\ !=\ ScalingMode\_None)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ s\ =\ ConvertToInternal().process(src.plane(p),\ src\_bit\_depth);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ scaled;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (scaling\_mode)\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ Downsampling\_1D().process(s,\ p\ ==\ 0\ ?\ downsample\_luma\ :\ downsample\_chroma);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ Downsampling().process(s,\ p\ ==\ 0\ ?\ downsample\_luma\ :\ downsample\_chroma);}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ downsampled\_surfaces.push\_back(ConvertFromInternal().process(scaled,\ dst\_bit\_depth));}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ Downsampling,\ only\ bit\ shifting}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ downsampled\_surfaces.push\_back(ConvertBitShift().process(src.plane(p),\ src\_bit\_depth,\ dst\_bit\_depth));}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ ds\_desc(src.description().with\_depth(dst\_bit\_depth).format(),\ downsampled\_surfaces[0].width(),}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ downsampled\_surfaces[0].height());}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Image(\textcolor{stringliteral}{"{}downsampled"{}},\ ds\_desc,\ src.timestamp(),\ downsampled\_surfaces);}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

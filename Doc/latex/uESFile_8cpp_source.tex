@@ -1,0 +1,302 @@
+\doxysection{u\+ESFile.\+cpp}
+\label{uESFile_8cpp_source}\index{src/uESFile.cpp@{src/uESFile.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}uESFile.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ kNalUnitMarkerSize\ =\ 3;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ kNalUnitMarker[kNalUnitMarkerSize]\ =\ \{0x0,\ 0x0,\ 0x1\};}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ ESFile::ESFile()\ :\ m\_file(nullptr),\ m\_type(BaseDecoder::None),\ m\_decoder(nullptr),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_poc\_highest(0),\ m\_poc\_offset(0)\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ mpucBuffer\ =\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *)malloc(BITSTREAM\_BUFFER\_SIZE);}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ ESFile::\string~ESFile()\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ free(mpucBuffer);}
+\DoxyCodeLine{00050\ \ \ \ \ Close();}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{bool}\ ESFile::Open(\textcolor{keyword}{const}\ std::string\ \&path,\ BaseDecoder::Codec\ type)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{if}\ (IsOpen())}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ Close();}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{if}\ ((m\_file\ =\ fopen(path.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}}))\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ m\_type\ =\ type;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{return}\ Reset();}
+\DoxyCodeLine{00063\ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keywordtype}{bool}\ ESFile::Reset()\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ m\_decoder\ =\ CreateBaseDecoder(m\_type);}
+\DoxyCodeLine{00067\ \ \ \ \ CHECK(!!m\_decoder);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ fseek(m\_file,\ 0,\ SEEK\_SET)\ ==\ 0;}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{void}\ ESFile::Close()\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_file\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ fclose(m\_file);}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ m\_file\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00076\ \ \ \ \ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ m\_type\ =\ BaseDecoder::None;}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{bool}\ ESFile::IsOpen()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_file\ !=\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keywordtype}{bool}\ ESFile::IsEof()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ feof(m\_file)\ ==\ 0;\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ BaseDecoder::Codec\ ESFile::GetType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_type;\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ uint32\_t\ ESFile::GetPictureWidth()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00088\ \ \ \ \ assert(m\_decoder);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_decoder-\/>GetPictureWidth();}
+\DoxyCodeLine{00091\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ uint32\_t\ ESFile::GetPictureHeight()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00094\ \ \ \ \ assert(m\_decoder);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_decoder-\/>GetPictureHeight();}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ uint32\_t\ ESFile::GetBitDepth()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ assert(m\_decoder);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ CHECK(m\_decoder-\/>GetBitDepthLuma()\ ==\ m\_decoder-\/>GetBitDepthLuma());}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_decoder-\/>GetBitDepthLuma();}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ uint32\_t\ ESFile::GetChromaFormatIDC()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00108\ \ \ \ \ assert(m\_decoder);}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_decoder-\/>GetChromaFormatIDC();}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ ESFile::Result\ ESFile::NextAccessUnit(AccessUnit\ \&out)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ Result\ result;}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ result\ =\ ReadAccessUnit(out);}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{if}\ (result\ !=\ Success)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{return}\ Success;}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ ESFile::Result\ ESFile::ReadAccessUnit(AccessUnit\ \&out)\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{switch}\ (m\_decoder-\/>Delimiter())\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{case}\ NALDelimiterMarker:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ReadAccessUnitMarker(out);}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{case}\ NALDelimiterU32Length:}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ReadAccessUnitU32Length(out);}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NoFile;}
+\DoxyCodeLine{00134\ \ \ \ \ \}}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ ESFile::Result\ ESFile::ReadAccessUnitMarker(AccessUnit\ \&out)\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_file\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NoFile;}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ utility::DataBuffer\ buffer;}
+\DoxyCodeLine{00142\ \ \ \ \ std::vector<NalUnit>\ nalUnits;}
+\DoxyCodeLine{00143\ \ \ \ \ int32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00144\ \ \ \ \ uint32\_t\ temporalId\ =\ 0;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ c\ =\ fgetc(m\_file);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ !=\ EOF)}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ buffer.push\_back(c);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ foundNalStart\ =}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ buffer.size()\ >\ kNalUnitMarkerSize\ \&\&\ std::equal(buffer.end()\ -\/\ kNalUnitMarkerSize,\ buffer.end(),\ kNalUnitMarker);}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (foundNalStart\ ||\ feof(m\_file))\ \{}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ uint64\_t\ nalLength\ =\ buffer.size();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ uint64\_t\ */}\ \textcolor{keywordtype}{int}\ markerSize\ =\ 0;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (foundNalStart)\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ markerSize\ =\ kNalUnitMarkerSize;}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ [0,\ 0,\ 0,\ 1]\ case}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buffer.size()\ >\ kNalUnitMarkerSize\ \&\&\ buffer[nalLength\ -\/\ markerSize\ -\/\ 1]\ ==\ 0x0)}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++markerSize;}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalLength\ >\ markerSize)\ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalLength\ -\/=\ markerSize;}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ result\ =\ m\_decoder-\/>ParseNalUnit(buffer.data(),\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(nalLength));}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\ ==\ 1)\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NalUnit\ unit;}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ nalEnd\ =\ buffer.end()\ -\/\ markerSize;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_type\ =\ m\_decoder-\/>GetNalType();}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporalId\ =\ std::max(temporalId,\ m\_decoder-\/>GetTemporalId());}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ the\ next\ nal\ unit's\ marker\ into\ unit's\ buffer\ so\ we\ can\ just\ swap\ the\ two}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_data.insert(unit.m\_data.end(),\ nalEnd,\ buffer.end());}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buffer.erase(nalEnd,\ buffer.end());}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(unit.m\_data,\ buffer);}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalUnits.push\_back(std::move(unit));}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ (int32\_t)(nalLength);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_decoder-\/>GetBaseNalUnitType()\ ==\ BaseDecNalUnitType::Slice)\ \{}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_pictureType\ =\ m\_decoder-\/>GetBasePictureType();}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_poc\ =\ GenerateIncreasingPOC();}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_qp\ =\ m\_decoder-\/>GetQP();}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_temporalId\ =\ temporalId;}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_nalUnits\ =\ std::move(nalUnits);}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_size\ =\ size;}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fseek(m\_file,\ -\/\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\textcolor{keyword}{>}(markerSize),\ SEEK\_CUR);}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Success;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (result\ ==\ 2)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NalUnit\ unit;}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ nalEnd\ =\ buffer.end()\ -\/\ markerSize;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ the\ next\ nal\ unit's\ marker\ into\ unit's\ buffer\ so\ we\ can\ just\ swap\ the\ two}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_data.insert(unit.m\_data.end(),\ nalEnd,\ buffer.end());}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buffer.erase(nalEnd,\ buffer.end());}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(unit.m\_data,\ buffer);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalUnits.push\_back(std::move(unit));}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NalParsingError;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ ==\ EOF)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{return}\ EndOfFile;}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ ESFile::Result\ ESFile::ReadAccessUnitU32Length(AccessUnit\ \&out)\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_file\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NoFile;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ utility::DataBuffer\ buffer;}
+\DoxyCodeLine{00229\ \ \ \ \ std::vector<NalUnit>\ nalUnits;}
+\DoxyCodeLine{00230\ \ \ \ \ int32\_t\ size\ =\ 0;}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ length\ prefix}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ uint32\_t\ nal\_length\ =\ 0;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ result\ =\ fread(\&nal\_length,\ 1,\ \textcolor{keyword}{sizeof}(nal\_length),\ m\_file);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\ ==\ 0)}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EndOfFile;}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\ !=\ \textcolor{keyword}{sizeof}(nal\_length))}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NalParsingError;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ body\ of\ NAL\ unit}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ buffer.resize(nal\_length);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fread(buffer.data(),\ 1,\ nal\_length,\ m\_file)\ !=\ nal\_length)}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NalParsingError;}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_decoder-\/>ParseNalUnit(buffer.data(),\ nal\_length))\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ NalUnit\ unit;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_type\ =\ m\_decoder-\/>GetNalType();}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_data.insert(unit.m\_data.end(),\ (uint8\_t\ *)\&nal\_length,\ (uint8\_t\ *)\&nal\_length\ +\ \textcolor{keyword}{sizeof}(nal\_length));}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ unit.m\_data.insert(unit.m\_data.end(),\ buffer.begin(),\ buffer.end());}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ nalUnits.push\_back(std::move(unit));}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ size\ +=\ (int32\_t)(nal\_length\ +\ 4);\ \textcolor{comment}{//\ length\ +\ length\ prefix}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_decoder-\/>GetBaseNalUnitType()\ ==\ BaseDecNalUnitType::Slice)\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_pictureType\ =\ m\_decoder-\/>GetBasePictureType();}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_poc\ =\ GenerateIncreasingPOC();}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_qp\ =\ m\_decoder-\/>GetQP();}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_nalUnits\ =\ std::move(nalUnits);}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ out.m\_size\ =\ size;}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Success;}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NalParsingError;}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{comment}{//\ Create\ a\ POC\ that\ always\ increases\ across\ IDR}}
+\DoxyCodeLine{00275\ \textcolor{comment}{//}}
+\DoxyCodeLine{00276\ uint64\_t\ ESFile::GenerateIncreasingPOC()\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ uint64\_t\ decoded\_poc\ =\ m\_decoder-\/>GetPictureOrderCount();}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{comment}{//\ If\ we\ see\ the\ start\ of\ an\ IDR\ and\ the\ POC\ goes\ backwards,\ then}}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ offset\ the\ generated\ POC\ by\ the\ highest\ POC\ seen\ so\ far}}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{if}(m\_decoder-\/>GetBasePictureType()\ ==\ BaseDecPictType::IDR\ \&\&\ decoded\_poc\ <\ m\_poc\_highest)\ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ m\_poc\_offset\ =\ m\_poc\_highest;}
+\DoxyCodeLine{00284\ \ \ \ \ \}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keyword}{const}\ uint64\_t\ poc\ =\ decoded\_poc\ +\ m\_poc\_offset;}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordflow}{if}(poc\ >\ m\_poc\_highest)\ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ m\_poc\_highest\ =\ poc\ +\ m\_decoder-\/>GetPictureOrderCountIncrement();}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordflow}{return}\ poc;}
+\DoxyCodeLine{00293\ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00296\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+
+\end{DoxyCode}

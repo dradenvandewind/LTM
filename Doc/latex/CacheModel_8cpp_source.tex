@@ -1,0 +1,486 @@
+\doxysection{Cache\+Model.\+cpp}
+\label{CacheModel_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/CacheModel.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/CacheModel.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010\ -\/\ 2019,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <inttypes.h>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#define\ \_\_STDC\_FORMAT\_MACROS}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#ifdef\ WIN32}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ strdup\ \_strdup}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Utilities/program\_options\_lite.h"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}CacheModel.h"{}}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#if\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#ifndef\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_ACCESS\_INFO}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#define\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_ACCESS\_INFO\ 0}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#ifndef\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_FRAME}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#define\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_FRAME\ -\/1}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{enum}\ CacheAddressMap}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ CACHE\_MODE\_1D\ =\ 0,}
+\DoxyCodeLine{00061\ \ \ CACHE\_MODE\_2D,}
+\DoxyCodeLine{00062\ \ \ MAX\_NUM\_CACHE\_MODE}
+\DoxyCodeLine{00063\ \};}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{namespace\ }po\ =\ df::program\_options\_lite;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{void}*\ cache\_mem\_align\_malloc(\textcolor{keywordtype}{int}\ size,\ \textcolor{keywordtype}{int}\ alignSize)}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *alignBuf;}
+\DoxyCodeLine{00070\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *buf\ =\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *)malloc(size\ +\ 2\ *\ alignSize\ +\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}\ **));}
+\DoxyCodeLine{00071\ \ \ \textcolor{keywordflow}{if}\ (buf)}
+\DoxyCodeLine{00072\ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ alignBuf\ =\ buf\ +\ alignSize\ +\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}\ **);}
+\DoxyCodeLine{00074\ \ \ \ \ alignBuf\ -\/=\ (intptr\_t)alignBuf\ \&\ (alignSize\ -\/\ 1);}
+\DoxyCodeLine{00075\ \ \ \ \ *((\textcolor{keywordtype}{void}\ **)(alignBuf\ -\/\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}\ **)))\ =\ buf;}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{return}\ alignBuf;}
+\DoxyCodeLine{00077\ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ memory\ keep\ fail}}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{keywordtype}{void}\ cache\_mem\_align\_free(\textcolor{keywordtype}{void}\ *ptr)}
+\DoxyCodeLine{00082\ \{}
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordflow}{if}\ (\ ptr\ )}
+\DoxyCodeLine{00084\ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ free(*(((\textcolor{keywordtype}{void}\ **)ptr)\ -\/\ 1));}
+\DoxyCodeLine{00086\ \ \ \}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ CacheModel::CacheModel()}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \ \ m\_cacheEnable\ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00092\ \ \ m\_cacheEnableFilter\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00093\ \ \ m\_cacheLineSize\ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00094\ \ \ m\_numCacheLine\ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00095\ \ \ m\_numWay\ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00096\ \ \ m\_cacheSize\ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00097\ \ \ m\_shift\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00098\ \ \ m\_cacheAddr\ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00099\ \ \ m\_cachePoc\ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00100\ \ \ m\_cacheComp\ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00101\ \ \ m\_available\ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00102\ \ \ m\_refPoc\ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00103\ \ \ m\_base\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00104\ \ \ m\_compID\ \ \ \ \ \ \ \ \ \ \ \ =\ MAX\_NUM\_COMPONENT;}
+\DoxyCodeLine{00105\ \ \ m\_hitCount\ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00106\ \ \ m\_treeStatus\ \ \ \ \ \ \ \ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00107\ \ \ m\_missHitCount\ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00108\ \ \ m\_totalAccess\ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00109\ \ \ m\_hitCountSeq\ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00110\ \ \ m\_missHitCountSeq\ \ \ =\ 0;}
+\DoxyCodeLine{00111\ \ \ m\_totalAccessSeq\ \ \ \ =\ 0;}
+\DoxyCodeLine{00112\ \ \ m\_frameCount\ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ CacheModel::\string~CacheModel()}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{keywordtype}{int}\ CacheModel::xCalcPower(\ \textcolor{keywordtype}{int}\ num\ )}
+\DoxyCodeLine{00120\ \{}
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordtype}{int}\ power\ =\ -\/1;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ 32\ ;\ i++\ )}
+\DoxyCodeLine{00124\ \ \ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ num\ ==\ (1\ <<\ i)\ )}
+\DoxyCodeLine{00126\ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ power\ =\ i;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00129\ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{if}\ (power\ <\ 0)}
+\DoxyCodeLine{00132\ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ THROW(\textcolor{stringliteral}{"{}non\ power\ of\ 2"{}});}
+\DoxyCodeLine{00134\ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{return}\ power;}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{void}\ CacheModel::xConfigure(\textcolor{keyword}{const}\ std::string\&\ filename\ )}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ po::Options\ opts;}
+\DoxyCodeLine{00141\ \ \ opts.addOptions()}
+\DoxyCodeLine{00142\ \ \ (\textcolor{stringliteral}{"{}CacheEnable"{}},\ \ \ m\_cacheEnable,\ \ \ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Cache\ Enable"{}}\ )}
+\DoxyCodeLine{00143\ \ \ (\textcolor{stringliteral}{"{}CacheLineSize"{}},\ m\_cacheLineSize,\ \ \ 128,\ \textcolor{stringliteral}{"{}Cache\ line\ size"{}})}
+\DoxyCodeLine{00144\ \ \ (\textcolor{stringliteral}{"{}NumCacheLine"{}},\ \ m\_numCacheLine,\ \ \ \ \ 32,\ \textcolor{stringliteral}{"{}Number\ of\ cache\ line"{}})}
+\DoxyCodeLine{00145\ \ \ (\textcolor{stringliteral}{"{}NumWay"{}},\ \ \ \ \ \ \ \ m\_numWay,\ \ \ \ \ \ \ \ \ \ \ \ 4,\ \textcolor{stringliteral}{"{}Number\ of\ way"{}})}
+\DoxyCodeLine{00146\ \ \ (\textcolor{stringliteral}{"{}CacheAddrMode"{}},\ m\_cacheAddrMode,\ \ \ \ \ 0,\ \textcolor{stringliteral}{"{}Address\ mapping\ mode\ 0\ :\ linear\ address\ 1\ :\ 2D\ address"{}})}
+\DoxyCodeLine{00147\ \ \ (\textcolor{stringliteral}{"{}BlkWidth"{}},\ \ \ \ \ \ m\_cacheBlkWidth,\ \ \ \ 32,\ \textcolor{stringliteral}{"{}Block\ width\ in\ 2D\ address\ mode"{}})}
+\DoxyCodeLine{00148\ \ \ (\textcolor{stringliteral}{"{}BlkHeight"{}},\ \ \ \ \ m\_cacheBlkHeight,\ \ \ 16,\ \textcolor{stringliteral}{"{}Block\ height\ in\ 2D\ address\ mode"{}})}
+\DoxyCodeLine{00149\ \ \ (\textcolor{stringliteral}{"{}FrameReport"{}},\ \ \ m\_frameReport,\ \ \ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Report\ in\ each\ frame"{}}\ )}
+\DoxyCodeLine{00150\ \ \ ;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ po::setDefaults(opts);}
+\DoxyCodeLine{00153\ \ \ po::parseConfigFile(\ opts,\ filename\ );}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheLineSize\ >\ CACHE\_MEM\_ALIGN\_SIZE\ )}
+\DoxyCodeLine{00156\ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ fprintf(\ stderr,\ \textcolor{stringliteral}{"{}cache\ line\ size\ is\ bigger\ that\ memory\ alignment\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00158\ \ \ \ \ fprintf(\ stderr,\ \textcolor{stringliteral}{"{}This\ may\ lead\ mismatch\ among\ enviroments\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00159\ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheAddrMode\ ==\ CACHE\_MODE\_2D\ )}
+\DoxyCodeLine{00161\ \ \ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{int}\ blkSize\ =\ m\_cacheBlkWidth\ *\ m\_cacheBlkHeight;}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheLineSize\ \%\ blkSize\ !=\ 0\ \&\&\ blkSize\ \%\ m\_cacheLineSize\ )\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ THROW(\textcolor{stringliteral}{"{}CacheLineSize\ shall\ be\ multiple\ of\ BlkWidth\ x\ BlkHeight\ or\ BlkWidth\ x\ BlkHeight\ shall\ be\ multiple\ of\ CacheLineSize\ in\ 2D\ mode"{}});}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \}}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ initilize\ cache\ information\ such\ as\ size}}
+\DoxyCodeLine{00170\ \textcolor{keywordtype}{void}\ CacheModel::create(\textcolor{keyword}{const}\ std::string\&\ cacheCfgFileName)}
+\DoxyCodeLine{00171\ \{}
+\DoxyCodeLine{00172\ \ \ \textcolor{keywordtype}{bool}\ init\ =\ cacheCfgFileName\ ==\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordflow}{if}\ (cacheCfgFileName.length()\ >\ 1000)}
+\DoxyCodeLine{00175\ \ \ \{}
+\DoxyCodeLine{00176\ \ \ \ \ THROW(\textcolor{stringliteral}{"{}config\ file\ name\ for\ cache\ model\ is\ too\ long.\ It\ shall\ be\ <\ 1000\(\backslash\)n"{}});}
+\DoxyCodeLine{00177\ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \textcolor{keywordflow}{if}\ (\ init\ )}
+\DoxyCodeLine{00179\ \ \ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordflow}{return};\ \textcolor{comment}{//\ no\ cache\ config}}
+\DoxyCodeLine{00181\ \ \ \}}
+\DoxyCodeLine{00182\ \ \ xConfigure(cacheCfgFileName);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \textcolor{keywordflow}{if}\ (\ !m\_cacheEnable\ )}
+\DoxyCodeLine{00185\ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00187\ \ \ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \textcolor{comment}{//\ set\ parameters}}
+\DoxyCodeLine{00190\ \ \ m\_cacheSize\ =\ m\_numCacheLine\ *\ m\_numWay;}
+\DoxyCodeLine{00191\ \ \ \textcolor{comment}{//\ calc\ address\ calculation\ parameter}}
+\DoxyCodeLine{00192\ \ \ m\_shift\ =\ xCalcPower(\ m\_cacheLineSize\ );}
+\DoxyCodeLine{00193\ \ \ \textcolor{comment}{//\ keep\ memory}}
+\DoxyCodeLine{00194\ \ \ m\_cacheAddr\ \ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{size\_t}\ [m\_cacheSize];}
+\DoxyCodeLine{00195\ \ \ m\_cachePoc\ \ \ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}\ [m\_cacheSize];}
+\DoxyCodeLine{00196\ \ \ m\_cacheComp\ \ =\ \textcolor{keyword}{new}\ ComponentID\ [m\_cacheSize];}
+\DoxyCodeLine{00197\ \ \ m\_available\ \ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{bool}\ \ [m\_cacheSize];}
+\DoxyCodeLine{00198\ \ \ m\_hitCount\ \ \ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}\ \ [m\_cacheSize];}
+\DoxyCodeLine{00199\ \ \ \textcolor{comment}{//\ PLRU}}
+\DoxyCodeLine{00200\ \ \ m\_treeDepth\ \ =\ xCalcPower(\ m\_numWay\ );}
+\DoxyCodeLine{00201\ \ \ m\_treeStatus\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}\ [m\_numCacheLine];}
+\DoxyCodeLine{00202\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheLineSize\ >\ 0\ \&\&\ m\_numCacheLine\ >\ 0\ \&\&\ m\_numWay\ >\ 0\ )}
+\DoxyCodeLine{00203\ \ \ \{}
+\DoxyCodeLine{00204\ \ \ \ \ m\_cacheEnableFilter\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00205\ \ \ \}}
+\DoxyCodeLine{00206\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{comment}{//\ free\ memory}}
+\DoxyCodeLine{00209\ \textcolor{keywordtype}{void}\ CacheModel::destroy()}
+\DoxyCodeLine{00210\ \{}
+\DoxyCodeLine{00211\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheAddr\ )}
+\DoxyCodeLine{00212\ \ \ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_cacheAddr;}
+\DoxyCodeLine{00214\ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cachePoc\ )}
+\DoxyCodeLine{00216\ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_cachePoc;}
+\DoxyCodeLine{00218\ \ \ \}}
+\DoxyCodeLine{00219\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheComp\ )}
+\DoxyCodeLine{00220\ \ \ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_cacheComp;}
+\DoxyCodeLine{00222\ \ \ \}}
+\DoxyCodeLine{00223\ \ \ \textcolor{keywordflow}{if}\ (\ m\_available\ )}
+\DoxyCodeLine{00224\ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_available;}
+\DoxyCodeLine{00226\ \ \ \}}
+\DoxyCodeLine{00227\ \ \ \textcolor{keywordflow}{if}\ (\ m\_hitCount\ )}
+\DoxyCodeLine{00228\ \ \ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_hitCount;}
+\DoxyCodeLine{00230\ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \textcolor{keywordflow}{if}\ (\ m\_treeStatus\ )}
+\DoxyCodeLine{00232\ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_treeStatus;}
+\DoxyCodeLine{00234\ \ \ \}}
+\DoxyCodeLine{00235\ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \textcolor{comment}{//\ clear\ cache\ status\ (set\ invalid\ for\ each\ entry)}}
+\DoxyCodeLine{00238\ \textcolor{keywordtype}{void}\ CacheModel::clear()}
+\DoxyCodeLine{00239\ \{}
+\DoxyCodeLine{00240\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheEnable\ )}
+\DoxyCodeLine{00241\ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ ::memset(\ m\_available,\ 0,\ m\_cacheSize\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{bool})\ );}
+\DoxyCodeLine{00243\ \ \ \ \ ::memset(\ m\_hitCount,\ \ 0,\ m\_cacheSize\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int})\ );}
+\DoxyCodeLine{00244\ \ \ \ \ m\_missHitCount\ =\ 0;}
+\DoxyCodeLine{00245\ \ \ \ \ m\_totalAccess\ \ =\ 0;}
+\DoxyCodeLine{00246\ \ \ \}}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{comment}{//\ accuulate\ result\ for\ sequence\ level}}
+\DoxyCodeLine{00250\ \textcolor{keywordtype}{void}\ CacheModel::accumulateFrame(\ )}
+\DoxyCodeLine{00251\ \{}
+\DoxyCodeLine{00252\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheEnable\ )}
+\DoxyCodeLine{00253\ \ \ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ m\_cacheSize\ ;\ i++\ )}
+\DoxyCodeLine{00255\ \ \ \ \ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ m\_hitCountSeq\ +=\ m\_hitCount[\ i\ ];}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ m\_missHitCountSeq\ +=\ m\_missHitCount;}
+\DoxyCodeLine{00259\ \ \ \ \ m\_totalAccessSeq\ \ +=\ m\_totalAccess;}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_totalAccessSeq\ <\ 0\ )}
+\DoxyCodeLine{00262\ \ \ \ \ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}detect\ overflow\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \}}
+\DoxyCodeLine{00266\ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{comment}{//\ report\ bandwidth,\ hit\ ratio\ and\ so\ on\ in\ a\ Frame}}
+\DoxyCodeLine{00269\ \textcolor{keywordtype}{void}\ CacheModel::reportFrame(\ )}
+\DoxyCodeLine{00270\ \{}
+\DoxyCodeLine{00271\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheEnable\ )}
+\DoxyCodeLine{00272\ \ \ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_frameReport\ )}
+\DoxyCodeLine{00274\ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ hitCount\ =\ 0;}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ m\_cacheSize\ ;\ i++\ )}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ hitCount\ +=\ m\_hitCount[\ i\ ];}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ Statics\ in\ frame\ \%d\(\backslash\)n"{}},\ m\_frameCount\ );}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Hit\ ratio\ \%5.2f\ [\%\%]\(\backslash\)n"{}},\ (100\ *\ (\textcolor{keywordtype}{double})(hitCount))\ /\ m\_totalAccess\ );}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Required\ bandwidth\ \%.1f\ [MB]\(\backslash\)n"{}},\ ((\textcolor{keywordtype}{double})(m\_missHitCount)\ *\ m\_cacheLineSize)\ /\ (1024\ *\ 1024)\ );}
+\DoxyCodeLine{00285\ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \ m\_frameCount++;}
+\DoxyCodeLine{00287\ \ \ \}}
+\DoxyCodeLine{00288\ \}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \textcolor{keywordtype}{void}\ CacheModel::reportSequence(\ )}
+\DoxyCodeLine{00291\ \{}
+\DoxyCodeLine{00292\ \ \ \textcolor{keywordflow}{if}\ (\ m\_cacheEnable\ )}
+\DoxyCodeLine{00293\ \ \ \{}
+\DoxyCodeLine{00294\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ config\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00295\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ line\ size:\ \%d\(\backslash\)n"{}},\ m\_cacheLineSize\ \ );}
+\DoxyCodeLine{00296\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ line\ number\ \%d\(\backslash\)n"{}},\ m\_numCacheLine\ );}
+\DoxyCodeLine{00297\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ way\ number\ \%d\(\backslash\)n\(\backslash\)n"{}},\ m\_numWay\ );}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Cache\ Statics\ in\ total\(\backslash\)n"{}}\ );}
+\DoxyCodeLine{00300\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Hit\ ratio\ \%5.2f\ [\%\%]\(\backslash\)n"{}},\ (100\ *\ (\textcolor{keywordtype}{double})(m\_hitCountSeq))\ /\ m\_totalAccessSeq\ );}
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00302\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Hit\ count\ /\ total\ \%I64d\ /\ \%I64d\(\backslash\)n"{}},\ m\_hitCountSeq,\ m\_totalAccessSeq\ );}
+\DoxyCodeLine{00303\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00304\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Hit\ count\ /\ total\ \%"{}}\ PRIi64\ \textcolor{stringliteral}{"{}\ /\ \%"{}}\ PRIi64\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ m\_hitCountSeq,\ m\_totalAccessSeq\ );}
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00306\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}Required\ bandwidth\ \%.1f\ [MB]\ /\ frame\(\backslash\)n"{}},\ (((\textcolor{keywordtype}{double})m\_missHitCountSeq)\ *\ m\_cacheLineSize)\ /\ (m\_frameCount\ *\ 1024\ *\ 1024)\ );}
+\DoxyCodeLine{00307\ \ \ \}}
+\DoxyCodeLine{00308\ \}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \textcolor{keywordtype}{void}\ CacheModel::setRefPicture(\ \textcolor{keyword}{const}\ Picture\ *refPic,\ \textcolor{keyword}{const}\ ComponentID\ CompID\ )}
+\DoxyCodeLine{00311\ \{}
+\DoxyCodeLine{00312\ \ \ \ \ m\_refPoc\ =\ refPic-\/>getPOC();}
+\DoxyCodeLine{00313\ \ \ \ \ m\_base\ \ \ =\ refPic-\/>getOrigin(\ PIC\_RECONSTRUCTION,\ CompID\ );}
+\DoxyCodeLine{00314\ \ \ \ \ m\_compID\ =\ CompID;}
+\DoxyCodeLine{00315\ \ \ \ \ m\_picWidth\ =\ refPic-\/>getRecoBuf(\ CompID\ ).stride;}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{keywordtype}{bool}\ CacheModel::xIsCacheHit(\ \textcolor{keywordtype}{int}\ pos,\ \textcolor{keywordtype}{size\_t}\ addr\ )}
+\DoxyCodeLine{00319\ \{}
+\DoxyCodeLine{00320\ \ \ \textcolor{keywordtype}{bool}\ ret\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \textcolor{keywordflow}{if}\ (\ m\_available[pos]\ )}
+\DoxyCodeLine{00323\ \ \ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ addr\ ==\ m\_cacheAddr[pos]\ )}
+\DoxyCodeLine{00325\ \ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_refPoc\ ==\ m\_cachePoc[pos]\ )}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ m\_compID\ ==\ m\_cacheComp[pos]\ )}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ ret\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00336\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{comment}{//-\/-\/\ PLRU}}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \textcolor{keywordtype}{int}\ CacheModel::xGetWayTreePLRU(\ \textcolor{keywordtype}{int}\ entry\ )}
+\DoxyCodeLine{00341\ \{}
+\DoxyCodeLine{00342\ \ \ \textcolor{keywordtype}{int}\ shift\ \ =\ 0;}
+\DoxyCodeLine{00343\ \ \ \textcolor{keywordtype}{int}\ way\ \ \ \ =\ 0;}
+\DoxyCodeLine{00344\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ m\_treeDepth\ ;\ i++\ )}
+\DoxyCodeLine{00345\ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{int}\ flag\ \ =\ (m\_treeStatus[\ entry\ ]\ >>\ shift)\ \&\ 0x1;}
+\DoxyCodeLine{00347\ \ \ \ \ shift\ =\ (shift\ <<\ 1)\ +\ flag\ +\ 1;}
+\DoxyCodeLine{00348\ \ \ \ \ way\ \ \ =\ (way\ <<\ 1)\ |\ (flag\ \string^\ 0x1);}
+\DoxyCodeLine{00349\ \ \ \}}
+\DoxyCodeLine{00350\ \ \ xUpdateCacheStatus(\ entry,\ way\ );}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \textcolor{keywordflow}{return}\ way;}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{keywordtype}{void}\ CacheModel::xUpdatePLRUStatus(\ \textcolor{keywordtype}{int}\ entry,\ \textcolor{keywordtype}{int}\ way\ )}
+\DoxyCodeLine{00356\ \{}
+\DoxyCodeLine{00357\ \ \ \textcolor{keywordtype}{int}\ val\ \ \ =\ m\_treeStatus[\ entry\ ];}
+\DoxyCodeLine{00358\ \ \ \textcolor{keywordtype}{int}\ shift\ =\ 0;}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ i\ =\ 0\ ;\ i\ <\ m\_treeDepth\ ;\ i++\ )}
+\DoxyCodeLine{00361\ \ \ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keywordtype}{int}\ flag\ =\ (way\ >>\ (m\_treeDepth\ -\/\ i\ -\/\ 1))\ \&\ 0x1;}
+\DoxyCodeLine{00363\ \ \ \ \ val\ =\ (val\ \&\ (\string~0\ \string^\ (1\ <<\ shift)))\ |\ (flag\ <<\ shift);\ \textcolor{comment}{//\ only\ set\ shift-\/th\ bit}}
+\DoxyCodeLine{00364\ \ \ \ \ shift\ =\ (shift\ <<\ 1)\ +\ 2\ -\/\ flag;}
+\DoxyCodeLine{00365\ \ \ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ m\_treeStatus[\ entry\ ]\ =\ val;}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \textcolor{comment}{//-\/-\/\ other\ cache\ alg.\ (for\ future\ use)}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{comment}{//\ get\ update\ way\ based\ on\ each\ update\ algorithm\ (Now\ Tree\ PLRU\ only)}}
+\DoxyCodeLine{00373\ \textcolor{keywordtype}{int}\ CacheModel::xGetWay(\ \textcolor{keywordtype}{int}\ entry\ )}
+\DoxyCodeLine{00374\ \{}
+\DoxyCodeLine{00375\ \ \ \textcolor{comment}{//\ single\ way}}
+\DoxyCodeLine{00376\ \ \ \textcolor{keywordflow}{if}\ (\ m\_numWay\ ==\ 1\ )}
+\DoxyCodeLine{00377\ \ \ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00379\ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \textcolor{comment}{//\ multiway}}
+\DoxyCodeLine{00381\ \ \ \textcolor{keywordflow}{return}\ xGetWayTreePLRU(\ entry\ );}
+\DoxyCodeLine{00382\ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{comment}{//\ update\ cache\ entry}}
+\DoxyCodeLine{00385\ \textcolor{keywordtype}{void}\ CacheModel::xUpdateCache(\ \textcolor{keywordtype}{int}\ entry,\ \textcolor{keywordtype}{size\_t}\ addr\ )}
+\DoxyCodeLine{00386\ \{}
+\DoxyCodeLine{00387\ \ \ \textcolor{keywordtype}{int}\ way\ =\ xGetWay(\ entry\ );}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \textcolor{keywordflow}{if}\ (entry\ *\ m\_numWay\ +\ way\ >=\ m\_cacheSize\ ||\ entry\ *\ m\_numWay\ +\ way\ <\ 0)}
+\DoxyCodeLine{00390\ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ THROW(\textcolor{stringliteral}{"{}incorrect\ cache\ info"{}});}
+\DoxyCodeLine{00392\ \ \ \}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ m\_cacheAddr[\ entry\ *\ m\_numWay\ +\ way\ ]\ =\ addr;}
+\DoxyCodeLine{00395\ \ \ m\_cachePoc[\ entry\ *\ m\_numWay\ +\ way\ ]\ \ =\ m\_refPoc;}
+\DoxyCodeLine{00396\ \ \ m\_cacheComp[\ entry\ *\ m\_numWay\ +\ way\ ]\ =\ m\_compID;}
+\DoxyCodeLine{00397\ \ \ m\_available[\ entry\ *\ m\_numWay\ +\ way\ ]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \textcolor{keywordtype}{void}\ CacheModel::xUpdateCacheStatus(\ \textcolor{keywordtype}{int}\ entry,\ \textcolor{keywordtype}{int}\ way\ )}
+\DoxyCodeLine{00402\ \{}
+\DoxyCodeLine{00403\ \ \ \textcolor{keywordflow}{if}\ (\ m\_numWay\ ==\ 1\ )}
+\DoxyCodeLine{00404\ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00406\ \ \ \}}
+\DoxyCodeLine{00407\ \ \ xUpdatePLRUStatus(\ entry,\ way\ );}
+\DoxyCodeLine{00408\ \}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \textcolor{keywordtype}{size\_t}\ CacheModel::xMapAddress(\ \textcolor{keywordtype}{size\_t}\ offset\ )\ \{}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \textcolor{keywordtype}{size\_t}\ ret;}
+\DoxyCodeLine{00413\ \ \ \textcolor{keywordtype}{size\_t}\ xInPic,\ yInPic,\ blkPosX,\ blkPosY,\ xInBlk,\ yInBlk;}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \textcolor{keywordflow}{switch}\ (\ m\_cacheAddrMode\ )\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordflow}{case}\ CACHE\_MODE\_1D\ :\ \textcolor{comment}{//\ diret\ mapping}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ offset;}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keywordflow}{case}\ CACHE\_MODE\_2D\ :\ \textcolor{comment}{//\ 2D\ address\ mapping}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ xInPic\ \ =\ offset\ \%\ m\_picWidth;}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ yInPic\ \ =\ offset\ /\ m\_picWidth;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ blkPosX\ =\ xInPic\ /\ m\_cacheBlkWidth;}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ blkPosY\ =\ yInPic\ /\ m\_cacheBlkHeight;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ xInBlk\ \ =\ xInPic\ \%\ m\_cacheBlkWidth;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ yInBlk\ \ =\ yInPic\ \%\ m\_cacheBlkHeight;}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ ret\ \ =\ m\_picWidth\ *\ blkPosY\ *\ m\_cacheBlkHeight;}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ ret\ +=\ blkPosX\ *\ m\_cacheBlkWidth\ *\ m\_cacheBlkHeight;}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ ret\ +=\ yInBlk\ *\ m\_cacheBlkWidth;}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ ret\ +=\ xInBlk;}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00430\ \ \ \ \ default\ :}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unknown\ address\ mode\ "{}}\ <<\ m\_cacheAddrMode\ );}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00433\ \ \ \}}
+\DoxyCodeLine{00434\ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \textcolor{comment}{//\ check\ cache\ hit/miss}}
+\DoxyCodeLine{00437\ \textcolor{keywordtype}{void}\ CacheModel::cacheAccess(\ \textcolor{keyword}{const}\ Pel\ *addr,\ \textcolor{keyword}{const}\ std::string\&\ fileName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ lineNum\ )}
+\DoxyCodeLine{00438\ \{}
+\DoxyCodeLine{00439\ \ \ \textcolor{keywordflow}{if}\ (\ !m\_cacheEnable\ ||\ !m\_cacheEnableFilter\ )}
+\DoxyCodeLine{00440\ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00442\ \ \ \}}
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordtype}{bool}\ hit\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00444\ \ \ \textcolor{keywordtype}{size\_t}\ cacheAddr\ =\ xMapAddress(\ (\textcolor{keywordtype}{size\_t})\ (addr\ -\/\ m\_base)\ )\ >>\ m\_shift;}
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordtype}{int}\ \ entry\ =\ (int)\ (cacheAddr\ \%\ m\_numCacheLine);}
+\DoxyCodeLine{00446\ \ \ \textcolor{keywordtype}{int}\ \ pos\ \ \ =\ entry\ *\ m\_numWay;}
+\DoxyCodeLine{00447\ \ \ \textcolor{keywordtype}{int}\ \ way;}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \textcolor{comment}{//\ check\ cache\ hit\ in\ each\ way}}
+\DoxyCodeLine{00450\ \ \ \textcolor{keywordflow}{for}\ (\ way\ =\ 0\ ;\ way\ <\ m\_numWay\ ;\ way++\ )}
+\DoxyCodeLine{00451\ \ \ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ xIsCacheHit(\ pos\ +\ way,\ cacheAddr\ )\ )\ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ hit\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00456\ \ \ \}}
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\#if\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_ACCESS\_INFO}}
+\DoxyCodeLine{00458\ \ \ \textcolor{keywordflow}{if}\ (\ m\_frameCount\ ==\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE\_PRINT\_FRAME\ )}
+\DoxyCodeLine{00459\ \ \ \{}
+\DoxyCodeLine{00460\ \ \ \ \ fprintf(\ stdout,\ \textcolor{stringliteral}{"{}\%s\ \%d:\%p\(\backslash\)n"{}},\ fileName.c\_str(),\ lineNum,\ addr\ );}
+\DoxyCodeLine{00461\ \ \ \}}
+\DoxyCodeLine{00462\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \textcolor{keywordflow}{if}\ (\ !hit\ )}
+\DoxyCodeLine{00465\ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{comment}{//\ read\ data\ from\ external\ memory}}
+\DoxyCodeLine{00467\ \ \ \ \ m\_missHitCount++;}
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{comment}{//\ update\ cache\ entry}}
+\DoxyCodeLine{00469\ \ \ \ \ xUpdateCache(\ entry,\ cacheAddr\ );}
+\DoxyCodeLine{00470\ \ \ \}}
+\DoxyCodeLine{00471\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00472\ \ \ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \textcolor{comment}{//\ update\ hit\ status}}
+\DoxyCodeLine{00474\ \ \ \ \ m\_hitCount[\ pos\ +\ way\ ]\ ++;}
+\DoxyCodeLine{00475\ \ \ \ \ xUpdateCacheStatus(\ entry,\ way\ );}
+\DoxyCodeLine{00476\ \ \ \}}
+\DoxyCodeLine{00477\ \ \ m\_totalAccess++;}
+\DoxyCodeLine{00478\ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \textcolor{keywordtype}{void}\ CacheModel::setCacheEnable(\ \textcolor{keywordtype}{bool}\ enable\ )}
+\DoxyCodeLine{00481\ \{}
+\DoxyCodeLine{00482\ \ \ m\_cacheEnableFilter\ =\ enable;}
+\DoxyCodeLine{00483\ \}}
+\DoxyCodeLine{00484\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}}
+
+\end{DoxyCode}

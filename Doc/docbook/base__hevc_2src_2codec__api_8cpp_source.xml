@@ -1,0 +1,586 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_base__hevc_2src_2codec__api_8cpp_source" xml:lang="en-US">
+<title>codec_api.cpp</title>
+<indexterm><primary>deps/base_hevc/src/codec_api.cpp</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00001"/>00001 <emphasis role="comment">//</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00002"/>00002 <emphasis role="comment">//</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00003"/>00003 <emphasis role="preprocessor">#include&#32;&lt;cstdio&gt;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00004"/>00004 <emphasis role="preprocessor">#include&#32;&lt;cstdlib&gt;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00005"/>00005 <emphasis role="preprocessor">#include&#32;&lt;string&gt;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00006"/>00006 <emphasis role="preprocessor">#include&#32;&lt;vector&gt;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00007"/>00007 <emphasis role="preprocessor">#include&#32;&lt;thread&gt;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00008"/>00008 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00009"/>00009 <emphasis role="preprocessor">#include&#32;&quot;memory.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00010"/>00010 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00011"/>00011 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_CodecApi_8h">CodecApi.h</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00012"/>00012 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_CodecUtils_8h">CodecUtils.h</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00013"/>00013 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_Diagnostics_8hpp">Diagnostics.hpp</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00014"/>00014 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_Misc_8hpp">Misc.hpp</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00015"/>00015 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_RingBuffer_8hpp">RingBuffer.hpp</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00016"/>00016 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00017"/>00017 <emphasis role="preprocessor">#include&#32;&quot;TLibCommon/TComList.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00018"/>00018 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00019"/>00019 <emphasis role="preprocessor">#include&#32;&quot;TLibCommon/TComPicYuv.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00020"/>00020 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00021"/>00021 <emphasis role="preprocessor">#include&#32;&quot;TLibDecoder/TDecTop.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00022"/>00022 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00023"/>00023 <emphasis role="preprocessor">#include&#32;&quot;TLibDecoder/AnnexBread.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00024"/>00024 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00025"/>00025 <emphasis role="preprocessor">#include&#32;&quot;TLibDecoder/NALread.h&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00026"/>00026 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00027"/>00027 <emphasis role="preprocessor">#include&#32;&quot;<link linkend="_TVideoIOYuvMem_8h">TVideoIOYuvMem.h</link>&quot;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00028"/>00028 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00029"/>00029 <emphasis role="keyword">using&#32;namespace&#32;</emphasis><link linkend="_namespacestd">std</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00030"/>00030 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00031"/>00031 <emphasis role="keyword">struct&#32;</emphasis><link linkend="_structMetadata">Metadata</link>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00032"/>00032 &#32;&#32;&#32;&#32;int32_t&#32;<link linkend="_structMetadata_1ac7882f6012a5159f8d3facf62bd348ae">width</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00033"/>00033 &#32;&#32;&#32;&#32;int32_t&#32;<link linkend="_structMetadata_1a1c4a8fff8d947225d95b7e64452f5576">height</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00034"/>00034 &#32;&#32;&#32;&#32;int32_t&#32;<link linkend="_structMetadata_1a77780b808cb757ac1059564e056e6c55">planes</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00035"/>00035 &#32;&#32;&#32;&#32;int32_t&#32;<link linkend="_structMetadata_1a7c4f94d2710eb67ebdcbe10c6d2a5327">bpp</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00036"/>00036 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00037"/>00037 &#32;&#32;&#32;&#32;uint64_t&#32;<link linkend="_structMetadata_1a97d1aaee50e79708824b044b2baadbd7">timestamp</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00038"/>00038 &#32;&#32;&#32;&#32;uint64_t&#32;<link linkend="_structMetadata_1ae8ac0a429bc9b404d5870673189593dd">poc</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00039"/>00039 &#32;&#32;&#32;&#32;uint32_t&#32;<link linkend="_structMetadata_1a01139f3b55ad4efbd223f32b53ef701e">qp</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00040"/>00040 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00041"/>00041 &#32;&#32;&#32;&#32;uint32_t&#32;<link linkend="_structMetadata_1a4d9729f6dde2fbc4cd8e03c136e8b669">frame_type</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00042"/>00042 };
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00043"/>00043 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00044"/>00044 <emphasis role="keyword">struct&#32;</emphasis><link linkend="_structError">Error</link>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00045"/>00045 &#32;&#32;&#32;&#32;uint32_t&#32;<link linkend="_structError_1a346463656059871686d180f71f900a7a">code</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00046"/>00046 &#32;&#32;&#32;&#32;std::string&#32;<link linkend="_structError_1ab658956d4b570329a05280ed9d71e458">msg</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00047"/>00047 &#32;&#32;&#32;&#32;std::string&#32;<link linkend="_structError_1a430d5522db482f3242a235b07f99423a">file</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00048"/>00048 &#32;&#32;&#32;&#32;uint32_t&#32;<link linkend="_structError_1ace7c138567008afea62d66aee9b0063d">line</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00049"/>00049 };
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00050"/>00050 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00051"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8">00051</link> <emphasis role="keyword">enum</emphasis>&#32;<link linkend="_base__avc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8">State</link>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00052"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a37f2d46cb013e02d179bd376110b13c4">00052</link> &#32;&#32;&#32;&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a37f2d46cb013e02d179bd376110b13c4">StateNone</link>&#32;=&#32;0,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00053"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb">00053</link> &#32;&#32;&#32;&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb">StatePushing</link>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00054"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f">00054</link> &#32;&#32;&#32;&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f">StateDecoding</link>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00055"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7">00055</link> &#32;&#32;&#32;&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7">StateFlushing</link>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00056"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8add37f7d39aa98f563b061ed1d4eb6839">00056</link> &#32;&#32;&#32;&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8add37f7d39aa98f563b061ed1d4eb6839">StateFinished</link>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00057"/>00057 };
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00058"/>00058 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00059"/>00059 <emphasis role="keyword">struct&#32;</emphasis><link linkend="_structDecodedImage">DecodedImage</link>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00060"/>00060 &#32;&#32;&#32;&#32;vector&lt;uint8_t&gt;&#32;<link linkend="_structDecodedImage_1aef46bb3c3d16f8d24b5097bbf31fd12e">buffer_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00061"/>00061 &#32;&#32;&#32;&#32;<link linkend="_structCodecImage">CodecImage</link>&#32;<link linkend="_structDecodedImage_1af5ef8fc79f8aec91f61fd247a42d75d2">image_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00062"/>00062 };
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00063"/>00063 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00064"/>00064 <emphasis role="keyword">class&#32;</emphasis><link linkend="_classContext">Context</link>:&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_classTVideoIOYuvMem_1_1Writer">TVideoIOYuvMem::Writer</link>&#32;&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00065"/>00065 <emphasis role="keyword">public</emphasis>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00066"/>00066 &#32;&#32;&#32;&#32;<emphasis role="comment">//</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00067"/><link linkend="_classContext_1a8843e8692caa3f02e714c26a12ccafd9">00067</link> &#32;&#32;&#32;&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a8843e8692caa3f02e714c26a12ccafd9">flush</link>();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00068"/>00068 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">WriteOutput</link>(TComList&lt;TComPic&#32;*&gt;&#32;*pcListPic,&#32;<emphasis role="keywordtype">unsigned</emphasis>&#32;<emphasis role="keywordtype">int</emphasis>&#32;tId);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00069"/>00069 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a041516c46819d3a8023b11fef0257dea">FlushOutput</link>(TComList&lt;TComPic&#32;*&gt;&#32;*pcListPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00070"/>00070 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00071"/>00071 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Implement&#32;TVideoIOYuvMem::Writer</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00072"/>00072 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1ae5b0018483acf054882d2b0dfd459291">picture_begin</link>(<emphasis role="keywordtype">bool</emphasis>&#32;is16bit,&#32;UInt&#32;width,&#32;UInt&#32;height,&#32;ChromaFormat&#32;format)&#32;<emphasis role="keyword">override</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00073"/>00073 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a85068d51c0951cb081a55c135832e044">picture_end</link>()&#32;<emphasis role="keyword">override</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00074"/>00074 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;<link linkend="_classContext_1a0479ef08f93215f09a3be0b46b836562">write</link>(<emphasis role="keyword">const</emphasis>&#32;uint8_t&#32;*data,&#32;<emphasis role="keywordtype">size_t</emphasis>&#32;size)&#32;<emphasis role="keyword">override</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00075"/>00075 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00076"/>00076 &#32;&#32;&#32;&#32;<emphasis role="comment">//</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00077"/>00077 &#32;&#32;&#32;&#32;std::string&#32;<link linkend="_classContext_1ab1ea6d384b79a0f9f4ea1ee3c8595aad">configuration_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00078"/>00078 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00079"/>00079 &#32;&#32;&#32;&#32;<link linkend="_base__vvc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8">State</link>&#32;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00080"/>00080 &#32;&#32;&#32;&#32;stringstream&#32;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00081"/>00081 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00082"/><link linkend="_classContext_1a663f4f03c5ab865fe1cf5c4ee97a6e3f">00082</link> &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;<link linkend="_classContext_1a663f4f03c5ab865fe1cf5c4ee97a6e3f">frame_count</link>&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00083"/>00083 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00084"/>00084 &#32;&#32;&#32;&#32;thread&#32;<link linkend="_classContext_1af6ec2c9f19b0de79a58a53c4d01d7ae8">decoder_thread_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00085"/>00085 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00086"/>00086 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Base&#32;decoder</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00087"/><link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">00087</link> &#32;&#32;&#32;&#32;TDecTop&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00088"/><link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">00088</link> &#32;&#32;&#32;&#32;<link linkend="_classTVideoIOYuvMem">TVideoIOYuvMem</link>&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00089"/><link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">00089</link> &#32;&#32;&#32;&#32;Int&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00090"/>00090 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00091"/><link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">00091</link> &#32;&#32;&#32;&#32;Int&#32;<link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">m_outputBitDepth</link>[MAX_NUM_CHANNEL_TYPE];
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00092"/>00092 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00093"/>00093 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">unsigned</emphasis>&#32;<link linkend="_classContext_1a35a3292c1ad01dbc2407ff8c458a6377">output_frame_</link>&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00094"/>00094 <emphasis role="comment">//&#32;&#32;vector&lt;uint8_t&gt;&#32;output_buffer_;</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00095"/>00095 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00096"/>00096 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;shallow&#32;ring&#32;buffer&#32;used&#32;to&#32;move&#32;pictures&#32;from&#32;decoder&#32;to&#32;codec&#32;api</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00097"/>00097 &#32;&#32;&#32;&#32;<link linkend="_classRingBuffer">RingBuffer&lt;shared_ptr&lt;DecodedImage&gt;</link>&gt;&#32;<link linkend="_classContext_1abce66a0709690e66c22b1ca83ce26bcf">decoded_images_</link>&#32;=&#32;{2};
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00098"/>00098 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00099"/>00099 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Image&#32;being&#32;assembled&#32;by&#32;YUV&#32;writer&#32;callbacks</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00100"/>00100 &#32;&#32;&#32;&#32;shared_ptr&lt;DecodedImage&gt;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00101"/>00101 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00102"/>00102 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Image&#32;returned&#32;to&#32;API&#32;client</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00103"/>00103 &#32;&#32;&#32;&#32;shared_ptr&lt;DecodedImage&gt;&#32;<link linkend="_classContext_1adf46c3ca3c1cecf2ce0f88dfe111813b">decoded_image_</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00104"/>00104 };
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00105"/>00105 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00106"/>00106 <emphasis role="keyword">static</emphasis>&#32;int32_t&#32;create_context(<link linkend="_CodecApi_8h_1ab99f392e5c5516a0b3567438a6c67a80">CodecContext</link>&#32;*cp,&#32;<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*json_configuration,&#32;<link linkend="_CodecApi_8h_1a39c4f594f59e82dcebd73c5bde911bb9">CodecError</link>&#32;*error)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00107"/>00107 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(error)
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00108"/>00108 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*error&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00109"/>00109 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00110"/>00110 &#32;&#32;&#32;&#32;<link linkend="_classContext">Context</link>*&#32;context&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;<link linkend="_classContext">Context</link>();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00111"/>00111 &#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1ab1ea6d384b79a0f9f4ea1ee3c8595aad">configuration_</link>&#32;=&#32;json_configuration;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00112"/>00112 &#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>&#32;=&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb">StatePushing</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00113"/>00113 &#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;-MAX_INT;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00114"/>00114 &#32;&#32;&#32;&#32;*cp&#32;=&#32;(<emphasis role="keywordtype">void</emphasis>&#32;*)context;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00115"/>00115 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00116"/>00116 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;1;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00117"/>00117 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00118"/>00118 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00119"/>00119 <emphasis role="comment">//&#32;Push&#32;encoded&#32;data&#32;into&#32;decoder</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00120"/>00120 <emphasis role="comment">//</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00121"/>00121 <emphasis role="keyword">static</emphasis>&#32;int32_t&#32;push_packet(<link linkend="_CodecApi_8h_1ab99f392e5c5516a0b3567438a6c67a80">CodecContext</link>&#32;c,&#32;<emphasis role="keyword">const</emphasis>&#32;uint8_t&#32;*data,&#32;<emphasis role="keywordtype">size_t</emphasis>&#32;length,&#32;<link linkend="_CodecApi_8h_1aefeeff6e2bff20fb9f068dfb09808478">CodecMetadata</link>&#32;metadata,&#32;int8_t&#32;eos,&#32;<link linkend="_CodecApi_8h_1a39c4f594f59e82dcebd73c5bde911bb9">CodecError</link>&#32;*error)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00122"/>00122 &#32;&#32;&#32;&#32;<link linkend="_classContext">Context</link>&#32;*context&#32;=&#32;(<link linkend="_classContext">Context</link>&#32;*)c;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00123"/>00123 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(error)
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00124"/>00124 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*error&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00125"/>00125 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00126"/>00126 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">switch</emphasis>(context-&gt;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00127"/>00127 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">case</emphasis>&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb">StatePushing</link>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00128"/>00128 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(!eos)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00129"/>00129 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_TypeDef_8h_1a87a0b8601d301b04efad305d35b8ba20">CHECK</link>(data);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00130"/>00130 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_TypeDef_8h_1a87a0b8601d301b04efad305d35b8ba20">CHECK</link>(length&#32;&gt;=&#32;3);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00131"/>00131 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Fixup&#32;NALU&#32;start&#32;code&#32;-&#32;if&#32;first&#32;is&#32;3&#32;bytes,&#32;make&#32;it&#32;4</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00132"/>00132 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(data[0]&#32;==&#32;<emphasis role="charliteral">&apos;\0&apos;</emphasis>&#32;&amp;&amp;&#32;data[1]&#32;==&#32;<emphasis role="charliteral">&apos;\0&apos;</emphasis>&#32;&amp;&amp;&#32;data[2]&#32;==&#32;<emphasis role="charliteral">&apos;\1&apos;</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00133"/>00133 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordtype">char</emphasis>&#32;<emphasis role="keyword">const</emphasis>&#32;zero&#32;=&#32;<emphasis role="charliteral">&apos;\0&apos;</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00134"/>00134 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>.put(0);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00135"/>00135 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00136"/>00136 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00137"/>00137 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Accumulate&#32;AUs&#32;into&#32;a&#32;temporary&#32;buffer</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00138"/>00138 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>.write((<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*)data,&#32;length);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00139"/>00139 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00141"/>00141 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>&#32;=&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f">StateDecoding</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00142"/>00142 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00143"/>00143 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00144"/>00144 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00145"/>00145 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">default</emphasis>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00146"/>00146 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_Diagnostics_8hpp_1acb46ebc54cc32cc39cdd4779f736d332">ERR</link>(<emphasis role="stringliteral">&quot;Unexpected&#32;decoder&#32;state&quot;</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00147"/>00147 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00148"/>00148 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00149"/>00149 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00150"/>00150 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00151"/>00151 <emphasis role="keyword">static</emphasis>&#32;int32_t&#32;pull_image(<link linkend="_CodecApi_8h_1ab99f392e5c5516a0b3567438a6c67a80">CodecContext</link>&#32;c,&#32;<link linkend="_structCodecImage">CodecImage</link>*&#32;image,&#32;<link linkend="_CodecApi_8h_1aefeeff6e2bff20fb9f068dfb09808478">CodecMetadata</link>&#32;*metadata,&#32;int8_t*&#32;eos,&#32;<link linkend="_CodecApi_8h_1a39c4f594f59e82dcebd73c5bde911bb9">CodecError</link>&#32;*error){
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00152"/>00152 &#32;&#32;&#32;&#32;<link linkend="_classContext">Context</link>&#32;*context&#32;=&#32;(<link linkend="_classContext">Context</link>&#32;*)c;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00153"/>00153 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(error)
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00154"/>00154 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*error&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00155"/>00155 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00156"/>00156 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">switch</emphasis>(context-&gt;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00157"/>00157 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">case</emphasis>&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb">StatePushing</link>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00158"/>00158 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Still&#32;accumulating&#32;input&#32;stream</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00159"/>00159 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*eos&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00160"/>00160 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00161"/>00161 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00162"/>00162 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">case</emphasis>&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f">StateDecoding</link>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00163"/>00163 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.create();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00164"/>00164 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.init();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00165"/>00165 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00166"/>00166 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1af6ec2c9f19b0de79a58a53c4d01d7ae8">decoder_thread_</link>&#32;=&#32;std::thread([context]&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00167"/>00167 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a8843e8692caa3f02e714c26a12ccafd9">flush</link>();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00168"/>00168 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1abce66a0709690e66c22b1ca83ce26bcf">decoded_images_</link>.<link linkend="_classRingBuffer_1a0617f299bd97acf8f88392070bd5877b">push</link>(<emphasis role="keyword">nullptr</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00169"/>00169 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;});
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00170"/>00170 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00171"/>00171 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1a88d2b5073fdf4d3287026b075628076a">state_</link>&#32;=&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7">StateFlushing</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00172"/>00172 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">/*&#32;Fall&#32;through&#32;*/</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00173"/>00173 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00174"/>00174 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">case</emphasis>&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7">StateFlushing</link>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00175"/>00175 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1abce66a0709690e66c22b1ca83ce26bcf">decoded_images_</link>.<link linkend="_classRingBuffer_1a598c5cfce60f33812e6a0a513b090dcc">pop</link>(context-&gt;<link linkend="_classContext_1adf46c3ca3c1cecf2ce0f88dfe111813b">decoded_image_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00176"/>00176 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(context-&gt;<link linkend="_classContext_1adf46c3ca3c1cecf2ce0f88dfe111813b">decoded_image_</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00177"/>00177 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*image&#32;=&#32;context-&gt;<link linkend="_classContext_1adf46c3ca3c1cecf2ce0f88dfe111813b">decoded_image_</link>-&gt;image_;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00178"/>00178 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*eos&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00179"/>00179 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;1;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00180"/>00180 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00181"/>00181 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(context-&gt;<link linkend="_classContext_1af6ec2c9f19b0de79a58a53c4d01d7ae8">decoder_thread_</link>.joinable())
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00182"/>00182 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;context-&gt;<link linkend="_classContext_1af6ec2c9f19b0de79a58a53c4d01d7ae8">decoder_thread_</link>.join();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00183"/>00183 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*eos&#32;=&#32;1;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00184"/>00184 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00185"/>00185 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00186"/>00186 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">default</emphasis>:
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00187"/>00187 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_Diagnostics_8hpp_1acb46ebc54cc32cc39cdd4779f736d332">ERR</link>(<emphasis role="stringliteral">&quot;Unexpected&#32;decoder&#32;state&quot;</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00188"/>00188 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00189"/>00189 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00190"/>00190 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00191"/>00191 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00192"/>00192 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00193"/>00193 <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a8843e8692caa3f02e714c26a12ccafd9">Context::flush</link>()&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00194"/>00194 &#32;&#32;&#32;&#32;Bool&#32;openedRecon&#32;=&#32;<emphasis role="keyword">false</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00195"/>00195 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">bool</emphasis>&#32;loopFiltered&#32;=&#32;<emphasis role="keyword">false</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00196"/>00196 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;poc&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00197"/>00197 &#32;&#32;&#32;&#32;TComList&lt;TComPic&#32;*&gt;&#32;*pcListPic&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00198"/>00198 &#32;&#32;&#32;&#32;InputByteStream&#32;bytestream(<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00199"/>00199 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00200"/>00200 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(!!<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00201"/>00201 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;streampos&#32;location&#32;=&#32;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>.tellg();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00202"/>00202 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00203"/>00203 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;AnnexBStats&#32;stats&#32;=&#32;AnnexBStats();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00204"/>00204 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;InputNALUnit&#32;nalu;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00205"/>00205 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;byteStreamNALUnit(bytestream,&#32;nalu.getBitstream().getFifo(),&#32;stats);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00206"/>00206 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00207"/>00207 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;call&#32;actual&#32;decoding&#32;function</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00208"/>00208 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;Bool&#32;bNewPicture&#32;=&#32;<emphasis role="keyword">false</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00209"/>00209 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(nalu.getBitstream().getFifo().empty())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00210"/>00210 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_Diagnostics_8hpp_1ac4cebd204831cf85d2c6e9d03b8d5bbb">WARN</link>(<emphasis role="stringliteral">&quot;Attempt&#32;to&#32;decode&#32;an&#32;empty&#32;NAL&#32;unit&quot;</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00211"/>00211 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00212"/>00212 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;read(nalu);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00213"/>00213 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;skip&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00214"/>00214 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;bNewPicture&#32;=&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.decode(nalu,&#32;skip,&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00215"/>00215 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00216"/>00216 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(bNewPicture)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00217"/>00217 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>.clear();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00218"/>00218 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>.seekg(location&#32;-&#32;streamoff(3));
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00219"/>00219 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;bytestream.reset();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00220"/>00220 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00221"/>00221 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00222"/>00222 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00223"/>00223 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;((bNewPicture&#32;||&#32;!<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>&#32;||&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_EOS)&#32;&amp;&amp;&#32;!<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.getFirstSliceInSequence())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00224"/>00224 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!loopFiltered&#32;||&#32;<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00225"/>00225 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.executeLoopFilters(poc,&#32;pcListPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00226"/>00226 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00227"/>00227 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;loopFiltered&#32;=&#32;(nalu.m_nalUnitType&#32;==&#32;<link linkend="_namespacevtm_1a1189185baa59b4c37f1fdcd035b5ab51aba512cbe228c3d26b589e8ec4351a403">NAL_UNIT_EOS</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00228"/>00228 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_EOS)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00229"/>00229 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.setFirstSliceInSequence(<emphasis role="keyword">true</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00230"/>00230 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00231"/>00231 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;<emphasis role="keywordflow">if</emphasis>&#32;((bNewPicture&#32;||&#32;!<link linkend="_classContext_1a6f7c64f2efeda9cda95b8b2ad0e1afc8">base_bitstream_</link>&#32;||&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_EOS)&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00232"/>00232 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.getFirstSliceInSequence())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00233"/>00233 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.setFirstSliceInPicture(<emphasis role="keyword">true</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00234"/>00234 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00235"/>00235 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00236"/>00236 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcListPic)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00237"/>00237 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!openedRecon)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00238"/>00238 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;BitDepths&#32;&amp;bitDepths&#32;=
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00239"/>00239 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcListPic-&gt;front()-&gt;getPicSym()-&gt;getSPS().getBitDepths();&#32;<emphasis role="comment">//&#32;use&#32;bit&#32;depths&#32;of&#32;first&#32;reconstructed&#32;picture.</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00240"/>00240 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">for</emphasis>&#32;(UInt&#32;channelType&#32;=&#32;0;&#32;channelType&#32;&lt;&#32;<link linkend="_namespacevtm_1ae55eb169b1f87620662a35628ecf373ba59317e02229639449b6f0aa358de2379">MAX_NUM_CHANNEL_TYPE</link>;&#32;channelType++)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00241"/>00241 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(<link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">m_outputBitDepth</link>[channelType]&#32;==&#32;0)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00242"/>00242 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">m_outputBitDepth</link>[channelType]&#32;=&#32;bitDepths.recon[channelType];
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00243"/>00243 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00244"/>00244 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00245"/>00245 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00246"/>00246 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>.<link linkend="_classTVideoIOYuvMem_1a09296d4152e72c060ba9e1f12416643a">open</link>(<emphasis role="keyword">this</emphasis>,&#32;<link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">m_outputBitDepth</link>,&#32;<link linkend="_classContext_1a580953d2390d9560e0ac0c145df7d1c7">m_outputBitDepth</link>,&#32;bitDepths.recon);&#32;<emphasis role="comment">//&#32;write&#32;mode</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00247"/>00247 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;openedRecon&#32;=&#32;<emphasis role="keyword">true</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00248"/>00248 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00249"/>00249 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00250"/>00250 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;reconstruction&#32;to&#32;file</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00251"/>00251 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(bNewPicture)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00252"/>00252 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">WriteOutput</link>(pcListPic,&#32;nalu.m_temporalId);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00253"/>00253 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00254"/>00254 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;((bNewPicture&#32;||&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_CRA)&#32;&amp;&amp;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.getNoOutputPriorPicsFlag())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00255"/>00255 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.checkNoOutputPriorPics(pcListPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00256"/>00256 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.setNoOutputPriorPicsFlag(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00257"/>00257 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00258"/>00258 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(bNewPicture&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00259"/>00259 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_IDR_W_RADL&#32;||&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_IDR_N_LP&#32;||
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00260"/>00260 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_BLA_N_LP&#32;||&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_BLA_W_RADL&#32;||
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00261"/>00261 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_CODED_SLICE_BLA_W_LP))&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00262"/>00262 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a041516c46819d3a8023b11fef0257dea">FlushOutput</link>(pcListPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00263"/>00263 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00264"/>00264 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(nalu.m_nalUnitType&#32;==&#32;NAL_UNIT_EOS)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00265"/>00265 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">WriteOutput</link>(pcListPic,&#32;nalu.m_temporalId);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00266"/>00266 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.setFirstSliceInPicture(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00267"/>00267 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00268"/>00268 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;reconstruction&#32;to&#32;file&#32;--&#32;for&#32;additional&#32;bumping&#32;as&#32;defined&#32;in&#32;C.5.2.3</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00269"/>00269 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!bNewPicture&#32;&amp;&amp;&#32;nalu.m_nalUnitType&#32;&gt;=&#32;NAL_UNIT_CODED_SLICE_TRAIL_N&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00270"/>00270 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu.m_nalUnitType&#32;&lt;=&#32;NAL_UNIT_RESERVED_VCL31)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00271"/>00271 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">WriteOutput</link>(pcListPic,&#32;nalu.m_temporalId);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00272"/>00272 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00273"/>00273 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00274"/>00274 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00275"/>00275 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00276"/>00276 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a041516c46819d3a8023b11fef0257dea">FlushOutput</link>(pcListPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00277"/>00277 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00278"/>00278 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;delete&#32;buffers</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00279"/>00279 &#32;&#32;&#32;&#32;<link linkend="_classContext_1aed7cdb5a776262207241707b894e6b33">m_cTDecTop</link>.deletePicBuffer();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00280"/>00280 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00281"/>00281 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00285"/><link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">00285</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a21dd4ddd0ab8d8d55941dd95832ef976">Context::WriteOutput</link>(TComList&lt;TComPic&#32;*&gt;&#32;*pcListPic,&#32;<emphasis role="keywordtype">unsigned</emphasis>&#32;<emphasis role="keywordtype">int</emphasis>&#32;tId)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00286"/>00286 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcListPic-&gt;empty())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00287"/>00287 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00288"/>00288 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00289"/>00289 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00290"/>00290 &#32;&#32;&#32;&#32;TComList&lt;TComPic&#32;*&gt;::iterator&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00291"/>00291 &#32;&#32;&#32;&#32;Int&#32;numPicsNotYetDisplayed&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00292"/>00292 &#32;&#32;&#32;&#32;Int&#32;dpbFullness&#32;=&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00293"/>00293 &#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;TComSPS&#32;*activeSPS&#32;=&#32;&amp;(pcListPic-&gt;front()-&gt;getPicSym()-&gt;getSPS());
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00294"/>00294 &#32;&#32;&#32;&#32;UInt&#32;numReorderPicsHighestTid;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00295"/>00295 &#32;&#32;&#32;&#32;UInt&#32;maxDecPicBufferingHighestTid;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00296"/>00296 &#32;&#32;&#32;&#32;UInt&#32;maxNrSublayers&#32;=&#32;activeSPS-&gt;getMaxTLayers();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00297"/>00297 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00298"/>00298 &#32;&#32;&#32;&#32;numReorderPicsHighestTid&#32;=&#32;activeSPS-&gt;getNumReorderPics(maxNrSublayers&#32;-&#32;1);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00299"/>00299 &#32;&#32;&#32;&#32;maxDecPicBufferingHighestTid&#32;=&#32;activeSPS-&gt;getMaxDecPicBuffering(maxNrSublayers&#32;-&#32;1);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00300"/>00300 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00301"/>00301 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(iterPic&#32;!=&#32;pcListPic-&gt;end())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00302"/>00302 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComPic&#32;*pcPic&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00303"/>00303 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;getOutputMark()&#32;&amp;&amp;&#32;pcPic-&gt;getPOC()&#32;&gt;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00304"/>00304 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;numPicsNotYetDisplayed++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00305"/>00305 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;dpbFullness++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00306"/>00306 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;getSlice(0)-&gt;isReferenced())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00307"/>00307 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;dpbFullness++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00308"/>00308 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00309"/>00309 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00310"/>00310 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00311"/>00311 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00312"/>00312 &#32;&#32;&#32;&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00313"/>00313 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00314"/>00314 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(numPicsNotYetDisplayed&#32;&gt;&#32;2)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00315"/>00315 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00316"/>00316 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00317"/>00317 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00318"/>00318 &#32;&#32;&#32;&#32;TComPic&#32;*pcPic&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00319"/>00319 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(numPicsNotYetDisplayed&#32;&gt;&#32;2&#32;&amp;&amp;&#32;pcPic-&gt;isField())&#32;<emphasis role="comment">//&#32;Field&#32;Decoding</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00320"/>00320 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00321"/>00321 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComList&lt;TComPic&#32;*&gt;::iterator&#32;endPic&#32;=&#32;pcListPic-&gt;end();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00322"/>00322 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;endPic--;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00323"/>00323 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00324"/>00324 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(iterPic&#32;!=&#32;endPic)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00325"/>00325 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComPic&#32;*pcPicTop&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00326"/>00326 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00327"/>00327 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComPic&#32;*pcPicBottom&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00328"/>00328 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00329"/>00329 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPicTop-&gt;getOutputMark()&#32;&amp;&amp;&#32;pcPicBottom-&gt;getOutputMark()&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00330"/>00330 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(numPicsNotYetDisplayed&#32;&gt;&#32;numReorderPicsHighestTid&#32;||&#32;dpbFullness&#32;&gt;&#32;maxDecPicBufferingHighestTid)&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00331"/>00331 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(!(pcPicTop-&gt;getPOC()&#32;%&#32;2)&#32;&amp;&amp;&#32;pcPicBottom-&gt;getPOC()&#32;==&#32;pcPicTop-&gt;getPOC()&#32;+&#32;1)&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00332"/>00332 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(pcPicTop-&gt;getPOC()&#32;==&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;+&#32;1&#32;||&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;&lt;&#32;0))&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00333"/>00333 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;to&#32;file</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00334"/>00334 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;numPicsNotYetDisplayed&#32;=&#32;numPicsNotYetDisplayed&#32;-&#32;2;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00335"/>00335 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;&amp;conf&#32;=&#32;pcPicTop-&gt;getConformanceWindow();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00336"/>00336 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;defDisp&#32;=&#32;pcPicTop-&gt;getDefDisplayWindow();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00337"/>00337 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Bool&#32;isTff&#32;=&#32;pcPicTop-&gt;isTopField();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00338"/>00338 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00339"/>00339 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>.<link linkend="_classTVideoIOYuvMem_1aa8bd6bc7e05ebf0f4f19708964937b96">write</link>(pcPicTop-&gt;getPicYuvRec(),&#32;pcPicBottom-&gt;getPicYuvRec(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00340"/>00340 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IPCOLOURSPACE_UNCHANGED&#32;<emphasis role="comment">/*m_outputColourSpaceConvert*/</emphasis>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00341"/>00341 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowLeftOffset()&#32;+&#32;defDisp.getWindowLeftOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00342"/>00342 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowRightOffset()&#32;+&#32;defDisp.getWindowRightOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00343"/>00343 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowTopOffset()&#32;+&#32;defDisp.getWindowTopOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00344"/>00344 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowBottomOffset()&#32;+&#32;defDisp.getWindowBottomOffset(),&#32;NUM_CHROMA_FORMAT,&#32;isTff);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00345"/>00345 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00346"/>00346 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;update&#32;POC&#32;of&#32;display&#32;order</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00347"/>00347 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;pcPicBottom-&gt;getPOC();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00348"/>00348 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00349"/>00349 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;erase&#32;non-referenced&#32;picture&#32;in&#32;the&#32;reference&#32;picture&#32;list&#32;after&#32;display</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00350"/>00350 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPicTop-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPicTop-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00351"/>00351 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00352"/>00352 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00353"/>00353 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00354"/>00354 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00355"/>00355 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00356"/>00356 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPicBottom-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPicBottom-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00357"/>00357 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00358"/>00358 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00359"/>00359 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00360"/>00360 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00361"/>00361 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00362"/>00362 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00363"/>00363 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00364"/>00364 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00365"/>00365 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00366"/>00366 &#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPic-&gt;isField())&#32;<emphasis role="comment">//&#32;Frame&#32;Decoding</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00367"/>00367 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00368"/>00368 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00369"/>00369 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00370"/>00370 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(iterPic&#32;!=&#32;pcListPic-&gt;end())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00371"/>00371 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00372"/>00372 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00373"/>00373 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;getOutputMark()&#32;&amp;&amp;&#32;pcPic-&gt;getPOC()&#32;&gt;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00374"/>00374 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(numPicsNotYetDisplayed&#32;&gt;&#32;numReorderPicsHighestTid&#32;||&#32;dpbFullness&#32;&gt;&#32;maxDecPicBufferingHighestTid))&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00375"/>00375 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;to&#32;file</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00376"/>00376 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;numPicsNotYetDisplayed--;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00377"/>00377 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;getSlice(0)-&gt;isReferenced()&#32;==&#32;<emphasis role="keyword">false</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00378"/>00378 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;dpbFullness--;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00379"/>00379 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00380"/>00380 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00381"/>00381 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;&amp;conf&#32;=&#32;pcPic-&gt;getConformanceWindow();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00382"/>00382 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;defDisp&#32;=&#32;<emphasis role="keyword">true</emphasis>&#32;<emphasis role="comment">/*m_respectDefDispWindow*/</emphasis>&#32;?&#32;pcPic-&gt;getDefDisplayWindow()&#32;:&#32;Window();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00383"/>00383 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00384"/>00384 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>.<link linkend="_classTVideoIOYuvMem_1aa8bd6bc7e05ebf0f4f19708964937b96">write</link>(pcPic-&gt;getPicYuvRec(),&#32;IPCOLOURSPACE_UNCHANGED&#32;<emphasis role="comment">/*m_outputColourSpaceConvert*/</emphasis>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00385"/>00385 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowLeftOffset()&#32;+&#32;defDisp.getWindowLeftOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00386"/>00386 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowRightOffset()&#32;+&#32;defDisp.getWindowRightOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00387"/>00387 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowTopOffset()&#32;+&#32;defDisp.getWindowTopOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00388"/>00388 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowBottomOffset()&#32;+&#32;defDisp.getWindowBottomOffset(),&#32;NUM_CHROMA_FORMAT,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00389"/>00389 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">false</emphasis>&#32;<emphasis role="comment">/*m_bClipOutputVideoToRec709Range&#32;*/</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00390"/>00390 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00391"/>00391 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;update&#32;POC&#32;of&#32;display&#32;order</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00392"/>00392 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;pcPic-&gt;getPOC();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00393"/>00393 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00394"/>00394 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;erase&#32;non-referenced&#32;picture&#32;in&#32;the&#32;reference&#32;picture&#32;list&#32;after&#32;display</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00395"/>00395 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPic-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPic-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00396"/>00396 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00397"/>00397 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00398"/>00398 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00399"/>00399 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00400"/>00400 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00401"/>00401 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00402"/>00402 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00403"/>00403 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00404"/>00404 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00405"/>00405 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00406"/>00406 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00407"/>00407 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00408"/>00408 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00411"/><link linkend="_classContext_1a041516c46819d3a8023b11fef0257dea">00411</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a041516c46819d3a8023b11fef0257dea">Context::FlushOutput</link>(TComList&lt;TComPic&#32;*&gt;&#32;*pcListPic)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00412"/>00412 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcListPic&#32;||&#32;pcListPic-&gt;empty())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00413"/>00413 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00414"/>00414 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00415"/>00415 &#32;&#32;&#32;&#32;TComList&lt;TComPic&#32;*&gt;::iterator&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00416"/>00416 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00417"/>00417 &#32;&#32;&#32;&#32;iterPic&#32;=&#32;pcListPic-&gt;begin();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00418"/>00418 &#32;&#32;&#32;&#32;TComPic&#32;*pcPic&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00419"/>00419 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00420"/>00420 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;isField())&#32;<emphasis role="comment">//&#32;Field&#32;Decoding</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00421"/>00421 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00422"/>00422 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComList&lt;TComPic&#32;*&gt;::iterator&#32;endPic&#32;=&#32;pcListPic-&gt;end();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00423"/>00423 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;endPic--;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00424"/>00424 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TComPic&#32;*pcPicTop,&#32;*pcPicBottom&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00425"/>00425 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(iterPic&#32;!=&#32;endPic)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00426"/>00426 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00427"/>00427 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00428"/>00428 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00429"/>00429 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00430"/>00430 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPicTop-&gt;getOutputMark()&#32;&amp;&amp;&#32;pcPicBottom-&gt;getOutputMark()&#32;&amp;&amp;&#32;!(pcPicTop-&gt;getPOC()&#32;%&#32;2)&#32;&amp;&amp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00431"/>00431 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(pcPicBottom-&gt;getPOC()&#32;==&#32;pcPicTop-&gt;getPOC()&#32;+&#32;1))&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00432"/>00432 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;to&#32;file</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00433"/>00433 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;&amp;conf&#32;=&#32;pcPicTop-&gt;getConformanceWindow();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00434"/>00434 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;defDisp&#32;=&#32;<emphasis role="keyword">true</emphasis>&#32;<emphasis role="comment">/*m_respectDefDispWindow*/</emphasis>&#32;?&#32;pcPicTop-&gt;getDefDisplayWindow()&#32;:&#32;Window();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00435"/>00435 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Bool&#32;isTff&#32;=&#32;pcPicTop-&gt;isTopField();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00436"/>00436 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>.<link linkend="_classTVideoIOYuvMem_1aa8bd6bc7e05ebf0f4f19708964937b96">write</link>(pcPicTop-&gt;getPicYuvRec(),&#32;pcPicBottom-&gt;getPicYuvRec(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00437"/>00437 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IPCOLOURSPACE_UNCHANGED&#32;<emphasis role="comment">/*m_outputColourSpaceConvert*/</emphasis>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00438"/>00438 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowLeftOffset()&#32;+&#32;defDisp.getWindowLeftOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00439"/>00439 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowRightOffset()&#32;+&#32;defDisp.getWindowRightOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00440"/>00440 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowTopOffset()&#32;+&#32;defDisp.getWindowTopOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00441"/>00441 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowBottomOffset()&#32;+&#32;defDisp.getWindowBottomOffset(),&#32;NUM_CHROMA_FORMAT,&#32;isTff);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00442"/>00442 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00443"/>00443 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;update&#32;POC&#32;of&#32;display&#32;order</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00444"/>00444 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;pcPicBottom-&gt;getPOC();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00445"/>00445 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00446"/>00446 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;erase&#32;non-referenced&#32;picture&#32;in&#32;the&#32;reference&#32;picture&#32;list&#32;after&#32;display</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00447"/>00447 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPicTop-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPicTop-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00448"/>00448 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00449"/>00449 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00450"/>00450 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00451"/>00451 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00452"/>00452 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00453"/>00453 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPicBottom-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPicBottom-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00454"/>00454 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00455"/>00455 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00456"/>00456 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00457"/>00457 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00458"/>00458 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00459"/>00459 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00460"/>00460 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00461"/>00461 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00462"/>00462 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPicTop)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00463"/>00463 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop-&gt;destroy();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00464"/>00464 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">delete</emphasis>&#32;pcPicTop;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00465"/>00465 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicTop&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00466"/>00466 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00467"/>00467 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00468"/>00468 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00469"/>00469 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPicBottom)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00470"/>00470 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom-&gt;destroy();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00471"/>00471 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">delete</emphasis>&#32;pcPicBottom;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00472"/>00472 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPicBottom&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00473"/>00473 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00474"/>00474 &#32;&#32;&#32;&#32;}&#32;<emphasis role="keywordflow">else</emphasis>&#32;<emphasis role="comment">//&#32;Frame&#32;decoding</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00475"/>00475 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00476"/>00476 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(iterPic&#32;!=&#32;pcListPic-&gt;end())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00477"/>00477 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic&#32;=&#32;*(iterPic);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00478"/>00478 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00479"/>00479 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic-&gt;getOutputMark())&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00480"/>00480 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;write&#32;to&#32;file</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00481"/>00481 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;&amp;conf&#32;=&#32;pcPic-&gt;getConformanceWindow();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00482"/>00482 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">const</emphasis>&#32;Window&#32;defDisp&#32;=&#32;<emphasis role="keyword">true</emphasis>&#32;<emphasis role="comment">/*m_respectDefDispWindow*/</emphasis>&#32;?&#32;pcPic-&gt;getDefDisplayWindow()&#32;:&#32;Window();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00483"/>00483 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00484"/>00484 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1ab268ad563709243ab0961edb5cbabc20">m_cTVideoIOYuvRecon</link>.<link linkend="_classTVideoIOYuvMem_1aa8bd6bc7e05ebf0f4f19708964937b96">write</link>(pcPic-&gt;getPicYuvRec(),&#32;IPCOLOURSPACE_UNCHANGED&#32;<emphasis role="comment">/*m_outputColourSpaceConvert*/</emphasis>,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00485"/>00485 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowLeftOffset()&#32;+&#32;defDisp.getWindowLeftOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00486"/>00486 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowRightOffset()&#32;+&#32;defDisp.getWindowRightOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00487"/>00487 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowTopOffset()&#32;+&#32;defDisp.getWindowTopOffset(),
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00488"/>00488 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;conf.getWindowBottomOffset()&#32;+&#32;defDisp.getWindowBottomOffset(),&#32;NUM_CHROMA_FORMAT,
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00489"/>00489 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">false</emphasis>&#32;<emphasis role="comment">/*m_bClipOutputVideoToRec709Range*/</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00490"/>00490 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00491"/>00491 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;update&#32;POC&#32;of&#32;display&#32;order</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00492"/>00492 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;pcPic-&gt;getPOC();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00493"/>00493 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00494"/>00494 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;erase&#32;non-referenced&#32;picture&#32;in&#32;the&#32;reference&#32;picture&#32;list&#32;after&#32;display</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00495"/>00495 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(!pcPic-&gt;getSlice(0)-&gt;isReferenced()&#32;&amp;&amp;&#32;pcPic-&gt;getReconMark()&#32;==&#32;<emphasis role="keyword">true</emphasis>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00496"/>00496 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;setReconMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00497"/>00497 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00498"/>00498 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;mark&#32;it&#32;should&#32;be&#32;extended&#32;later</emphasis>
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00499"/>00499 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;getPicYuvRec()-&gt;setBorderExtension(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00500"/>00500 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00501"/>00501 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;setOutputMark(<emphasis role="keyword">false</emphasis>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00502"/>00502 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00503"/>00503 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pcPic&#32;!=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00504"/>00504 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic-&gt;destroy();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00505"/>00505 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">delete</emphasis>&#32;pcPic;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00506"/>00506 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pcPic&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00507"/>00507 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00508"/>00508 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;iterPic++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00509"/>00509 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00510"/>00510 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00511"/>00511 &#32;&#32;&#32;&#32;pcListPic-&gt;clear();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00512"/>00512 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a2a669cb8e12176b6b2c505a64fa4141c">m_iPOCLastDisplay</link>&#32;=&#32;-MAX_INT;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00513"/>00513 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00514"/>00514 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00515"/><link linkend="_classContext_1ae5b0018483acf054882d2b0dfd459291">00515</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1ae5b0018483acf054882d2b0dfd459291">Context::picture_begin</link>(<emphasis role="keywordtype">bool</emphasis>&#32;is16bit,&#32;UInt&#32;width,&#32;UInt&#32;height,&#32;ChromaFormat&#32;format)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00516"/>00516 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a35a3292c1ad01dbc2407ff8c458a6377">output_frame_</link>++;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00517"/>00517 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">size_t</emphasis>&#32;frame_size&#32;=&#32;(width&#32;*&#32;height&#32;+&#32;2&#32;*&#32;(width&#32;/&#32;2&#32;*&#32;height&#32;/&#32;2))&#32;*&#32;(is16bit&#32;?&#32;2&#32;:&#32;1);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00518"/>00518 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00519"/>00519 &#32;&#32;&#32;&#32;<link linkend="_TypeDef_8h_1a87a0b8601d301b04efad305d35b8ba20">CHECK</link>(!<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00520"/>00520 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00521"/>00521 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>&#32;=&#32;std::shared_ptr&lt;DecodedImage&gt;(<emphasis role="keyword">new</emphasis>&#32;<link linkend="_structDecodedImage">DecodedImage</link>());
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00522"/>00522 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00523"/>00523 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;buffer_.reserve(frame_size);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00524"/>00524 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00525"/>00525 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.bpp&#32;=&#32;is16bit&#32;?&#32;2&#32;:&#32;1;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00526"/>00526 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.width_y&#32;=&#32;width;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00527"/>00527 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.height_y&#32;=&#32;height;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00528"/>00528 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.stride_y&#32;=&#32;width&#32;*&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.bpp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00529"/>00529 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00530"/>00530 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.width_uv&#32;=&#32;width&#32;/&#32;2;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00531"/>00531 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.height_uv&#32;=&#32;height&#32;/&#32;2;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00532"/>00532 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.stride_uv&#32;=&#32;(width&#32;/&#32;2)&#32;*&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.bpp;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00533"/>00533 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00534"/>00534 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00535"/><link linkend="_classContext_1a0479ef08f93215f09a3be0b46b836562">00535</link> <emphasis role="keywordtype">int</emphasis>&#32;<link linkend="_classContext_1a0479ef08f93215f09a3be0b46b836562">Context::write</link>(<emphasis role="keyword">const</emphasis>&#32;uint8_t&#32;*data,&#32;<emphasis role="keywordtype">size_t</emphasis>&#32;size)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00536"/>00536 &#32;&#32;&#32;&#32;<link linkend="_TypeDef_8h_1a87a0b8601d301b04efad305d35b8ba20">CHECK</link>(<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00537"/>00537 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;buffer_.insert(<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;buffer_.end(),&#32;data,&#32;data&#32;+&#32;size);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00538"/>00538 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;(<emphasis role="keywordtype">int</emphasis>)size;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00539"/>00539 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00540"/>00540 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00541"/><link linkend="_classContext_1a85068d51c0951cb081a55c135832e044">00541</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_classContext_1a85068d51c0951cb081a55c135832e044">Context::picture_end</link>()&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00542"/>00542 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00543"/>00543 &#32;&#32;&#32;&#32;<link linkend="_TypeDef_8h_1a87a0b8601d301b04efad305d35b8ba20">CHECK</link>(<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00544"/>00544 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.data_y&#32;=&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;buffer_.data();
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00545"/>00545 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.data_u&#32;=&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.data_y&#32;+&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.stride_y&#32;*&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.height_y;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00546"/>00546 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.data_v&#32;=&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.data_u&#32;+&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.stride_uv&#32;*&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>-&gt;image_.height_uv;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00547"/>00547 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00548"/>00548 &#32;&#32;&#32;&#32;<link linkend="_classContext_1abce66a0709690e66c22b1ca83ce26bcf">decoded_images_</link>.<link linkend="_classRingBuffer_1a0617f299bd97acf8f88392070bd5877b">push</link>(<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00549"/>00549 &#32;&#32;&#32;&#32;<link linkend="_classContext_1a23d55f28276daa523d86ffbf2781382b">writing_image_</link>&#32;=&#32;<emphasis role="keyword">nullptr</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00550"/>00550 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00551"/>00551 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00552"/>00552 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keywordtype">void</emphasis>&#32;release_context(<link linkend="_CodecApi_8h_1ab99f392e5c5516a0b3567438a6c67a80">CodecContext</link>&#32;c)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00553"/>00553 &#32;&#32;&#32;&#32;<link linkend="_classContext">Context</link>&#32;*context&#32;=&#32;(<link linkend="_classContext">Context</link>&#32;*)c;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00554"/>00554 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(!context)
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00555"/>00555 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00556"/>00556 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00558"/>00558 &#32;&#32;&#32;&#32;free(context);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00559"/>00559 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00560"/>00560 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00561"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a94895c920aa3532906ab4aa6a323d4b5">00561</link> CODEC_API_EXPORT&#32;uint32_t&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a94895c920aa3532906ab4aa6a323d4b5">CodecAPI_Version</link>()&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00562"/>00562 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;<link linkend="_CodecApi_8h_1a853360b5a9fa7d887fb278fc2a7c5843">LOADABLE_CODEC_API_VERSION</link>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00563"/>00563 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00564"/>00564 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00565"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a61fe27bc1c47250821bae6da63960abc">00565</link> CODEC_API_EXPORT&#32;uint32_t&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a61fe27bc1c47250821bae6da63960abc">CodecAPI_Query</link>(<emphasis role="keywordtype">int</emphasis>&#32;num,&#32;<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*buffer,&#32;uint32_t&#32;buffer_size)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00566"/>00566 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00567"/>00567 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00568"/>00568 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00569"/>00569 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;codec_name[]&#32;=&#32;<emphasis role="stringliteral">&quot;hevc&quot;</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00570"/>00570 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;codec_version_string[]&#32;=&#32;<emphasis role="stringliteral">&quot;LTM&#32;xxx&quot;</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00571"/>00571 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00572"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a279d7f9c6688abd97dec02b0f10d8579">00572</link> CODEC_API_EXPORT&#32;<link linkend="_structCodec">Codec</link>*&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a279d7f9c6688abd97dec02b0f10d8579">CodecAPI_Create</link>(<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*name,&#32;<link linkend="_CodecApi_8h_1acca53023810ef8d56974434b3e35a1c8">CodecOperation</link>&#32;operation,&#32;<emphasis role="keyword">const</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*json_create_options)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00573"/>00573 &#32;&#32;&#32;&#32;<link linkend="_structCodec">Codec</link>&#32;*codec&#32;=&#32;<link linkend="_CodecUtils_8h_1a92da2141ced63659ba91bb093eb9548d">LTMCodecAllocate</link>(codec_name,&#32;codec_version_string,&#32;operation);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00574"/>00574 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00575"/>00575 &#32;&#32;&#32;&#32;codec-&gt;<link linkend="_structCodec_1a67dfe36e8684be224c3fd0b167feeadd">create_context</link>&#32;=&#32;create_context;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00576"/>00576 &#32;&#32;&#32;&#32;codec-&gt;<link linkend="_structCodec_1a1fe21f04e3d376ef0b947f219a60d343">push_packet</link>&#32;=&#32;push_packet;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00577"/>00577 &#32;&#32;&#32;&#32;codec-&gt;<link linkend="_structCodec_1ad56657750d1e1bc77b2b92123d8b7d68">pull_image</link>&#32;=&#32;pull_image;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00578"/>00578 &#32;&#32;&#32;&#32;codec-&gt;<link linkend="_structCodec_1a803e89e99f6a780601ddef59dae2da52">release_context</link>&#32;=&#32;release_context;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00579"/>00579 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00580"/>00580 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;codec;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00581"/>00581 }
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00582"/>00582 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00583"/><link linkend="_base__hevc_2src_2codec__api_8cpp_1a4da0a4a2bd73a2803982c2dc36bf8c5c">00583</link> CODEC_API_EXPORT&#32;<emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_base__hevc_2src_2codec__api_8cpp_1a4da0a4a2bd73a2803982c2dc36bf8c5c">CodecAPI_Release</link>(<link linkend="_structCodec">Codec</link>&#32;*codec)&#32;{
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00584"/>00584 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(!codec)
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00585"/>00585 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>;
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00586"/>00586 
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00587"/>00587 &#32;&#32;&#32;&#32;<link linkend="_CodecUtils_8h_1acac8c073cd1535560f6c15f30bdbba58">LTMCodecFree</link>(codec);
+<anchor xml:id="_base__hevc_2src_2codec__api_8cpp_source_1l00588"/>00588 }
+</programlisting></section>

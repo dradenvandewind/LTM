@@ -1,0 +1,344 @@
+\doxysection{Image.\+cpp}
+\label{Image_8cpp_source}\index{util/src/Image.cpp@{util/src/Image.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Image.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ Various\ properties\ of\ the\ Image\ pixel\ formats}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }ImageDescInfo\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ planes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ distinct\ planes\ in\ image}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_mask;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Width\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_mask;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Height\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_plane\_shift[4];\ \ \textcolor{comment}{//\ width\ of\ image\ must\ divide\ by\ 2\string^width\_plane\_shift\ for\ all\ planes}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_plane\_shift[4];\ \textcolor{comment}{//\ height\ of\ image\ must\ divide\ by\ 2\string^height\_plane\_shift\ for\ all\ planes}}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ bytes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NUmber\ of\ bytes\ per\ component}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{int}\ component\_bits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ LSB\ bits\ per\ component}}
+\DoxyCodeLine{00056\ \ \ \ \ Colourspace\ colourspace;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ colourspace}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *suffix;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Vooya\ compatible\ suffix\ for\ files}}
+\DoxyCodeLine{00058\ \}\ s\_PictureDescInfo[]\ =\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \{0,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 0,\ 0,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}none"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_NONE}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 1,\ 8,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P8}}
+\DoxyCodeLine{00062\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P8}}
+\DoxyCodeLine{00063\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P8}}
+\DoxyCodeLine{00064\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y8}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 10,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_10bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P10}}
+\DoxyCodeLine{00067\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_10bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P10}}
+\DoxyCodeLine{00068\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_10bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P10}}
+\DoxyCodeLine{00069\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_10bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y10}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 12,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_12bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P12}}
+\DoxyCodeLine{00072\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_12bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P12}}
+\DoxyCodeLine{00073\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_12bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P12}}
+\DoxyCodeLine{00074\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_12bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y12}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 14,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_14bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P14}}
+\DoxyCodeLine{00077\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_14bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P14}}
+\DoxyCodeLine{00078\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_14bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P14}}
+\DoxyCodeLine{00079\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_14bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y14}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 16,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P16}}
+\DoxyCodeLine{00082\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P16}}
+\DoxyCodeLine{00083\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P16}}
+\DoxyCodeLine{00084\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_-\/16bit.y"{}}\}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y16}}
+\DoxyCodeLine{00085\ \};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{static\_assert}(ARRAY\_SIZE(s\_PictureDescInfo)\ ==\ \_IMAGE\_FORMAT\_MAX,\ \textcolor{stringliteral}{"{}Image\ format\ mismatch"{}});}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{const}\ \textcolor{keyword}{inline}\ ImageDescInfo\ \&ImageDescription::imagedesc()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00090\ \ \ \ \ assert(format\_\ >\ 0\ \&\&\ format\_\ <\ ARRAY\_SIZE(s\_PictureDescInfo));}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{return}\ s\_PictureDescInfo[format\_];}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ ImageDescription}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//}}
+\DoxyCodeLine{00096\ ImageDescription::ImageDescription()\ :\ format\_(IMAGE\_FORMAT\_NONE),\ width\_(0),\ height\_(0)\ \{\}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ ImageDescription::ImageDescription(ImageFormat\ f,\ \textcolor{keywordtype}{unsigned}\ w,\ \textcolor{keywordtype}{unsigned}\ h)\ :\ format\_(f),\ width\_(w),\ height\_(h)\ \{\}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ ImageFormat\ ImageDescription::format()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ format\_;\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ Colourspace\ ImageDescription::colourspace()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().colourspace;\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keywordtype}{unsigned}\ ImageDescription::width(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00105\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ width\_\ >>\ imagedesc().width\_plane\_shift[plane];}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keywordtype}{unsigned}\ ImageDescription::height(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00111\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{return}\ height\_\ >>\ imagedesc().height\_plane\_shift[plane];}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ Return\ true\ if\ image\ dimensions\ are\ valid\ for\ format}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//}}
+\DoxyCodeLine{00118\ \textcolor{keywordtype}{bool}\ ImageDescription::is\_valid()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ !(width\_\ \&\ info.width\_mask\ ||\ height\_\ \&\ info.height\_mask);}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ Total\ number\ of\ planes\ in\ image}}
+\DoxyCodeLine{00124\ \textcolor{keywordtype}{unsigned}\ ImageDescription::num\_planes()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().planes;\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keywordtype}{unsigned}\ ImageDescription::plane\_size(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00127\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{return}\ row\_stride(plane)\ *\ (height\_\ >>\ imagedesc().height\_plane\_shift[plane]);}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ Total\ number\ of\ bytes\ to\ store\ an\ image}}
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{unsigned}\ ImageDescription::byte\_size()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ num\_planes();\ ++p)}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ r\ +=\ plane\_size(p);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ Return\ byte\ offset\ of\ pixel\ row\ within\ buffer}}
+\DoxyCodeLine{00141\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_offset(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane,\ \textcolor{keywordtype}{unsigned}\ row)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00142\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00143\ \ \ \ \ assert(row\ <\ height\_);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ plane;\ ++p)}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ r\ +=\ plane\_size(p);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordflow}{return}\ r\ +\ row\ *\ row\_stride(plane);}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ Return\ byte\ size\ of\ pixel\ row\ (may\ be\ less\ than\ stride\ due\ to\ alignment)}}
+\DoxyCodeLine{00153\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_size(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00154\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{comment}{//\ Width\ of\ plane,\ rounded\ up\ to\ component\ units}}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ info.bytes\ *\ (width\_\ >>\ imagedesc().width\_plane\_shift[plane]);}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ Return\ byte\ stride\ of\ plane}}
+\DoxyCodeLine{00162\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_stride(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00163\ \ \ \ \ assert(plane\ <\ num\_planes());}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ a\ =\ 1;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Align\ stride\ to\ required\ power-\/of-\/2}}
+\DoxyCodeLine{00167\ \ \ \ \ assert(((a\ +\ 1)\ \&\ a)\ ==\ 0);}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{return}\ (row\_size(plane)\ +\ a)\ \&\ \string~a;}
+\DoxyCodeLine{00169\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{keywordtype}{bool}\ ImageDescription::rows\_are\_contiguous(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ row\_size(p)\ ==\ row\_stride(p);\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{keywordtype}{unsigned}\ ImageDescription::bit\_depth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().component\_bits;\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{keywordtype}{unsigned}\ ImageDescription::byte\_depth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().bytes;\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ std::string\ ImageDescription::make\_name(\textcolor{keyword}{const}\ std::string\ \&base)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{return}\ lctm::format(\textcolor{stringliteral}{"{}\%s\_\%dx\%d\%s"{}},\ base.c\_str(),\ width\_,\ height\_,\ imagedesc().suffix);}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ ImageDescription\ \&lhs,\ \textcolor{keyword}{const}\ ImageDescription\ \&rhs)\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ lhs.format()\ ==\ rhs.format()\ \&\&\ lhs.width()\ ==\ rhs.width()\ \&\&\ lhs.height()\ ==\ rhs.height();}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ Image::Image(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ std::vector<Surface>\ \&planes)}
+\DoxyCodeLine{00186\ \ \ \ \ :\ name\_(name),\ description\_(description),\ timestamp\_(timestamp),\ planes\_(planes)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ Image::Image(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ Surface\ (\&planes)[3])}
+\DoxyCodeLine{00191\ \ \ \ \ :\ name\_(name),\ description\_(description),\ timestamp\_(timestamp)\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
+\DoxyCodeLine{00193\ \ \ \ \ planes\_.push\_back(planes[0]);}
+\DoxyCodeLine{00194\ \ \ \ \ planes\_.push\_back(planes[1]);}
+\DoxyCodeLine{00195\ \ \ \ \ planes\_.push\_back(planes[2]);}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ Image::Image()\ :\ name\_(\textcolor{stringliteral}{"{}"{}}),\ description\_(ImageDescription(IMAGE\_FORMAT\_NONE,\ 0,\ 0)),\ timestamp\_(0)\ \{\}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keyword}{const}\ Surface\ \&Image::plane(uint32\_t\ p)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00201\ \ \ \ \ assert(p\ <\ planes\_.size());}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordflow}{return}\ planes\_[p];}
+\DoxyCodeLine{00203\ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ bit\ depth}}
+\DoxyCodeLine{00206\ ImageDescription\ ImageDescription::with\_depth(\textcolor{keywordtype}{unsigned}\ depth)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ fmt\ =\ (format\_\ -\/\ IMAGE\_FORMAT\_YUV420P8)\ \%\ (IMAGE\_FORMAT\_YUV420P10\ -\/\ IMAGE\_FORMAT\_YUV420P8);}
+\DoxyCodeLine{00208\ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{switch}\ (depth)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P10\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P12\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P14\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{case}\ 16:}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P16\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00227\ \ \ \ \ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(\textcolor{keyword}{static\_cast<}ImageFormat\textcolor{keyword}{>}(fmt),\ width(),\ height());}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ size}}
+\DoxyCodeLine{00233\ ImageDescription\ ImageDescription::with\_size(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(format\_,\ width,\ height);}
+\DoxyCodeLine{00235\ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \textcolor{comment}{//\ Parsing}}
+\DoxyCodeLine{00238\ \textcolor{comment}{//}}
+\DoxyCodeLine{00239\ std::istream\ \&operator>>(std::istream\ \&in,\ ImageFormat\ \&v)\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ std::string\ s;}
+\DoxyCodeLine{00241\ \ \ \ \ in\ >>\ s;}
+\DoxyCodeLine{00242\ \ \ \ \ s\ =\ lowercase(s);}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv"{}})}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420"{}})}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422"{}})}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444"{}})}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p"{}})}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p"{}})}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p"{}})}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p8"{}})}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p8"{}})}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p8"{}})}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p10"{}})}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P10;}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p10"{}})}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P10;}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p10"{}})}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P10;}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p12"{}})}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P12;}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p12"{}})}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P12;}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p12"{}})}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P12;}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p14"{}})}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P14;}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p14"{}})}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P14;}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p14"{}})}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P14;}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p16"{}})}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P16;}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p16"{}})}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P16;}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p16"{}})}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P16;}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y"{}})}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y8"{}})}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y10"{}})}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y10;}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y12"{}})}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y12;}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y14"{}})}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y14;}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y16"{}})}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y16;}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400"{}})}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p"{}})}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p10"{}})}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y10;}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p12"{}})}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y12;}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p14"{}})}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y14;}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p16"{}})}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y16;}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}not\ an\ image\ format:\ \%s"{}},\ s.c\_str());}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
+\DoxyCodeLine{00325\ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ std::istream\ \&operator>>(std::istream\ \&in,\ Colourspace\ \&v)\ \{}
+\DoxyCodeLine{00328\ \ \ \ \ ImageFormat\ f;}
+\DoxyCodeLine{00329\ \ \ \ \ in\ >>\ f;}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ CHECK(f\ <\ ARRAY\_SIZE(s\_PictureDescInfo));}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ v\ =\ s\_PictureDescInfo[f].colourspace;}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
+\DoxyCodeLine{00336\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

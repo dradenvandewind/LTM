@@ -1,0 +1,1638 @@
+\doxysection{Dep\+Quant.\+cpp}
+\label{DepQuant_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/DepQuant.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/DepQuant.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}DepQuant.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ "{}TrQuant.h"{}}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}CodingStructure.h"{}}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}UnitTools.h"{}}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <bitset>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }DQIntern}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00049\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00050\ \ \ \textcolor{comment}{/*=====\ \ \ R\ A\ T\ E\ \ \ E\ S\ T\ I\ M\ A\ T\ O\ R\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00051\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00052\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \textcolor{keyword}{struct\ }NbInfoSbb}
+\DoxyCodeLine{00055\ \ \ \{}
+\DoxyCodeLine{00056\ \ \ \ \ uint8\_t\ \ \ num;}
+\DoxyCodeLine{00057\ \ \ \ \ uint8\_t\ \ \ inPos[5];}
+\DoxyCodeLine{00058\ \ \ \};}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{struct\ }NbInfoOut}
+\DoxyCodeLine{00060\ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ uint16\_t\ \ maxDist;}
+\DoxyCodeLine{00062\ \ \ \ \ uint16\_t\ \ num;}
+\DoxyCodeLine{00063\ \ \ \ \ uint16\_t\ \ outPos[5];}
+\DoxyCodeLine{00064\ \ \ \};}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{struct\ }CoeffFracBits}
+\DoxyCodeLine{00066\ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ int32\_t\ \ \ bits[6];}
+\DoxyCodeLine{00068\ \ \ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{enum}\ ScanPosType\ \{\ SCAN\_ISCSBB\ =\ 0,\ SCAN\_SOCSBB\ =\ 1,\ SCAN\_EOCSBB\ =\ 2\ \};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \textcolor{keyword}{struct\ }ScanInfo}
+\DoxyCodeLine{00074\ \ \ \{}
+\DoxyCodeLine{00075\ \ \ \ \ ScanInfo()\ \{\}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ sbbSize;}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ numSbb;}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ scanIdx;}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ rasterPos;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ sbbPos;}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ insidePos;}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ eosbb;}
+\DoxyCodeLine{00083\ \ \ \ \ ScanPosType\ \ \ spt;}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ sigCtxOffsetNext;}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ gtxCtxOffsetNext;}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ nextInsidePos;}
+\DoxyCodeLine{00087\ \ \ \ \ NbInfoSbb\ \ \ \ \ nextNbInfoSbb;}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ nextSbbRight;}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ nextSbbBelow;}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ posX;}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ posY;}
+\DoxyCodeLine{00092\ \ \ \ \ ChannelType\ \ \ chType;}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ sbtInfo;}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ tuWidth;}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ tuHeight;}
+\DoxyCodeLine{00096\ \ \ \};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \textcolor{keyword}{class\ }Rom;}
+\DoxyCodeLine{00099\ \ \ \textcolor{keyword}{struct\ }TUParameters}
+\DoxyCodeLine{00100\ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ TUParameters\ (\ \textcolor{keyword}{const}\ Rom\&\ rom,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keyword}{const}\ ChannelType\ chType\ );}
+\DoxyCodeLine{00102\ \ \ \ \ \string~TUParameters()}
+\DoxyCodeLine{00103\ \ \ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ m\_scanInfo;}
+\DoxyCodeLine{00105\ \ \ \ \ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ ChannelType\ \ \ \ \ \ \ m\_chType;}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_width;}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_height;}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_numCoeff;}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_numSbb;}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_log2SbbWidth;}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_log2SbbHeight;}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_log2SbbSize;}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_sbbSize;}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_sbbMask;}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_widthInSbb;}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ m\_heightInSbb;}
+\DoxyCodeLine{00119\ \ \ \ \ CoeffScanType\ \ \ \ \ m\_scanType;}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{const}\ ScanElement\ *m\_scanSbbId2SbbPos;}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ ScanElement\ *m\_scanId2BlkPos;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoSbb*\ \ m\_scanId2NbInfoSbb;}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoOut*\ \ m\_scanId2NbInfoOut;}
+\DoxyCodeLine{00124\ \ \ \ \ ScanInfo*\ \ \ \ \ \ \ \ \ m\_scanInfo;}
+\DoxyCodeLine{00125\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordtype}{void}\ xSetScanInfo(\ ScanInfo\&\ scanInfo,\ \textcolor{keywordtype}{int}\ scanIdx\ );}
+\DoxyCodeLine{00127\ \ \ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \textcolor{keyword}{class\ }Rom}
+\DoxyCodeLine{00130\ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00132\ \ \ \ \ Rom()\ :\ m\_scansInitialized(false)\ \{\}}
+\DoxyCodeLine{00133\ \ \ \ \ \string~Rom()\ \{\ xUninitScanArrays();\ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ init\ \ \ \ \ \ \ \ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ xInitScanArrays();\ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoSbb*\ \ \ \ getNbInfoSbb(\ \textcolor{keywordtype}{int}\ hd,\ \textcolor{keywordtype}{int}\ vd\ )\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_scanId2NbInfoSbbArray[hd][vd];\ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoOut*\ \ \ \ getNbInfoOut(\ \textcolor{keywordtype}{int}\ hd,\ \textcolor{keywordtype}{int}\ vd\ )\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_scanId2NbInfoOutArray[hd][vd];\ \}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{const}\ TUParameters*\ getTUPars\ \ \ (\ \textcolor{keyword}{const}\ CompArea\&\ area,\ \textcolor{keyword}{const}\ ComponentID\ compID\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00138\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_tuParameters[floorLog2(area.width)][floorLog2(area.height)][toChannelType(compID)];}
+\DoxyCodeLine{00140\ \ \ \ \ \}}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xInitScanArrays\ \ \ ();}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xUninitScanArrays\ ();}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ m\_scansInitialized;}
+\DoxyCodeLine{00146\ \ \ \ \ NbInfoSbb*\ \ \ \ m\_scanId2NbInfoSbbArray[\ MAX\_CU\_DEPTH+1\ ][\ MAX\_CU\_DEPTH+1\ ];}
+\DoxyCodeLine{00147\ \ \ \ \ NbInfoOut*\ \ \ \ m\_scanId2NbInfoOutArray[\ MAX\_CU\_DEPTH+1\ ][\ MAX\_CU\_DEPTH+1\ ];}
+\DoxyCodeLine{00148\ \ \ \ \ TUParameters*\ m\_tuParameters\ \ \ \ \ \ \ \ \ [\ MAX\_CU\_DEPTH+1\ ][\ MAX\_CU\_DEPTH+1\ ][\ MAX\_NUM\_CHANNEL\_TYPE\ ];}
+\DoxyCodeLine{00149\ \ \ \};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \textcolor{keywordtype}{void}\ Rom::xInitScanArrays()}
+\DoxyCodeLine{00152\ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_scansInitialized\ )}
+\DoxyCodeLine{00154\ \ \ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00156\ \ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ \ ::memset(\ m\_scanId2NbInfoSbbArray,\ 0,\ \textcolor{keyword}{sizeof}(m\_scanId2NbInfoSbbArray)\ );}
+\DoxyCodeLine{00158\ \ \ \ \ ::memset(\ m\_scanId2NbInfoOutArray,\ 0,\ \textcolor{keyword}{sizeof}(m\_scanId2NbInfoOutArray)\ );}
+\DoxyCodeLine{00159\ \ \ \ \ ::memset(\ m\_tuParameters,\ \ \ \ \ \ \ \ \ \ 0,\ \textcolor{keyword}{sizeof}(m\_tuParameters)\ );}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ uint32\_t\ raster2id[\ MAX\_CU\_SIZE\ *\ MAX\_CU\_SIZE\ ];}
+\DoxyCodeLine{00162\ \ \ \ \ ::memset(raster2id,\ 0,\ \textcolor{keyword}{sizeof}(raster2id));}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ hd\ =\ 0;\ hd\ <=\ MAX\_CU\_DEPTH;\ hd++\ )}
+\DoxyCodeLine{00165\ \ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ vd\ =\ 0;\ vd\ <=\ MAX\_CU\_DEPTH;\ vd++\ )}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (hd\ ==\ 0\ \&\&\ vd\ <=\ 1)\ ||\ (hd\ <=\ 1\ \&\&\ vd\ ==\ 0)\ )}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ blockWidth\ \ \ \ =\ (1\ <<\ hd);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ blockHeight\ \ \ =\ (1\ <<\ vd);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ log2CGWidth\ \ \ =\ g\_log2SbbSize[hd][vd][0];}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ log2CGHeight\ \ =\ g\_log2SbbSize[hd][vd][1];}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ groupWidth\ \ \ \ =\ 1\ <<\ log2CGWidth;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ groupHeight\ \ \ =\ 1\ <<\ log2CGHeight;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ groupSize\ \ \ \ \ =\ groupWidth\ *\ groupHeight;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CoeffScanType\ scanType\ \ \ \ \ \ =\ SCAN\_DIAG;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ \ \ \ \ \ blkWidthIdx\ \ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ blockWidth\ \ );}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ \ \ \ \ \ blkHeightIdx\ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ blockHeight\ );}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ScanElement\ *\ scanId2RP\ \ \ \ \ =\ g\_scanOrder[SCAN\_GROUPED\_4x4][scanType][blkWidthIdx][blkHeightIdx];}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ NbInfoSbb*\&\ \ \ \ \ \ \ \ \ sId2NbSbb\ \ \ \ \ =\ m\_scanId2NbInfoSbbArray[hd][vd];}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ NbInfoOut*\&\ \ \ \ \ \ \ \ \ sId2NbOut\ \ \ \ \ =\ m\_scanId2NbInfoOutArray[hd][vd];}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ consider\ only\ non-\/zero-\/out\ region}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ blkWidthNZOut\ =\ std::min<unsigned>(\ JVET\_C0024\_ZERO\_OUT\_TH,\ blockWidth\ \ );}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ blkHeightNZOut=\ std::min<unsigned>(\ JVET\_C0024\_ZERO\_OUT\_TH,\ blockHeight\ );}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ \ \ totalValues\ \ \ =\ blkWidthNZOut\ *\ blkHeightNZOut;}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ sId2NbSbb\ =\ \textcolor{keyword}{new}\ NbInfoSbb[\ totalValues\ ];}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ sId2NbOut\ =\ \textcolor{keyword}{new}\ NbInfoOut[\ totalValues\ ];}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ scanId\ =\ 0;\ scanId\ <\ totalValues;\ scanId++\ )}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ raster2id[scanId2RP[scanId].idx]\ =\ scanId;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ scanId\ =\ 0;\ scanId\ <\ totalValues;\ scanId++\ )}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ posX\ =\ scanId2RP[scanId].x;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ posY\ =\ scanId2RP[scanId].y;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ rpos\ =\ scanId2RP[scanId].idx;}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//=====\ inside\ subband\ neighbours\ =====}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ NbInfoSbb\&\ \ \ \ \ nbSbb\ \ =\ sId2NbSbb[\ scanId\ ];}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ begSbb\ =\ scanId\ -\/\ (\ scanId\ \&\ (groupSize-\/1)\ );\ \textcolor{comment}{//\ first\ pos\ in\ current\ subblock}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ cpos[5];}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[0]\ =\ (\ posX\ +\ 1\ <\ blkWidthNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+1\ \ \ \ \ \ \ \ \ \ \ ]\ <\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+1\ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ begSbb\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[1]\ =\ (\ posX\ +\ 2\ <\ blkWidthNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+2\ \ \ \ \ \ \ \ \ \ \ ]\ <\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+2\ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ begSbb\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[2]\ =\ (\ posX\ +\ 1\ <\ blkWidthNZOut\ \&\&\ posY\ +\ 1\ <\ blkHeightNZOut\ ?\ (\ raster2id[rpos+1+blockWidth]\ <\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+1+blockWidth]\ -\/\ begSbb\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[3]\ =\ (\ posY\ +\ 1\ <\ blkHeightNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+\ \ blockWidth]\ <\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+\ \ blockWidth]\ -\/\ begSbb\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[4]\ =\ (\ posY\ +\ 2\ <\ blkHeightNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+2*blockWidth]\ <\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+2*blockWidth]\ -\/\ begSbb\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ nbSbb.num\ =\ 0;\ \textcolor{keyword}{true};\ )}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ nk\ =\ -\/1;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++\ )}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ cpos[k]\ !=\ 0\ \&\&\ (\ nk\ <\ 0\ ||\ cpos[k]\ <\ cpos[nk]\ )\ )}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nk\ =\ k;}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nk\ <\ 0\ )}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nbSbb.inPos[\ nbSbb.num++\ ]\ =\ uint8\_t(\ cpos[nk]\ );}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpos[nk]\ =\ 0;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ nbSbb.num;\ k\ <\ 5;\ k++\ )}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nbSbb.inPos[k]\ =\ 0;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//=====\ outside\ subband\ neighbours\ =====}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ NbInfoOut\&\ \ \ \ \ nbOut\ \ =\ sId2NbOut[\ scanId\ ];}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ begSbb\ =\ scanId\ -\/\ (\ scanId\ \&\ (groupSize-\/1)\ );\ \textcolor{comment}{//\ first\ pos\ in\ current\ subblock}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ cpos[5];}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[0]\ =\ (\ posX\ +\ 1\ <\ blkWidthNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+1\ \ \ \ \ \ \ \ \ \ \ ]\ >=\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+1\ \ \ \ \ \ \ \ \ \ \ ]\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[1]\ =\ (\ posX\ +\ 2\ <\ blkWidthNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+2\ \ \ \ \ \ \ \ \ \ \ ]\ >=\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+2\ \ \ \ \ \ \ \ \ \ \ ]\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[2]\ =\ (\ posX\ +\ 1\ <\ blkWidthNZOut\ \&\&\ posY\ +\ 1\ <\ blkHeightNZOut\ ?\ (\ raster2id[rpos+1+blockWidth]\ >=\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+1+blockWidth]\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[3]\ =\ (\ posY\ +\ 1\ <\ blkHeightNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+\ \ blockWidth]\ >=\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+\ \ blockWidth]\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ cpos[4]\ =\ (\ posY\ +\ 2\ <\ blkHeightNZOut\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ (\ raster2id[rpos+2*blockWidth]\ >=\ groupSize\ +\ begSbb\ ?\ raster2id[rpos+2*blockWidth]\ :\ 0\ )\ :\ 0\ );}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ nbOut.num\ =\ 0;\ \textcolor{keyword}{true};\ )}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ nk\ =\ -\/1;}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++\ )}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ cpos[k]\ !=\ 0\ \&\&\ (\ nk\ <\ 0\ ||\ cpos[k]\ <\ cpos[nk]\ )\ )}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nk\ =\ k;}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nk\ <\ 0\ )}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nbOut.outPos[\ nbOut.num++\ ]\ =\ uint16\_t(\ cpos[nk]\ );}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cpos[nk]\ =\ 0;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ nbOut.num;\ k\ <\ 5;\ k++\ )}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nbOut.outPos[k]\ =\ 0;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ nbOut.maxDist\ =\ (\ scanId\ ==\ 0\ ?\ 0\ :\ sId2NbOut[scanId-\/1].maxDist\ );}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ nbOut.num;\ k++\ )}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut.outPos[k]\ >\ nbOut.maxDist\ )}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nbOut.maxDist\ =\ nbOut.outPos[k];}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ make\ it\ relative}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ scanId\ =\ 0;\ scanId\ <\ totalValues;\ scanId++\ )}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ NbInfoOut\&\ nbOut\ \ =\ sId2NbOut[scanId];}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ begSbb\ =\ scanId\ -\/\ (\ scanId\ \&\ (groupSize-\/1)\ );\ \textcolor{comment}{//\ first\ pos\ in\ current\ subblock}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ nbOut.num;\ k++\ )}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(begSbb\ >\ nbOut.outPos[k],\ \textcolor{stringliteral}{"{}Position\ must\ be\ past\ sub\ block\ begin"{}});}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ nbOut.outPos[k]\ -\/=\ begSbb;}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ nbOut.maxDist\ -\/=\ scanId;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ chId\ =\ 0;\ chId\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ chId++\ )}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ m\_tuParameters[hd][vd][chId]\ =\ \textcolor{keyword}{new}\ TUParameters(\ *\textcolor{keyword}{this},\ blockWidth,\ blockHeight,\ ChannelType(chId)\ );}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00299\ \ \ \ \ \}}
+\DoxyCodeLine{00300\ \ \ \ \ m\_scansInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00301\ \ \ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordtype}{void}\ Rom::xUninitScanArrays()}
+\DoxyCodeLine{00304\ \ \ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordflow}{if}(\ !m\_scansInitialized\ )}
+\DoxyCodeLine{00306\ \ \ \ \ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00308\ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ hd\ =\ 0;\ hd\ <=\ MAX\_CU\_DEPTH;\ hd++\ )}
+\DoxyCodeLine{00310\ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ vd\ =\ 0;\ vd\ <=\ MAX\_CU\_DEPTH;\ vd++\ )}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ NbInfoSbb*\&\ sId2NbSbb\ =\ m\_scanId2NbInfoSbbArray[hd][vd];}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ NbInfoOut*\&\ sId2NbOut\ =\ m\_scanId2NbInfoOutArray[hd][vd];}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ sId2NbSbb\ )}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ sId2NbSbb;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ sId2NbOut\ )}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ sId2NbOut;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ chId\ =\ 0;\ chId\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ chId++\ )}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ TUParameters*\&\ tuPars\ =\ m\_tuParameters[hd][vd][chId];}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ tuPars\ )}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ tuPars;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ m\_scansInitialized\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \textcolor{keyword}{static}\ Rom\ g\_Rom;}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ TUParameters::TUParameters(\ \textcolor{keyword}{const}\ Rom\&\ rom,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keyword}{const}\ ChannelType\ chType\ )}
+\DoxyCodeLine{00341\ \ \ \{}
+\DoxyCodeLine{00342\ \ \ \ \ m\_chType\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ chType;}
+\DoxyCodeLine{00343\ \ \ \ \ m\_width\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ width;}
+\DoxyCodeLine{00344\ \ \ \ \ m\_height\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ height;}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ nonzeroWidth\ \ =\ std::min<uint32\_t>(JVET\_C0024\_ZERO\_OUT\_TH,\ m\_width);}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ nonzeroHeight\ =\ std::min<uint32\_t>(JVET\_C0024\_ZERO\_OUT\_TH,\ m\_height);}
+\DoxyCodeLine{00347\ \ \ \ \ m\_numCoeff\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ nonzeroWidth\ *\ nonzeroHeight;}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ log2W\ \ \ \ \ \ \ =\ floorLog2(\ m\_width\ \ );}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ log2H\ \ \ \ \ \ \ =\ floorLog2(\ m\_height\ );}
+\DoxyCodeLine{00350\ \ \ \ \ m\_log2SbbWidth\ \ \ \ \ \ \ \ =\ g\_log2SbbSize[\ log2W\ ][\ log2H\ ][0];}
+\DoxyCodeLine{00351\ \ \ \ \ m\_log2SbbHeight\ \ \ \ \ \ \ =\ g\_log2SbbSize[\ log2W\ ][\ log2H\ ][1];}
+\DoxyCodeLine{00352\ \ \ \ \ m\_log2SbbSize\ \ \ \ \ \ \ \ \ =\ m\_log2SbbWidth\ +\ m\_log2SbbHeight;}
+\DoxyCodeLine{00353\ \ \ \ \ m\_sbbSize\ \ \ \ \ \ \ \ \ \ \ \ \ =\ (\ 1\ <<\ m\_log2SbbSize\ );}
+\DoxyCodeLine{00354\ \ \ \ \ m\_sbbMask\ \ \ \ \ \ \ \ \ \ \ \ \ =\ m\_sbbSize\ -\/\ 1;}
+\DoxyCodeLine{00355\ \ \ \ \ m\_widthInSbb\ \ =\ nonzeroWidth\ >>\ m\_log2SbbWidth;}
+\DoxyCodeLine{00356\ \ \ \ \ m\_heightInSbb\ =\ nonzeroHeight\ >>\ m\_log2SbbHeight;}
+\DoxyCodeLine{00357\ \ \ \ \ m\_numSbb\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ m\_widthInSbb\ *\ m\_heightInSbb;}
+\DoxyCodeLine{00358\ \ \ \ \ m\_scanType\ \ \ \ \ \ \ \ \ \ \ \ =\ SCAN\_DIAG;}
+\DoxyCodeLine{00359\ \ \ \ \ SizeType\ \ \ \ \ \ \ \ hsbb\ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ m\_widthInSbb\ \ );}
+\DoxyCodeLine{00360\ \ \ \ \ SizeType\ \ \ \ \ \ \ \ vsbb\ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ m\_heightInSbb\ );}
+\DoxyCodeLine{00361\ \ \ \ \ SizeType\ \ \ \ \ \ \ \ hsId\ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ m\_width\ \ );}
+\DoxyCodeLine{00362\ \ \ \ \ SizeType\ \ \ \ \ \ \ \ vsId\ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ m\_height\ );}
+\DoxyCodeLine{00363\ \ \ \ \ m\_scanSbbId2SbbPos\ \ \ \ =\ g\_scanOrder\ \ \ \ \ [\ SCAN\_UNGROUPED\ \ \ ][\ m\_scanType\ ][\ hsbb\ ][\ vsbb\ ];}
+\DoxyCodeLine{00364\ \ \ \ \ m\_scanId2BlkPos\ \ \ \ \ \ \ =\ g\_scanOrder\ \ \ \ \ [\ SCAN\_GROUPED\_4x4\ ][\ m\_scanType\ ][\ hsId\ ][\ vsId\ ];}
+\DoxyCodeLine{00365\ \ \ \ \ m\_scanId2NbInfoSbb\ \ \ \ =\ rom.getNbInfoSbb(\ log2W,\ log2H\ );}
+\DoxyCodeLine{00366\ \ \ \ \ m\_scanId2NbInfoOut\ \ \ \ =\ rom.getNbInfoOut(\ log2W,\ log2H\ );}
+\DoxyCodeLine{00367\ \ \ \ \ m\_scanInfo\ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{new}\ ScanInfo[\ m\_numCoeff\ ];}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ scanIdx\ =\ 0;\ scanIdx\ <\ m\_numCoeff;\ scanIdx++\ )}
+\DoxyCodeLine{00369\ \ \ \ \ \{}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ xSetScanInfo(\ m\_scanInfo[scanIdx],\ scanIdx\ );}
+\DoxyCodeLine{00371\ \ \ \ \ \}}
+\DoxyCodeLine{00372\ \ \ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordtype}{void}\ TUParameters::xSetScanInfo(\ ScanInfo\&\ scanInfo,\ \textcolor{keywordtype}{int}\ scanIdx\ )}
+\DoxyCodeLine{00376\ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ scanInfo.chType\ \ \ \ \ =\ m\_chType;}
+\DoxyCodeLine{00378\ \ \ \ \ scanInfo.tuWidth\ \ \ \ =\ m\_width;}
+\DoxyCodeLine{00379\ \ \ \ \ scanInfo.tuHeight\ \ \ =\ m\_height;}
+\DoxyCodeLine{00380\ \ \ \ \ scanInfo.sbbSize\ \ \ \ =\ m\_sbbSize;}
+\DoxyCodeLine{00381\ \ \ \ \ scanInfo.numSbb\ \ \ \ \ =\ m\_numSbb;}
+\DoxyCodeLine{00382\ \ \ \ \ scanInfo.scanIdx\ \ \ \ =\ scanIdx;}
+\DoxyCodeLine{00383\ \ \ \ \ scanInfo.rasterPos\ \ =\ m\_scanId2BlkPos[scanIdx].idx;}
+\DoxyCodeLine{00384\ \ \ \ \ scanInfo.sbbPos\ \ \ \ \ =\ m\_scanSbbId2SbbPos[scanIdx\ >>\ m\_log2SbbSize].idx;}
+\DoxyCodeLine{00385\ \ \ \ \ scanInfo.insidePos\ \ =\ scanIdx\ \&\ m\_sbbMask;}
+\DoxyCodeLine{00386\ \ \ \ \ scanInfo.eosbb\ \ \ \ \ \ =\ (\ scanInfo.insidePos\ ==\ 0\ );}
+\DoxyCodeLine{00387\ \ \ \ \ scanInfo.spt\ \ \ \ \ \ \ \ =\ SCAN\_ISCSBB;}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordflow}{if}(\ \ scanInfo.insidePos\ ==\ m\_sbbMask\ \&\&\ scanIdx\ >\ scanInfo.sbbSize\ \&\&\ scanIdx\ <\ m\_numCoeff\ -\/\ 1\ )}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ scanInfo.spt\ \ \ \ \ \ =\ SCAN\_SOCSBB;}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ scanInfo.eosbb\ \&\&\ scanIdx\ >\ 0\ \&\&\ scanIdx\ <\ m\_numCoeff\ -\/\ m\_sbbSize\ )}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ scanInfo.spt\ \ \ \ \ \ =\ SCAN\_EOCSBB;}
+\DoxyCodeLine{00392\ \ \ \ \ scanInfo.posX\ =\ m\_scanId2BlkPos[scanIdx].x;}
+\DoxyCodeLine{00393\ \ \ \ \ scanInfo.posY\ =\ m\_scanId2BlkPos[scanIdx].y;}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordflow}{if}(\ scanIdx\ )}
+\DoxyCodeLine{00395\ \ \ \ \ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nextScanIdx\ =\ scanIdx\ -\/\ 1;}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ diag\ \ \ \ \ \ \ \ =\ m\_scanId2BlkPos[nextScanIdx].x\ +\ m\_scanId2BlkPos[nextScanIdx].y;}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_chType\ ==\ CHANNEL\_TYPE\_LUMA\ )}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ scanInfo.sigCtxOffsetNext\ =\ (\ diag\ <\ 2\ ?\ 8\ :\ diag\ <\ 5\ ?\ \ 4\ :\ 0\ );}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ scanInfo.gtxCtxOffsetNext\ =\ (\ diag\ <\ 1\ ?\ 16\ :\ diag\ <\ 3\ ?\ 11\ :\ diag\ <\ 10\ ?\ 6\ :\ 1\ );}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ scanInfo.sigCtxOffsetNext\ =\ (\ diag\ <\ 2\ ?\ 4\ :\ 0\ );}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ scanInfo.gtxCtxOffsetNext\ =\ (\ diag\ <\ 1\ ?\ 6\ :\ 1\ );}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ scanInfo.nextInsidePos\ \ \ \ \ \ =\ nextScanIdx\ \&\ m\_sbbMask;}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ scanInfo.nextNbInfoSbb\ \ \ \ \ \ =\ m\_scanId2NbInfoSbb[\ nextScanIdx\ ];}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ scanInfo.eosbb\ )}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nextSbbPos\ \ =\ m\_scanSbbId2SbbPos[nextScanIdx\ >>\ m\_log2SbbSize].idx;}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nextSbbPosY\ =\ nextSbbPos\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ /\ m\_widthInSbb;}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nextSbbPosX\ =\ nextSbbPos\ -\/\ nextSbbPosY\ *\ m\_widthInSbb;}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ scanInfo.nextSbbRight\ =\ (\ nextSbbPosX\ <\ m\_widthInSbb\ \ -\/\ 1\ ?\ nextSbbPos\ +\ 1\ \ \ \ \ \ \ \ \ \ \ \ :\ 0\ );}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ scanInfo.nextSbbBelow\ =\ (\ nextSbbPosY\ <\ m\_heightInSbb\ -\/\ 1\ ?\ nextSbbPos\ +\ m\_widthInSbb\ :\ 0\ );}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00418\ \ \ \ \ \}}
+\DoxyCodeLine{00419\ \ \ \}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ \ \ \textcolor{keyword}{class\ }RateEstimator}
+\DoxyCodeLine{00424\ \ \ \{}
+\DoxyCodeLine{00425\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00426\ \ \ \ \ RateEstimator\ ()\ \{\}}
+\DoxyCodeLine{00427\ \ \ \ \ \string~RateEstimator()\ \{\}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keywordtype}{void}\ initCtx\ \ (\ \textcolor{keyword}{const}\ TUParameters\&\ tuPars,\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess\ );}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ BinFracBits\ *sigSbbFracBits()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sigSbbFracBits;\ \}}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ BinFracBits\ *sigFlagBits(\textcolor{keywordtype}{unsigned}\ stateId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00432\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sigFracBits[std::max(((\textcolor{keywordtype}{int})\ stateId)\ -\/\ 1,\ 0)];}
+\DoxyCodeLine{00434\ \ \ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ CoeffFracBits\ *gtxFracBits(\textcolor{keywordtype}{unsigned}\ stateId)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_gtxFracBits;\ \}}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keyword}{inline}\ int32\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ lastOffset(\textcolor{keywordtype}{unsigned}\ scanIdx)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00437\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_lastBitsX[m\_scanId2Pos[scanIdx].x]\ +\ m\_lastBitsY[m\_scanId2Pos[scanIdx].y];}
+\DoxyCodeLine{00439\ \ \ \ \ \}}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xSetLastCoeffOffset\ (\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ \textcolor{keyword}{const}\ TUParameters\&\ tuPars,\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID\ );}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xSetSigSbbFracBits\ \ (\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ );}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xSetSigFlagBits\ \ \ \ \ (\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ );}
+\DoxyCodeLine{00445\ \ \ \ \ \textcolor{keywordtype}{void}\ \ xSetGtxFlagBits\ \ \ \ \ (\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ );}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ sm\_numCtxSetsSig\ \ \ \ =\ 3;}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ sm\_numCtxSetsGtx\ \ \ \ =\ 2;}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ sm\_maxNumSigSbbCtx\ \ =\ 2;}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ sm\_maxNumSigCtx\ \ \ \ \ =\ 12;}
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ sm\_maxNumGtxCtx\ \ \ \ \ =\ 21;}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keyword}{const}\ ScanElement\ *\ m\_scanId2Pos;}
+\DoxyCodeLine{00456\ \ \ \ \ int32\_t\ \ \ \ \ \ \ \ \ \ \ \ \ m\_lastBitsX\ \ \ \ \ \ [\ MAX\_TB\_SIZEY\ ];}
+\DoxyCodeLine{00457\ \ \ \ \ int32\_t\ \ \ \ \ \ \ \ \ \ \ \ \ m\_lastBitsY\ \ \ \ \ \ [\ MAX\_TB\_SIZEY\ ];}
+\DoxyCodeLine{00458\ \ \ \ \ BinFracBits\ \ \ \ \ \ \ \ \ m\_sigSbbFracBits\ [\ sm\_maxNumSigSbbCtx\ ];}
+\DoxyCodeLine{00459\ \ \ \ \ BinFracBits\ \ \ \ \ \ \ \ \ m\_sigFracBits\ \ \ \ [\ sm\_numCtxSetsSig\ \ \ ][\ sm\_maxNumSigCtx\ ];}
+\DoxyCodeLine{00460\ \ \ \ \ CoeffFracBits\ \ \ \ \ \ \ m\_gtxFracBits\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\ sm\_maxNumGtxCtx\ ];}
+\DoxyCodeLine{00461\ \ \ \};}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \textcolor{keywordtype}{void}\ RateEstimator::initCtx(\ \textcolor{keyword}{const}\ TUParameters\&\ tuPars,\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess\ )}
+\DoxyCodeLine{00464\ \ \ \{}
+\DoxyCodeLine{00465\ \ \ \ \ m\_scanId2Pos\ =\ tuPars.m\_scanId2BlkPos;}
+\DoxyCodeLine{00466\ \ \ \ \ xSetSigSbbFracBits\ \ (\ fracBitsAccess,\ tuPars.m\_chType\ );}
+\DoxyCodeLine{00467\ \ \ \ \ xSetSigFlagBits\ \ \ \ \ (\ fracBitsAccess,\ tuPars.m\_chType\ );}
+\DoxyCodeLine{00468\ \ \ \ \ xSetGtxFlagBits\ \ \ \ \ (\ fracBitsAccess,\ tuPars.m\_chType\ );}
+\DoxyCodeLine{00469\ \ \ \ \ xSetLastCoeffOffset\ (\ fracBitsAccess,\ tuPars,\ tu,\ compID\ );}
+\DoxyCodeLine{00470\ \ \ \}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \textcolor{keywordtype}{void}\ RateEstimator::xSetLastCoeffOffset(\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ \textcolor{keyword}{const}\ TUParameters\&\ tuPars,\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID\ )}
+\DoxyCodeLine{00473\ \ \ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType\ =\ (\ compID\ ==\ COMPONENT\_Y\ ?\ CHANNEL\_TYPE\_LUMA\ :\ CHANNEL\_TYPE\_CHROMA\ );}
+\DoxyCodeLine{00475\ \ \ \ \ int32\_t\ cbfDeltaBits\ =\ 0;}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keywordflow}{if}(\ compID\ ==\ COMPONENT\_Y\ \&\&\ !CU::isIntra(*tu.cu)\ \&\&\ !tu.depth\ )}
+\DoxyCodeLine{00477\ \ \ \ \ \{}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \textcolor{keyword}{const}\ BinFracBits\ bits\ \ =\ fracBitsAccess.getFracBitsArray(\ Ctx::QtRootCbf()\ );}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ cbfDeltaBits\ \ \ \ \ \ \ \ \ \ \ \ =\ int32\_t(\ bits.intBits[1]\ )\ -\/\ int32\_t(\ bits.intBits[0]\ );}
+\DoxyCodeLine{00480\ \ \ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00482\ \ \ \ \ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ BinFracBits\ bits;}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ prevLumaCbf\ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ lastCbfIsInferred\ \ \ \ \ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ useIntraSubPartitions\ =\ tu.cu-\/>ispMode\ \&\&\ isLuma(chType);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ useIntraSubPartitions\ )}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ rootCbfSoFar\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLastSubPartition\ =\ CU::isISPLast(*tu.cu,\ tu.Y(),\ compID);}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ uint32\_t\ nTus\ =\ tu.cu-\/>ispMode\ ==\ HOR\_INTRA\_SUBPARTITIONS\ ?\ tu.cu-\/>lheight()\ >>\ floorLog2(tu.lheight())\ :\ tu.cu-\/>lwidth()\ >>\ floorLog2(tu.lwidth());}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ isLastSubPartition\ )}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ TransformUnit*\ tuPointer\ =\ tu.cu-\/>firstTU;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ tuIdx\ =\ 0;\ tuIdx\ <\ nTus\ -\/\ 1;\ tuIdx++\ )}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ rootCbfSoFar\ |=\ TU::getCbfAtDepth(*tuPointer,\ COMPONENT\_Y,\ tu.depth);}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ tuPointer\ \ \ \ \ =\ tuPointer-\/>next;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !rootCbfSoFar\ )}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ lastCbfIsInferred\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !lastCbfIsInferred\ )}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ prevLumaCbf\ =\ TU::getPrevTuCbfAtDepth(tu,\ compID,\ tu.depth);}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ bits\ =\ fracBitsAccess.getFracBitsArray(Ctx::QtCbf[compID](DeriveCtx::CtxQtCbf(compID,\ prevLumaCbf,\ \textcolor{keyword}{true})));}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ bits\ =\ fracBitsAccess.getFracBitsArray(Ctx::QtCbf[compID](DeriveCtx::CtxQtCbf(compID,\ tu.cbf[COMPONENT\_Cb])));}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ cbfDeltaBits\ =\ lastCbfIsInferred\ ?\ 0\ :\ int32\_t(bits.intBits[1])\ -\/\ int32\_t(bits.intBits[0]);}
+\DoxyCodeLine{00516\ \ \ \ \ \}}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ prefixCtx[]\ =\ \{\ 0,\ 0,\ 0,\ 3,\ 6,\ 10,\ 15,\ 21\ \};}
+\DoxyCodeLine{00519\ \ \ \ \ uint32\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ ctxBits\ \ [\ LAST\_SIGNIFICANT\_GROUPS\ ];}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ xy\ =\ 0;\ xy\ <\ 2;\ xy++\ )}
+\DoxyCodeLine{00521\ \ \ \ \ \{}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ int32\_t\ \ \ \ \ \ \ \ \ \ \ \ \ bitOffset\ \ \ =\ (\ xy\ ?\ cbfDeltaBits\ :\ 0\ );}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ int32\_t*\ \ \ \ \ \ \ \ \ \ \ \ lastBits\ \ \ \ =\ (\ xy\ ?\ m\_lastBitsY\ :\ m\_lastBitsX\ );}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ size\ \ \ \ \ \ \ \ =\ (\ xy\ ?\ tuPars.m\_height\ :\ tuPars.m\_width\ );}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ log2Size\ \ \ \ =\ ceilLog2(\ size\ );}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ useYCtx\ \ \ \ \ =\ (\ xy\ !=\ 0\ );}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ \ \ \ \ \ \ ctxSetLast\ \ =\ (\ useYCtx\ ?\ Ctx::LastY\ :\ Ctx::LastX\ )[\ chType\ ];}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ lastShift\ \ \ =\ (\ compID\ ==\ COMPONENT\_Y\ ?\ (log2Size+1)>>2\ :\ Clip3<unsigned>(0,2,size>>3)\ );}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ lastOffset\ \ =\ (\ compID\ ==\ COMPONENT\_Y\ ?\ (\ prefixCtx[log2Size]\ )\ :\ 0\ );}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ uint32\_t\ \ \ \ \ \ \ \ \ \ \ \ sumFBits\ \ \ \ =\ 0;}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ \ \ maxCtxId\ \ \ \ =\ g\_uiGroupIdx[std::min<unsigned>(JVET\_C0024\_ZERO\_OUT\_TH,\ size)\ -\/\ 1];}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ ctxId\ =\ 0;\ ctxId\ <\ maxCtxId;\ ctxId++\ )}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ BinFracBits\ bits\ \ =\ fracBitsAccess.getFracBitsArray(\ ctxSetLast(\ lastOffset\ +\ (\ ctxId\ >>\ lastShift\ )\ )\ );}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ ctxBits[\ ctxId\ ]\ \ \ \ \ \ \ \ =\ sumFBits\ +\ bits.intBits[0]\ +\ (\ ctxId>3\ ?\ ((ctxId-\/2)>>1)<<SCALE\_BITS\ :\ 0\ )\ +\ bitOffset;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ sumFBits\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +=\ \ \ \ \ \ \ \ \ \ \ \ bits.intBits[1];}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ ctxBits\ \ [\ maxCtxId\ ]\ \ \ \ \ =\ sumFBits\ +\ (\ maxCtxId>3\ ?\ ((maxCtxId-\/2)>>1)<<SCALE\_BITS\ :\ 0\ )\ +\ bitOffset;}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ pos\ =\ 0;\ pos\ <\ std::min<unsigned>(JVET\_C0024\_ZERO\_OUT\_TH,\ size);\ pos++)}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ lastBits[\ pos\ ]\ \ \ \ \ \ \ \ \ =\ ctxBits[\ g\_uiGroupIdx[\ pos\ ]\ ];}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00543\ \ \ \ \ \}}
+\DoxyCodeLine{00544\ \ \ \}}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \ \ \textcolor{keywordtype}{void}\ RateEstimator::xSetSigSbbFracBits(\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ )}
+\DoxyCodeLine{00547\ \ \ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet\ =\ Ctx::SigCoeffGroup[\ chType\ ];}
+\DoxyCodeLine{00549\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ ctxId\ =\ 0;\ ctxId\ <\ sm\_maxNumSigSbbCtx;\ ctxId++\ )}
+\DoxyCodeLine{00550\ \ \ \ \ \{}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ m\_sigSbbFracBits[\ ctxId\ ]\ =\ fracBitsAccess.getFracBitsArray(\ ctxSet(\ ctxId\ )\ );}
+\DoxyCodeLine{00552\ \ \ \ \ \}}
+\DoxyCodeLine{00553\ \ \ \}}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ \textcolor{keywordtype}{void}\ RateEstimator::xSetSigFlagBits(\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ )}
+\DoxyCodeLine{00556\ \ \ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ ctxSetId\ =\ 0;\ ctxSetId\ <\ sm\_numCtxSetsSig;\ ctxSetId++\ )}
+\DoxyCodeLine{00558\ \ \ \ \ \{}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ BinFracBits*\ \ \ \ bits\ \ \ \ =\ m\_sigFracBits\ [\ ctxSetId\ ];}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ \ \ ctxSet\ \ =\ Ctx::SigFlag\ \ [\ chType\ +\ 2*ctxSetId\ ];}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ numCtx\ \ =\ (\ chType\ ==\ CHANNEL\_TYPE\_LUMA\ ?\ 12\ :\ 8\ );}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ ctxId\ =\ 0;\ ctxId\ <\ numCtx;\ ctxId++\ )}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ bits[\ ctxId\ ]\ =\ fracBitsAccess.getFracBitsArray(\ ctxSet(\ ctxId\ )\ );}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00566\ \ \ \ \ \}}
+\DoxyCodeLine{00567\ \ \ \}}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \ \ \textcolor{keywordtype}{void}\ RateEstimator::xSetGtxFlagBits(\ \textcolor{keyword}{const}\ FracBitsAccess\&\ fracBitsAccess,\ ChannelType\ chType\ )}
+\DoxyCodeLine{00570\ \ \ \{}
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ \ \ ctxSetPar\ \ \ =\ Ctx::ParFlag\ [\ \ \ \ \ chType\ ];}
+\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ \ \ ctxSetGt1\ \ \ =\ Ctx::GtxFlag\ [\ 2\ +\ chType\ ];}
+\DoxyCodeLine{00573\ \ \ \ \ \textcolor{keyword}{const}\ CtxSet\&\ \ \ ctxSetGt2\ \ \ =\ Ctx::GtxFlag\ [\ \ \ \ \ chType\ ];}
+\DoxyCodeLine{00574\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ numCtx\ \ \ \ \ \ =\ (\ chType\ ==\ CHANNEL\_TYPE\_LUMA\ ?\ 21\ :\ 11\ );}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{unsigned}\ ctxId\ =\ 0;\ ctxId\ <\ numCtx;\ ctxId++\ )}
+\DoxyCodeLine{00576\ \ \ \ \ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ BinFracBits\ \ \ \ \ fbPar\ =\ fracBitsAccess.getFracBitsArray(\ ctxSetPar(\ ctxId\ )\ );}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ BinFracBits\ \ \ \ \ fbGt1\ =\ fracBitsAccess.getFracBitsArray(\ ctxSetGt1(\ ctxId\ )\ );}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ BinFracBits\ \ \ \ \ fbGt2\ =\ fracBitsAccess.getFracBitsArray(\ ctxSetGt2(\ ctxId\ )\ );}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ CoeffFracBits\&\ \ cb\ \ \ \ =\ m\_gtxFracBits[\ ctxId\ ];}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ int32\_t\ \ \ \ \ \ \ \ \ par0\ \ =\ (1<<SCALE\_BITS)\ +\ int32\_t(fbPar.intBits[0]);}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ int32\_t\ \ \ \ \ \ \ \ \ par1\ \ =\ (1<<SCALE\_BITS)\ +\ int32\_t(fbPar.intBits[1]);}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ cb.bits[0]\ =\ 0;}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ cb.bits[1]\ =\ fbGt1.intBits[0]\ +\ (1\ <<\ SCALE\_BITS);}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ cb.bits[2]\ =\ fbGt1.intBits[1]\ +\ par0\ +\ fbGt2.intBits[0];}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ cb.bits[3]\ =\ fbGt1.intBits[1]\ +\ par1\ +\ fbGt2.intBits[0];}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ cb.bits[4]\ =\ fbGt1.intBits[1]\ +\ par0\ +\ fbGt2.intBits[1];}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ cb.bits[5]\ =\ fbGt1.intBits[1]\ +\ par1\ +\ fbGt2.intBits[1];}
+\DoxyCodeLine{00589\ \ \ \ \ \}}
+\DoxyCodeLine{00590\ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ }
+\DoxyCodeLine{00596\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00597\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00598\ \ \ \textcolor{comment}{/*=====\ \ \ D\ A\ T\ A\ \ \ S\ T\ R\ U\ C\ T\ U\ R\ E\ S\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00599\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00600\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \textcolor{keyword}{struct\ }PQData}
+\DoxyCodeLine{00604\ \ \ \{}
+\DoxyCodeLine{00605\ \ \ \ \ TCoeff\ \ absLevel;}
+\DoxyCodeLine{00606\ \ \ \ \ int64\_t\ deltaDist;}
+\DoxyCodeLine{00607\ \ \ \};}
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \ \ \textcolor{keyword}{struct\ }Decision}
+\DoxyCodeLine{00611\ \ \ \{}
+\DoxyCodeLine{00612\ \ \ \ \ int64\_t\ rdCost;}
+\DoxyCodeLine{00613\ \ \ \ \ TCoeff\ \ absLevel;}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ prevId;}
+\DoxyCodeLine{00615\ \ \ \};}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ }
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00621\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00622\ \ \ \textcolor{comment}{/*=====\ \ \ P\ R\ E\ -\/\ Q\ U\ A\ N\ T\ I\ Z\ E\ R\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00623\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00624\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \textcolor{keyword}{class\ }Quantizer}
+\DoxyCodeLine{00627\ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00629\ \ \ \ \ Quantizer()\ \{\}}
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keywordtype}{void}\ \ dequantBlock\ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ CoeffBuf\&\ recCoeff,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ piDequantCoef\ )\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordtype}{void}\ \ initQuantBlock\ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ lambda,\ \textcolor{keywordtype}{int}\ gValue\ );}
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \ \ preQuantCoeff(\ \textcolor{keyword}{const}\ TCoeff\ absCoeff,\ PQData\ *pqData,\ TCoeff\ quanCoeff\ )\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keyword}{inline}\ TCoeff\ getLastThreshold()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thresLast;\ \}}
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{keyword}{inline}\ TCoeff\ getSSbbThreshold()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_thresSSbb;\ \}}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{keyword}{inline}\ int64\_t\ getQScale()\textcolor{keyword}{\ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_QScale;\ \}}
+\DoxyCodeLine{00637\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00638\ \ \ \ \ \textcolor{comment}{//\ quantization}}
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_QShift;}
+\DoxyCodeLine{00640\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ m\_QAdd;}
+\DoxyCodeLine{00641\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ m\_QScale;}
+\DoxyCodeLine{00642\ \ \ \ \ TCoeff\ \ \ \ \ \ \ \ \ \ \ \ m\_maxQIdx;}
+\DoxyCodeLine{00643\ \ \ \ \ TCoeff\ \ \ \ \ \ \ \ \ \ \ \ m\_thresLast;}
+\DoxyCodeLine{00644\ \ \ \ \ TCoeff\ \ \ \ \ \ \ \ \ \ \ \ m\_thresSSbb;}
+\DoxyCodeLine{00645\ \ \ \ \ \textcolor{comment}{//\ distortion\ normalization}}
+\DoxyCodeLine{00646\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_DistShift;}
+\DoxyCodeLine{00647\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ m\_DistAdd;}
+\DoxyCodeLine{00648\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ m\_DistStepAdd;}
+\DoxyCodeLine{00649\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ m\_DistOrgFact;}
+\DoxyCodeLine{00650\ \ \ \};}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ ceil\_log2(uint64\_t\ x)}
+\DoxyCodeLine{00653\ \ \ \{}
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint64\_t\ t[6]\ =\ \{\ 0xFFFFFFFF00000000ull,\ 0x00000000FFFF0000ull,\ 0x000000000000FF00ull,\ 0x00000000000000F0ull,\ 0x000000000000000Cull,\ 0x0000000000000002ull\ \};}
+\DoxyCodeLine{00655\ \ \ \ \ \textcolor{keywordtype}{int}\ y\ =\ (((x\ \&\ (x\ -\/\ 1))\ ==\ 0)\ ?\ 0\ :\ 1);}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordtype}{int}\ j\ =\ 32;}
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 6;\ i++)}
+\DoxyCodeLine{00658\ \ \ \ \ \{}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ k\ =\ (((x\ \&\ t[i])\ ==\ 0)\ ?\ 0\ :\ j);}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ y\ +=\ k;}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ x\ >>=\ k;}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ j\ >>=\ 1;}
+\DoxyCodeLine{00663\ \ \ \ \ \}}
+\DoxyCodeLine{00664\ \ \ \ \ \textcolor{keywordflow}{return}\ y;}
+\DoxyCodeLine{00665\ \ \ \}}
+\DoxyCodeLine{00666\ \ \ \textcolor{keywordtype}{void}\ Quantizer::initQuantBlock(\textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ lambda,\ \textcolor{keywordtype}{int}\ gValue\ =\ -\/1)}
+\DoxyCodeLine{00667\ \ \ \{}
+\DoxyCodeLine{00668\ \ \ \ \ CHECKD(\ lambda\ <=\ 0.0,\ \textcolor{stringliteral}{"{}Lambda\ must\ be\ greater\ than\ 0"{}}\ );}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpDQ\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ cQP.Qp(tu.mtsIdx[compID]\ ==\ MTS\_SKIP)\ +\ 1;}
+\DoxyCodeLine{00671\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpPer\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ /\ 6;}
+\DoxyCodeLine{00672\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpRem\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ -\/\ 6\ *\ qpPer;}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keyword}{const}\ SPS\&\ \ \ \ \ \ \ \ sps\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ *tu.cs-\/>sps;}
+\DoxyCodeLine{00674\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\&\ \ \ area\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ tu.blocks[\ compID\ ];}
+\DoxyCodeLine{00675\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ toChannelType(\ compID\ );}
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ channelBitDepth\ \ \ \ \ \ \ =\ sps.getBitDepth(\ chType\ );}
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ maxLog2TrDynamicRange\ =\ sps.getMaxLog2TrDynamicRange(\ chType\ );}
+\DoxyCodeLine{00678\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ nomTransformShift\ \ \ \ \ =\ getTransformShift(\ channelBitDepth,\ area.size(),\ maxLog2TrDynamicRange\ );}
+\DoxyCodeLine{00679\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ clipTransformShift\ \ \ \ =\ (\ tu.mtsIdx[compID]\ ==\ MTS\_SKIP\ \&\&\ sps.getSpsRangeExtension().getExtendedPrecisionProcessingFlag());}
+\DoxyCodeLine{00680\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ needsSqrt2ScaleAdjustment\ =\ TU::needsSqrt2Scale(tu,\ compID);}
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ transformShift\ \ \ \ \ \ \ \ =\ (\ clipTransformShift\ ?\ std::max<int>(\ 0,\ nomTransformShift\ )\ :\ nomTransformShift\ )\ +\ (needsSqrt2ScaleAdjustment?-\/1:0);}
+\DoxyCodeLine{00682\ \ \ \ \ \textcolor{comment}{//\ quant\ parameters}}
+\DoxyCodeLine{00683\ \ \ \ \ m\_QShift\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ QUANT\_SHIFT\ \ -\/\ 1\ +\ qpPer\ +\ transformShift;}
+\DoxyCodeLine{00684\ \ \ \ \ m\_QAdd\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ -\/(\ (\ 3\ <<\ m\_QShift\ )\ >>\ 1\ );}
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invShift\ \ =\ IQUANT\_SHIFT\ +\ 1\ -\/\ qpPer\ -\/\ transformShift;}
+\DoxyCodeLine{00686\ \ \ \ \ m\_QScale\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ g\_quantScales[needsSqrt2ScaleAdjustment?1:0][\ qpRem\ ];}
+\DoxyCodeLine{00687\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ \ qIdxBD\ \ \ \ =\ std::min<unsigned>(\ maxLog2TrDynamicRange\ +\ 1,\ 8*\textcolor{keyword}{sizeof}(Intermediate\_Int)\ +\ invShift\ -\/\ IQUANT\_SHIFT\ -\/\ 1\ );}
+\DoxyCodeLine{00688\ \ \ \ \ m\_maxQIdx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ (\ 1\ <<\ (qIdxBD-\/1)\ )\ -\/\ 4;}
+\DoxyCodeLine{00689\ \ \ \ \ m\_thresLast\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ TCoeff((int64\_t(4)\ <<\ m\_QShift));}
+\DoxyCodeLine{00690\ \ \ \ \ m\_thresSSbb\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ TCoeff((int64\_t(3)\ <<\ m\_QShift));}
+\DoxyCodeLine{00691\ \ \ \ \ \textcolor{comment}{//\ distortion\ calculation\ parameters}}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keyword}{const}\ int64\_t\ qScale\ \ \ \ \ \ \ \ =\ (gValue==-\/1)\ ?\ m\_QScale\ :\ gValue;}
+\DoxyCodeLine{00693\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nomDShift\ =}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ SCALE\_BITS\ -\/\ 2\ *\ (nomTransformShift\ +\ DISTORTION\_PRECISION\_ADJUSTMENT(channelBitDepth))\ +\ m\_QShift\ +\ (needsSqrt2ScaleAdjustment\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00695\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \ qScale2\ \ \ \ \ \ \ =\ double(\ qScale\ *\ qScale\ );}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \ nomDistFactor\ =\ (\ nomDShift\ <\ 0\ ?\ 1.0/(double(int64\_t(1)<<(-\/nomDShift))*qScale2*lambda)\ :\ double(int64\_t(1)<<nomDShift)/(qScale2*lambda)\ );}
+\DoxyCodeLine{00697\ \ \ \ \ \textcolor{keyword}{const}\ int64\_t\ pow2dfShift\ \ \ =\ (int64\_t)(\ nomDistFactor\ *\ qScale2\ )\ +\ 1;}
+\DoxyCodeLine{00698\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ dfShift\ \ \ \ \ \ \ =\ ceil\_log2(\ pow2dfShift\ );}
+\DoxyCodeLine{00699\ \ \ \ \ m\_DistShift\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 62\ +\ m\_QShift\ -\/\ 2*maxLog2TrDynamicRange\ -\/\ dfShift;}
+\DoxyCodeLine{00700\ \ \ \ \ m\_DistAdd\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ (int64\_t(1)\ <<\ m\_DistShift)\ >>\ 1;}
+\DoxyCodeLine{00701\ \ \ \ \ m\_DistStepAdd\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ (int64\_t)(\ nomDistFactor\ *\ \textcolor{keywordtype}{double}(int64\_t(1)<<(m\_DistShift+m\_QShift))\ +\ .5\ );}
+\DoxyCodeLine{00702\ \ \ \ \ m\_DistOrgFact\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ (int64\_t)(\ nomDistFactor\ *\ \textcolor{keywordtype}{double}(int64\_t(1)<<(m\_DistShift+1\ \ \ \ \ \ \ ))\ +\ .5\ );}
+\DoxyCodeLine{00703\ \ \ \}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \ \ \textcolor{keywordtype}{void}\ Quantizer::dequantBlock(\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ CoeffBuf\&\ recCoeff,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ piDequantCoef)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00706\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ \ \ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/\ set\ basic\ parameters\ -\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\&\ \ \ \ \ area\ \ \ \ \ \ =\ tu.blocks[\ compID\ ];}
+\DoxyCodeLine{00710\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ numCoeff\ \ =\ area.area();}
+\DoxyCodeLine{00711\ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ \ \ \ \ \ hsId\ \ \ \ \ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ area.width\ \ );}
+\DoxyCodeLine{00712\ \ \ \ \ \textcolor{keyword}{const}\ SizeType\ \ \ \ \ \ vsId\ \ \ \ \ \ =\ gp\_sizeIdxInfo-\/>idxFrom(\ area.height\ );}
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keyword}{const}\ CoeffScanType\ scanType\ \ =\ SCAN\_DIAG;}
+\DoxyCodeLine{00714\ \ \ \ \ \textcolor{keyword}{const}\ ScanElement\ *scan\ \ \ \ \ \ \ =\ g\_scanOrder[SCAN\_GROUPED\_4x4][scanType][hsId][vsId];}
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff*\ \ \ \ \ \ \ qCoeff\ \ \ \ =\ tu.getCoeffs(\ compID\ ).buf;}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \ \ TCoeff*\ \ \ \ \ \ \ tCoeff\ \ \ \ =\ recCoeff.buf;}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \ \ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/\ reset\ coefficients\ and\ get\ last\ scan\ index\ -\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00719\ \ \ \ \ ::memset(\ tCoeff,\ 0,\ numCoeff\ *\ \textcolor{keyword}{sizeof}(TCoeff)\ );}
+\DoxyCodeLine{00720\ \ \ \ \ \textcolor{keywordtype}{int}\ lastScanIdx\ =\ -\/1;}
+\DoxyCodeLine{00721\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ scanIdx\ =\ numCoeff\ -\/\ 1;\ scanIdx\ >=\ 0;\ scanIdx-\/-\/\ )}
+\DoxyCodeLine{00722\ \ \ \ \ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (qCoeff[scan[scanIdx].idx])}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ lastScanIdx\ =\ scanIdx;}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00728\ \ \ \ \ \}}
+\DoxyCodeLine{00729\ \ \ \ \ \textcolor{keywordflow}{if}(\ lastScanIdx\ <\ 0\ )}
+\DoxyCodeLine{00730\ \ \ \ \ \{}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00732\ \ \ \ \ \}}
+\DoxyCodeLine{00733\ }
+\DoxyCodeLine{00734\ \ \ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/\ set\ dequant\ parameters\ -\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00735\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpDQ\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ cQP.Qp(tu.mtsIdx[compID]\ ==\ MTS\_SKIP)\ +\ 1;}
+\DoxyCodeLine{00736\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpPer\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ /\ 6;}
+\DoxyCodeLine{00737\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpRem\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ -\/\ 6\ *\ qpPer;}
+\DoxyCodeLine{00738\ \ \ \ \ \textcolor{keyword}{const}\ SPS\&\ \ \ \ \ \ \ \ sps\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ *tu.cs-\/>sps;}
+\DoxyCodeLine{00739\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ toChannelType(\ compID\ );}
+\DoxyCodeLine{00740\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ channelBitDepth\ \ \ \ \ \ \ =\ sps.getBitDepth(\ chType\ );}
+\DoxyCodeLine{00741\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ maxLog2TrDynamicRange\ =\ sps.getMaxLog2TrDynamicRange(\ chType\ );}
+\DoxyCodeLine{00742\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ \ \ \ \ \ minTCoeff\ \ \ \ \ \ \ \ \ \ \ \ \ =\ -\/(\ 1\ <<\ maxLog2TrDynamicRange\ );}
+\DoxyCodeLine{00743\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ \ \ \ \ \ maxTCoeff\ \ \ \ \ \ \ \ \ \ \ \ \ =\ \ (\ 1\ <<\ maxLog2TrDynamicRange\ )\ -\/\ 1;}
+\DoxyCodeLine{00744\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ nomTransformShift\ \ \ \ \ =\ getTransformShift(\ channelBitDepth,\ area.size(),\ maxLog2TrDynamicRange\ );}
+\DoxyCodeLine{00745\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ clipTransformShift\ \ \ \ =\ (\ tu.mtsIdx[compID]\ ==\ MTS\_SKIP\ \&\&\ sps.getSpsRangeExtension().getExtendedPrecisionProcessingFlag());}
+\DoxyCodeLine{00746\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ needsSqrt2ScaleAdjustment\ =\ TU::needsSqrt2Scale(tu,\ compID);}
+\DoxyCodeLine{00747\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ transformShift\ \ \ \ \ \ \ \ =\ (\ clipTransformShift\ ?\ std::max<int>(\ 0,\ nomTransformShift\ )\ :\ nomTransformShift\ )\ +\ (needsSqrt2ScaleAdjustment?-\/1:0);}
+\DoxyCodeLine{00748\ \ \ \ \ Intermediate\_Int\ \ shift\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ IQUANT\_SHIFT\ +\ 1\ -\/\ qpPer\ -\/\ transformShift\ +\ (enableScalingLists\ ?\ LOG2\_SCALING\_LIST\_NEUTRAL\_VALUE\ :\ 0);}
+\DoxyCodeLine{00749\ \ \ \ \ Intermediate\_Int\ \ invQScale\ \ \ \ \ \ \ \ \ \ \ \ \ =\ g\_invQuantScales[needsSqrt2ScaleAdjustment?1:0][\ qpRem\ ];}
+\DoxyCodeLine{00750\ \ \ \ \ Intermediate\_Int\ \ add\ =\ (shift\ <\ 0)\ ?\ 0\ :\ ((1\ <<\ shift)\ >>\ 1);}
+\DoxyCodeLine{00751\ \ \ \ \ \textcolor{comment}{//-\/-\/-\/-\/-\/\ dequant\ coefficients\ -\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ state\ =\ 0,\ scanIdx\ =\ lastScanIdx;\ scanIdx\ >=\ 0;\ scanIdx-\/-\/\ )}
+\DoxyCodeLine{00753\ \ \ \ \ \{}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ rasterPos\ =\ scan[scanIdx].idx;}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\&\ \ \ level\ \ \ \ \ =\ qCoeff[\ rasterPos\ ];}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ level\ )}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (enableScalingLists)}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \ invQScale\ =\ piDequantCoef[rasterPos];\textcolor{comment}{//scalingfactor*levelScale}}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shift\ <\ 0\ \&\&\ (enableScalingLists\ ||\ scanIdx\ ==\ lastScanIdx))}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ invQScale\ <<=\ -\/shift;}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ Intermediate\_Int\ \ qIdx\ \ \ \ \ \ =\ (\ level\ <<\ 1\ )\ +\ (\ level\ >\ 0\ ?\ -\/(state>>1)\ :\ (state>>1)\ );}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ int64\_t\ \ nomTCoeff\ \ \ \ \ \ \ \ \ \ =\ ((int64\_t)qIdx\ *\ (int64\_t)invQScale\ +\ add)\ >>\ ((shift\ <\ 0)\ ?\ 0\ :\ shift);}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ tCoeff[rasterPos]\ \ \ \ \ \ \ \ \ \ \ =\ (TCoeff)Clip3<int64\_t>(minTCoeff,\ maxTCoeff,\ nomTCoeff);}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ state\ =\ (\ 32040\ >>\ ((state<<2)+((level\&1)<<1))\ )\ \&\ 3;\ \ \ \textcolor{comment}{//\ the\ 16-\/bit\ value\ "{}32040"{}\ represent\ the\ state\ transition\ table}}
+\DoxyCodeLine{00769\ \ \ \ \ \}}
+\DoxyCodeLine{00770\ \ \ \}}
+\DoxyCodeLine{00771\ }
+\DoxyCodeLine{00772\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ Quantizer::preQuantCoeff(\textcolor{keyword}{const}\ TCoeff\ absCoeff,\ PQData\ *pqData,\ TCoeff\ quanCoeff)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00773\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00774\ \ \ \ \ int64\_t\ scaledOrg\ =\ int64\_t(\ absCoeff\ )\ *\ quanCoeff;}
+\DoxyCodeLine{00775\ \ \ \ \ TCoeff\ \ qIdx\ \ \ \ \ \ =\ std::max<TCoeff>(\ 1,\ std::min<TCoeff>(\ m\_maxQIdx,\ TCoeff(\ (\ scaledOrg\ +\ m\_QAdd\ )\ >>\ m\_QShift\ )\ )\ );}
+\DoxyCodeLine{00776\ \ \ \ \ int64\_t\ scaledAdd\ =\ qIdx\ *\ m\_DistStepAdd\ -\/\ scaledOrg\ *\ m\_DistOrgFact;}
+\DoxyCodeLine{00777\ \ \ \ \ PQData\&\ pq\_a\ \ \ \ \ \ =\ pqData[\ qIdx\ \&\ 3\ ];}
+\DoxyCodeLine{00778\ \ \ \ \ pq\_a.deltaDist\ \ \ \ =\ (\ scaledAdd\ *\ qIdx\ +\ m\_DistAdd\ )\ >>\ m\_DistShift;}
+\DoxyCodeLine{00779\ \ \ \ \ pq\_a.absLevel\ \ \ \ \ =\ (\ ++qIdx\ )\ >>\ 1;}
+\DoxyCodeLine{00780\ \ \ \ \ scaledAdd\ \ \ \ \ \ \ \ +=\ m\_DistStepAdd;}
+\DoxyCodeLine{00781\ \ \ \ \ PQData\&\ pq\_b\ \ \ \ \ \ =\ pqData[\ qIdx\ \&\ 3\ ];}
+\DoxyCodeLine{00782\ \ \ \ \ pq\_b.deltaDist\ \ \ \ =\ (\ scaledAdd\ *\ qIdx\ +\ m\_DistAdd\ )\ >>\ m\_DistShift;}
+\DoxyCodeLine{00783\ \ \ \ \ pq\_b.absLevel\ \ \ \ \ =\ (\ ++qIdx\ )\ >>\ 1;}
+\DoxyCodeLine{00784\ \ \ \ \ scaledAdd\ \ \ \ \ \ \ \ +=\ m\_DistStepAdd;}
+\DoxyCodeLine{00785\ \ \ \ \ PQData\&\ pq\_c\ \ \ \ \ \ =\ pqData[\ qIdx\ \&\ 3\ ];}
+\DoxyCodeLine{00786\ \ \ \ \ pq\_c.deltaDist\ \ \ \ =\ (\ scaledAdd\ *\ qIdx\ +\ m\_DistAdd\ )\ >>\ m\_DistShift;}
+\DoxyCodeLine{00787\ \ \ \ \ pq\_c.absLevel\ \ \ \ \ =\ (\ ++qIdx\ )\ >>\ 1;}
+\DoxyCodeLine{00788\ \ \ \ \ scaledAdd\ \ \ \ \ \ \ \ +=\ m\_DistStepAdd;}
+\DoxyCodeLine{00789\ \ \ \ \ PQData\&\ pq\_d\ \ \ \ \ \ =\ pqData[\ qIdx\ \&\ 3\ ];}
+\DoxyCodeLine{00790\ \ \ \ \ pq\_d.deltaDist\ \ \ \ =\ (\ scaledAdd\ *\ qIdx\ +\ m\_DistAdd\ )\ >>\ m\_DistShift;}
+\DoxyCodeLine{00791\ \ \ \ \ pq\_d.absLevel\ \ \ \ \ =\ (\ ++qIdx\ )\ >>\ 1;}
+\DoxyCodeLine{00792\ \ \ \}}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ }
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ }
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ }
+\DoxyCodeLine{00799\ }
+\DoxyCodeLine{00800\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00801\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00802\ \ \ \textcolor{comment}{/*=====\ \ \ T\ C\ Q\ \ \ S\ T\ A\ T\ E\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00803\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{00804\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ \ \ \textcolor{keyword}{class\ }State;}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \ \ \textcolor{keyword}{struct\ }SbbCtx}
+\DoxyCodeLine{00809\ \ \ \{}
+\DoxyCodeLine{00810\ \ \ \ \ uint8\_t*\ \ sbbFlags;}
+\DoxyCodeLine{00811\ \ \ \ \ uint8\_t*\ \ levels;}
+\DoxyCodeLine{00812\ \ \ \};}
+\DoxyCodeLine{00813\ }
+\DoxyCodeLine{00814\ \ \ \textcolor{keyword}{class\ }CommonCtx}
+\DoxyCodeLine{00815\ \ \ \{}
+\DoxyCodeLine{00816\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00817\ \ \ \ \ CommonCtx()\ :\ m\_currSbbCtx(\ m\_allSbbCtx\ ),\ m\_prevSbbCtx(\ m\_currSbbCtx\ +\ 4\ )\ \{\}}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ swap()\ \{\ std::swap(m\_currSbbCtx,\ m\_prevSbbCtx);\ \}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ reset(\ \textcolor{keyword}{const}\ TUParameters\&\ tuPars,\ \textcolor{keyword}{const}\ RateEstimator\ \&rateEst)}
+\DoxyCodeLine{00822\ \ \ \ \ \{}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ m\_nbInfo\ =\ tuPars.m\_scanId2NbInfoOut;}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ ::memcpy(\ m\_sbbFlagBits,\ rateEst.sigSbbFracBits(),\ 2*\textcolor{keyword}{sizeof}(BinFracBits)\ );}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ numSbb\ \ \ \ =\ tuPars.m\_numSbb;}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ chunkSize\ =\ numSbb\ +\ tuPars.m\_numCoeff;}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ uint8\_t*\ \ nextMem\ \ \ =\ m\_memory;}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 8;\ k++,\ nextMem\ +=\ chunkSize\ )}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ m\_allSbbCtx[k].sbbFlags\ =\ nextMem;}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ m\_allSbbCtx[k].levels\ \ \ =\ nextMem\ +\ numSbb;}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00833\ \ \ \ \ \}}
+\DoxyCodeLine{00834\ }
+\DoxyCodeLine{00835\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ update(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevState,\ State\ \&currState);}
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00838\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoOut*\ \ \ \ \ \ \ \ \ \ \ \ m\_nbInfo;}
+\DoxyCodeLine{00839\ \ \ \ \ BinFracBits\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_sbbFlagBits[2];}
+\DoxyCodeLine{00840\ \ \ \ \ SbbCtx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_allSbbCtx\ \ [8];}
+\DoxyCodeLine{00841\ \ \ \ \ SbbCtx*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_currSbbCtx;}
+\DoxyCodeLine{00842\ \ \ \ \ SbbCtx*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_prevSbbCtx;}
+\DoxyCodeLine{00843\ \ \ \ \ uint8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_memory[\ 8\ *\ (\ MAX\_TB\_SIZEY\ *\ MAX\_TB\_SIZEY\ +\ MLS\_GRP\_NUM\ )\ ];}
+\DoxyCodeLine{00844\ \ \ \};}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \textcolor{preprocessor}{\#define\ RICEMAX\ 32}}
+\DoxyCodeLine{00847\ \ \ \textcolor{keyword}{const}\ int32\_t\ g\_goRiceBits[4][RICEMAX]\ =}
+\DoxyCodeLine{00848\ \ \ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \{\ 32768,\ \ 65536,\ \ 98304,\ 131072,\ 163840,\ 196608,\ 262144,\ 262144,\ 327680,\ 327680,\ 327680,\ 327680,\ 393216,\ 393216,\ 393216,\ 393216,\ 393216,\ 393216,\ 393216,\ 393216,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752,\ 458752\},}
+\DoxyCodeLine{00850\ \ \ \ \ \{\ 65536,\ \ 65536,\ \ 98304,\ \ 98304,\ 131072,\ 131072,\ 163840,\ 163840,\ 196608,\ 196608,\ 229376,\ 229376,\ 294912,\ 294912,\ 294912,\ 294912,\ 360448,\ 360448,\ 360448,\ 360448,\ 360448,\ 360448,\ 360448,\ 360448,\ 425984,\ 425984,\ 425984,\ 425984,\ 425984,\ 425984,\ 425984,\ 425984\},}
+\DoxyCodeLine{00851\ \ \ \ \ \{\ 98304,\ \ 98304,\ \ 98304,\ \ 98304,\ 131072,\ 131072,\ 131072,\ 131072,\ 163840,\ 163840,\ 163840,\ 163840,\ 196608,\ 196608,\ 196608,\ 196608,\ 229376,\ 229376,\ 229376,\ 229376,\ 262144,\ 262144,\ 262144,\ 262144,\ 327680,\ 327680,\ 327680,\ 327680,\ 327680,\ 327680,\ 327680,\ 327680\},}
+\DoxyCodeLine{00852\ \ \ \ \ \{131072,\ 131072,\ 131072,\ 131072,\ 131072,\ 131072,\ 131072,\ 131072,\ 163840,\ 163840,\ 163840,\ 163840,\ 163840,\ 163840,\ 163840,\ 163840,\ 196608,\ 196608,\ 196608,\ 196608,\ 196608,\ 196608,\ 196608,\ 196608,\ 229376,\ 229376,\ 229376,\ 229376,\ 229376,\ 229376,\ 229376,\ 229376\}}
+\DoxyCodeLine{00853\ \ \ \};}
+\DoxyCodeLine{00854\ }
+\DoxyCodeLine{00855\ \ \ \textcolor{keyword}{class\ }State}
+\DoxyCodeLine{00856\ \ \ \{}
+\DoxyCodeLine{00857\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }CommonCtx;}
+\DoxyCodeLine{00858\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00859\ \ \ \ \ State(\ \textcolor{keyword}{const}\ RateEstimator\&\ rateEst,\ CommonCtx\&\ commonCtx,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ stateId\ );}
+\DoxyCodeLine{00860\ }
+\DoxyCodeLine{00861\ \ \ \ \ \textcolor{keyword}{template}<u\textcolor{keywordtype}{int}8\_t\ numIPos>}
+\DoxyCodeLine{00862\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ updateState(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevStates,\ \textcolor{keyword}{const}\ Decision\ \&decision);}
+\DoxyCodeLine{00863\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ updateStateEOS(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevStates,\ \textcolor{keyword}{const}\ State\ *skipStates,}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Decision\ \&decision);}
+\DoxyCodeLine{00865\ }
+\DoxyCodeLine{00866\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ init()}
+\DoxyCodeLine{00867\ \ \ \ \ \{}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ m\_rdCost\ \ \ \ \ \ \ \ =\ std::numeric\_limits<int64\_t>::max()>>1;}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ m\_numSigSbb\ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ m\_remRegBins\ \ \ \ =\ 4;\ \ \textcolor{comment}{//\ just\ large\ enough\ for\ last\ scan\ pos}}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ m\_refSbbCtxId\ \ \ =\ -\/1;}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ m\_sigFracBits\ \ \ =\ m\_sigFracBitsArray[\ 0\ ];}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ m\_coeffFracBits\ =\ m\_gtxFracBitsArray[\ 0\ ];}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ m\_goRicePar\ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ m\_goRiceZero\ \ \ \ =\ 0;}
+\DoxyCodeLine{00876\ \ \ \ \ \}}
+\DoxyCodeLine{00877\ \ \ \ \ \textcolor{keywordtype}{void}\ checkRdCosts(\ \textcolor{keyword}{const}\ ScanPosType\ spt,\ \textcolor{keyword}{const}\ PQData\&\ pqDataA,\ \textcolor{keyword}{const}\ PQData\&\ pqDataB,\ Decision\&\ decisionA,\ Decision\&\ decisionB\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00878\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t*\ \ goRiceTab\ =\ g\_goRiceBits[m\_goRicePar];}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ rdCostA\ \ \ =\ m\_rdCost\ +\ pqDataA.deltaDist;}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ rdCostB\ \ \ =\ m\_rdCost\ +\ pqDataB.deltaDist;}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ rdCostZ\ \ \ =\ m\_rdCost;}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_remRegBins\ >=\ 4\ )}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pqDataA.absLevel\ <\ 4\ )}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ m\_coeffFracBits.bits[\ pqDataA.absLevel\ ];}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ value\ =\ (\ pqDataA.absLevel\ -\/\ 4\ )\ >>\ 1;}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ m\_coeffFracBits.bits[\ pqDataA.absLevel\ -\/\ (\ value\ <<\ 1\ )\ ]\ +\ goRiceTab[\ value\ <\ RICEMAX\ ?\ value\ :\ RICEMAX\ -\/\ 1\ ];}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pqDataB.absLevel\ <\ 4\ )}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ m\_coeffFracBits.bits[\ pqDataB.absLevel\ ];}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ value\ =\ (\ pqDataB.absLevel\ -\/\ 4\ )\ >>\ 1;}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ m\_coeffFracBits.bits[\ pqDataB.absLevel\ -\/\ (\ value\ <<\ 1\ )\ ]\ +\ goRiceTab[\ value\ <\ RICEMAX\ ?\ value\ :\ RICEMAX\ -\/\ 1\ ];}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ spt\ ==\ SCAN\_ISCSBB\ )}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostZ\ +=\ m\_sigFracBits.intBits[\ 0\ ];}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ spt\ ==\ SCAN\_SOCSBB\ )}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ m\_sbbFracBits.intBits[\ 1\ ]\ +\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ m\_sbbFracBits.intBits[\ 1\ ]\ +\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostZ\ +=\ m\_sbbFracBits.intBits[\ 1\ ]\ +\ m\_sigFracBits.intBits[\ 0\ ];}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ m\_numSigSbb\ )}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00914\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ m\_sigFracBits.intBits[\ 1\ ];}
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostZ\ +=\ m\_sigFracBits.intBits[\ 0\ ];}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \ \ \ \ rdCostZ\ =\ decisionA.rdCost;}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \ \ rdCostA\ +=\ (\ 1\ <<\ SCALE\_BITS\ )\ +\ goRiceTab[\ pqDataA.absLevel\ <=\ m\_goRiceZero\ ?\ pqDataA.absLevel\ -\/\ 1\ :\ (\ pqDataA.absLevel\ <\ RICEMAX\ ?\ pqDataA.absLevel\ :\ RICEMAX\ -\/\ 1\ )\ ];}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \ \ rdCostB\ +=\ (\ 1\ <<\ SCALE\_BITS\ )\ +\ goRiceTab[\ pqDataB.absLevel\ <=\ m\_goRiceZero\ ?\ pqDataB.absLevel\ -\/\ 1\ :\ (\ pqDataB.absLevel\ <\ RICEMAX\ ?\ pqDataB.absLevel\ :\ RICEMAX\ -\/\ 1\ )\ ];}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ rdCostZ\ +=\ goRiceTab[\ m\_goRiceZero\ ];}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ rdCostA\ <\ decisionA.rdCost\ )}
+\DoxyCodeLine{00929\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \ \ decisionA.rdCost\ =\ rdCostA;}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ \ \ \ \ decisionA.absLevel\ =\ pqDataA.absLevel;}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ decisionA.prevId\ =\ m\_stateId;}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ rdCostZ\ <\ decisionA.rdCost\ )}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ \ \ \ \ decisionA.rdCost\ =\ rdCostZ;}
+\DoxyCodeLine{00937\ \ \ \ \ \ \ \ \ \ \ decisionA.absLevel\ =\ 0;}
+\DoxyCodeLine{00938\ \ \ \ \ \ \ \ \ \ \ decisionA.prevId\ =\ m\_stateId;}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ rdCostB\ <\ decisionB.rdCost\ )}
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00942\ \ \ \ \ \ \ \ \ \ \ decisionB.rdCost\ =\ rdCostB;}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \ \ decisionB.absLevel\ =\ pqDataB.absLevel;}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \ \ decisionB.prevId\ =\ m\_stateId;}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00947\ }
+\DoxyCodeLine{00948\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ checkRdCostStart(int32\_t\ lastOffset,\ \textcolor{keyword}{const}\ PQData\ \&pqData,\ Decision\ \&decision)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00949\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00950\ \ \ \ \ \ \ int64\_t\ rdCost\ =\ pqData.deltaDist\ +\ lastOffset;}
+\DoxyCodeLine{00951\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pqData.absLevel\ <\ 4)}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ rdCost\ +=\ m\_coeffFracBits.bits[pqData.absLevel];}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ value\ =\ (pqData.absLevel\ -\/\ 4)\ >>\ 1;}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ rdCost\ +=\ m\_coeffFracBits.bits[pqData.absLevel\ -\/\ (value\ <<\ 1)]\ +\ g\_goRiceBits[m\_goRicePar][value\ <\ RICEMAX\ ?\ value\ :\ RICEMAX-\/1];}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ rdCost\ <\ decision.rdCost\ )}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ decision.rdCost\ \ \ =\ rdCost;}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ decision.absLevel\ =\ pqData.absLevel;}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ decision.prevId\ \ \ =\ -\/1;}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00966\ \ \ \ \ \}}
+\DoxyCodeLine{00967\ }
+\DoxyCodeLine{00968\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ checkRdCostSkipSbb(Decision\ \&decision)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00969\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00970\ \ \ \ \ \ \ int64\_t\ rdCost\ =\ m\_rdCost\ +\ m\_sbbFracBits.intBits[0];}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ rdCost\ <\ decision.rdCost\ )}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ decision.rdCost\ \ \ =\ rdCost;}
+\DoxyCodeLine{00974\ \ \ \ \ \ \ \ \ decision.absLevel\ =\ 0;}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ decision.prevId\ \ \ =\ 4+m\_stateId;}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00977\ \ \ \ \ \}}
+\DoxyCodeLine{00978\ }
+\DoxyCodeLine{00979\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ checkRdCostSkipSbbZeroOut(Decision\ \&decision)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00980\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ int64\_t\ rdCost\ =\ m\_rdCost\ +\ m\_sbbFracBits.intBits[0];}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ decision.rdCost\ =\ rdCost;}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ decision.absLevel\ =\ 0;}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ decision.prevId\ =\ 4\ +\ m\_stateId;}
+\DoxyCodeLine{00985\ \ \ \ \ \}}
+\DoxyCodeLine{00986\ }
+\DoxyCodeLine{00987\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00988\ \ \ \ \ int64\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_rdCost;}
+\DoxyCodeLine{00989\ \ \ \ \ uint16\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_absLevelsAndCtxInit[24];\ \ \textcolor{comment}{//\ 16x8bit\ for\ abs\ levels\ +\ 16x16bit\ for\ ctx\ init\ id}}
+\DoxyCodeLine{00990\ \ \ \ \ int8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_numSigSbb;}
+\DoxyCodeLine{00991\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_remRegBins;}
+\DoxyCodeLine{00992\ \ \ \ \ int8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_refSbbCtxId;}
+\DoxyCodeLine{00993\ \ \ \ \ BinFracBits\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_sbbFracBits;}
+\DoxyCodeLine{00994\ \ \ \ \ BinFracBits\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_sigFracBits;}
+\DoxyCodeLine{00995\ \ \ \ \ CoeffFracBits\ \ \ \ \ \ \ \ \ \ \ \ \ m\_coeffFracBits;}
+\DoxyCodeLine{00996\ \ \ \ \ int8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_goRicePar;}
+\DoxyCodeLine{00997\ \ \ \ \ int8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_goRiceZero;}
+\DoxyCodeLine{00998\ \ \ \ \ \textcolor{keyword}{const}\ int8\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_stateId;}
+\DoxyCodeLine{00999\ \ \ \ \ \textcolor{keyword}{const}\ BinFracBits*\textcolor{keyword}{const}\ \ \ m\_sigFracBitsArray;}
+\DoxyCodeLine{01000\ \ \ \ \ \textcolor{keyword}{const}\ CoeffFracBits*\textcolor{keyword}{const}\ m\_gtxFracBitsArray;}
+\DoxyCodeLine{01001\ \ \ \ \ CommonCtx\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_commonCtx;}
+\DoxyCodeLine{01002\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{01003\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ effWidth;}
+\DoxyCodeLine{01004\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ effHeight;}
+\DoxyCodeLine{01005\ \ \ \};}
+\DoxyCodeLine{01006\ }
+\DoxyCodeLine{01007\ }
+\DoxyCodeLine{01008\ \ \ State::State(\ \textcolor{keyword}{const}\ RateEstimator\&\ rateEst,\ CommonCtx\&\ commonCtx,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ stateId\ )}
+\DoxyCodeLine{01009\ \ \ \ \ :\ m\_sbbFracBits\ \ \ \ \ \{\ \{\ 0,\ 0\ \}\ \}}
+\DoxyCodeLine{01010\ \ \ \ \ ,\ m\_stateId\ \ \ \ \ \ \ \ \ (\ stateId\ )}
+\DoxyCodeLine{01011\ \ \ \ \ ,\ m\_sigFracBitsArray(\ rateEst.sigFlagBits(stateId)\ )}
+\DoxyCodeLine{01012\ \ \ \ \ ,\ m\_gtxFracBitsArray(\ rateEst.gtxFracBits(stateId)\ )}
+\DoxyCodeLine{01013\ \ \ \ \ ,\ m\_commonCtx\ \ \ \ \ \ \ (\ commonCtx\ )}
+\DoxyCodeLine{01014\ \ \ \{}
+\DoxyCodeLine{01015\ \ \ \}}
+\DoxyCodeLine{01016\ }
+\DoxyCodeLine{01017\ \ \ \textcolor{keyword}{template}<u\textcolor{keywordtype}{int}8\_t\ numIPos>}
+\DoxyCodeLine{01018\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ State::updateState(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevStates,\ \textcolor{keyword}{const}\ Decision\ \&decision)}
+\DoxyCodeLine{01019\ \ \ \{}
+\DoxyCodeLine{01020\ \ \ \ \ m\_rdCost\ =\ decision.rdCost;}
+\DoxyCodeLine{01021\ \ \ \ \ \textcolor{keywordflow}{if}(\ decision.prevId\ >\ -\/2\ )}
+\DoxyCodeLine{01022\ \ \ \ \ \{}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ decision.prevId\ >=\ 0\ )}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ State*\ \ prvState\ \ =\ prevStates\ \ \ \ \ \ \ \ \ \ \ \ +\ \ \ decision.prevId;}
+\DoxyCodeLine{01026\ \ \ \ \ \ \ \ \ m\_numSigSbb\ \ \ \ \ \ \ \ \ \ \ \ \ =\ prvState-\/>m\_numSigSbb\ +\ !!decision.absLevel;}
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ m\_refSbbCtxId\ \ \ \ \ \ \ \ \ \ \ =\ prvState-\/>m\_refSbbCtxId;}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ m\_sbbFracBits\ \ \ \ \ \ \ \ \ \ \ =\ prvState-\/>m\_sbbFracBits;}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ m\_remRegBins\ \ \ \ \ \ \ \ \ \ \ \ =\ prvState-\/>m\_remRegBins\ -\/\ 1;}
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ m\_goRicePar\ \ \ \ \ \ \ \ \ \ \ \ \ =\ prvState-\/>m\_goRicePar;}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_remRegBins\ >=\ 4\ )}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01033\ \ \ \ \ \ \ \ \ \ \ m\_remRegBins\ -\/=\ (decision.absLevel\ <\ 2\ ?\ (unsigned)decision.absLevel\ :\ 3);}
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ ::memcpy(\ m\_absLevelsAndCtxInit,\ prvState-\/>m\_absLevelsAndCtxInit,\ 48*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01038\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01039\ \ \ \ \ \ \ \ \ m\_numSigSbb\ \ \ \ \ =\ \ 1;}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ m\_refSbbCtxId\ \ \ =\ -\/1;}
+\DoxyCodeLine{01041\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ctxBinSampleRatio\ =\ (scanInfo.chType\ ==\ CHANNEL\_TYPE\_LUMA)\ ?\ MAX\_TU\_LEVEL\_CTX\_CODED\_BIN\_CONSTRAINT\_LUMA\ :\ MAX\_TU\_LEVEL\_CTX\_CODED\_BIN\_CONSTRAINT\_CHROMA;}
+\DoxyCodeLine{01042\ \ \ \ \ \ \ \ \ m\_remRegBins\ =\ (effWidth\ *\ effHeight\ *ctxBinSampleRatio)\ /\ 16\ -\/\ (decision.absLevel\ <\ 2\ ?\ (\textcolor{keywordtype}{unsigned})decision.absLevel\ :\ 3);}
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ ::memset(\ m\_absLevelsAndCtxInit,\ 0,\ 48*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01044\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01045\ }
+\DoxyCodeLine{01046\ \ \ \ \ \ \ uint8\_t*\ levels\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(m\_absLevelsAndCtxInit);}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ levels[\ scanInfo.insidePos\ ]\ \ =\ (uint8\_t)std::min<TCoeff>(\ 255,\ decision.absLevel\ );}
+\DoxyCodeLine{01048\ }
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_remRegBins\ >=\ 4)}
+\DoxyCodeLine{01050\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01051\ \ \ \ \ \ \ \ \ TCoeff\ \ tinit\ =\ m\_absLevelsAndCtxInit[8\ +\ scanInfo.nextInsidePos];}
+\DoxyCodeLine{01052\ \ \ \ \ \ \ \ \ TCoeff\ \ sumAbs1\ =\ (tinit\ >>\ 3)\ \&\ 31;}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ TCoeff\ \ sumNum\ =\ tinit\ \&\ 7;}
+\DoxyCodeLine{01054\ \textcolor{preprocessor}{\#define\ UPDATE(k)\ \{TCoeff\ t=levels[scanInfo.nextNbInfoSbb.inPos[k]];\ sumAbs1+=std::min<TCoeff>(4+(t\&1),t);\ sumNum+=!!t;\ \}}}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 1)}
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 2)}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 3)}
+\DoxyCodeLine{01065\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01066\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01069\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 4)}
+\DoxyCodeLine{01071\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01072\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01073\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01074\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01075\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01076\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 5)}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01080\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01082\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \ \ \ \ UPDATE(4);}
+\DoxyCodeLine{01084\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01085\ \textcolor{preprocessor}{\#undef\ UPDATE}}
+\DoxyCodeLine{01086\ \ \ \ \ \ \ \ \ TCoeff\ sumGt1\ =\ sumAbs1\ -\/\ sumNum;}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ \ \ m\_sigFracBits\ =\ m\_sigFracBitsArray[scanInfo.sigCtxOffsetNext\ +\ std::min<TCoeff>(\ (sumAbs1+1)>>1,\ 3\ )];}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \ \ m\_coeffFracBits\ =\ m\_gtxFracBitsArray[scanInfo.gtxCtxOffsetNext\ +\ (sumGt1\ <\ 4\ ?\ sumGt1\ :\ 4)];}
+\DoxyCodeLine{01089\ }
+\DoxyCodeLine{01090\ \ \ \ \ \ \ \ \ TCoeff\ \ sumAbs\ =\ m\_absLevelsAndCtxInit[8\ +\ scanInfo.nextInsidePos]\ >>\ 8;}
+\DoxyCodeLine{01091\ \textcolor{preprocessor}{\#define\ UPDATE(k)\ \{TCoeff\ t=levels[scanInfo.nextNbInfoSbb.inPos[k]];\ sumAbs+=t;\ \}}}
+\DoxyCodeLine{01092\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 1)}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01094\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 2)}
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01100\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 3)}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 4)}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 5)}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01119\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ \ \ UPDATE(4);}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01122\ \textcolor{preprocessor}{\#undef\ UPDATE}}
+\DoxyCodeLine{01123\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sumAll\ =\ std::max(std::min(31,\ (\textcolor{keywordtype}{int})sumAbs\ -\/\ 4\ *\ 5),\ 0);}
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \ \ m\_goRicePar\ =\ g\_auiGoRiceParsCoeff[sumAll];}
+\DoxyCodeLine{01125\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01128\ \ \ \ \ \ \ \ \ TCoeff\ \ sumAbs\ =\ m\_absLevelsAndCtxInit[8\ +\ scanInfo.nextInsidePos]\ >>\ 8;}
+\DoxyCodeLine{01129\ \textcolor{preprocessor}{\#define\ UPDATE(k)\ \{TCoeff\ t=levels[scanInfo.nextNbInfoSbb.inPos[k]];\ sumAbs+=t;\ \}}}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 1)}
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 2)}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01138\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 3)}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 4)}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01150\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (numIPos\ ==\ 5)}
+\DoxyCodeLine{01153\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01155\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01156\ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01157\ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01158\ \ \ \ \ \ \ \ \ \ \ UPDATE(4);}
+\DoxyCodeLine{01159\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01160\ \textcolor{preprocessor}{\#undef\ UPDATE}}
+\DoxyCodeLine{01161\ \ \ \ \ \ \ \ \ sumAbs\ =\ std::min<TCoeff>(31,\ sumAbs);}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ m\_goRicePar\ =\ g\_auiGoRiceParsCoeff[sumAbs];}
+\DoxyCodeLine{01163\ \ \ \ \ \ \ \ \ m\_goRiceZero\ =\ g\_auiGoRicePosCoeff0(m\_stateId,\ m\_goRicePar);}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01165\ \ \ \ \ \}}
+\DoxyCodeLine{01166\ \ \ \}}
+\DoxyCodeLine{01167\ }
+\DoxyCodeLine{01168\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ State::updateStateEOS(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevStates,\ \textcolor{keyword}{const}\ State\ *skipStates,}
+\DoxyCodeLine{01169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Decision\ \&decision)}
+\DoxyCodeLine{01170\ \ \ \{}
+\DoxyCodeLine{01171\ \ \ \ \ m\_rdCost\ =\ decision.rdCost;}
+\DoxyCodeLine{01172\ \ \ \ \ \textcolor{keywordflow}{if}(\ decision.prevId\ >\ -\/2\ )}
+\DoxyCodeLine{01173\ \ \ \ \ \{}
+\DoxyCodeLine{01174\ \ \ \ \ \ \ \textcolor{keyword}{const}\ State*\ prvState\ =\ 0;}
+\DoxyCodeLine{01175\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ decision.prevId\ \ >=\ 4\ )}
+\DoxyCodeLine{01176\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01177\ \ \ \ \ \ \ \ \ CHECK(\ decision.absLevel\ !=\ 0,\ \textcolor{stringliteral}{"{}cannot\ happen"{}}\ );}
+\DoxyCodeLine{01178\ \ \ \ \ \ \ \ \ prvState\ \ \ \ =\ skipStates\ +\ (\ decision.prevId\ -\/\ 4\ );}
+\DoxyCodeLine{01179\ \ \ \ \ \ \ \ \ m\_numSigSbb\ =\ 0;}
+\DoxyCodeLine{01180\ \ \ \ \ \ \ \ \ ::memset(\ m\_absLevelsAndCtxInit,\ 0,\ 16*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01181\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01182\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ decision.prevId\ \ >=\ 0\ )}
+\DoxyCodeLine{01183\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01184\ \ \ \ \ \ \ \ \ prvState\ \ \ \ =\ prevStates\ \ \ \ \ \ \ \ \ \ \ \ +\ \ \ decision.prevId;}
+\DoxyCodeLine{01185\ \ \ \ \ \ \ \ \ m\_numSigSbb\ =\ prvState-\/>m\_numSigSbb\ +\ !!decision.absLevel;}
+\DoxyCodeLine{01186\ \ \ \ \ \ \ \ \ ::memcpy(\ m\_absLevelsAndCtxInit,\ prvState-\/>m\_absLevelsAndCtxInit,\ 16*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01187\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01188\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01189\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01190\ \ \ \ \ \ \ \ \ m\_numSigSbb\ =\ 1;}
+\DoxyCodeLine{01191\ \ \ \ \ \ \ \ \ ::memset(\ m\_absLevelsAndCtxInit,\ 0,\ 16*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01192\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01193\ \ \ \ \ \ \ \textcolor{keyword}{reinterpret\_cast<}uint8\_t*\textcolor{keyword}{>}(m\_absLevelsAndCtxInit)[\ scanInfo.insidePos\ ]\ =\ (uint8\_t)std::min<TCoeff>(\ 255,\ decision.absLevel\ );}
+\DoxyCodeLine{01194\ }
+\DoxyCodeLine{01195\ \ \ \ \ \ \ m\_commonCtx.update(\ scanInfo,\ prvState,\ *\textcolor{keyword}{this}\ );}
+\DoxyCodeLine{01196\ }
+\DoxyCodeLine{01197\ \ \ \ \ \ \ TCoeff\ \ tinit\ \ \ =\ m\_absLevelsAndCtxInit[\ 8\ +\ scanInfo.nextInsidePos\ ];}
+\DoxyCodeLine{01198\ \ \ \ \ \ \ TCoeff\ \ sumNum\ \ =\ \ \ tinit\ \ \ \ \ \ \ \ \&\ 7;}
+\DoxyCodeLine{01199\ \ \ \ \ \ \ TCoeff\ \ sumAbs1\ =\ (\ tinit\ >>\ 3\ )\ \&\ 31;}
+\DoxyCodeLine{01200\ \ \ \ \ \ \ TCoeff\ \ sumGt1\ \ =\ sumAbs1\ \ \ \ \ \ \ \ -\/\ sumNum;}
+\DoxyCodeLine{01201\ \ \ \ \ \ \ m\_sigFracBits\ \ \ =\ m\_sigFracBitsArray[\ scanInfo.sigCtxOffsetNext\ +\ std::min<TCoeff>(\ (sumAbs1+1)>>1,\ 3\ )\ ];}
+\DoxyCodeLine{01202\ \ \ \ \ \ \ m\_coeffFracBits\ =\ m\_gtxFracBitsArray[\ scanInfo.gtxCtxOffsetNext\ +\ (\ sumGt1\ \ <\ 4\ ?\ sumGt1\ \ :\ 4\ )\ ];}
+\DoxyCodeLine{01203\ \ \ \ \ \}}
+\DoxyCodeLine{01204\ \ \ \}}
+\DoxyCodeLine{01205\ }
+\DoxyCodeLine{01206\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ CommonCtx::update(\textcolor{keyword}{const}\ ScanInfo\ \&scanInfo,\ \textcolor{keyword}{const}\ State\ *prevState,\ State\ \&currState)}
+\DoxyCodeLine{01207\ \ \ \{}
+\DoxyCodeLine{01208\ \ \ \ \ uint8\_t*\ \ \ \ sbbFlags\ \ =\ m\_currSbbCtx[\ currState.m\_stateId\ ].sbbFlags;}
+\DoxyCodeLine{01209\ \ \ \ \ uint8\_t*\ \ \ \ levels\ \ \ \ =\ m\_currSbbCtx[\ currState.m\_stateId\ ].levels;}
+\DoxyCodeLine{01210\ \ \ \ \ std::size\_t\ setCpSize\ =\ m\_nbInfo[\ scanInfo.scanIdx\ -\/\ 1\ ].maxDist\ *\ \textcolor{keyword}{sizeof}(uint8\_t);}
+\DoxyCodeLine{01211\ \ \ \ \ \textcolor{keywordflow}{if}(\ prevState\ \&\&\ prevState-\/>m\_refSbbCtxId\ >=\ 0\ )}
+\DoxyCodeLine{01212\ \ \ \ \ \{}
+\DoxyCodeLine{01213\ \ \ \ \ \ \ ::memcpy(\ sbbFlags,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_prevSbbCtx[prevState-\/>m\_refSbbCtxId].sbbFlags,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scanInfo.numSbb*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01214\ \ \ \ \ \ \ ::memcpy(\ levels\ +\ scanInfo.scanIdx,\ m\_prevSbbCtx[prevState-\/>m\_refSbbCtxId].levels\ +\ scanInfo.scanIdx,\ setCpSize\ );}
+\DoxyCodeLine{01215\ \ \ \ \ \}}
+\DoxyCodeLine{01216\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01217\ \ \ \ \ \{}
+\DoxyCodeLine{01218\ \ \ \ \ \ \ ::memset(\ sbbFlags,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,\ scanInfo.numSbb*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01219\ \ \ \ \ \ \ ::memset(\ levels\ +\ scanInfo.scanIdx,\ 0,\ setCpSize\ );}
+\DoxyCodeLine{01220\ \ \ \ \ \}}
+\DoxyCodeLine{01221\ \ \ \ \ sbbFlags[\ scanInfo.sbbPos\ ]\ =\ !!currState.m\_numSigSbb;}
+\DoxyCodeLine{01222\ \ \ \ \ ::memcpy(\ levels\ +\ scanInfo.scanIdx,\ currState.m\_absLevelsAndCtxInit,\ scanInfo.sbbSize*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01223\ }
+\DoxyCodeLine{01224\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ sigNSbb\ \ \ =\ (\ (\ scanInfo.nextSbbRight\ ?\ sbbFlags[\ scanInfo.nextSbbRight\ ]\ :\ false\ )\ ||\ (\ scanInfo.nextSbbBelow\ ?\ sbbFlags[\ scanInfo.nextSbbBelow\ ]\ :\ false\ )\ ?\ 1\ :\ 0\ );}
+\DoxyCodeLine{01225\ \ \ \ \ currState.m\_numSigSbb\ \ \ \ \ =\ 0;}
+\DoxyCodeLine{01226\ \ \ \ \ \textcolor{keywordflow}{if}\ (prevState)}
+\DoxyCodeLine{01227\ \ \ \ \ \{}
+\DoxyCodeLine{01228\ \ \ \ \ \ \ currState.m\_remRegBins\ =\ prevState-\/>m\_remRegBins;}
+\DoxyCodeLine{01229\ \ \ \ \ \}}
+\DoxyCodeLine{01230\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01231\ \ \ \ \ \{}
+\DoxyCodeLine{01232\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ctxBinSampleRatio\ =\ (scanInfo.chType\ ==\ CHANNEL\_TYPE\_LUMA)\ ?\ MAX\_TU\_LEVEL\_CTX\_CODED\_BIN\_CONSTRAINT\_LUMA\ :\ MAX\_TU\_LEVEL\_CTX\_CODED\_BIN\_CONSTRAINT\_CHROMA;}
+\DoxyCodeLine{01233\ \ \ \ \ \ \ currState.m\_remRegBins\ =\ (currState.effWidth\ *\ currState.effHeight\ *ctxBinSampleRatio)\ /\ 16;}
+\DoxyCodeLine{01234\ \ \ \ \ \}}
+\DoxyCodeLine{01235\ \ \ \ \ currState.m\_goRicePar\ \ \ \ \ =\ 0;}
+\DoxyCodeLine{01236\ \ \ \ \ currState.m\_refSbbCtxId\ \ \ =\ currState.m\_stateId;}
+\DoxyCodeLine{01237\ \ \ \ \ currState.m\_sbbFracBits\ \ \ =\ m\_sbbFlagBits[\ sigNSbb\ ];}
+\DoxyCodeLine{01238\ }
+\DoxyCodeLine{01239\ \ \ \ \ uint16\_t\ \ \ \ \ \ \ \ \ \ templateCtxInit[16];}
+\DoxyCodeLine{01240\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ scanBeg\ \ \ =\ scanInfo.scanIdx\ -\/\ scanInfo.sbbSize;}
+\DoxyCodeLine{01241\ \ \ \ \ \textcolor{keyword}{const}\ NbInfoOut*\ \ nbOut\ \ \ \ \ =\ m\_nbInfo\ +\ scanBeg;}
+\DoxyCodeLine{01242\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t*\ \ \ \ absLevels\ =\ levels\ \ \ +\ scanBeg;}
+\DoxyCodeLine{01243\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0;\ \textcolor{keywordtype}{id}\ <\ scanInfo.sbbSize;\ \textcolor{keywordtype}{id}++,\ nbOut++\ )}
+\DoxyCodeLine{01244\ \ \ \ \ \{}
+\DoxyCodeLine{01245\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut-\/>num\ )}
+\DoxyCodeLine{01246\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01247\ \ \ \ \ \ \ \ \ TCoeff\ sumAbs\ =\ 0,\ sumAbs1\ =\ 0,\ sumNum\ =\ 0;}
+\DoxyCodeLine{01248\ \textcolor{preprocessor}{\#define\ UPDATE(k)\ \{TCoeff\ t=absLevels[nbOut-\/>outPos[k]];\ sumAbs+=t;\ sumAbs1+=std::min<TCoeff>(4+(t\&1),t);\ sumNum+=!!t;\ \}}}
+\DoxyCodeLine{01249\ \ \ \ \ \ \ \ \ UPDATE(0);}
+\DoxyCodeLine{01250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut-\/>num\ >\ 1\ )}
+\DoxyCodeLine{01251\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01252\ \ \ \ \ \ \ \ \ \ \ UPDATE(1);}
+\DoxyCodeLine{01253\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut-\/>num\ >\ 2\ )}
+\DoxyCodeLine{01254\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01255\ \ \ \ \ \ \ \ \ \ \ \ \ UPDATE(2);}
+\DoxyCodeLine{01256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut-\/>num\ >\ 3\ )}
+\DoxyCodeLine{01257\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UPDATE(3);}
+\DoxyCodeLine{01259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ nbOut-\/>num\ >\ 4\ )}
+\DoxyCodeLine{01260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ UPDATE(4);}
+\DoxyCodeLine{01262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01263\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01264\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01265\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01266\ \textcolor{preprocessor}{\#undef\ UPDATE}}
+\DoxyCodeLine{01267\ \ \ \ \ \ \ \ \ templateCtxInit[id]\ =\ uint16\_t(sumNum)\ +\ (\ uint16\_t(sumAbs1)\ <<\ 3\ )\ +\ (\ (uint16\_t)std::min<TCoeff>(\ 127,\ sumAbs\ )\ <<\ 8\ );}
+\DoxyCodeLine{01268\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01269\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01270\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01271\ \ \ \ \ \ \ \ \ templateCtxInit[id]\ =\ 0;}
+\DoxyCodeLine{01272\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01273\ \ \ \ \ \}}
+\DoxyCodeLine{01274\ \ \ \ \ ::memset(\ currState.m\_absLevelsAndCtxInit,\ \ \ \ \ 0,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 16*\textcolor{keyword}{sizeof}(uint8\_t)\ );}
+\DoxyCodeLine{01275\ \ \ \ \ ::memcpy(\ currState.m\_absLevelsAndCtxInit\ +\ 8,\ templateCtxInit,\ 16*\textcolor{keyword}{sizeof}(uint16\_t)\ );}
+\DoxyCodeLine{01276\ \ \ \}}
+\DoxyCodeLine{01277\ }
+\DoxyCodeLine{01278\ }
+\DoxyCodeLine{01279\ }
+\DoxyCodeLine{01280\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{01281\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{01282\ \ \ \textcolor{comment}{/*=====\ \ \ T\ C\ Q\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{01283\ \ \ \textcolor{comment}{/*=====\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =====*/}}
+\DoxyCodeLine{01284\ \ \ \textcolor{comment}{/*================================================================================*/}}
+\DoxyCodeLine{01285\ \ \ \textcolor{keyword}{class\ }DepQuant\ :\ \textcolor{keyword}{private}\ RateEstimator}
+\DoxyCodeLine{01286\ \ \ \{}
+\DoxyCodeLine{01287\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{01288\ \ \ \ \ DepQuant();}
+\DoxyCodeLine{01289\ }
+\DoxyCodeLine{01290\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ quant\ \ \ (\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ CCoeffBuf\&\ srcCoeff,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ lambda,\ \textcolor{keyword}{const}\ Ctx\&\ ctx,\ TCoeff\&\ absSum,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ quantCoeff\ );}
+\DoxyCodeLine{01291\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ dequant\ (\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ CoeffBuf\&\ recCoeff,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ quantCoeff\ );}
+\DoxyCodeLine{01292\ }
+\DoxyCodeLine{01293\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{01294\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ xDecideAndUpdate\ \ (\ \textcolor{keyword}{const}\ TCoeff\ absCoeff,\ \textcolor{keyword}{const}\ ScanInfo\&\ scanInfo,\ \textcolor{keywordtype}{bool}\ zeroOut,\ TCoeff\ quantCoeff);}
+\DoxyCodeLine{01295\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ xDecide\ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ ScanPosType\ spt,\ \textcolor{keyword}{const}\ TCoeff\ absCoeff,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ lastOffset,\ Decision*\ decisions,\ \textcolor{keywordtype}{bool}\ zeroOut,\ TCoeff\ quantCoeff\ );}
+\DoxyCodeLine{01296\ }
+\DoxyCodeLine{01297\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{01298\ \ \ \ \ CommonCtx\ \ \ m\_commonCtx;}
+\DoxyCodeLine{01299\ \ \ \ \ State\ \ \ \ \ \ \ m\_allStates[\ 12\ ];}
+\DoxyCodeLine{01300\ \ \ \ \ State*\ \ \ \ \ \ m\_currStates;}
+\DoxyCodeLine{01301\ \ \ \ \ State*\ \ \ \ \ \ m\_prevStates;}
+\DoxyCodeLine{01302\ \ \ \ \ State*\ \ \ \ \ \ m\_skipStates;}
+\DoxyCodeLine{01303\ \ \ \ \ State\ \ \ \ \ \ \ m\_startState;}
+\DoxyCodeLine{01304\ \ \ \ \ Quantizer\ \ \ m\_quant;}
+\DoxyCodeLine{01305\ \ \ \ \ Decision\ \ \ \ m\_trellis[\ MAX\_TB\_SIZEY\ *\ MAX\_TB\_SIZEY\ ][\ 8\ ];}
+\DoxyCodeLine{01306\ \ \ \};}
+\DoxyCodeLine{01307\ }
+\DoxyCodeLine{01308\ }
+\DoxyCodeLine{01309\ \textcolor{preprocessor}{\#define\ TINIT(x)\ \{*this,m\_commonCtx,x\}}}
+\DoxyCodeLine{01310\ \ \ DepQuant::DepQuant()}
+\DoxyCodeLine{01311\ \ \ \ \ :\ RateEstimator\ ()}
+\DoxyCodeLine{01312\ \ \ \ \ ,\ m\_commonCtx\ \ \ ()}
+\DoxyCodeLine{01313\ \ \ \ \ ,\ m\_allStates\ \ \ \{TINIT(0),TINIT(1),TINIT(2),TINIT(3),TINIT(0),TINIT(1),TINIT(2),TINIT(3),TINIT(0),TINIT(1),TINIT(2),TINIT(3)\}}
+\DoxyCodeLine{01314\ \ \ \ \ ,\ m\_currStates\ \ (\ \ m\_allStates\ \ \ \ \ \ )}
+\DoxyCodeLine{01315\ \ \ \ \ ,\ m\_prevStates\ \ (\ \ m\_currStates\ +\ 4\ )}
+\DoxyCodeLine{01316\ \ \ \ \ ,\ m\_skipStates\ \ (\ \ m\_prevStates\ +\ 4\ )}
+\DoxyCodeLine{01317\ \ \ \ \ ,\ m\_startState\ \ TINIT(0)}
+\DoxyCodeLine{01318\ \ \ \{\}}
+\DoxyCodeLine{01319\ \textcolor{preprocessor}{\#undef\ TINIT}}
+\DoxyCodeLine{01320\ }
+\DoxyCodeLine{01321\ }
+\DoxyCodeLine{01322\ \ \ \textcolor{keywordtype}{void}\ DepQuant::dequant(\ \textcolor{keyword}{const}\ TransformUnit\&\ tu,\ \ CoeffBuf\&\ recCoeff,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ piDequantCoef\ )}
+\DoxyCodeLine{01323\ \ \ \{}
+\DoxyCodeLine{01324\ \ \ \ \ m\_quant.dequantBlock(\ tu,\ compID,\ cQP,\ recCoeff,\ enableScalingLists,\ piDequantCoef\ );}
+\DoxyCodeLine{01325\ \ \ \}}
+\DoxyCodeLine{01326\ }
+\DoxyCodeLine{01327\ }
+\DoxyCodeLine{01328\ \textcolor{preprocessor}{\#define\ DINIT(l,p)\ \{std::numeric\_limits<int64\_t>::max()>>2,l,p\}}}
+\DoxyCodeLine{01329\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ Decision\ startDec[8]\ =\ \{DINIT(-\/1,-\/2),DINIT(-\/1,-\/2),DINIT(-\/1,-\/2),DINIT(-\/1,-\/2),DINIT(0,4),DINIT(0,5),DINIT(0,6),DINIT(0,7)\};}
+\DoxyCodeLine{01330\ \textcolor{preprocessor}{\#undef\ \ DINIT}}
+\DoxyCodeLine{01331\ }
+\DoxyCodeLine{01332\ }
+\DoxyCodeLine{01333\ \ \ \textcolor{keywordtype}{void}\ DepQuant::xDecide(\ \textcolor{keyword}{const}\ ScanPosType\ spt,\ \textcolor{keyword}{const}\ TCoeff\ absCoeff,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ lastOffset,\ Decision*\ decisions,\ \textcolor{keywordtype}{bool}\ zeroOut,\ TCoeff\ quanCoeff)}
+\DoxyCodeLine{01334\ \ \ \{}
+\DoxyCodeLine{01335\ \ \ \ \ ::memcpy(\ decisions,\ startDec,\ 8*\textcolor{keyword}{sizeof}(Decision)\ );}
+\DoxyCodeLine{01336\ }
+\DoxyCodeLine{01337\ \ \ \ \ \textcolor{keywordflow}{if}(\ zeroOut\ )}
+\DoxyCodeLine{01338\ \ \ \ \ \{}
+\DoxyCodeLine{01339\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ spt==SCAN\_EOCSBB\ )}
+\DoxyCodeLine{01340\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01341\ \ \ \ \ \ \ \ \ m\_skipStates[0].checkRdCostSkipSbbZeroOut(\ decisions[0]\ );}
+\DoxyCodeLine{01342\ \ \ \ \ \ \ \ \ m\_skipStates[1].checkRdCostSkipSbbZeroOut(\ decisions[1]\ );}
+\DoxyCodeLine{01343\ \ \ \ \ \ \ \ \ m\_skipStates[2].checkRdCostSkipSbbZeroOut(\ decisions[2]\ );}
+\DoxyCodeLine{01344\ \ \ \ \ \ \ \ \ m\_skipStates[3].checkRdCostSkipSbbZeroOut(\ decisions[3]\ );}
+\DoxyCodeLine{01345\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01346\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01347\ \ \ \ \ \}}
+\DoxyCodeLine{01348\ }
+\DoxyCodeLine{01349\ \ \ \ \ PQData\ \ pqData[4];}
+\DoxyCodeLine{01350\ \ \ \ \ m\_quant.preQuantCoeff(\ absCoeff,\ pqData,\ quanCoeff\ );}
+\DoxyCodeLine{01351\ \ \ \ \ m\_prevStates[0].checkRdCosts(\ spt,\ pqData[0],\ pqData[2],\ decisions[0],\ decisions[2]);}
+\DoxyCodeLine{01352\ \ \ \ \ m\_prevStates[1].checkRdCosts(\ spt,\ pqData[0],\ pqData[2],\ decisions[2],\ decisions[0]);}
+\DoxyCodeLine{01353\ \ \ \ \ m\_prevStates[2].checkRdCosts(\ spt,\ pqData[3],\ pqData[1],\ decisions[1],\ decisions[3]);}
+\DoxyCodeLine{01354\ \ \ \ \ m\_prevStates[3].checkRdCosts(\ spt,\ pqData[3],\ pqData[1],\ decisions[3],\ decisions[1]);}
+\DoxyCodeLine{01355\ \ \ \ \ \textcolor{keywordflow}{if}(\ spt==SCAN\_EOCSBB\ )}
+\DoxyCodeLine{01356\ \ \ \ \ \{}
+\DoxyCodeLine{01357\ \ \ \ \ \ \ \ \ m\_skipStates[0].checkRdCostSkipSbb(\ decisions[0]\ );}
+\DoxyCodeLine{01358\ \ \ \ \ \ \ \ \ m\_skipStates[1].checkRdCostSkipSbb(\ decisions[1]\ );}
+\DoxyCodeLine{01359\ \ \ \ \ \ \ \ \ m\_skipStates[2].checkRdCostSkipSbb(\ decisions[2]\ );}
+\DoxyCodeLine{01360\ \ \ \ \ \ \ \ \ m\_skipStates[3].checkRdCostSkipSbb(\ decisions[3]\ );}
+\DoxyCodeLine{01361\ \ \ \ \ \}}
+\DoxyCodeLine{01362\ }
+\DoxyCodeLine{01363\ \ \ \ \ m\_startState.checkRdCostStart(\ lastOffset,\ pqData[0],\ decisions[0]\ );}
+\DoxyCodeLine{01364\ \ \ \ \ m\_startState.checkRdCostStart(\ lastOffset,\ pqData[2],\ decisions[2]\ );}
+\DoxyCodeLine{01365\ \ \ \}}
+\DoxyCodeLine{01366\ }
+\DoxyCodeLine{01367\ \ \ \textcolor{keywordtype}{void}\ DepQuant::xDecideAndUpdate(\ \textcolor{keyword}{const}\ TCoeff\ absCoeff,\ \textcolor{keyword}{const}\ ScanInfo\&\ scanInfo,\ \textcolor{keywordtype}{bool}\ zeroOut,\ TCoeff\ quantCoeff\ )}
+\DoxyCodeLine{01368\ \ \ \{}
+\DoxyCodeLine{01369\ \ \ \ \ Decision*\ decisions\ =\ m\_trellis[\ scanInfo.scanIdx\ ];}
+\DoxyCodeLine{01370\ }
+\DoxyCodeLine{01371\ \ \ \ \ std::swap(\ m\_prevStates,\ m\_currStates\ );}
+\DoxyCodeLine{01372\ }
+\DoxyCodeLine{01373\ \ \ \ \ xDecide(\ scanInfo.spt,\ absCoeff,\ lastOffset(scanInfo.scanIdx),\ decisions,\ zeroOut,\ quantCoeff\ );}
+\DoxyCodeLine{01374\ }
+\DoxyCodeLine{01375\ \ \ \ \ \textcolor{keywordflow}{if}(\ scanInfo.scanIdx\ )}
+\DoxyCodeLine{01376\ \ \ \ \ \{}
+\DoxyCodeLine{01377\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ scanInfo.eosbb\ )}
+\DoxyCodeLine{01378\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01379\ \ \ \ \ \ \ \ \ m\_commonCtx.swap();}
+\DoxyCodeLine{01380\ \ \ \ \ \ \ \ \ m\_currStates[0].updateStateEOS(\ scanInfo,\ m\_prevStates,\ m\_skipStates,\ decisions[0]\ );}
+\DoxyCodeLine{01381\ \ \ \ \ \ \ \ \ m\_currStates[1].updateStateEOS(\ scanInfo,\ m\_prevStates,\ m\_skipStates,\ decisions[1]\ );}
+\DoxyCodeLine{01382\ \ \ \ \ \ \ \ \ m\_currStates[2].updateStateEOS(\ scanInfo,\ m\_prevStates,\ m\_skipStates,\ decisions[2]\ );}
+\DoxyCodeLine{01383\ \ \ \ \ \ \ \ \ m\_currStates[3].updateStateEOS(\ scanInfo,\ m\_prevStates,\ m\_skipStates,\ decisions[3]\ );}
+\DoxyCodeLine{01384\ \ \ \ \ \ \ \ \ ::memcpy(\ decisions+4,\ decisions,\ 4*\textcolor{keyword}{sizeof}(Decision)\ );}
+\DoxyCodeLine{01385\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01386\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !zeroOut\ )}
+\DoxyCodeLine{01387\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01388\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(\ scanInfo.nextNbInfoSbb.num\ )}
+\DoxyCodeLine{01389\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0:}
+\DoxyCodeLine{01391\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<0>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01392\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<0>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01393\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<0>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01394\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<0>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01395\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01396\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{01397\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<1>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01398\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<1>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01399\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<1>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01400\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<1>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01401\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01402\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{01403\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<2>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01404\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<2>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01405\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<2>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01406\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<2>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01407\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{01409\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<3>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01410\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<3>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01411\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<3>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01412\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<3>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01413\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{01415\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<4>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01416\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<4>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01417\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<4>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01418\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<4>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01419\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01420\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01421\ \ \ \ \ \ \ \ \ \ \ m\_currStates[0].updateState<5>(\ scanInfo,\ m\_prevStates,\ decisions[0]\ );}
+\DoxyCodeLine{01422\ \ \ \ \ \ \ \ \ \ \ m\_currStates[1].updateState<5>(\ scanInfo,\ m\_prevStates,\ decisions[1]\ );}
+\DoxyCodeLine{01423\ \ \ \ \ \ \ \ \ \ \ m\_currStates[2].updateState<5>(\ scanInfo,\ m\_prevStates,\ decisions[2]\ );}
+\DoxyCodeLine{01424\ \ \ \ \ \ \ \ \ \ \ m\_currStates[3].updateState<5>(\ scanInfo,\ m\_prevStates,\ decisions[3]\ );}
+\DoxyCodeLine{01425\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01426\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01427\ }
+\DoxyCodeLine{01428\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ scanInfo.spt\ ==\ SCAN\_SOCSBB\ )}
+\DoxyCodeLine{01429\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01430\ \ \ \ \ \ \ \ \ std::swap(\ m\_prevStates,\ m\_skipStates\ );}
+\DoxyCodeLine{01431\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01432\ \ \ \ \ \}}
+\DoxyCodeLine{01433\ \ \ \}}
+\DoxyCodeLine{01434\ }
+\DoxyCodeLine{01435\ }
+\DoxyCodeLine{01436\ \ \ \textcolor{keywordtype}{void}\ DepQuant::quant(\ TransformUnit\&\ tu,\ \textcolor{keyword}{const}\ CCoeffBuf\&\ srcCoeff,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ QpParam\&\ cQP,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ lambda,\ \textcolor{keyword}{const}\ Ctx\&\ ctx,\ TCoeff\&\ absSum,\ \textcolor{keywordtype}{bool}\ enableScalingLists,\ \textcolor{keywordtype}{int}*\ quantCoeff\ )}
+\DoxyCodeLine{01437\ \ \ \{}
+\DoxyCodeLine{01438\ \ \ \ \ CHECKD(\ tu.cs-\/>sps-\/>getSpsRangeExtension().getExtendedPrecisionProcessingFlag(),\ \textcolor{stringliteral}{"{}ext\ precision\ is\ not\ supported"{}}\ );}
+\DoxyCodeLine{01439\ }
+\DoxyCodeLine{01440\ \ \ \ \ \textcolor{comment}{//=====\ reset\ /\ pre-\/init\ =====}}
+\DoxyCodeLine{01441\ \ \ \ \ \textcolor{keyword}{const}\ TUParameters\&\ tuPars\ \ =\ *g\_Rom.getTUPars(\ tu.blocks[compID],\ compID\ );}
+\DoxyCodeLine{01442\ \ \ \ \ m\_quant.initQuantBlock\ \ \ \ (\ tu,\ compID,\ cQP,\ lambda\ );}
+\DoxyCodeLine{01443\ \ \ \ \ TCoeff*\ \ \ \ \ \ \ qCoeff\ \ \ \ \ \ =\ tu.getCoeffs(\ compID\ ).buf;}
+\DoxyCodeLine{01444\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff*\ tCoeff\ \ \ \ \ \ =\ srcCoeff.buf;}
+\DoxyCodeLine{01445\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ numCoeff\ \ \ \ =\ tu.blocks[compID].area();}
+\DoxyCodeLine{01446\ \ \ \ \ ::memset(\ tu.getCoeffs(\ compID\ ).buf,\ 0x00,\ numCoeff*\textcolor{keyword}{sizeof}(TCoeff)\ );}
+\DoxyCodeLine{01447\ \ \ \ \ absSum\ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{01448\ }
+\DoxyCodeLine{01449\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\&\ area\ \ \ \ \ =\ tu.blocks[\ compID\ ];}
+\DoxyCodeLine{01450\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ width\ \ \ \ =\ area.width;}
+\DoxyCodeLine{01451\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ height\ \ \ =\ area.height;}
+\DoxyCodeLine{01452\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ lfnstIdx\ =\ tu.cu-\/>lfnstIdx;}
+\DoxyCodeLine{01453\ \ \ \ \ \textcolor{comment}{//=====\ scaling\ matrix\ ====}}
+\DoxyCodeLine{01454\ \ \ \ \ \textcolor{comment}{//const\ int\ \ \ \ \ \ \ \ \ qpDQ\ =\ cQP.Qp\ +\ 1;}}
+\DoxyCodeLine{01455\ \ \ \ \ \textcolor{comment}{//const\ int\ \ \ \ \ \ \ \ \ qpPer\ =\ qpDQ\ /\ 6;}}
+\DoxyCodeLine{01456\ \ \ \ \ \textcolor{comment}{//const\ int\ \ \ \ \ \ \ \ \ qpRem\ =\ qpDQ\ -\/\ 6\ *\ qpPer;}}
+\DoxyCodeLine{01457\ }
+\DoxyCodeLine{01458\ \ \ \ \ \textcolor{comment}{//TCoeff\ thresTmp\ =\ thres;}}
+\DoxyCodeLine{01459\ \ \ \ \ \textcolor{keywordtype}{bool}\ zeroOut\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01460\ \ \ \ \ \textcolor{keywordtype}{bool}\ zeroOutforThres\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01461\ \ \ \ \ \textcolor{keywordtype}{int}\ effWidth\ =\ tuPars.m\_width,\ effHeight\ =\ tuPars.m\_height;}
+\DoxyCodeLine{01462\ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ tu.mtsIdx[compID]\ >\ MTS\_SKIP\ ||\ (tu.cs-\/>sps-\/>getUseMTS()\ \&\&\ tu.cu-\/>sbtInfo\ !=\ 0\ \&\&\ tuPars.m\_height\ <=\ 32\ \&\&\ tuPars.m\_width\ <=\ 32))\ \&\&\ compID\ ==\ COMPONENT\_Y)}
+\DoxyCodeLine{01463\ \ \ \ \ \{}
+\DoxyCodeLine{01464\ \ \ \ \ \ \ effHeight\ =\ (tuPars.m\_height\ ==\ 32)\ ?\ 16\ :\ tuPars.m\_height;}
+\DoxyCodeLine{01465\ \ \ \ \ \ \ effWidth\ =\ (tuPars.m\_width\ ==\ 32)\ ?\ 16\ :\ tuPars.m\_width;}
+\DoxyCodeLine{01466\ \ \ \ \ \ \ zeroOut\ =\ (effHeight\ <\ tuPars.m\_height\ ||\ effWidth\ <\ tuPars.m\_width);}
+\DoxyCodeLine{01467\ \ \ \ \ \}}
+\DoxyCodeLine{01468\ \ \ \ \ zeroOutforThres\ =\ zeroOut\ ||\ (32\ <\ tuPars.m\_height\ ||\ 32\ <\ tuPars.m\_width);}
+\DoxyCodeLine{01469\ \ \ \ \ \textcolor{comment}{//=====\ find\ first\ test\ position\ =====}}
+\DoxyCodeLine{01470\ \ \ \ \ \textcolor{keywordtype}{int}\ firstTestPos\ =\ numCoeff\ -\/\ 1;}
+\DoxyCodeLine{01471\ \ \ \ \ \textcolor{keywordflow}{if}\ (lfnstIdx\ >\ 0\ \&\&\ tu.mtsIdx[compID]\ !=\ MTS\_SKIP\ \&\&\ width\ >=\ 4\ \&\&\ height\ >=\ 4)}
+\DoxyCodeLine{01472\ \ \ \ \ \{}
+\DoxyCodeLine{01473\ \ \ \ \ \ \ firstTestPos\ =\ (\ (\ width\ ==\ 4\ \&\&\ height\ ==\ 4\ )\ ||\ (\ width\ ==\ 8\ \&\&\ height\ ==\ 8\ )\ )\ \ ?\ 7\ :\ 15\ ;}
+\DoxyCodeLine{01474\ \ \ \ \ \}}
+\DoxyCodeLine{01475\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ defaultQuantisationCoefficient\ =\ (TCoeff)m\_quant.getQScale();}
+\DoxyCodeLine{01476\ \ \ \ \ \textcolor{keyword}{const}\ TCoeff\ thres\ =\ m\_quant.getLastThreshold();}
+\DoxyCodeLine{01477\ \ \ \ \ \textcolor{keywordflow}{for}(\ ;\ firstTestPos\ >=\ 0;\ firstTestPos-\/-\/\ )}
+\DoxyCodeLine{01478\ \ \ \ \ \{}
+\DoxyCodeLine{01479\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeroOutforThres\ \&\&\ (tuPars.m\_scanId2BlkPos[firstTestPos].x\ >=\ ((tuPars.m\_width\ ==\ 32\ \&\&\ zeroOut)\ ?\ 16\ :\ 32)}
+\DoxyCodeLine{01480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ tuPars.m\_scanId2BlkPos[firstTestPos].y\ >=\ ((tuPars.m\_height\ ==\ 32\ \&\&\ zeroOut)\ ?\ 16\ :\ 32)))}
+\DoxyCodeLine{01481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{01482\ \ \ \ \ \ \ TCoeff\ thresTmp\ =\ (enableScalingLists)\ ?\ TCoeff(thres\ /\ (4\ *\ quantCoeff[tuPars.m\_scanId2BlkPos[firstTestPos].idx]))}
+\DoxyCodeLine{01483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ TCoeff(thres\ /\ (4\ *\ defaultQuantisationCoefficient));}
+\DoxyCodeLine{01484\ }
+\DoxyCodeLine{01485\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(tCoeff[tuPars.m\_scanId2BlkPos[firstTestPos].idx])\ >\ thresTmp)}
+\DoxyCodeLine{01486\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01487\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01488\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01489\ \ \ \ \ \}}
+\DoxyCodeLine{01490\ \ \ \ \ \textcolor{keywordflow}{if}(\ firstTestPos\ <\ 0\ )}
+\DoxyCodeLine{01491\ \ \ \ \ \{}
+\DoxyCodeLine{01492\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01493\ \ \ \ \ \}}
+\DoxyCodeLine{01494\ }
+\DoxyCodeLine{01495\ \ \ \ \ \textcolor{comment}{//=====\ real\ init\ =====}}
+\DoxyCodeLine{01496\ \ \ \ \ RateEstimator::initCtx(\ tuPars,\ tu,\ compID,\ ctx.getFracBitsAcess()\ );}
+\DoxyCodeLine{01497\ \ \ \ \ m\_commonCtx.reset(\ tuPars,\ *\textcolor{keyword}{this}\ );}
+\DoxyCodeLine{01498\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 12;\ k++\ )}
+\DoxyCodeLine{01499\ \ \ \ \ \{}
+\DoxyCodeLine{01500\ \ \ \ \ \ \ m\_allStates[k].init();}
+\DoxyCodeLine{01501\ \ \ \ \ \}}
+\DoxyCodeLine{01502\ \ \ \ \ m\_startState.init();}
+\DoxyCodeLine{01503\ }
+\DoxyCodeLine{01504\ }
+\DoxyCodeLine{01505\ \ \ \ \ \textcolor{keywordtype}{int}\ effectWidth\ =\ std::min(32,\ effWidth);}
+\DoxyCodeLine{01506\ \ \ \ \ \textcolor{keywordtype}{int}\ effectHeight\ =\ std::min(32,\ effHeight);}
+\DoxyCodeLine{01507\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 12;\ k++)}
+\DoxyCodeLine{01508\ \ \ \ \ \{}
+\DoxyCodeLine{01509\ \ \ \ \ \ \ m\_allStates[k].effWidth\ =\ effectWidth;}
+\DoxyCodeLine{01510\ \ \ \ \ \ \ m\_allStates[k].effHeight\ =\ effectHeight;}
+\DoxyCodeLine{01511\ \ \ \ \ \}}
+\DoxyCodeLine{01512\ \ \ \ \ m\_startState.effWidth\ =\ effectWidth;}
+\DoxyCodeLine{01513\ \ \ \ \ m\_startState.effHeight\ =\ effectHeight;}
+\DoxyCodeLine{01514\ }
+\DoxyCodeLine{01515\ \ \ \ \ \textcolor{comment}{//=====\ populate\ trellis\ =====}}
+\DoxyCodeLine{01516\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ scanIdx\ =\ firstTestPos;\ scanIdx\ >=\ 0;\ scanIdx-\/-\/\ )}
+\DoxyCodeLine{01517\ \ \ \ \ \{}
+\DoxyCodeLine{01518\ \ \ \ \ \ \ \textcolor{keyword}{const}\ ScanInfo\&\ scanInfo\ =\ tuPars.m\_scanInfo[\ scanIdx\ ];}
+\DoxyCodeLine{01519\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (enableScalingLists)}
+\DoxyCodeLine{01520\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01521\ \ \ \ \ \ \ \ \ m\_quant.initQuantBlock(tu,\ compID,\ cQP,\ lambda,\ quantCoeff[scanInfo.rasterPos]);}
+\DoxyCodeLine{01522\ \ \ \ \ \ \ \ \ xDecideAndUpdate(\ abs(\ tCoeff[scanInfo.rasterPos]),\ scanInfo,\ (zeroOut\ \&\&\ (scanInfo.posX\ >=\ effWidth\ ||\ scanInfo.posY\ >=\ effHeight)),\ quantCoeff[scanInfo.rasterPos]\ );}
+\DoxyCodeLine{01523\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01524\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01525\ \ \ \ \ \ \ \ \ xDecideAndUpdate(\ abs(\ tCoeff[scanInfo.rasterPos]),\ scanInfo,\ (zeroOut\ \&\&\ (scanInfo.posX\ >=\ effWidth\ ||\ scanInfo.posY\ >=\ effHeight)),\ defaultQuantisationCoefficient\ );}
+\DoxyCodeLine{01526\ \ \ \ \ \}}
+\DoxyCodeLine{01527\ }
+\DoxyCodeLine{01528\ \ \ \ \ \textcolor{comment}{//=====\ find\ best\ path\ =====}}
+\DoxyCodeLine{01529\ \ \ \ \ Decision\ \ decision\ \ \ \ =\ \{\ std::numeric\_limits<int64\_t>::max(),\ -\/1,\ -\/2\ \};}
+\DoxyCodeLine{01530\ \ \ \ \ int64\_t\ \ \ minPathCost\ =\ \ 0;}
+\DoxyCodeLine{01531\ \ \ \ \ \textcolor{keywordflow}{for}(\ int8\_t\ stateId\ =\ 0;\ stateId\ <\ 4;\ stateId++\ )}
+\DoxyCodeLine{01532\ \ \ \ \ \{}
+\DoxyCodeLine{01533\ \ \ \ \ \ \ int64\_t\ pathCost\ =\ m\_trellis[0][stateId].rdCost;}
+\DoxyCodeLine{01534\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pathCost\ <\ minPathCost\ )}
+\DoxyCodeLine{01535\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01536\ \ \ \ \ \ \ \ \ decision.prevId\ =\ stateId;}
+\DoxyCodeLine{01537\ \ \ \ \ \ \ \ \ minPathCost\ \ \ \ \ =\ pathCost;}
+\DoxyCodeLine{01538\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01539\ \ \ \ \ \}}
+\DoxyCodeLine{01540\ }
+\DoxyCodeLine{01541\ \ \ \ \ \textcolor{comment}{//=====\ backward\ scanning\ =====}}
+\DoxyCodeLine{01542\ \ \ \ \ \textcolor{keywordtype}{int}\ scanIdx\ =\ 0;}
+\DoxyCodeLine{01543\ \ \ \ \ \textcolor{keywordflow}{for}(\ ;\ decision.prevId\ >=\ 0;\ scanIdx++\ )}
+\DoxyCodeLine{01544\ \ \ \ \ \{}
+\DoxyCodeLine{01545\ \ \ \ \ \ \ decision\ \ \ \ \ \ \ \ \ \ =\ m\_trellis[\ scanIdx\ ][\ decision.prevId\ ];}
+\DoxyCodeLine{01546\ \ \ \ \ \ \ int32\_t\ blkpos\ \ \ \ =\ tuPars.m\_scanId2BlkPos[scanIdx].idx;}
+\DoxyCodeLine{01547\ \ \ \ \ \ \ qCoeff[\ blkpos\ ]\ \ =\ (\ tCoeff[\ blkpos\ ]\ <\ 0\ ?\ -\/decision.absLevel\ :\ decision.absLevel\ );}
+\DoxyCodeLine{01548\ \ \ \ \ \ \ absSum\ \ \ \ \ \ \ \ \ \ \ +=\ decision.absLevel;}
+\DoxyCodeLine{01549\ \ \ \ \ \}}
+\DoxyCodeLine{01550\ \ \ \}}
+\DoxyCodeLine{01551\ }
+\DoxyCodeLine{01552\ \};\ \textcolor{comment}{//\ namespace\ DQIntern}}
+\DoxyCodeLine{01553\ }
+\DoxyCodeLine{01554\ }
+\DoxyCodeLine{01555\ }
+\DoxyCodeLine{01556\ }
+\DoxyCodeLine{01557\ \textcolor{comment}{//=====\ interface\ class\ =====}}
+\DoxyCodeLine{01558\ DepQuant::DepQuant(\ \textcolor{keyword}{const}\ Quant*\ other,\ \textcolor{keywordtype}{bool}\ enc\ )\ :\ QuantRDOQ(\ other\ )}
+\DoxyCodeLine{01559\ \{}
+\DoxyCodeLine{01560\ \ \ \textcolor{keyword}{const}\ DepQuant*\ dq\ =\ \textcolor{keyword}{dynamic\_cast<}\textcolor{keyword}{const\ }DepQuant*\textcolor{keyword}{>}(\ other\ );}
+\DoxyCodeLine{01561\ \ \ CHECK(\ other\ \&\&\ !dq,\ \textcolor{stringliteral}{"{}The\ DepQuant\ cast\ must\ be\ successfull!"{}}\ );}
+\DoxyCodeLine{01562\ \ \ p\ =\ \textcolor{keyword}{new}\ DQIntern::DepQuant();}
+\DoxyCodeLine{01563\ \ \ \textcolor{keywordflow}{if}(\ enc\ )}
+\DoxyCodeLine{01564\ \ \ \{}
+\DoxyCodeLine{01565\ \ \ \ \ DQIntern::g\_Rom.init();}
+\DoxyCodeLine{01566\ \ \ \}}
+\DoxyCodeLine{01567\ \}}
+\DoxyCodeLine{01568\ }
+\DoxyCodeLine{01569\ DepQuant::\string~DepQuant()}
+\DoxyCodeLine{01570\ \{}
+\DoxyCodeLine{01571\ \ \ \textcolor{keyword}{delete}\ \textcolor{keyword}{static\_cast<}DQIntern::DepQuant*\textcolor{keyword}{>}(p);}
+\DoxyCodeLine{01572\ \}}
+\DoxyCodeLine{01573\ }
+\DoxyCodeLine{01574\ \textcolor{keywordtype}{void}\ DepQuant::quant(\ TransformUnit\ \&tu,\ \textcolor{keyword}{const}\ ComponentID\ \&compID,\ \textcolor{keyword}{const}\ CCoeffBuf\ \&pSrc,\ TCoeff\ \&uiAbsSum,\ \textcolor{keyword}{const}\ QpParam\ \&cQP,\ \textcolor{keyword}{const}\ Ctx\&\ ctx\ )}
+\DoxyCodeLine{01575\ \{}
+\DoxyCodeLine{01576\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ useRegularResidualCoding\ =\ tu.cu-\/>slice-\/>getTSResidualCodingDisabledFlag()\ ||\ tu.mtsIdx[compID]\ !=\ MTS\_SKIP;}
+\DoxyCodeLine{01577\ \ \ \textcolor{keywordflow}{if}(\ tu.cs-\/>slice-\/>getDepQuantEnabledFlag()\ \&\&\ useRegularResidualCoding\ )}
+\DoxyCodeLine{01578\ \ \ \{}
+\DoxyCodeLine{01579\ \ \ \ \ \textcolor{comment}{//=====\ scaling\ matrix\ ====}}
+\DoxyCodeLine{01580\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpDQ\ \ \ \ \ \ \ \ \ \ \ \ =\ cQP.Qp(tu.mtsIdx[compID]\ ==\ MTS\_SKIP)\ +\ 1;}
+\DoxyCodeLine{01581\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpPer\ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ /\ 6;}
+\DoxyCodeLine{01582\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpRem\ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ -\/\ 6\ *\ qpPer;}
+\DoxyCodeLine{01583\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\ \ \ \ \&rect\ \ \ \ \ \ \ \ \ \ \ =\ tu.blocks[compID];}
+\DoxyCodeLine{01584\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ width\ \ \ \ \ \ \ \ \ \ \ =\ rect.width;}
+\DoxyCodeLine{01585\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ height\ \ \ \ \ \ \ \ \ \ =\ rect.height;}
+\DoxyCodeLine{01586\ \ \ \ \ uint32\_t\ \ \ \ \ \ \ \ \ \ scalingListType\ =\ getScalingListType(tu.cu-\/>predMode,\ compID);}
+\DoxyCodeLine{01587\ \ \ \ \ CHECK(scalingListType\ >=\ SCALING\_LIST\_NUM,\ \textcolor{stringliteral}{"{}Invalid\ scaling\ list"{}});}
+\DoxyCodeLine{01588\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ log2TrWidth\ \ \ \ \ =\ floorLog2(width);}
+\DoxyCodeLine{01589\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ log2TrHeight\ \ \ \ =\ floorLog2(height);}
+\DoxyCodeLine{01590\ }
+\DoxyCodeLine{01591\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ disableSMForLFNST\ =\ tu.cs-\/>slice-\/>getExplicitScalingListUsed()\ ?\ tu.cs-\/>slice-\/>getSPS()-\/>getDisableScalingMatrixForLfnstBlks()\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01592\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ isLfnstApplied\ =\ tu.cu-\/>lfnstIdx\ >\ 0\ \&\&\ (tu.cu-\/>isSepTree()\ ?\ true\ :\ isLuma(compID));}
+\DoxyCodeLine{01593\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ disableSMForACT\ =\ tu.cs-\/>slice-\/>getSPS()-\/>getScalingMatrixForAlternativeColourSpaceDisabledFlag()\ \&\&\ (tu.cs-\/>slice-\/>getSPS()-\/>getScalingMatrixDesignatedColourSpaceFlag()\ ==\ tu.cu-\/>colorTransform);}
+\DoxyCodeLine{01594\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ enableScalingLists\ =\ getUseScalingList(width,\ height,\ (tu.mtsIdx[compID]\ ==\ MTS\_SKIP),\ isLfnstApplied,\ disableSMForLFNST,\ disableSMForACT);}
+\DoxyCodeLine{01595\ \ \ \ \ \textcolor{keyword}{static\_cast<}DQIntern::DepQuant*\textcolor{keyword}{>}(p)-\/>quant(\ tu,\ pSrc,\ compID,\ cQP,\ Quant::m\_dLambda,\ ctx,\ uiAbsSum,\ enableScalingLists,\ Quant::getQuantCoeff(scalingListType,\ qpRem,\ log2TrWidth,\ log2TrHeight)\ );}
+\DoxyCodeLine{01596\ \ \ \}}
+\DoxyCodeLine{01597\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01598\ \ \ \{}
+\DoxyCodeLine{01599\ \ \ \ \ QuantRDOQ::quant(\ tu,\ compID,\ pSrc,\ uiAbsSum,\ cQP,\ ctx\ );}
+\DoxyCodeLine{01600\ \ \ \}}
+\DoxyCodeLine{01601\ \}}
+\DoxyCodeLine{01602\ }
+\DoxyCodeLine{01603\ \textcolor{keywordtype}{void}\ DepQuant::dequant(\ \textcolor{keyword}{const}\ TransformUnit\ \&tu,\ CoeffBuf\ \&dstCoeff,\ \textcolor{keyword}{const}\ ComponentID\ \&compID,\ \textcolor{keyword}{const}\ QpParam\ \&cQP\ )}
+\DoxyCodeLine{01604\ \{}
+\DoxyCodeLine{01605\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ useRegularResidualCoding\ =\ tu.cu-\/>slice-\/>getTSResidualCodingDisabledFlag()\ ||\ tu.mtsIdx[compID]\ !=\ MTS\_SKIP;}
+\DoxyCodeLine{01606\ \ \ \textcolor{keywordflow}{if}(\ tu.cs-\/>slice-\/>getDepQuantEnabledFlag()\ \&\&\ useRegularResidualCoding\ )}
+\DoxyCodeLine{01607\ \ \ \{}
+\DoxyCodeLine{01608\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpDQ\ \ \ \ \ \ \ \ \ \ \ \ =\ cQP.Qp(tu.mtsIdx[compID]\ ==\ MTS\_SKIP)\ +\ 1;}
+\DoxyCodeLine{01609\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpPer\ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ /\ 6;}
+\DoxyCodeLine{01610\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ qpRem\ \ \ \ \ \ \ \ \ \ \ =\ qpDQ\ -\/\ 6\ *\ qpPer;}
+\DoxyCodeLine{01611\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\ \ \ \ \&rect\ \ \ \ \ \ \ \ \ \ \ =\ tu.blocks[compID];}
+\DoxyCodeLine{01612\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ width\ \ \ \ \ \ \ \ \ \ \ =\ rect.width;}
+\DoxyCodeLine{01613\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ height\ \ \ \ \ \ \ \ \ \ =\ rect.height;}
+\DoxyCodeLine{01614\ \ \ \ \ uint32\_t\ \ \ \ \ \ \ \ \ \ scalingListType\ =\ getScalingListType(tu.cu-\/>predMode,\ compID);}
+\DoxyCodeLine{01615\ \ \ \ \ CHECK(scalingListType\ >=\ SCALING\_LIST\_NUM,\ \textcolor{stringliteral}{"{}Invalid\ scaling\ list"{}});}
+\DoxyCodeLine{01616\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ log2TrWidth\ \ =\ floorLog2(width);}
+\DoxyCodeLine{01617\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ \ \ \ log2TrHeight\ =\ floorLog2(height);}
+\DoxyCodeLine{01618\ }
+\DoxyCodeLine{01619\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ disableSMForLFNST\ =\ tu.cs-\/>slice-\/>getExplicitScalingListUsed()\ ?\ tu.cs-\/>slice-\/>getSPS()-\/>getDisableScalingMatrixForLfnstBlks()\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01620\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isLfnstApplied\ =\ tu.cu-\/>lfnstIdx\ >\ 0\ \&\&\ (tu.cu-\/>isSepTree()\ ?\ true\ :\ isLuma(compID));}
+\DoxyCodeLine{01621\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ disableSMForACT\ =\ tu.cs-\/>slice-\/>getSPS()-\/>getScalingMatrixForAlternativeColourSpaceDisabledFlag()\ \&\&\ (tu.cs-\/>slice-\/>getSPS()-\/>getScalingMatrixDesignatedColourSpaceFlag()\ ==\ tu.cu-\/>colorTransform);}
+\DoxyCodeLine{01622\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enableScalingLists\ =\ getUseScalingList(width,\ height,\ (tu.mtsIdx[compID]\ ==\ MTS\_SKIP),\ isLfnstApplied,\ disableSMForLFNST,\ disableSMForACT);}
+\DoxyCodeLine{01623\ \ \ \ \ \textcolor{keyword}{static\_cast<}DQIntern::DepQuant*\textcolor{keyword}{>}(p)-\/>dequant(\ tu,\ dstCoeff,\ compID,\ cQP,\ enableScalingLists,\ Quant::getDequantCoeff(scalingListType,\ qpRem,\ log2TrWidth,\ log2TrHeight)\ );}
+\DoxyCodeLine{01624\ \ \ \}}
+\DoxyCodeLine{01625\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01626\ \ \ \{}
+\DoxyCodeLine{01627\ \ \ \ \ QuantRDOQ::dequant(\ tu,\ dstCoeff,\ compID,\ cQP\ );}
+\DoxyCodeLine{01628\ \ \ \}}
+\DoxyCodeLine{01629\ \}}
+\DoxyCodeLine{01630\ }
+\DoxyCodeLine{01631\ }
+\DoxyCodeLine{01632\ }
+
+\end{DoxyCode}

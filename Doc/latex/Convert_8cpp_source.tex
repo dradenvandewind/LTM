@@ -1,0 +1,382 @@
+\doxysection{Convert.\+cpp}
+\label{Convert_8cpp_source}\index{decoder/src/Convert.cpp@{decoder/src/Convert.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Convert.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ Surface\ ConvertToU8::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ shift;}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ int16\_t\ half;}
+\DoxyCodeLine{00050\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<int16\_t>(),\ shift,\ (int16\_t)((1\ <<\ shift)\ /\ 2)\};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{00054\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ uint8\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ clamp(((context.src.read(x,\ y)\ +\ 0x4000\ +\ context.half)\ >>\ context.shift),\ 0,\ 255));}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ clamp(((*psrc++\ +\ 0x4000\ +\ context.half)\ >>\ context.shift),\ 0,\ 255);}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint8\_t>()}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint8\_t\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(((c.src.read(x,\ y)\ +\ 0x4000\ +\ c.half)\ >>\ c.shift),\ 0,\ 255);}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ Surface\ ConvertFromU8::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ src;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ shift;}
+\DoxyCodeLine{00080\ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ surface.view\_as<uint8\_t>(),}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ shift,}
+\DoxyCodeLine{00083\ \ \ \ \ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00087\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ ((context.src.read(x,\ y)\ <<\ context.shift)\ -\/\ 0x4000));}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ ((*psrc++\ <<\ context.shift)\ -\/\ 0x4000);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{\ \textcolor{keywordflow}{return}\ (c.src.read(x,\ y)\ <<\ c.shift)\ -\/\ 0x4000;\ \},\ context)}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ Surface\ ConvertToU16::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ shift;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ int16\_t\ half;}
+\DoxyCodeLine{00111\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<int16\_t>(),\ shift,\ (int16\_t)((1\ <<\ shift)\ /\ 2)\};}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00114\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ clamp(((context.src.read(x,\ y)\ +\ 0x4000\ +\ context.half)\ >>\ context.shift),\ 0,\ 32767\ >>\ context.shift));}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ clamp((*psrc++\ +\ 0x4000\ +\ context.half)\ >>\ context.shift,\ 0,\ 32767\ >>\ context.shift);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clamp(((c.src.read(x,\ y)\ +\ 0x4000\ +\ c.half)\ >>\ c.shift),\ 0,\ 32767\ >>\ c.shift);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00134\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ Surface\ ConvertFromU16::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint16\_t>\ src;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ shift;}
+\DoxyCodeLine{00140\ \ \ \ \ \}\ context\ =\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ surface.view\_as<uint16\_t>(),}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ shift,}
+\DoxyCodeLine{00143\ \ \ \ \ \};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00147\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ ((context.src.read(x,\ y)\ <<\ context.shift)\ -\/\ 0x4000));}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ ((*psrc++\ <<\ context.shift)\ -\/\ 0x4000);}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ int16\_t\ \{\ \textcolor{keywordflow}{return}\ (c.src.read(x,\ y)\ <<\ c.shift)\ -\/\ 0x4000;\ \},\ context)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00164\ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ Surface\ ConvertDumpU08toU10::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ src;}
+\DoxyCodeLine{00169\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<uint8\_t>()\};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00173\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ (context.src.read(x,\ y)\ <<\ 2));}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (*psrc++\ <<\ 2);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{\ \textcolor{keywordflow}{return}\ ((c.src.read(x,\ y))\ <<\ 2);\ \},\ context)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ Surface\ ConvertDumpS15toU10::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ src;}
+\DoxyCodeLine{00195\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<int16\_t>()\};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00199\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ (((uint32\_t)context.src.read(x,\ y)\ +\ (1\ <<\ 14)\ +\ (1\ <<\ 4))\ >>\ 5));}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (((uint32\_t)context.src.read(x,\ y)\ +\ (1\ <<\ 14)\ +\ (1\ <<\ 4))\ >>\ 5);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00207\ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ value\ =\ ((uint32\_t)c.src.read(x,\ y)\ +\ (1\ <<\ 14)\ +\ (1\ <<\ 4))\ >>\ 5;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((uint16\_t)value);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ context)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00220\ \}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ Surface\ ConvertToInternal::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ depth)\ \{}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordflow}{switch}\ (depth)\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertFromU8().process(surface,\ 7);}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertFromU16().process(surface,\ 5);}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertFromU16().process(surface,\ 3);}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertFromU16().process(surface,\ 1);}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{case}\ 16:}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ surface;}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface();}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ Surface\ ConvertFromInternal::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ depth)\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{switch}\ (depth)\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertToU8().process(surface,\ 7);}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertToU16().process(surface,\ 5);}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertToU16().process(surface,\ 3);}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertToU16().process(surface,\ 1);}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{case}\ 16:}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ surface;}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface();}
+\DoxyCodeLine{00255\ \ \ \ \ \}}
+\DoxyCodeLine{00256\ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ Surface\ ConvertBitShift::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ depth\_src,\ \textcolor{keywordtype}{unsigned}\ depth\_dst)\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{if}\ (depth\_src\ ==\ depth\_dst)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ surface;}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (depth\_dst\ >\ depth\_src)\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (depth\_src\ ==\ 8)\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertLeftShiftFromU8().process(surface,\ depth\_dst\ -\/\ depth\_src);}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertLeftShiftFromU16().process(surface,\ depth\_dst\ -\/\ depth\_src);}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \textcolor{comment}{//\ depth\_dst\ <\ depth\_src}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (depth\_dst\ ==\ 8)\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertRightShiftToU8().process(surface,\ depth\_src\ -\/\ depth\_dst);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConvertRightShiftToU16().process(surface,\ depth\_src\ -\/\ depth\_dst);}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00273\ \ \ \ \ \}}
+\DoxyCodeLine{00274\ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ Surface\ ConvertLeftShiftFromU8::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint8\_t>\ src;}
+\DoxyCodeLine{00279\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<uint8\_t>()\};}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00283\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (*psrc++\ <<\ shift);}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00292\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{\ \textcolor{keywordflow}{return}\ ((c.src.read(x,\ y))\ <<\ shift);\ \},\ context)}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00298\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00299\ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ Surface\ ConvertLeftShiftFromU16::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint16\_t>\ src;}
+\DoxyCodeLine{00304\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<uint16\_t>()\};}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00308\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (*psrc++\ <<\ shift);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{\ \textcolor{keywordflow}{return}\ ((c.src.read(x,\ y))\ <<\ shift);\ \},\ context)}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00324\ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ Surface\ ConvertRightShiftToU8::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint16\_t>\ src;}
+\DoxyCodeLine{00329\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<uint16\_t>()\};}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{00333\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ uint8\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (*psrc++\ >>\ shift);}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint8\_t>()}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint8\_t\ \{\ \textcolor{keywordflow}{return}\ ((c.src.read(x,\ y))\ >>\ shift);\ \},\ context)}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00349\ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ Surface\ ConvertRightShiftToU16::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ shift)\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keyword}{struct\ }Context\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<uint16\_t>\ src;}
+\DoxyCodeLine{00354\ \ \ \ \ \}\ context\ =\ \{surface.view\_as<uint16\_t>()\};}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00358\ \ \ \ \ dest.reserve(surface.width(),\ surface.height());}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface.height();\ ++y)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ *\_\_restrict\ psrc\ =\ context.src.data(0,\ y);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface.width();\ ++x)\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (*psrc++\ >>\ shift);}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint16\_t>()}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ .generate<Context>(}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ surface.width(),\ surface.height(),}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y,\ \textcolor{keyword}{const}\ Context\ \&c)\ -\/>\ uint16\_t\ \{\ \textcolor{keywordflow}{return}\ ((c.src.read(x,\ y))\ >>\ shift);\ \},\ context)}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00374\ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

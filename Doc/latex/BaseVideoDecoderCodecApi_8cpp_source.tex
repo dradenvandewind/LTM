@@ -1,0 +1,233 @@
+\doxysection{Base\+Video\+Decoder\+Codec\+Api.\+cpp}
+\label{BaseVideoDecoderCodecApi_8cpp_source}\index{decoder/src/BaseVideoDecoderCodecApi.cpp@{decoder/src/BaseVideoDecoderCodecApi.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ BaseVideoDecoderCodecApi.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Base\ decoder\ wrapper\ using\ utils/include/CodecApi.h\ to\ talk\ to\ loadable\ codecs.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BaseVideoDecoderCodecApi.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}Codec.hpp"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}ScanEnhancement.hpp"{}}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{extern}\ PsnrStatistic\ goPsnr;}
+\DoxyCodeLine{00057\ \textcolor{keyword}{extern}\ uint8\_t\ gaucMd5Digest[][16];}
+\DoxyCodeLine{00058\ \textcolor{keyword}{extern}\ ReportStructure\ goReportStructure;}
+\DoxyCodeLine{00059\ \textcolor{keyword}{extern}\ std::priority\_queue<ReportStructure,\ std::vector<ReportStructure,\ std::allocator<ReportStructure>>,\ ReportStructureComp>}
+\DoxyCodeLine{00060\ \ \ \ \ goReportQueue;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ PSS\ data\ that\ is\ queued\ whilst\ base\ frames\ are\ decoded}}
+\DoxyCodeLine{00065\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{00066\ \ \ \ \ Packet\ packet;}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr;}
+\DoxyCodeLine{00068\ \}\ PssPacket;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#define\ QUEUE\_LIMIT\ 32}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ compare\_packet\_timestamps(\textcolor{keyword}{const}\ lctm::Packet\ \&l,\ \textcolor{keyword}{const}\ lctm::Packet\ \&r)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ uint64\_t\ lt\ =\ l.timestamp();}
+\DoxyCodeLine{00074\ \ \ \ \ uint64\_t\ rt\ =\ r.timestamp();}
+\DoxyCodeLine{00075\ \ \ \ \ int64\_t\ d\ =\ (rt\ -\/\ lt);}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{return}\ d\ <\ 0;}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{struct\ }BufferCompare\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ PssPacket\ \&l,\ \textcolor{keyword}{const}\ PssPacket\ \&r)\ \{\ \textcolor{keywordflow}{return}\ compare\_packet\_timestamps(l.packet,\ r.packet);\ \}}
+\DoxyCodeLine{00081\ \};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{class\ }BaseVideoDecoderCodecApi\ :\ \textcolor{keyword}{public}\ BaseVideoDecoder\ \{}
+\DoxyCodeLine{00084\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00085\ \ \ \ \ BaseVideoDecoderCodecApi(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ BaseCoding\ base,}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ std::string\ \&selection\_options,\ \textcolor{keyword}{const}\ std::string\ \&create\_options);}
+\DoxyCodeLine{00087\ \ \ \ \ \string~BaseVideoDecoderCodecApi()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{void}\ stop()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ Consumer\ interface}}
+\DoxyCodeLine{00100\ \ \ \ \ Output\ \&output\_;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ Type\ of\ enhancement\ payload\ encapsulation}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{const}\ Encapsulation\ encapsulation\_;}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{const}\ BaseCoding\ base\_;}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ Temp.\ buffer}}
+\DoxyCodeLine{00107\ \ \ \ \ vector<uint8\_t>\ buffer\_;}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{comment}{//\ Priority\ queues\ of\ buffers\ for\ base\ \&\ pss\ ordered\ by\ timestamp}}
+\DoxyCodeLine{00110\ \ \ \ \ priority\_queue<PssPacket,\ vector<PssPacket>,\ BufferCompare>\ enhancement\_queue\_;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ name\_;}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ selection\_options\_;}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ create\_options\_;}
+\DoxyCodeLine{00116\ \ \ \ \ Codec\ *codec\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00117\ \ \ \ \ CodecContext\ context\_\ =\ 0;}
+\DoxyCodeLine{00118\ \};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ BaseVideoDecoderCodecApi::BaseVideoDecoderCodecApi(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ BaseCoding\ base,}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ std::string\ \&selection\_options,}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&create\_options)}
+\DoxyCodeLine{00123\ \ \ \ \ :\ output\_(output),\ encapsulation\_(encapsulation),\ base\_(base),\ name\_(name),\ selection\_options\_(selection\_options),}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ create\_options\_(create\_options)\ \{\}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ BaseVideoDecoderCodecApi::\string~BaseVideoDecoderCodecApi()\ \{\}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{void}\ BaseVideoDecoderCodecApi::start()\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ Create\ base\ codec}}
+\DoxyCodeLine{00130\ \ \ \ \ codec\_\ =\ CHECK(CodecCreate(name\_,\ CodecOperation\_Decode,\ selection\_options\_));}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ CodecError\ error\ =\ 0;}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{if}\ (!codec\_-\/>create\_context(\&context\_,\ create\_options\_.c\_str(),\ \&error))\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Codec\ error:\ \%s"{}},\ CodecErrorToString(codec\_,\ error).c\_str());}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ error\ =\ 0;}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{keywordtype}{void}\ BaseVideoDecoderCodecApi::stop()\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{if}\ (context\_)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ CHECK(codec\_);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ codec\_-\/>release\_context(context\_);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ context\_\ =\ 0;}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{if}\ (codec\_)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ CodecRelease(codec\_);}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ codec\_\ =\ 0;}
+\DoxyCodeLine{00149\ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{keywordtype}{void}\ BaseVideoDecoderCodecApi::push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{if}\ (data)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temp.\ copy\ of\ AU}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ vector<uint8\_t>\ b(data,\ data\ +\ data\_size);}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ out\ enhancement\ data\ -\/\ may\ be\ removed\ -\/\ new\ size\ is\ returned}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_size\ =\ scan\_enhancement(b.data(),\ data\_size,\ encapsulation\_,\ base\_,\ pts,\ is\_base\_idr,}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}](\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>enhancement\_queue\_.push(\{pkt,\ is\_lcevc\_idr\});}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ b.resize(new\_size);}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ goReportStructure.miTimeStamp\ =\ (int)(pts);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ goReportStructure.miPictureType\ =\ iPictureType;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ goReportStructure.miBaseSize\ =\ (int)(new\_size);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ goReportStructure.miEnhancementSize\ =\ (int)(data\_size\ -\/\ new\_size);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ goReportQueue.push(goReportStructure);}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flush\ any\ previous\ buffer}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts);}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ buffer\_.swap(b);}
+\DoxyCodeLine{00177\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ push\_es(0,\ 0,\ pts);}
+\DoxyCodeLine{00183\ \ \ \ \ \}}
+\DoxyCodeLine{00184\ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keywordtype}{void}\ BaseVideoDecoderCodecApi::push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ CHECK(context\_);}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ Push\ packet\ into\ codec}}
+\DoxyCodeLine{00190\ \ \ \ \ CodecError\ error\ =\ 0;}
+\DoxyCodeLine{00191\ \ \ \ \ codec\_-\/>push\_packet(context\_,\ data,\ data\_size,\ 0,\ data\ ==\ \textcolor{keyword}{nullptr},\ \&error);}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ Pull\ images\ while\ codec\ continues\ to\ return\ them}}
+\DoxyCodeLine{00194\ \ \ \ \ int32\_t\ n\ =\ 0;}
+\DoxyCodeLine{00195\ \ \ \ \ int8\_t\ eos\ =\ 0;}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ CodecImage\ codec\_image\ =\ \{0\};}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ CodecError\ error\ =\ 0;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ n\ =\ codec\_-\/>pull\_image(context\_,\ \&codec\_image,\ 0,\ \&eos,\ \&error);}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n)\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ next\ PSS\ from\ queue}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(!enhancement\_queue\_.empty());}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ PssPacket\ pss\ =\ enhancement\_queue\_.top();}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ enhancement\_queue\_.pop();}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Send\ to\ enhancement\ decoder}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ PacketView\ enhancement\_view(pss.packet);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ output\_.push\_base\_enhancement(\&codec\_image,\ enhancement\_view.data(),\ enhancement\_view.size(),\ pss.packet.timestamp(),}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss.is\_lcevc\_idr);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (n);}
+\DoxyCodeLine{00214\ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{keywordtype}{void}\ BaseVideoDecoderCodecApi::StatisticsComputation()\ \{\}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{comment}{//\ Factory\ function}}
+\DoxyCodeLine{00219\ \textcolor{comment}{//}}
+\DoxyCodeLine{00220\ unique\_ptr<BaseVideoDecoder>\ CreateBaseVideoDecoderCodecApi(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BaseCoding\ base,\ \textcolor{keyword}{const}\ std::string\ \&name,}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&selection\_options,}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&create\_options)\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ BaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ name,\ selection\_options,\ create\_options));}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

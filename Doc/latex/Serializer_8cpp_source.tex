@@ -1,0 +1,989 @@
+\doxysection{Serializer.\+cpp}
+\label{Serializer_8cpp_source}\index{encoder/src/Serializer.cpp@{encoder/src/Serializer.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Serializer.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Serializer.hpp"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}BitstreamPacker.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Crop.hpp"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Dimensions.hpp"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}EntropyEncoder.hpp"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <climits>}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ Write\ a\ multibyte\ encoded\ uint64\_t}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ write\_multibyte\_bytes(BitstreamPacker\ \&b,\ uint64\_t\ value,\ \textcolor{keywordtype}{bool}\ more)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ >\ 0x7f)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ write\_multibyte\_bytes(b,\ value\ >>\ 7,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ b.u(1,\ more\ ?\ 1\ :\ 0,\ \textcolor{stringliteral}{"{}mb-\/more"{}});}
+\DoxyCodeLine{00060\ \ \ \ \ b.u(7,\ value\ \&\ 0x7f,\ \textcolor{stringliteral}{"{}mb-\/bits"{}});}
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ write\_multibyte(BitstreamPacker\ \&b,\ uint64\_t\ value,\ \textcolor{keyword}{const}\ std::string\ \&label)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ l(b,\ label);}
+\DoxyCodeLine{00065\ \ \ \ \ write\_multibyte\_bytes(b,\ value,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ Coded\ resolution}}
+\DoxyCodeLine{00069\ \textcolor{comment}{//}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ resolution\_table[51][2]\ =\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \{0,\ 0\},\ \ \ \ \ \ \ \{360,\ 200\},\ \ \ \{400,\ 240\},\ \ \ \{480,\ 320\},\ \ \ \{640,\ 360\},\ \ \ \{640,\ 480\},\ \ \ \{768,\ 480\},\ \ \ \{800,\ 600\},\ \ \ \{852,\ 480\},}
+\DoxyCodeLine{00072\ \ \ \ \ \{854,\ 480\},\ \ \ \{856,\ 480\},\ \ \ \{960,\ 540\},\ \ \ \{960,\ 640\},\ \ \ \{1024,\ 576\},\ \ \{1024,\ 600\},\ \ \{1024,\ 768\},\ \ \{1152,\ 864\},\ \ \{1280,\ 720\},}
+\DoxyCodeLine{00073\ \ \ \ \ \{1280,\ 800\},\ \ \{1280,\ 1024\},\ \{1360,\ 768\},\ \ \{1366,\ 768\},\ \ \{1440,\ 1050\},\ \{1440,\ 900\},\ \ \{1600,\ 1200\},\ \{1680,\ 1050\},\ \{1920,\ 1080\},}
+\DoxyCodeLine{00074\ \ \ \ \ \{1920,\ 1200\},\ \{2048,\ 1080\},\ \{2048,\ 1152\},\ \{2048,\ 1536\},\ \{2160,\ 1440\},\ \{2560,\ 1440\},\ \{2560,\ 1600\},\ \{2560,\ 2048\},\ \{3200,\ 1800\},}
+\DoxyCodeLine{00075\ \ \ \ \ \{3200,\ 2048\},\ \{3200,\ 2400\},\ \{3440,\ 1440\},\ \{3840,\ 1600\},\ \{3840,\ 2160\},\ \{3840,\ 3072\},\ \{4096,\ 2160\},\ \{4096,\ 3072\},\ \{5120,\ 2880\},}
+\DoxyCodeLine{00076\ \ \ \ \ \{5120,\ 3200\},\ \{5120,\ 4096\},\ \{6400,\ 4096\},\ \{6400,\ 4800\},\ \{7680,\ 4320\},\ \{7680,\ 4800\}\};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{static\_assert}(ARRAY\_SIZE(resolution\_table)\ ==\ 51,\ \textcolor{stringliteral}{"{}Resolution\ table\ is\ broken"{}});}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//}}
+\DoxyCodeLine{00082\ Packet\ Serializer::emit(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ block\_mask,}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS])\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ BitstreamPacker\ bitstream;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ b\ =\ SyntaxBlock\_Sequence;\ b\ <=\ SyntaxBlock\_Filler;\ b\ <<=\ 1)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (block\_mask\ \&\ b)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ p\ =\ emit\_block(configuration,\ b,\ symbols);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ bitstream.bytes(p);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{return}\ bitstream.finish();}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ Packet\ Serializer::emit\_block(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ block,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS])\ \{}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ num\_residual\_layers\ =\ configuration.global\_configuration.num\_residual\_layers;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ Emit\ block\ into\ a\ packet}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00103\ \ \ \ \ BitstreamPacker\ contents\_bitstream;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ payload\_type\{\};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{switch}\ (block)\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_Sequence:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ emit\_sequence\_configuration(configuration.sequence\_configuration,\ contents\_bitstream);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ payload\_type\ =\ 0;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_Global:}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ emit\_global\_configuration(configuration.global\_configuration,\ contents\_bitstream);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ payload\_type\ =\ 1;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_Picture:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ emit\_picture\_configuration(configuration.picture\_configuration,\ contents\_bitstream,\ num\_residual\_layers);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ payload\_type\ =\ 2;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_EncodedData:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ emit\_encoded\_data(configuration,\ contents\_bitstream,\ symbols,\ num\_residual\_layers);}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ payload\_type\ =\ 3;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_EncodedData\_Tiled:}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ emit\_encoded\_data\_tiled(configuration,\ contents\_bitstream,\ symbols,\ num\_residual\_layers);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ payload\_type\ =\ 4;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_Additional\_Info:}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}emit\_additional\_info"{}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ emit\_additional\_info(configuration.additional\_info,\ contents\_bitstream);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ payload\_type\ =\ 5;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ \ \ \ \ /***}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ \ case\ SyntaxBlock\_Additional\_Info:}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ \ \ \ \ \ emit\_additional\_info(contents\_bitstream);}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ \ \ \ \ \ payload\_type\ =\ 6;}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ \ \ \ break;}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ \ \ \ ***/}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{case}\ SyntaxBlock\_Filler:}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ emit\_filler(contents\_bitstream,\ 0);\ \textcolor{comment}{//\ XXXX\ pass\ filler\ size}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ payload\_type\ =\ 6;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ Packet\ contents\ =\ contents\_bitstream.finish();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ BitstreamPacker\ block\_bitstream;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Block\ header}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ payload\_size\_type\ =\ 0;}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{switch}\ (contents.size())\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordflow}{case}\ 0:}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 0;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 1;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 2;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 3;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 4;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{case}\ 5:}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 5;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ payload\_size\_type\ =\ 7;}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00183\ \ \ \ \ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ block\_bitstream.u(3,\ payload\_size\_type,\ \textcolor{stringliteral}{"{}payload\_size\_type"{}});}
+\DoxyCodeLine{00186\ \ \ \ \ block\_bitstream.u(5,\ payload\_type,\ \textcolor{stringliteral}{"{}payload\_type"{}});}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{if}\ (payload\_size\_type\ ==\ 7)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ write\_multibyte(block\_bitstream,\ contents.size(),\ \textcolor{stringliteral}{"{}payload\_byte\_size"{}});}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Block\ contents}}
+\DoxyCodeLine{00192\ \ \ \ \ block\_bitstream.bytes(PacketView(contents));}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{return}\ block\_bitstream.finish();}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{comment}{//\ Write\ each\ configuration}}
+\DoxyCodeLine{00198\ \textcolor{comment}{//}}
+\DoxyCodeLine{00199\ \textcolor{keywordtype}{void}\ Serializer::emit\_sequence\_configuration(\textcolor{keyword}{const}\ SequenceConfiguration\ \&sequence\_configuration,\ BitstreamPacker\ \&b)\ \{}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00201\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ sequence\_config\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00202\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}sequence\_config"{}});}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{switch}\ (sequence\_configuration.profile\_idc)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{case}\ Profile\_Main:}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ b.u(4,\ 0,\ \textcolor{stringliteral}{"{}profile\_idc"{}});}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordflow}{case}\ Profile\_Main444:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ b.u(4,\ 1,\ \textcolor{stringliteral}{"{}profile\_idc"{}});}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00216\ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ b.u(4,\ sequence\_configuration.level\_idc,\ \textcolor{stringliteral}{"{}level\_idc"{}});}
+\DoxyCodeLine{00218\ \ \ \ \ b.u(2,\ sequence\_configuration.sublevel\_idc,\ \textcolor{stringliteral}{"{}sublevel\_idc"{}});}
+\DoxyCodeLine{00219\ \ \ \ \ b.u(1,\ sequence\_configuration.conformance\_window,\ \textcolor{stringliteral}{"{}conformance\_window"{}});}
+\DoxyCodeLine{00220\ \ \ \ \ b.u(5,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{if}\ (sequence\_configuration.profile\_idc\ ==\ 15\ ||\ sequence\_configuration.level\_idc\ ==\ 15)\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ b.u(3,\ sequence\_configuration.extended\_profile\_idc,\ \textcolor{stringliteral}{"{}extended\_profile\_idc"{}});}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ b.u(4,\ sequence\_configuration.extended\_level\_idc,\ \textcolor{stringliteral}{"{}extended\_level\_idc"{}});}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00225\ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{if}\ (sequence\_configuration.conformance\_window)\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ write\_multibyte(b,\ sequence\_configuration.conf\_win\_left\_offset,\ \textcolor{stringliteral}{"{}conf\_win\_left\_offset"{}});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ write\_multibyte(b,\ sequence\_configuration.conf\_win\_right\_offset,\ \textcolor{stringliteral}{"{}conf\_win\_right\_offset"{}});}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ write\_multibyte(b,\ sequence\_configuration.conf\_win\_top\_offset,\ \textcolor{stringliteral}{"{}conf\_win\_top\_offset"{}});}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ write\_multibyte(b,\ sequence\_configuration.conf\_win\_bottom\_offset,\ \textcolor{stringliteral}{"{}conf\_win\_bottom\_offset"{}});}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00234\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ sequence\_config\ <<<<\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00235\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00237\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{keywordtype}{void}\ Serializer::emit\_global\_configuration(\textcolor{keyword}{const}\ GlobalConfiguration\ \&global\_configuration,\ BitstreamPacker\ \&b)\ \{}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00241\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ global\_config\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00242\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}global\_config"{}});}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.num\_processed\_planes)\ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}processed\_planes\_type"{}});}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}processed\_planes\_type"{}});}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00256\ \ \ \ \ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ resolution\_type\ =\ 0;}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{for}\ (resolution\_type\ =\ 0;\ resolution\_type\ <\ ARRAY\_SIZE(resolution\_table);\ ++resolution\_type)}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.resolution\_width\ ==\ resolution\_table[resolution\_type][0]\ \&\&}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ global\_configuration.resolution\_height\ ==\ resolution\_table[resolution\_type][1])}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{if}\ (resolution\_type\ <\ ARRAY\_SIZE(resolution\_table))\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ b.u(6,\ resolution\_type,\ \textcolor{stringliteral}{"{}resolution\_type"{}});}
+\DoxyCodeLine{00265\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ resolution\_type\ =\ 63;}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ b.u(6,\ 63,\ \textcolor{stringliteral}{"{}resolution\_type"{}});}
+\DoxyCodeLine{00268\ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.transform\_block\_size)\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}transform\_type"{}});}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}transform\_type"{}});}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00279\ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.colourspace)\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_Y:}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}chroma\_sampling\_type"{}});}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV420:}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}chroma\_sampling\_type"{}});}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV422:}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}chroma\_sampling\_type"{}});}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV444:}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ b.u(2,\ 3,\ \textcolor{stringliteral}{"{}chroma\_sampling\_type"{}});}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00296\ \ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.base\_depth)\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}base\_depth\_type"{}});}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}base\_depth\_type"{}});}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}base\_depth\_type"{}});}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ b.u(2,\ 3,\ \textcolor{stringliteral}{"{}base\_depth\_type"{}});}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00313\ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.enhancement\_depth)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}enhancement\_depth\_type"{}});}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}enhancement\_depth\_type"{}});}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}enhancement\_depth\_type"{}});}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ b.u(2,\ 3,\ \textcolor{stringliteral}{"{}enhancement\_depth\_type"{}});}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00330\ \ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.temporal\_step\_width\_modifier\ ==\ 48)}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}temporal\_step\_width\_modifier\_signalled"{}});}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}temporal\_step\_width\_modifier\_signalled"{}});}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ b.u(1,\ global\_configuration.predicted\_residual\_enabled,\ \textcolor{stringliteral}{"{}predicted\_residual\_mode"{}});}
+\DoxyCodeLine{00338\ \ \ \ \ b.u(1,\ global\_configuration.temporal\_tile\_intra\_signalling\_enabled,\ \textcolor{stringliteral}{"{}temporal\_tile\_intra\_signalling\_enabled"{}});}
+\DoxyCodeLine{00339\ \ \ \ \ b.u(1,\ global\_configuration.temporal\_enabled,\ \textcolor{stringliteral}{"{}temporal\_enabled"{}});}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.upsample)\ \{}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordflow}{case}\ Upsample\_Nearest:}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ b.u(3,\ 0,\ \textcolor{stringliteral}{"{}upsample\_type"{}});}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordflow}{case}\ Upsample\_Linear:}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ b.u(3,\ 1,\ \textcolor{stringliteral}{"{}upsample\_type"{}});}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordflow}{case}\ Upsample\_Cubic:}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ b.u(3,\ 2,\ \textcolor{stringliteral}{"{}upsample\_type"{}});}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordflow}{case}\ Upsample\_ModifiedCubic:}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ b.u(3,\ 3,\ \textcolor{stringliteral}{"{}upsample\_type"{}});}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordflow}{case}\ Upsample\_AdaptiveCubic:}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ b.u(3,\ 4,\ \textcolor{stringliteral}{"{}upsample\_type"{}});}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00359\ \ \ \ \ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.level\_1\_filtering\_first\_coefficient\ ==\ 0\ \&\&}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ global\_configuration.level\_1\_filtering\_second\_coefficient\ ==\ 0)}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}level\_1\_filtering\_signalled"{}});}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}level\_1\_filtering\_signalled"{}});}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.scaling\_mode[LOQ\_LEVEL\_1])\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}scaling\_mode\_level1"{}});}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}scaling\_mode\_level1"{}});}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}scaling\_mode\_level1"{}});}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00379\ \ \ \ \ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.scaling\_mode[LOQ\_LEVEL\_2])\ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}scaling\_mode\_level2"{}});}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}scaling\_mode\_level2"{}});}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}scaling\_mode\_level2"{}});}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00393\ \ \ \ \ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.tile\_dimensions\_type)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_None:}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}tile\_dimensions\_type"{}});}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_512x256:}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}tile\_dimensions\_type"{}});}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_1024x512:}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}tile\_dimensions\_type"{}});}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_Custom:}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ b.u(2,\ 3,\ \textcolor{stringliteral}{"{}tile\_dimensions\_type"{}});}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00410\ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.user\_data\_enabled)\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keywordflow}{case}\ UserData\_None:}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}user\_data\_enabled"{}});}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordflow}{case}\ UserData\_2bits:}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}user\_data\_enabled"{}});}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordflow}{case}\ UserData\_6bits:}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}user\_data\_enabled"{}});}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00424\ \ \ \ \ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ b.u(1,\ global\_configuration.level1\_depth\_flag,\ \textcolor{stringliteral}{"{}level1\_depth\_flags"{}});}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.chroma\_step\_width\_multiplier\ !=\ 64)}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}chroma\_step\_width\_flag"{}});}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}chroma\_step\_width\_flag"{}});}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.num\_processed\_planes\ !=\ 1)\ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ CHECK(global\_configuration.num\_processed\_planes\ ==\ 3);}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ b.u(4,\ 1,\ \textcolor{stringliteral}{"{}planes\_type"{}});}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ b.u(4,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.temporal\_step\_width\_modifier\ !=\ 48)}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ b.u(8,\ global\_configuration.temporal\_step\_width\_modifier,\ \textcolor{stringliteral}{"{}temporal\_step\_width\_modifier"{}});}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.upsample\ ==\ Upsample\_AdaptiveCubic)\ \{}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.upsampling\_coefficients[0],\ \textcolor{stringliteral}{"{}upsampling\_coefficients[0]"{}});}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.upsampling\_coefficients[1],\ \textcolor{stringliteral}{"{}upsampling\_coefficients[1]"{}});}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.upsampling\_coefficients[2],\ \textcolor{stringliteral}{"{}upsampling\_coefficients[2]"{}});}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.upsampling\_coefficients[3],\ \textcolor{stringliteral}{"{}upsampling\_coefficients[3]"{}});}
+\DoxyCodeLine{00447\ \ \ \ \ \}}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.level\_1\_filtering\_first\_coefficient\ !=\ 0\ ||}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ global\_configuration.level\_1\_filtering\_second\_coefficient\ !=\ 0)\ \{}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ b.u(4,\ global\_configuration.level\_1\_filtering\_first\_coefficient,\ \textcolor{stringliteral}{"{}level\_1\_filtering\_first\_coefficient"{}});}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ b.u(4,\ global\_configuration.level\_1\_filtering\_second\_coefficient,\ \textcolor{stringliteral}{"{}level\_1\_filtering\_second\_coefficient"{}});}
+\DoxyCodeLine{00453\ \ \ \ \ \}}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.tile\_dimensions\_type\ !=\ TileDimensions\_None)\ \{}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.tile\_dimensions\_type)\ \{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_512x256:}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(global\_configuration.tile\_width\ ==\ 512);}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(global\_configuration.tile\_height\ ==\ 256);}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_1024x512:}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(global\_configuration.tile\_width\ ==\ 1024);}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(global\_configuration.tile\_height\ ==\ 512);}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ TileDimensions\_Custom:}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.tile\_width,\ \textcolor{stringliteral}{"{}custom\_tile\_width"{}});}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.tile\_height,\ \textcolor{stringliteral}{"{}custom\_tile\_height"{}});}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ b.u(5,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ b.u(1,\ global\_configuration.compression\_type\_entropy\_enabled\_per\_tile,\ \textcolor{stringliteral}{"{}compression\_type\_entropy\_enabled\_per\_tile"{}});}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (global\_configuration.compression\_type\_size\_per\_tile)\ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CompressionType\_None:}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}});}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CompressionType\_Prefix:}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}});}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CompressionType\_Prefix\_OnDiff:}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(2,\ 2,\ \textcolor{stringliteral}{"{}compression\_type\_size\_per\_tile"{}});}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00487\ \ \ \ \ \}}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{keywordflow}{if}\ (resolution\_type\ ==\ 63)\ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.resolution\_width,\ \textcolor{stringliteral}{"{}resolution\_width"{}});}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ b.u(16,\ global\_configuration.resolution\_height,\ \textcolor{stringliteral}{"{}resolution\_height"{}});}
+\DoxyCodeLine{00492\ \ \ \ \ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{if}\ (global\_configuration.chroma\_step\_width\_multiplier\ !=\ 64)}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ b.u(8,\ global\_configuration.chroma\_step\_width\_multiplier,\ \textcolor{stringliteral}{"{}chroma\_step\_width\_multiplier"{}});}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00498\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ global\_config\ <<<<\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00499\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00500\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00501\ \}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \textcolor{keywordtype}{void}\ Serializer::emit\_picture\_configuration(\textcolor{keyword}{const}\ PictureConfiguration\ \&picture\_configuration,\ BitstreamPacker\ \&b,}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ num\_layers)\ \{}
+\DoxyCodeLine{00505\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00506\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ picture\_config\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00507\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00508\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}picture\_config"{}});}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \ \ \ \ b.u(1,\ !picture\_configuration.enhancement\_enabled,\ \textcolor{stringliteral}{"{}no\_enhancement\_bit"{}});}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.enhancement\_enabled)\ \{}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.quant\_matrix\_mode)\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_BothPrevious:}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 0,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_BothDefault:}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 1,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_SameAndCustom:}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 2,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_Level2CustomLevel1Default:}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 3,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_Level2DefaultLevel1Custom:}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 4,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ QuantMatrix\_DifferentAndCustom:}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(3,\ 5,\ \textcolor{stringliteral}{"{}quant\_matrix\_mode"{}});}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.dequant\_offset\_signalled,\ \textcolor{stringliteral}{"{}dequant\_offset\_signalled"{}});}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.picture\_type)\ \{}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PictureType\_Frame:}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}picture\_type"{}});}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PictureType\_Field:}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}picture\_type"{}});}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.temporal\_refresh,\ \textcolor{stringliteral}{"{}temporal\_refresh"{}});}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.step\_width\_loq[LOQ\_LEVEL\_1]\ ==\ MAX\_STEP\_WIDTH)}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}step\_width\_level1\_enabled"{}});}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}step\_width\_level1\_enabled"{}});}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ b.u(15,\ picture\_configuration.step\_width\_loq[LOQ\_LEVEL\_2],\ \textcolor{stringliteral}{"{}step\_width\_level2"{}});}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.dithering\_control,\ \textcolor{stringliteral}{"{}dithering\_control"{}});}
+\DoxyCodeLine{00555\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ b.u(4,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.picture\_type)\ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PictureType\_Frame:}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}picture\_type"{}});}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PictureType\_Field:}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}picture\_type"{}});}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.temporal\_refresh,\ \textcolor{stringliteral}{"{}temporal\_refresh"{}});}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.temporal\_signalling\_present,\ \textcolor{stringliteral}{"{}temporal\_signalling\_present"{}});}
+\DoxyCodeLine{00569\ \ \ \ \ \}}
+\DoxyCodeLine{00570\ }
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.picture\_type\ ==\ PictureType\_Field)\ \{}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.field\_type)\ \{}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FieldType\_Top:}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}field\_type"{}});}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ FieldType\_Bottom:}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}field\_type"{}});}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ b.u(7,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00583\ \ \ \ \ \}}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.step\_width\_loq[LOQ\_LEVEL\_1]\ !=\ MAX\_STEP\_WIDTH)\ \{}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ b.u(15,\ picture\_configuration.step\_width\_loq[LOQ\_LEVEL\_1],\ \textcolor{stringliteral}{"{}step\_width\_level1"{}});}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ b.u(1,\ picture\_configuration.level\_1\_filtering\_enabled,\ \textcolor{stringliteral}{"{}level\_1\_filtering\_enabled"{}});}
+\DoxyCodeLine{00588\ \ \ \ \ \}}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.quant\_matrix\_mode\ ==\ QuantMatrix\_SameAndCustom\ ||}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ picture\_configuration.quant\_matrix\_mode\ ==\ QuantMatrix\_Level2CustomLevel1Default\ ||}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ picture\_configuration.quant\_matrix\_mode\ ==\ QuantMatrix\_DifferentAndCustom)\ \{}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layerIndex\ =\ 0;\ layerIndex\ <\ num\_layers;\ layerIndex++)}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(8,\ picture\_configuration.qm\_coefficient\_2[layerIndex],\ \textcolor{stringliteral}{"{}qm\_coefficient\_0"{}});}
+\DoxyCodeLine{00595\ \ \ \ \ \}}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.quant\_matrix\_mode\ ==\ QuantMatrix\_Level2DefaultLevel1Custom\ ||}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ picture\_configuration.quant\_matrix\_mode\ ==\ QuantMatrix\_DifferentAndCustom)\ \{}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layerIndex\ =\ 0;\ layerIndex\ <\ num\_layers;\ layerIndex++)}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(8,\ picture\_configuration.qm\_coefficient\_1[layerIndex],\ \textcolor{stringliteral}{"{}qm\_coefficient\_1"{}});}
+\DoxyCodeLine{00600\ \ \ \ \ \}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.dequant\_offset\_signalled)\ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.dequant\_offset\_mode)\ \{}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DequantOffset\_Default:}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}dequant\_offset\_mode"{}});}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ DequantOffset\_ConstOffset:}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ 1,\ \textcolor{stringliteral}{"{}dequant\_offset\_mode"{}});}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ b.u(7,\ picture\_configuration.dequant\_offset,\ \textcolor{stringliteral}{"{}dequant\_offset"{}});}
+\DoxyCodeLine{00614\ \ \ \ \ \}}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.dithering\_control)\ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (picture\_configuration.dithering\_type)\ \{}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Dithering\_None:}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(2,\ 0,\ \textcolor{stringliteral}{"{}dithering\_type"{}});}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Dithering\_Uniform:}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Dithering\_UniformFixed:}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(2,\ 1,\ \textcolor{stringliteral}{"{}dithering\_type"{}});}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (picture\_configuration.dithering\_type\ !=\ Dithering\_None)}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(5,\ picture\_configuration.dithering\_strength,\ \textcolor{stringliteral}{"{}dithering\_strength"{}});}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(5,\ 0,\ \textcolor{stringliteral}{"{}reserved"{}});}
+\DoxyCodeLine{00633\ \ \ \ \ \}}
+\DoxyCodeLine{00634\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00635\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ picture\_config\ <<<<\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00636\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00638\ \}}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \textcolor{comment}{//\ Return\ whether\ temporal\ layer\ is\ enabled}}
+\DoxyCodeLine{00641\ \textcolor{comment}{//}}
+\DoxyCodeLine{00642\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ temporal\_layer\_(\textcolor{keyword}{const}\ SignaledConfiguration\ \&signaled\_configuration,\ \textcolor{keywordtype}{unsigned}\ loq)\ \{}
+\DoxyCodeLine{00643\ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2\ \&\&\ signaled\_configuration.picture\_configuration.temporal\_signalling\_present)}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00645\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00647\ \}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \textcolor{comment}{//\ Number\ of\ encoded\ layers\ in\ bitstream\ -\/\ residual\ +\ temporal}}
+\DoxyCodeLine{00650\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ total\_layers(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq)\ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \textcolor{keywordflow}{return}\ configuration.global\_configuration.num\_residual\_layers\ +}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ ((loq\ ==\ LOQ\_LEVEL\_2\ \&\&\ configuration.picture\_configuration.temporal\_signalling\_present)\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{00653\ \}}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ first\_layer(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration)\ \{}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration.picture\_configuration.enhancement\_enabled)}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ configuration.global\_configuration.num\_residual\_layers;}
+\DoxyCodeLine{00660\ \}}
+\DoxyCodeLine{00661\ }
+\DoxyCodeLine{00662\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ is\_temporal\_layer(\textcolor{keyword}{const}\ SignaledConfiguration\ \&configuration,\ \textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keywordtype}{unsigned}\ layer)\ \{}
+\DoxyCodeLine{00663\ \ \ \ \ \textcolor{keywordflow}{return}\ layer\ ==\ configuration.global\_configuration.num\_residual\_layers;}
+\DoxyCodeLine{00664\ \}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \textcolor{keywordtype}{void}\ Serializer::emit\_encoded\_data(\textcolor{keyword}{const}\ SignaledConfiguration\ \&signaled\_configuration,\ BitstreamPacker\ \&b,}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS],\ \textcolor{keywordtype}{unsigned}\ num\_layers)\ \{}
+\DoxyCodeLine{00668\ \ \ \ \ CHECK(signaled\_configuration.global\_configuration.tile\_dimensions\_type\ ==\ TileDimensions\_None);}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00671\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ encoded\_data\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00672\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00673\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00674\ \ \ \ \ \textcolor{comment}{//\ Entropy\ code\ the\ layers}}
+\DoxyCodeLine{00675\ \ \ \ \ \textcolor{keywordtype}{bool}\ entropy\_enabled[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS]\ =\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{keywordtype}{bool}\ rle\_only[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS]\ =\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00677\ \ \ \ \ Packet\ data[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS];}
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ signaled\_configuration.global\_configuration.num\_processed\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ first\_layer(signaled\_configuration);\ layer\ <\ total\_layers(signaled\_configuration,\ plane,\ loq);}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++layer)\ \{}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Entropy\ code\ symbols}}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ EncodedChunk\ e;}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is\_temporal\_layer(signaled\_configuration,\ plane,\ loq,\ layer))\ \{}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ use\_tiled\_encoding\_order\ =\ signaled\_configuration.global\_configuration.temporal\_enabled\ ||}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.tile\_dimensions\_type\ >\ 0;}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_tiled\_encoding\_order)\ \{}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ EntropyEncoderResidualsTiled().process(}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ symbols[plane][loq][layer],\ signaled\_configuration.global\_configuration.transform\_block\_size);}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ EntropyEncoderResiduals().process(symbols[plane][loq][layer]);}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ EntropyEncoderTemporal().process(}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ symbols[plane][loq][layer],\ signaled\_configuration.global\_configuration.transform\_block\_size,}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.temporal\_tile\_intra\_signalling\_enabled);}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!e.empty())\ \{}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entropy\_enabled[plane][loq][layer]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00702\ }
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Choose\ smaller\ of\ prefix\ coded\ vs.\ raw}}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (e.prefix.size()\ >\ e.raw.size())\ \{}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rle\_only[plane][loq][layer]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data[plane][loq][layer]\ =\ e.raw;}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rle\_only[plane][loq][layer]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data[plane][loq][layer]\ =\ e.prefix;}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00714\ \ \ \ \ \}}
+\DoxyCodeLine{00715\ }
+\DoxyCodeLine{00716\ \ \ \ \ \textcolor{comment}{//\ Emit\ flags}}
+\DoxyCodeLine{00717\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}encoded\_data"{}});}
+\DoxyCodeLine{00718\ }
+\DoxyCodeLine{00719\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ signaled\_configuration.global\_configuration.num\_processed\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (signaled\_configuration.picture\_configuration.enhancement\_enabled)\ \{}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_layers;\ ++layer)\ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ entropy\_enabled[plane][loq][layer],\ \textcolor{stringliteral}{"{}entropy\_enabled"{}});}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ rle\_only[plane][loq][layer],\ \textcolor{stringliteral}{"{}rle\_only"{}});}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (temporal\_layer\_(signaled\_configuration,\ LOQ\_LEVEL\_2))\ \{}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ entropy\_enabled[plane][LOQ\_LEVEL\_2][num\_layers],\ \textcolor{stringliteral}{"{}entropy\_enabled"{}});}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ rle\_only[plane][LOQ\_LEVEL\_2][num\_layers],\ \textcolor{stringliteral}{"{}rle\_only"{}});}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00732\ \ \ \ \ \}}
+\DoxyCodeLine{00733\ }
+\DoxyCodeLine{00734\ \ \ \ \ \textcolor{comment}{//\ Byte\ alignment}}
+\DoxyCodeLine{00735\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{00736\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \&\ 0x07))}
+\DoxyCodeLine{00737\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00738\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \%\ 8\ !=\ 0))}
+\DoxyCodeLine{00739\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}alignment"{}});}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \ \ \textcolor{comment}{//\ Emit\ surfaces}}
+\DoxyCodeLine{00743\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ signaled\_configuration.global\_configuration.num\_processed\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ n\ =\ num\_layers\ +\ temporal\_layer\_(signaled\_configuration,\ loq);}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ n;\ ++layer)\ \{}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ format(\textcolor{stringliteral}{"{}surface[\%d][\%d][\%d]"{}},\ plane,\ loq,\ layer));}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[plane][loq][layer])\ \{}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ write\_multibyte(b,\ data[plane][loq][layer].size(),\ \textcolor{stringliteral}{"{}data\_size"{}});}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.bytes(data[plane][loq][layer]);}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00756\ \ \ \ \ \}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00759\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ encoded\_data\ <<<<\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00760\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00761\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00762\ \}}
+\DoxyCodeLine{00763\ }
+\DoxyCodeLine{00764\ \textcolor{keywordtype}{void}\ Serializer::emit\_encoded\_data\_tiled(\textcolor{keyword}{const}\ SignaledConfiguration\ \&signaled\_configuration,\ BitstreamPacker\ \&b,}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS],\ \textcolor{keywordtype}{unsigned}\ num\_layers)\ \{}
+\DoxyCodeLine{00766\ }
+\DoxyCodeLine{00767\ \ \ \ \ CHECK(signaled\_configuration.global\_configuration.tile\_dimensions\_type\ !=\ TileDimensions\_None);}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ \ \ \ \ Dimensions\ dimensions;}
+\DoxyCodeLine{00770\ \ \ \ \ dimensions.set(signaled\_configuration,}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.resolution\_width,}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.resolution\_height);}
+\DoxyCodeLine{00773\ }
+\DoxyCodeLine{00774\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00775\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ encoded\_data\_tiled\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00776\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00777\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ \ \ \ \ \textcolor{comment}{//\ Accumulated\ flags\ and\ data}}
+\DoxyCodeLine{00780\ \ \ \ \ std::vector<bool>\ rle\_only;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Per\ layer}}
+\DoxyCodeLine{00781\ \ \ \ \ std::vector<bool>\ entropy\_enabled;\ \textcolor{comment}{//\ Per\ tile}}
+\DoxyCodeLine{00782\ \ \ \ \ std::vector<Packet>\ chunks;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Per\ tile}}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ num\_tiles[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS]\ =\ \{0\};}
+\DoxyCodeLine{00785\ }
+\DoxyCodeLine{00786\ \ \ \ \ \textcolor{comment}{//\ Entropy\ code\ the\ tiles\ in\ each\ layer}}
+\DoxyCodeLine{00787\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ signaled\_configuration.global\_configuration.num\_processed\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00789\ }
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ All\ tile\ dimensions\ are\ in\ terms\ of\ transform\ blocks}}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_width\ =\ dimensions.tile\_width(plane,\ loq);}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_height\ =\ dimensions.tile\_height(plane,\ loq);}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ out\ tile\ breakdown\ for\ this\ level}}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ symbols[plane][loq][0].width();}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ symbols[plane][loq][0].height();}
+\DoxyCodeLine{00797\ }
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tiles\_x\ =\ (width\ +\ tile\_width\ -\/\ 1)\ /\ tile\_width;}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tiles\_y\ =\ (height\ +\ tile\_height\ -\/\ 1)\ /\ tile\_height;}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \ \ \ \ num\_tiles[plane][loq]\ =\ tiles\_x\ *\ tiles\_y;}
+\DoxyCodeLine{00802\ }
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ first\_layer(signaled\_configuration);\ layer\ <\ total\_layers(signaled\_configuration,\ plane,\ loq);}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++layer)\ \{}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<EncodedChunk>\ encoded\_chunks;}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ layer\_raw\_sizes\ =\ 0;}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ layer\_prefix\_sizes\ =\ 0;}
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ ...}}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ tiles\_y;\ ++ty)\ \{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ tiles\_x;\ ++tx)\ \{}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extract\ tile}}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tx0\ =\ tx\ *\ tile\_width;}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ ty0\ =\ ty\ *\ tile\_height;}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tx1\ =\ std::min((tx\ +\ 1)\ *\ tile\_width,\ width);}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ ty1\ =\ std::min((ty\ +\ 1)\ *\ tile\_height,\ height);}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Entropy\ code\ (raw\ \&\ prefix)}}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is\_temporal\_layer(signaled\_configuration,\ plane,\ loq,\ layer))\ \{}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ tile\_symbols\ =\ CropResiduals().process(symbols[plane][loq][layer],\ tx0,\ ty0,\ tx1,\ ty1);}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoded\_chunks.push\_back(EntropyEncoderResidualsTiled().process(}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tile\_symbols,\ signaled\_configuration.global\_configuration.transform\_block\_size));}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ tile\_symbols\ =\ CropTemporal().process(symbols[plane][loq][layer],\ tx0,\ ty0,\ tx1,\ ty1);}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoded\_chunks.push\_back(EntropyEncoderTemporal().process(}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tile\_symbols,\ signaled\_configuration.global\_configuration.transform\_block\_size,}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.temporal\_tile\_intra\_signalling\_enabled));}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumalate\ raw/prefix\ sizes\ for\ each\ layer}}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ layer\_raw\_sizes\ +=\ encoded\_chunks.back().raw.size();}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ layer\_prefix\_sizes\ +=\ encoded\_chunks.back().prefix.size();}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumalate\ entropy\_enabled\ for\ each\ tile}}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK((encoded\_chunks.back().raw.size()\ ==\ 0)\ ==\ (encoded\_chunks.back().prefix.size()\ ==\ 0));}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ entropy\_enabled.push\_back(encoded\_chunks.back().raw.size()\ >\ 0);}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decide\ rle\_only\ for\ layer\ based\ on\ accumulated\ sizes}}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ r\ =\ layer\_raw\_sizes\ <\ layer\_prefix\_sizes;}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rle\_only.push\_back(r);}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumulate\ chosen\ packets}}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ ec\ :\ encoded\_chunks)}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chunks.push\_back(r\ ?\ ec.raw\ :\ ec.prefix);}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00847\ \ \ \ \ \}}
+\DoxyCodeLine{00848\ }
+\DoxyCodeLine{00849\ \ \ \ \ CHECK(chunks.size()\ ==\ entropy\_enabled.size());}
+\DoxyCodeLine{00850\ }
+\DoxyCodeLine{00851\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}encoded\_data\_tiled"{}});}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ r\ :\ rle\_only)}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ b.u(1,\ r,\ \textcolor{stringliteral}{"{}rle\_only"{}});}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Byte\ alignment}}
+\DoxyCodeLine{00857\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{00858\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \&\ 0x07))}
+\DoxyCodeLine{00859\ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00860\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \%\ 8\ !=\ 0))}
+\DoxyCodeLine{00861\ \#endif}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}alignment"{}});}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \ \ \ \ \textcolor{comment}{//\ Emit\ per\ tile\ entropy\_enabled}}
+\DoxyCodeLine{00865\ \ \ \ \ \textcolor{keywordflow}{if}\ (!signaled\_configuration.global\_configuration.compression\_type\_entropy\_enabled\_per\_tile)\ \{}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ compress\ entropy\_enabled\ flags}}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ r\ :\ entropy\_enabled)}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \ \ \ b.u(1,\ r,\ \textcolor{stringliteral}{"{}entropy\_enabled"{}});}
+\DoxyCodeLine{00869\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prefix\ code\ the\ entropy\_enabled\ flags}}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ ee\ =\ Surface::build\_from<uint8\_t>()}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .generate(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(entropy\_enabled.size()),\ 1,}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ uint8\_t\ \{\ return\ entropy\_enabled[x];\ \})}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \ \ b.bytes(EntropyEncoderFlags().process(ee).raw);}
+\DoxyCodeLine{00876\ \ \ \ \ \}}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ \textcolor{comment}{//\ Byte\ alignment}}
+\DoxyCodeLine{00879\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{00880\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \&\ 0x07))}
+\DoxyCodeLine{00881\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00882\ \ \ \ \ \textcolor{keywordflow}{while}\ ((b.bit\_offset()\ \%\ 8\ !=\ 0))}
+\DoxyCodeLine{00883\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ b.u(1,\ 0,\ \textcolor{stringliteral}{"{}alignment"{}});}
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \ \ \ \ \textcolor{keywordflow}{if}\ (signaled\_configuration.global\_configuration.compression\_type\_size\_per\_tile\ ==\ CompressionType\_None)\ \{}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Don't\ compress\ tile\ sizes}}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ c\ =\ 0;\ c\ <\ chunks.size();\ ++c)\ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[c])\ \{}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(chunks[c].size()\ >\ 0);}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ write\_multibyte(b,\ chunks[c].size(),\ \textcolor{stringliteral}{"{}data\_size"{}});}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.bytes(chunks[c]);}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00895\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prefix\ code\ each\ layer's\ tile\ sizes}}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ idx\ =\ 0;}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ signaled\_configuration.global\_configuration.num\_processed\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ first\_layer(signaled\_configuration);\ layer\ <\ total\_layers(signaled\_configuration,\ plane,\ loq);}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++layer)\ \{}
+\DoxyCodeLine{00902\ }
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Does\ any\ tile\ contain\ data?}}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ any\_tile\_enabled\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ num\_tiles[plane][loq];\ x++)\ \{}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[idx\ +\ x])\ \{}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ any\_tile\_enabled\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00911\ }
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (any\_tile\_enabled)\ \{}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Collect\ tile\ sizes\ for\ this\ layer\ -\/\ optionally\ converting\ to\ deltas}}
+\DoxyCodeLine{00914\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ sb\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sb.generate(num\_tiles[plane][loq],\ 1,}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{\ \textcolor{keywordflow}{return}\ chunks[idx\ +\ x].size();\ \});}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ sz\ =\ sb.finish();}
+\DoxyCodeLine{00918\ }
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prefix\ code\ and\ emit\ them}}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.bytes(EntropyEncoderSizes()}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .process(sz,\ entropy\_enabled,\ idx,}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ signaled\_configuration.global\_configuration.compression\_type\_size\_per\_tile)}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .prefix);}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ tiles}}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ t\ =\ 0;\ t\ <\ num\_tiles[plane][loq];\ ++t)}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (chunks[idx\ +\ t].size()\ >\ 0)}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b.bytes(chunks[idx\ +\ t]);}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00929\ }
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ idx\ +=\ num\_tiles[plane][loq];}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00934\ \ \ \ \ \}}
+\DoxyCodeLine{00935\ }
+\DoxyCodeLine{00936\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00937\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ encoded\_data\_tiled\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00938\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00939\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00940\ \}}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \textcolor{keywordtype}{void}\ Serializer::emit\_additional\_info(\textcolor{keyword}{const}\ AdditionalInfo\ \&additional\_info,\ BitstreamPacker\ \&b)\ \{}
+\DoxyCodeLine{00943\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00944\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ additional\_info\ >>>>\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00945\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00946\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00947\ }
+\DoxyCodeLine{00948\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}additional\_info"{}});}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \ \ \ \ b.u(8,\ additional\_info.additional\_info\_type,\ \textcolor{stringliteral}{"{}additional\_info\_type"{}});}
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{keywordflow}{if}\ (additional\_info.additional\_info\_type\ ==\ 0)\ \{}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \ \ b.u(8,\ additional\_info.payload\_type,\ \textcolor{stringliteral}{"{}payload\_type"{}});}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}SeiPayload"{}});}
+\DoxyCodeLine{00954\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (additional\_info.additional\_info\_type\ ==\ 1)\ \{}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}VuiParameters"{}});}
+\DoxyCodeLine{00956\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (additional\_info.additional\_info\_type\ >=\ 2)}}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}additional\_info\_type\ MUST\ be\ 0\ or\ 1\ -\/\ type\ =\ \%4d"{}},\ additional\_info.additional\_info\_type);}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00960\ \ \ \ \ \}}
+\DoxyCodeLine{00961\ }
+\DoxyCodeLine{00962\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{00963\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}@@@@\ @@@@\ additional\_info\ <<<<\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00964\ \ \ \ \ fflush(goBits);}
+\DoxyCodeLine{00965\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00966\ \}}
+\DoxyCodeLine{00967\ }
+\DoxyCodeLine{00968\ \textcolor{comment}{/***}}
+\DoxyCodeLine{00969\ \textcolor{comment}{void\ Serializer::emit\_additional\_info(BitstreamPacker\ \&b)\ \{}}
+\DoxyCodeLine{00970\ \textcolor{comment}{\ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ "{}additional\_info"{});}}
+\DoxyCodeLine{00971\ \textcolor{comment}{}}
+\DoxyCodeLine{00972\ \textcolor{comment}{\ \ \ \ //\ TODO}}
+\DoxyCodeLine{00973\ \textcolor{comment}{\ \ \ \ return;}}
+\DoxyCodeLine{00974\ \textcolor{comment}{\}}}
+\DoxyCodeLine{00975\ \textcolor{comment}{***/}}
+\DoxyCodeLine{00976\ }
+\DoxyCodeLine{00977\ \textcolor{keywordtype}{void}\ Serializer::emit\_filler(BitstreamPacker\ \&b,\ \textcolor{keywordtype}{unsigned}\ size)\ \{}
+\DoxyCodeLine{00978\ \ \ \ \ BitstreamPacker::ScopedContextLabel\ label(b,\ \textcolor{stringliteral}{"{}filler"{}});}
+\DoxyCodeLine{00979\ }
+\DoxyCodeLine{00980\ \ \ \ \ \textcolor{keywordflow}{while}\ (size-\/-\/)}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ b.u(8,\ 0xaa,\ \textcolor{stringliteral}{"{}filler"{}});}
+\DoxyCodeLine{00982\ \}}
+\DoxyCodeLine{00983\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

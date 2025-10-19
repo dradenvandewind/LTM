@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['o_0',['o',['../structvtm_1_1WPScalingParam.html#a25a83ec64d29b196bd6b2934e9ae1b89',1,'vtm::WPScalingParam']]],
+  ['object_5fiterator_1',['object_iterator',['../structnlohmann_1_1detail_1_1internal__iterator.html#a8cb0af3498061426c1d0a65ad6220408',1,'nlohmann::detail::internal_iterator']]],
+  ['offs_2',['offs',['../classlctm_1_1rbsp__decoder.html#a0c2e14948c64a4744133178a60c2e135',1,'lctm::rbsp_decoder']]],
+  ['offset_3',['offset',['../structvtm_1_1ChromaQpAdj.html#a564cf65ee7ed006d8d6f2d23b0d4a29d',1,'vtm::ChromaQpAdj::offset'],['../structvtm_1_1WPScalingParam.html#a66f8eae7548d91b1a35401071aa3540a',1,'vtm::WPScalingParam::offset'],['../structvtm_1_1SAOOffset.html#a8db189b2e47ca08bdd971420350c7198',1,'vtm::SAOOffset::offset'],['../structlctm_1_1DownsampleKernel.html#ac96892e1ea8a6d5bd833f513e07ae397',1,'lctm::DownsampleKernel::offset'],['../classvtm_1_1CtxSet.html#a0ef0205ee645b03501495df77ad44748',1,'vtm::CtxSet::Offset']]],
+  ['onepictureonlyflagmustbe1_4',['onePictureOnlyFlagMustBe1',['../structvtm_1_1ProfileFeatures.html#aa3641154d3402641da12b7dd64eb5807',1,'vtm::ProfileFeatures']]],
+  ['operation_5',['operation',['../structCodec.html#afa609efc33fb23b4b682f1fe74c5d098',1,'Codec']]],
+  ['options_6',['options',['../structcxxopts_1_1HelpGroupDetails.html#ab2869d214c7fc9ac859d030afca33243',1,'cxxopts::HelpGroupDetails']]],
+  ['org_7',['org',['../classvtm_1_1DistParam.html#a66c2c64e0b0c02c29bf55e17c2a6444c',1,'vtm::DistParam']]],
+  ['orgcopy_8',['orgCopy',['../namespacevtm.html#aee4ff4364c3a28acc3121bc079368d7e',1,'vtm']]],
+  ['orgluma_9',['orgLuma',['../classvtm_1_1DistParam.html#abd75f6deb6d59b8f7b9030411bd3b025',1,'vtm::DistParam']]],
+  ['outpos_10',['outPos',['../structDQIntern_1_1NbInfoOut.html#aed96b0b94a53690a01fb56097876e887',1,'DQIntern::NbInfoOut']]],
+  ['output_5f_11',['output_',['../classlctm_1_1BaseVideoDecoderExternal.html#a008d173872d04c60d49eab177671aa0f',1,'lctm::BaseVideoDecoderExternal']]],
+  ['output_5fbegin_5ffn_12',['output_begin_fn',['../structevc__writer__t.html#a636f1dd96271e81bf471d925e8a0cba8',1,'evc_writer_t']]],
+  ['output_5fbitdepth_5f_13',['output_bitdepth_',['../classContext.html#a34a0d584f9dbcbb7c51e272c0c89e5da',1,'Context']]],
+  ['output_5fend_5ffn_14',['output_end_fn',['../structevc__writer__t.html#a088eb4acd3c2714b112f2536874c08c1',1,'evc_writer_t']]],
+  ['output_5fframe_5f_15',['output_frame_',['../classContext.html#a35a3292c1ad01dbc2407ff8c458a6377',1,'Context']]],
+  ['output_5fwrite_5ffn_16',['output_write_fn',['../structevc__writer__t.html#a643ea08a04d023e7634481985e6e004c',1,'evc_writer_t']]],
+  ['overscan_5fappropriate_5fflag_17',['overscan_appropriate_flag',['../structlctm_1_1VuiMessage.html#a1eb82e0b51a0e4de8c0409880d015c8c',1,'lctm::VuiMessage']]],
+  ['overscan_5finfo_5fpresent_5fflag_18',['overscan_info_present_flag',['../structlctm_1_1VuiMessage.html#a0fed087ce77540ffb99d3c74f698c371',1,'lctm::VuiMessage']]]
+];

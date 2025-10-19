@@ -1,0 +1,270 @@
+\doxysection{annexb.\+c}
+\label{annexb_8c_source}\index{deps/base\_avc/src/annexb.c@{deps/base\_avc/src/annexb.c}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ LCEVC\ replacement\ implementation\ to\ feed\ bitstresm\ directly\ into\ base\ layer\ via\ an\ in-\/memory\ buffer}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}global.h"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}annexb.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}memalloc.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}fast\_memory.h"{}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{byte}\ *injected\_annex\_b\_data\ =\ 0;}
+\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ injected\_annex\_b\_size\ =\ 0;}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ External\ hook\ from\ LCEVC}}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ inject\_annex\_b\_bitstream(\textcolor{keywordtype}{byte}\ *data,\ \textcolor{keywordtype}{unsigned}\ size)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ injected\_annex\_b\_data\ =\ data;}
+\DoxyCodeLine{00029\ \ \ \ \ injected\_annex\_b\_size\ =\ size;}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ malloc\_annex\_b(VideoParameters\ *p\_Vid,\ ANNEXB\_t\ **p\_annex\_b)}
+\DoxyCodeLine{00033\ \{}
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordflow}{if}\ (\ ((*p\_annex\_b)\ =\ (ANNEXB\_t\ *)\ calloc(1,\ \textcolor{keyword}{sizeof}(ANNEXB\_t)))\ ==\ NULL)}
+\DoxyCodeLine{00035\ \ \ \{}
+\DoxyCodeLine{00036\ \ \ \ \ snprintf(errortext,\ ET\_SIZE,\ \textcolor{stringliteral}{"{}Memory\ allocation\ for\ Annex\_B\ file\ failed"{}});}
+\DoxyCodeLine{00037\ \ \ \ \ error(errortext,100);}
+\DoxyCodeLine{00038\ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \textcolor{keywordflow}{if}\ (((*p\_annex\_b)-\/>Buf\ =\ (\textcolor{keywordtype}{byte}*)\ malloc(p\_Vid-\/>nalu-\/>max\_size))\ ==\ NULL)}
+\DoxyCodeLine{00040\ \ \ \{}
+\DoxyCodeLine{00041\ \ \ \ \ error(\textcolor{stringliteral}{"{}malloc\_annex\_b:\ Buf"{}},\ 101);}
+\DoxyCodeLine{00042\ \ \ \}}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keywordtype}{void}\ init\_annex\_b(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ annex\_b-\/>iobuffer\ =\ NULL;}
+\DoxyCodeLine{00049\ \ \ annex\_b-\/>iobufferread\ =\ NULL;}
+\DoxyCodeLine{00050\ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
+\DoxyCodeLine{00051\ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{00052\ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 1;}
+\DoxyCodeLine{00053\ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keywordtype}{void}\ free\_annex\_b(ANNEXB\_t\ **p\_annex\_b)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ free((*p\_annex\_b)-\/>Buf);}
+\DoxyCodeLine{00059\ \ \ (*p\_annex\_b)-\/>Buf\ =\ NULL;}
+\DoxyCodeLine{00060\ \ \ free(*p\_annex\_b);}
+\DoxyCodeLine{00061\ \ \ *p\_annex\_b\ =\ NULL;}
+\DoxyCodeLine{00062\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00071\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{byte}\ getfbyte(ANNEXB\_t\ *annex\_b)\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>bytesinbuffer\ ==\ 0)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ annex\_b-\/>is\_eof\ =\ TRUE;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00075\ \ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ annex\_b-\/>bytesinbuffer-\/-\/;}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{return}\ (*annex\_b-\/>iobufferread++);}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00098\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ FindStartCode\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *Buf,\ \textcolor{keywordtype}{int}\ zeros\_in\_startcode)}
+\DoxyCodeLine{00099\ \{}
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ zeros\_in\_startcode;\ i++)}
+\DoxyCodeLine{00103\ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{if}(*(Buf++)\ !=\ 0)}
+\DoxyCodeLine{00105\ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \textcolor{keywordflow}{if}(*Buf\ !=\ 1)}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00114\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00136\ \textcolor{keywordtype}{int}\ get\_annex\_b\_NALU\ (VideoParameters\ *p\_Vid,\ NALU\_t\ *nalu,\ ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{int}\ info2\ =\ 0,\ info3\ =\ 0,\ pos\ =\ 0;}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{int}\ StartCodeFound\ =\ 0;}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{int}\ LeadingZero8BitsCount\ =\ 0;}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{byte}\ *pBuf\ =\ annex\_b-\/>Buf;}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>nextstartcodebytes\ !=\ 0)}
+\DoxyCodeLine{00145\ \ \ \ \ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<annex\_b-\/>nextstartcodebytes-\/1;\ i++)}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 0;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 1;}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00155\ \ \ \ \ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!annex\_b-\/>is\_eof)}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*(pBuf++)=\ getfbyte(annex\_b))!=\ 0)}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00162\ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}(annex\_b-\/>is\_eof\ ==\ TRUE)}
+\DoxyCodeLine{00164\ \ \ \ \ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pos==0)}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}get\_annex\_b\_NALU\ can't\ read\ start\ code\(\backslash\)n"{}});}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}(*(pBuf\ -\/\ 1)\ !=\ 1\ ||\ pos\ <\ 3)}
+\DoxyCodeLine{00177\ \ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ no\ Start\ Code\ at\ the\ beginning\ of\ the\ NALU,\ return\ -\/1\(\backslash\)n"{}});}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00180\ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ ==\ 3)}
+\DoxyCodeLine{00183\ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 3;}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00187\ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ LeadingZero8BitsCount\ =\ pos\ -\/\ 4;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 4;}
+\DoxyCodeLine{00190\ \ \ \ \ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//the\ 1st\ byte\ stream\ NAL\ unit\ can\ has\ leading\_zero\_8bits,\ but\ subsequent\ ones\ are\ not}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//allowed\ to\ contain\ it\ since\ these\ zeros(if\ any)\ are\ considered\ trailing\_zero\_8bits}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//of\ the\ previous\ byte\ stream\ NAL\ unit.}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{if}(!annex\_b-\/>IsFirstByteStreamNALU\ \&\&\ LeadingZero8BitsCount\ >\ 0)}
+\DoxyCodeLine{00196\ \ \ \ \ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ The\ leading\_zero\_8bits\ syntax\ can\ only\ be\ present\ in\ the\ first\ byte\ stream\ NAL\ unit,\ return\ -\/1\(\backslash\)n"{}});}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ LeadingZero8BitsCount\ =\ pos;}
+\DoxyCodeLine{00202\ \ \ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 0;}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{while}\ (!StartCodeFound)}
+\DoxyCodeLine{00205\ \ \ \ \ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>is\_eof\ ==\ TRUE)}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 2;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)==0)}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>len\ =\ (pos\ -\/\ 1)\ -\/\ LeadingZero8BitsCount;}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ printf\ ("{}get\_annex\_b\_NALU,\ eof\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\#if\ TRACE}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nLast\ NALU\ in\ File\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}Annex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ fflush\ (p\_Dec-\/>p\_trace);}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pos\ -\/\ 1);}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ *(pBuf\ ++)\ \ =\ getfbyte(annex\_b);\ \ \ \ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ info3\ =\ FindStartCode(pBuf\ -\/\ 4,\ 3);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(info3\ !=\ 1)}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ info2\ =\ FindStartCode(pBuf\ -\/\ 3,\ 2);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ info2\ \&\ 0x01;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ 1;}
+\DoxyCodeLine{00240\ \ \ \ \ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ have\ found\ another\ start\ code\ (and\ read\ length\ of\ startcode\ bytes\ more\ than\ we\ should}}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ have.\ \ Hence,\ go\ back\ in\ the\ file}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{if}(info3\ ==\ 1)\ \ \textcolor{comment}{//if\ the\ detected\ start\ code\ is\ 00\ 00\ 01,\ trailing\_zero\_8bits\ is\ sure\ not\ to\ be\ present}}
+\DoxyCodeLine{00245\ \ \ \ \ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 5;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)\ ==\ 0)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 4;}
+\DoxyCodeLine{00250\ \ \ \ \ \}}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (info2\ ==\ 1)}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 3;}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00254\ \ \ \ \ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ Panic:\ Error\ in\ next\ start\ code\ search\ \(\backslash\)n"{}});}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ pos\ -\/=\ annex\_b-\/>nextstartcodebytes;}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{comment}{//\ Here\ the\ leading\ zeros(if\ any),\ Start\ code,\ the\ complete\ NALU,\ trailing\ zeros(if\ any)}}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ and\ the\ next\ start\ code\ is\ in\ the\ Buf.}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ Buf\ is\ pos\ -\/\ rewind,\ pos\ are\ the\ number\ of\ bytes\ excluding\ the\ next}}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ start\ code,\ and\ (pos)\ -\/\ LeadingZero8BitsCount}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ is\ the\ size\ of\ the\ NALU.}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ nalu-\/>len\ =\ pos\ -\/\ LeadingZero8BitsCount;}
+\DoxyCodeLine{00268\ \ \ \ \ fast\_memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
+\DoxyCodeLine{00269\ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
+\DoxyCodeLine{00270\ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
+\DoxyCodeLine{00271\ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
+\DoxyCodeLine{00272\ \ \ \ \ nalu-\/>lost\_packets\ =\ 0;}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//printf\ ("{}get\_annex\_b\_NALU,\ regular\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
+\DoxyCodeLine{00275\ \textcolor{preprocessor}{\#if\ TRACE}}
+\DoxyCodeLine{00276\ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nAnnex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
+\DoxyCodeLine{00278\ \ \ \ \ fflush\ (p\_Dec-\/>p\_trace);}
+\DoxyCodeLine{00279\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordflow}{return}\ (pos);}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00295\ \textcolor{keywordtype}{void}\ open\_annex\_b\ (\textcolor{keywordtype}{char}\ *fn,\ ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{00296\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{if}\ (NULL\ !=\ annex\_b-\/>iobuffer)}
+\DoxyCodeLine{00298\ \ \ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ tried\ to\ open\ Annex\ B\ file\ twice"{}},500);}
+\DoxyCodeLine{00300\ \ \ \ \ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ annex\_b-\/>iobuffer\ =\ injected\_annex\_b\_data;}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{if}\ (NULL\ ==\ annex\_b-\/>iobuffer)}
+\DoxyCodeLine{00305\ \ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ no\ injected\ data"{}},500);}
+\DoxyCodeLine{00307\ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ injected\_annex\_b\_size;}
+\DoxyCodeLine{00311\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00321\ \textcolor{keywordtype}{void}\ close\_annex\_b(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{00322\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ annex\_b-\/>iobuffer\ =\ NULL;}
+\DoxyCodeLine{00324\ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{keywordtype}{void}\ reset\_annex\_b(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{00328\ \{}
+\DoxyCodeLine{00329\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{00330\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
+\DoxyCodeLine{00331\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
+\DoxyCodeLine{00332\ \}}
+
+\end{DoxyCode}

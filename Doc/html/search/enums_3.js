@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['cabacblocktypes_0',['CABACBlockTypes',['../defines_8h.html#ab6be4aecc592a9dd78ceb21936bed334',1,'defines.h']]],
+  ['cavlcblocktypes_1',['CAVLCBlockTypes',['../defines_8h.html#ab5360f51cbeb8af6cdceb76aa1851057',1,'defines.h']]],
+  ['channeltype_2',['ChannelType',['../namespacevtm.html#ae55eb169b1f87620662a35628ecf373b',1,'vtm']]],
+  ['chromaformat_3',['ChromaFormat',['../namespacevtm.html#a39730bd08e7405af203ac6de4b2511d6',1,'vtm']]],
+  ['codec_4',['Codec',['../classvnova_1_1utility_1_1BaseDecoder.html#ac42b1dd6ff76c95b4029f0a95a6f36ef',1,'vnova::utility::BaseDecoder']]],
+  ['codecoperation_5',['CodecOperation',['../CodecApi_8h.html#acca53023810ef8d56974434b3e35a1c8',1,'CodecApi.h']]],
+  ['codingstatisticsmode_6',['CodingStatisticsMode',['../CodingStatistics_8h.html#abda6590b7e6ce737e02bd5ba07f9bb17',1,'CodingStatistics.h']]],
+  ['codingstatisticstype_7',['CodingStatisticsType',['../CodingStatistics_8h.html#ac3cb9729f15456669ef8019a9f4a877b',1,'CodingStatistics.h']]],
+  ['codingtype_8',['CodingType',['../namespacelctm.html#a6670b928858433a8003975d28b78017f',1,'lctm']]],
+  ['coeffscangrouptype_9',['CoeffScanGroupType',['../namespacevtm.html#a0650005552adf5c2eb1555f80126a054',1,'vtm']]],
+  ['coeffscantype_10',['CoeffScanType',['../namespacevtm.html#a21cf3ec4b7a1dec5453be830ee67bf75',1,'vtm']]],
+  ['colorcomponent_11',['ColorComponent',['../defines_8h.html#aef061403e3c0c9f0c95d44979b80c91a',1,'defines.h']]],
+  ['colourspace_12',['Colourspace',['../namespacelctm.html#ae7cf6dbf60e5ab7e21aa27a361760ac1',1,'lctm']]],
+  ['componentid_13',['ComponentID',['../namespacevtm.html#aba9b748715e5ebce1f0b519ca08a658d',1,'vtm']]],
+  ['compressiontype_14',['CompressionType',['../namespacelctm.html#aef9a0eb0bacc839b033e2cdfe58c4e30',1,'lctm']]],
+  ['costmode_15',['CostMode',['../namespacevtm.html#a358f149a0d191248f5b7d6f2d198f5b1',1,'vtm']]]
+];

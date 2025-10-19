@@ -1,0 +1,328 @@
+\doxysection{codec\+\_\+api.\+cpp}
+\label{base__avc_2src_2codec__api_8cpp_source}\index{deps/base\_avc/src/codec\_api.cpp@{deps/base\_avc/src/codec\_api.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}memory.h"{}}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}CodecApi.h"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}CodecUtils.h"{}}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}RingBuffer.hpp"{}}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}h264decoder.h"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}inject\_annexb.h"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}configfile.h"{}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{extern}\ DecoderParams\ *p\_Dec;}
+\DoxyCodeLine{00023\ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{struct\ }Metadata\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ int32\_t\ width;}
+\DoxyCodeLine{00029\ \ \ \ \ int32\_t\ height;}
+\DoxyCodeLine{00030\ \ \ \ \ int32\_t\ planes;}
+\DoxyCodeLine{00031\ \ \ \ \ int32\_t\ bpp;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ uint64\_t\ timestamp;}
+\DoxyCodeLine{00034\ \ \ \ \ uint64\_t\ poc;}
+\DoxyCodeLine{00035\ \ \ \ \ uint32\_t\ qp;}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ uint32\_t\ frame\_type;}
+\DoxyCodeLine{00038\ \};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{struct\ }Error\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ uint32\_t\ code;}
+\DoxyCodeLine{00042\ \ \ \ \ std::string\ msg;}
+\DoxyCodeLine{00043\ \ \ \ \ std::string\ file;}
+\DoxyCodeLine{00044\ \ \ \ \ uint32\_t\ line;}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{enum}\ State\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ StateNone\ =\ 0,}
+\DoxyCodeLine{00049\ \ \ \ \ StatePushing,}
+\DoxyCodeLine{00050\ \ \ \ \ StateDecoding,}
+\DoxyCodeLine{00051\ \ \ \ \ StateFlushing,}
+\DoxyCodeLine{00052\ \ \ \ \ StateFinished,}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{struct\ }DecodedImage\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ vector<uint8\_t>\ buffer\_;}
+\DoxyCodeLine{00057\ \ \ \ \ CodecImage\ image\_;}
+\DoxyCodeLine{00058\ \};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{keyword}{class\ }Context\ \{}
+\DoxyCodeLine{00061\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ flush();}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{void}\ decode\_enhanced\_frames(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ std::string\ configuration\_;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ State\ state\_;}
+\DoxyCodeLine{00068\ \ \ \ \ vector<uint8\_t>\ base\_bitstream\_;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{int}\ frame\_count\_\ =\ 0;}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ thread\ decoder\_thread\_;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ output\_frame\_\ =\ 0;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ shallow\ ring\ buffer\ used\ to\ move\ pictures\ from\ docoder\ to\ codec\ api}}
+\DoxyCodeLine{00077\ \ \ \ \ RingBuffer<shared\_ptr<DecodedImage>>\ decoded\_images\_\ =\ \{2\};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ Image\ returned\ to\ API\ client}}
+\DoxyCodeLine{00080\ \ \ \ \ shared\_ptr<DecodedImage>\ decoded\_image\_;}
+\DoxyCodeLine{00081\ \};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{static}\ int32\_t\ create\_context(CodecContext\ *cp,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ Context\ *context\ =\ \textcolor{keyword}{new}\ Context();}
+\DoxyCodeLine{00088\ \ \ \ \ context-\/>configuration\_\ =\ json\_configuration;}
+\DoxyCodeLine{00089\ \ \ \ \ context-\/>state\_\ =\ StatePushing;}
+\DoxyCodeLine{00090\ \ \ \ \ *cp\ =\ (\textcolor{keywordtype}{void}\ *)context;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Push\ encoded\ data\ into\ decoder}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ To\ avoid\ messing\ with\ JM\ any\ more\ than\ necessary,\ this\ cheats\ a\ bit\ and\ saves\ the\ entire\ input\ bitstream}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ until\ EOS,\ then\ starts\ the\ JM\ decoder\ with\ the\ whole\ stream.}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//}}
+\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ int32\_t\ push\_packet(CodecContext\ c,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ length,\ CodecMetadata\ metadata,\ int8\_t\ eos,}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CodecError\ *error)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>state\_)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{case}\ StatePushing:}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!eos)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(data);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(length\ >=\ 3);}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>base\_bitstream\_.push\_back(0);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ buffer}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>base\_bitstream\_.insert(context-\/>base\_bitstream\_.end(),\ data,\ data\ +\ length);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>state\_\ =\ StateDecoding;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
+\DoxyCodeLine{00127\ \ \ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ extract\_image(DecodedPicList\ *pic,\ CodecImage\ *codec\_image)\ \{}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ picture?}}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00142\ \ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ CHECK(codec\_image);}
+\DoxyCodeLine{00145\ \ \ \ \ codec\_image-\/>bpp\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
+\DoxyCodeLine{00146\ \ \ \ \ codec\_image-\/>width\_y\ =\ pic-\/>iWidth;}
+\DoxyCodeLine{00147\ \ \ \ \ codec\_image-\/>height\_y\ =\ pic-\/>iHeight;}
+\DoxyCodeLine{00148\ \ \ \ \ codec\_image-\/>stride\_y\ =\ pic-\/>iYBufStride;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ codec\_image-\/>width\_uv\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
+\DoxyCodeLine{00151\ \ \ \ \ codec\_image-\/>height\_uv\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
+\DoxyCodeLine{00152\ \ \ \ \ codec\_image-\/>stride\_uv\ =\ pic-\/>iUVBufStride;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ codec\_image-\/>data\_y\ =\ pic-\/>pY;}
+\DoxyCodeLine{00155\ \ \ \ \ codec\_image-\/>data\_u\ =\ pic-\/>pU;}
+\DoxyCodeLine{00156\ \ \ \ \ codec\_image-\/>data\_v\ =\ pic-\/>pV;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{static}\ int32\_t\ pull\_image(CodecContext\ c,\ CodecImage\ *image,\ CodecMetadata\ *metadata,\ int8\_t\ *eos,\ CodecError\ *error)\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>state\_)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{case}\ StatePushing:}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Still\ accumulating\ input\ stream}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{case}\ StateDecoding:}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ context-\/>decoder\_thread\_\ =\ std::thread([context]\ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>flush();}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>decoded\_images\_.push(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ context-\/>state\_\ =\ StateFlushing;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Fall\ through\ */}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{case}\ StateFlushing:}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ context-\/>decoded\_images\_.pop(context-\/>decoded\_image\_);}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>decoded\_image\_)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ *image\ =\ context-\/>decoded\_image\_-\/>image\_;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>decoder\_thread\_.joinable())}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>decoder\_thread\_.join();}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 1;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{comment}{//}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//}}
+\DoxyCodeLine{00202\ \textcolor{keywordtype}{void}\ Context::flush()\ \{}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Poke\ bitstream\ into\ our\ JM\ hooks}}
+\DoxyCodeLine{00205\ \ \ \ \ inject\_annex\_b\_bitstream(base\_bitstream\_.data(),\ (\textcolor{keywordtype}{unsigned})base\_bitstream\_.size());}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ InputParameters\ input\_parameters;}
+\DoxyCodeLine{00208\ \ \ \ \ memset(\&input\_parameters,\ 0,\ \textcolor{keyword}{sizeof}(input\_parameters));}
+\DoxyCodeLine{00209\ \ \ \ \ strcpy(input\_parameters.infile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00210\ \ \ \ \ strcpy(input\_parameters.outfile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00211\ \ \ \ \ strcpy(input\_parameters.reffile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keyword}{const}\ decoder\_args[]\ =\ \{\textcolor{stringliteral}{"{}ldecod"{}}\};}
+\DoxyCodeLine{00214\ \ \ \ \ ParseCommand(\&input\_parameters,\ ARRAY\_SIZE(decoder\_args),\ (\textcolor{keywordtype}{char}\ **)decoder\_args);}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Open\ decoder}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (OpenDecoder(\&input\_parameters)\ !=\ DEC\_OPEN\_NOERR)\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ open\ base\ decoder"{}});}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ p\_Dec-\/>p\_Vid-\/>p\_out\ =\ -\/2;}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ Run\ decoder}}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00225\ \ \ \ \ DecodedPicList\ *pDecPicList\ =\ 0;}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordtype}{int}\ frame\_count\ =\ 0;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ 0;}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ r\ =\ DecodeOneFrame(\&pDecPicList);}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ DEC\_EOS\ ||\ r\ ==\ DEC\_SUCCEED)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ decode\_enhanced\_frames(pDecPicList,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_count++;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Error\ in\ decoding\ process:\ 0x\%x"{}},\ r);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ ((r\ ==\ DEC\_SUCCEED)\ \&\&\ ((p\_Dec-\/>p\_Inp-\/>iDecFrmNum\ ==\ 0)\ ||\ (frame\_count\ <\ p\_Dec-\/>p\_Inp-\/>iDecFrmNum)));}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ FinitDecoder(\&pDecPicList);}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ Write\ last\ frame}}
+\DoxyCodeLine{00243\ \ \ \ \ decode\_enhanced\_frames(pDecPicList,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ CloseDecoder();}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{comment}{//}}
+\DoxyCodeLine{00249\ \textcolor{comment}{//}}
+\DoxyCodeLine{00250\ \textcolor{keywordtype}{void}\ Context::decode\_enhanced\_frames(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames)\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ Check\ picture\ and\ plane\ pointers\ -\/\ valid\ flag\ seems\ to\ be\ wrong\ sometimes!?}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00254\ \ \ \ \ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ output\_image\ =\ std::shared\_ptr<DecodedImage>(\textcolor{keyword}{new}\ DecodedImage());}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.bpp\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_y\ =\ pic-\/>iWidth;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_y\ =\ pic-\/>iHeight;}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_y\ =\ pic-\/>iYBufStride;}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_uv\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_uv\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_uv\ =\ pic-\/>iUVBufStride;}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_y\ =\ output\_image-\/>image\_.height\_y\ *\ output\_image-\/>image\_.stride\_y;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_uv\ =\ output\_image-\/>image\_.height\_uv\ *\ output\_image-\/>image\_.stride\_uv;}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ output\_image-\/>buffer\_.reserve(plane\_size\_y\ +\ 2\ *\ plane\_size\_uv);}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data(),\ pic-\/>pY,\ plane\_size\_y);}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y,\ pic-\/>pU,\ plane\_size\_uv);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y\ +\ plane\_size\_uv,\ pic-\/>pV,\ plane\_size\_uv);}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_y\ =\ output\_image-\/>buffer\_.data();}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_u\ =\ output\_image-\/>image\_.data\_y\ +\ plane\_size\_y;}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_v\ =\ output\_image-\/>image\_.data\_u\ +\ plane\_size\_uv;}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ decoded\_images\_.push(output\_image);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ as\ used\ and\ move\ to\ next}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ pic-\/>bValid\ =\ 0;}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ pic\ =\ pic-\/>pNext;}
+\DoxyCodeLine{00289\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (pic\ !=\ NULL\ \&\&\ pic-\/>bValid\ \&\&\ all\_frames);}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_context(CodecContext\ c)\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordflow}{if}\ (!context)}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00298\ \ \ \ \ free(context);}
+\DoxyCodeLine{00299\ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ CODEC\_API\_EXPORT\ uint32\_t\ CodecAPI\_Version()\ \{\ \textcolor{keywordflow}{return}\ LOADABLE\_CODEC\_API\_VERSION;\ \}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ CODEC\_API\_EXPORT\ uint32\_t\ CodecAPI\_Query(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size)\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_name[]\ =\ \textcolor{stringliteral}{"{}avc"{}};}
+\DoxyCodeLine{00306\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_version\_string[]\ =\ \textcolor{stringliteral}{"{}LTM\ xxx"{}};}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ CODEC\_API\_EXPORT\ Codec\ *CodecAPI\_Create(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_create\_options)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ Codec\ *codec\ =\ LTMCodecAllocate(codec\_name,\ codec\_version\_string,\ operation);}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ codec-\/>create\_context\ =\ create\_context;}
+\DoxyCodeLine{00312\ \ \ \ \ codec-\/>push\_packet\ =\ push\_packet;}
+\DoxyCodeLine{00313\ \ \ \ \ codec-\/>pull\_image\ =\ pull\_image;}
+\DoxyCodeLine{00314\ \ \ \ \ codec-\/>release\_context\ =\ release\_context;}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
+\DoxyCodeLine{00317\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ CODEC\_API\_EXPORT\ \textcolor{keywordtype}{void}\ CodecAPI\_Release(Codec\ *codec)\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordflow}{if}\ (!codec)}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ LTMCodecFree(codec);}
+\DoxyCodeLine{00324\ \}}
+
+\end{DoxyCode}

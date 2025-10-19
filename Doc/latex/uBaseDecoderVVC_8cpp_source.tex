@@ -1,0 +1,371 @@
+\doxysection{u\+Base\+Decoder\+VVC.\+cpp}
+\label{uBaseDecoderVVC_8cpp_source}\index{src/uBaseDecoderVVC.cpp@{src/uBaseDecoderVVC.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <climits>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}CommonLib/BitStream.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/VLCReader.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ XXX\ Collision\ w/\ VTM}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#undef\ CHECK}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}uBaseDecoderVVC.h"{}}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{using\ namespace\ }lctm;}
+\DoxyCodeLine{00052\ \textcolor{keyword}{using\ namespace\ }vtm;}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00055\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00056\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ BaseDecNalUnitType::Enum\ uFromVVC(uint8\_t\ type)\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordflow}{switch}\ (type)\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_TRAIL:}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_STSA:}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_RADL:}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_RASL:}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::RESERVED\_VCL\_4:}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::RESERVED\_VCL\_5:}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::RESERVED\_VCL\_6:}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_IDR\_W\_RADL:}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_IDR\_N\_LP:}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_CRA:}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::CODED\_SLICE\_GDR:}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Slice;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::DCI:}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::VPS:}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::VPS;}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::SPS:}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SPS;}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::PPS:}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::PPS;}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::PREFIX\_APS:}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::SUFFIX\_APS:}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::PH:}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::ACCESS\_UNIT\_DELIMITER:}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::AUD;}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::EOS:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::EOS;}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::EOB:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::EOB;}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::PREFIX\_SEI:}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::SUFFIX\_SEI:}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SEI;}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{case}\ VVCNalType::FD:}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Filler;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ kNalHeaderLength\ =\ 3;}
+\DoxyCodeLine{00111\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ kNalHeader[kNalHeaderLength]\ =\ \{0,\ 0,\ 1\};}
+\DoxyCodeLine{00112\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ kNalEscapeLength\ =\ 3;}
+\DoxyCodeLine{00113\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ kNalEscape[kNalEscapeLength]\ =\ \{0,\ 0,\ 3\};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ uint32\_t\ uOffsetForNalUnitHeader(\textcolor{keyword}{const}\ uint8\_t\ *nal)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(nal,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength;}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{if}\ (!nal[0]\ \&\&\ memcmp(nal\ +\ 1,\ kNalHeader,\ kNalHeaderLength)\ ==\ 0)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ kNalHeaderLength\ +\ 1;}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ VVC}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ BaseDecoderVVC::BaseDecoderVVC()\ \{}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParseNalUnit(\textcolor{keyword}{const}\ uint8\_t\ *nal,\ uint32\_t\ nalLength)\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{bool}\ bSuccess\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Account\ for\ AnnexB\ nal\ unit\ header\ ([0],0,0,1)}}
+\DoxyCodeLine{00137\ \ \ \ \ uint32\_t\ offset\ =\ uOffsetForNalUnitHeader(nal);}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ m\_nuhLayerId\ =\ nal[offset+0]\ \&\ 0x3f;}
+\DoxyCodeLine{00140\ \ \ \ \ m\_nalUnitType\ =\ ((nal[offset+1]\ >>\ 3)\ \&\ 0x1F);}
+\DoxyCodeLine{00141\ \ \ \ \ m\_temporalId\ =\ (nal[offset\ +\ 1]\ \&\ 0x07)\ -\/\ 1;}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ offset\ +=\ 2;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ nal\ +=\ offset;}
+\DoxyCodeLine{00146\ \ \ \ \ nalLength\ -\/=\ offset;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ InputBitstream\ bitstream;}
+\DoxyCodeLine{00149\ \ \ \ \ Unencapsulate(nal,\ nalLength,\ bitstream.getFifo());}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{switch}\ (m\_nalUnitType)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_VPS:}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseVPS(bitstream);}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_PPS:}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParsePPS(bitstream);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_SPS:}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseSPS(bitstream);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_PH:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParsePH(bitstream);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_PREFIX\_APS:}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_SUFFIX\_APS:}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseAPS(bitstream);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_TRAIL:}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_STSA:}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL:}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP:}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_CRA:}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_GDR:}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_RADL:}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_CODED\_SLICE\_RASL:}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseSliceHeader(bitstream);}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordflow}{case}\ NAL\_UNIT\_EOS:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00184\ \ \ \ \ \}}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordflow}{return}\ bSuccess;}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ BaseDecPictType::Enum\ BaseDecoderVVC::GetBasePictureType()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_basePictureType;}
+\DoxyCodeLine{00192\ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ BaseDecNalUnitType::Enum\ BaseDecoderVVC::GetBaseNalUnitType()\textcolor{keyword}{\ const\ }\{\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{return}\ uFromVVC(m\_nalUnitType);}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ int32\_t\ BaseDecoderVVC::GetQP()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 30;\ \ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ uint32\_t\ BaseDecoderVVC::GetNalType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_nalUnitType;\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ uint32\_t\ BaseDecoderVVC::GetPictureWidth()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_width;}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ uint32\_t\ BaseDecoderVVC::GetPictureHeight()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_height;}
+\DoxyCodeLine{00208\ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::GetDPBCanRefresh()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00211\ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00213\ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ uint32\_t\ BaseDecoderVVC::GetBitDepthLuma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_bitdepthLuma;}
+\DoxyCodeLine{00217\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ uint32\_t\ BaseDecoderVVC::GetBitDepthChroma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_bitdepthChroma;}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ uint32\_t\ BaseDecoderVVC::GetChromaFormatIDC()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_chromaFormatIDC;}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ int64\_t\ BaseDecoderVVC::GetPictureOrderCount()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_pictureOrderCount;}
+\DoxyCodeLine{00229\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ uint8\_t\ BaseDecoderVVC::GetMaxNumberOfReorderFrames()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00232\ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00234\ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ uint32\_t\ BaseDecoderVVC::GetFrameRate()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordflow}{return}\ 30;\ \textcolor{comment}{//\ XXX\ DOn't\ think\ this\ is\ used\ anywhere}}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ uint32\_t\ BaseDecoderVVC::GetTemporalId()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_temporalId;}
+\DoxyCodeLine{00242\ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParseVPS(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00246\ \ \ \ \ VPS\ *vps\ =\ \textcolor{keyword}{new}\ VPS();}
+\DoxyCodeLine{00247\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00248\ \ \ \ \ m\_reader.parseVPS(vps);}
+\DoxyCodeLine{00249\ \ \ \ \ m\_parameterSetManager.storeVPS(vps,\ bitstream.getFifo());}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParsePPS(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00256\ \ \ \ \ PPS\ *pps\ =\ \textcolor{keyword}{new}\ PPS();}
+\DoxyCodeLine{00257\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00258\ \ \ \ \ m\_reader.parsePPS(pps);}
+\DoxyCodeLine{00259\ \ \ \ \ pps-\/>setLayerId(\ m\_nuhLayerId\ );}
+\DoxyCodeLine{00260\ \ \ \ \ pps-\/>setTemporalId(\ m\_temporalId\ );}
+\DoxyCodeLine{00261\ \ \ \ \ m\_parameterSetManager.storePPS(\ pps,\ bitstream.getFifo()\ );}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00264\ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParseSPS(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00268\ \ \ \ \ SPS\ *sps\ =\ \textcolor{keyword}{new}\ SPS();}
+\DoxyCodeLine{00269\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00270\ \ \ \ \ m\_reader.parseSPS(sps);}
+\DoxyCodeLine{00271\ \ \ \ \ sps-\/>setLayerId(\ m\_nuhLayerId\ );}
+\DoxyCodeLine{00272\ \ \ \ \ m\_parameterSetManager.storeSPS(sps,\ bitstream.getFifo());}
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00275\ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParsePH(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00279\ \ \ \ \ PPS\ *pps\ =\ \textcolor{keyword}{new}\ PPS();}
+\DoxyCodeLine{00280\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00281\ \ \ \ \ m\_reader.parsePictureHeader(\&m\_picHeader,\ \&m\_parameterSetManager,\ \textcolor{keyword}{true}\ );}
+\DoxyCodeLine{00282\ \ \ \ \ m\_picHeader.setValid();}
+\DoxyCodeLine{00283\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00285\ \}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParseAPS(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00288\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00289\ \ \ \ \ APS*\ aps\ =\ \textcolor{keyword}{new}\ APS();}
+\DoxyCodeLine{00290\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00291\ \ \ \ \ m\_reader.parseAPS(aps);}
+\DoxyCodeLine{00292\ \ \ \ \ aps-\/>setTemporalId(m\_temporalId);}
+\DoxyCodeLine{00293\ \ \ \ \ aps-\/>setLayerId(m\_nuhLayerId);}
+\DoxyCodeLine{00294\ \ \ \ \ aps-\/>setHasPrefixNalUnitType(m\_nalUnitType\ ==\ NAL\_UNIT\_PREFIX\_APS);}
+\DoxyCodeLine{00295\ \ \ \ \ m\_parameterSetManager.storeAPS(aps,\ bitstream.getFifo());}
+\DoxyCodeLine{00296\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \textcolor{keywordtype}{bool}\ BaseDecoderVVC::ParseSliceHeader(InputBitstream\ \&bitstream)\ \{}
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#if\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00302\ \ \ \ \ Slice\ *slice\ =\ \textcolor{keyword}{new}\ Slice();}
+\DoxyCodeLine{00303\ \ \ \ \ slice-\/>setPicHeader(\&m\_picHeader);}
+\DoxyCodeLine{00304\ \ \ \ \ slice-\/>initSlice();}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ slice-\/>setNalUnitType((NalUnitType)m\_nalUnitType);}
+\DoxyCodeLine{00307\ \ \ \ \ slice-\/>setNalUnitLayerId(m\_nuhLayerId);}
+\DoxyCodeLine{00308\ \ \ \ \ slice-\/>setTLayer(m\_temporalId);}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ m\_reader.setBitstream(\&bitstream);}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{comment}{//\ m\_reader.parseSliceHeader(slice,\ \&m\_picHeader,\ \&m\_parameterSetManager,\ m\_prevTid0POC);}}
+\DoxyCodeLine{00312\ \ \ \ \ m\_reader.parseSliceHeader(slice,\ \&m\_picHeader,\ \&m\_parameterSetManager,\ m\_prevTid0POC,\ m\_prevPOC);}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ PPS\ *pps\ =\ m\_parameterSetManager.getPPS(m\_picHeader.getPPSId());}
+\DoxyCodeLine{00315\ \ \ \ \ CHECK(pps);}
+\DoxyCodeLine{00316\ \ \ \ \ SPS\ *sps\ =\ m\_parameterSetManager.getSPS(pps-\/>getSPSId());}
+\DoxyCodeLine{00317\ \ \ \ \ CHECK(sps);}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{comment}{//\ Taking\ in\ consideration\ the\ conformance\ window}}
+\DoxyCodeLine{00320\ \ \ \ \ m\_width\ =\ pps-\/>getPicWidthInLumaSamples()\ -\/}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ sps-\/>getWinUnitX(sps-\/>getChromaFormatIdc())\ *\ }
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ (pps-\/>getConformanceWindow().getWindowLeftOffset()\ +\ pps-\/>getConformanceWindow().getWindowRightOffset());}
+\DoxyCodeLine{00323\ \ \ \ \ m\_height\ =\ pps-\/>getPicHeightInLumaSamples()\ -\/\ }
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ sps-\/>getWinUnitY(sps-\/>getChromaFormatIdc())\ *}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ (pps-\/>getConformanceWindow().getWindowTopOffset()\ +\ pps-\/>getConformanceWindow().getWindowBottomOffset());}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ m\_bitdepthLuma\ =\ sps-\/>getBitDepth(CHANNEL\_TYPE\_LUMA);}
+\DoxyCodeLine{00328\ \ \ \ \ m\_bitdepthChroma\ =\ sps-\/>getBitDepth(CHANNEL\_TYPE\_CHROMA);}
+\DoxyCodeLine{00329\ \ \ \ \ m\_chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{if}\ (slice-\/>isIDRorBLA())}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ m\_basePictureType\ =\ BaseDecPictType::IDR;}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (slice-\/>getSliceType())\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ B\_SLICE:}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ m\_basePictureType\ =\ BaseDecPictType::B;}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ P\_SLICE:}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ m\_basePictureType\ =\ BaseDecPictType::P;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ I\_SLICE:}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ m\_basePictureType\ =\ BaseDecPictType::I;}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00347\ \ \ \ \ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ m\_pictureOrderCount\ =\ slice-\/>getPOC();}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ m\_QP\ =\ slice-\/>getSliceQp();}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{keywordflow}{if}\ (slice-\/>getTLayer()\ ==\ 0\ \&\&}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ slice-\/>getNalUnitType()\ !=\ NAL\_UNIT\_CODED\_SLICE\_RASL\ \&\&}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ slice-\/>getNalUnitType()\ !=\ NAL\_UNIT\_CODED\_SLICE\_RADL)\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ m\_prevTid0POC\ =\ slice-\/>getPOC();}
+\DoxyCodeLine{00357\ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined\ \_\_BASE\_VVC\_\_}}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00360\ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderVVC()\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>\{\textcolor{keyword}{new}\ BaseDecoderVVC\{\}\};\ \}}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00365\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+
+\end{DoxyCode}

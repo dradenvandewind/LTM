@@ -1,0 +1,474 @@
+\doxysection{Scan\+Enhancement.\+cpp}
+\label{ScanEnhancement_8cpp_source}\index{decoder/src/ScanEnhancement.cpp@{decoder/src/ScanEnhancement.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ "{}ScanEnhancement.hpp"{}}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{struct\ }RegisteredSEI\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ extract\_enhancement\_sei(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ emulation\_prevention,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback);}
+\DoxyCodeLine{00050\ \};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{struct\ }UnregisteredSEI\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ extract\_enhancement\_sei(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ emulation\_prevention,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback);}
+\DoxyCodeLine{00055\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{class\ }rbsp\_decoder\ \{}
+\DoxyCodeLine{00060\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ \ \ \ \ rbsp\_decoder(\textcolor{keyword}{const}\ uint8\_t\ *d,\ \textcolor{keywordtype}{size\_t}\ l,\ \textcolor{keywordtype}{bool}\ e)\ :\ data(d),\ len(l),\ emulatiom\_prevention(e),\ emitted(0xFFFFFFFF),\ offs(0)\{\};}
+\DoxyCodeLine{00062\ \ \ \ \ uint8\_t\ get\_byte();}
+\DoxyCodeLine{00063\ \ \ \ \ uint8\_t\ *copy\_sei(uint8\_t\ *dst,\ \textcolor{keywordtype}{size\_t}\ len);}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{void}\ copy(PacketBuilder\ *dst);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ *data;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ len;}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{bool}\ emulatiom\_prevention;}
+\DoxyCodeLine{00070\ \ \ \ \ uint32\_t\ emitted;}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offs;}
+\DoxyCodeLine{00072\ \};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ uint8\_t\ rbsp\_decoder::get\_byte()\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{if}\ (offs\ >=\ len)}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ out\_of\_range(\textcolor{stringliteral}{"{}No\ more\ RBSP"{}});}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ emitted\ <<=\ 8;}
+\DoxyCodeLine{00079\ \ \ \ \ emitted\ |=\ data[offs++];}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{if}\ (emulatiom\_prevention\ \&\&\ (emitted\ \&\ 0xFFFFFF)\ ==\ 0x000003)\ \{}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ emitted\ <<=\ 8;}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (offs\ >=\ len)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ out\_of\_range(\textcolor{stringliteral}{"{}No\ more\ RBSP"{}});}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ emitted\ |=\ data[offs++];}
+\DoxyCodeLine{00086\ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{return}\ emitted\ \&\ 0xFF;}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ uint8\_t\ *rbsp\_decoder::copy\_sei(uint8\_t\ *d,\ \textcolor{keywordtype}{size\_t}\ l)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ l;\ i++)}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ d[i]\ =\ get\_byte();}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ d;}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keywordtype}{void}\ rbsp\_decoder::copy(PacketBuilder\ *dst)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ i\ =\ 0;}
+\DoxyCodeLine{00099\ \ \ \ \ dst-\/>reserve((uint32\_t)len\ -\/\ (uint32\_t)offs);}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ dst-\/>data()[i]\ =\ get\_byte();}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ std::out\_of\_range\ \&)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ dst-\/>resize((uint32\_t)i\ -\/}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1);\ \textcolor{comment}{//\ 0x80\ is\ added\ during\ encapsulation\ process\ but\ does\ not\ belong\ to\ the\ actual\ data\ -\/\ stop\ bit}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ i++;}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ Recognize\ the\ NALU\ marker\ (used\ by\ LCEVC,AVC,HEVC,VVC,\ but\ not\ EVC)}}
+\DoxyCodeLine{00113\ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_nal\_marker(\textcolor{keyword}{const}\ uint8\_t\ *data)\ \{\ \textcolor{keywordflow}{return}\ data[0]\ ==\ 0\ \&\&\ data[1]\ ==\ 0\ \&\&\ data[2]\ ==\ 1;\ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ Check\ for\ valid\ LCEVC\ NAL\ uint\ type}}
+\DoxyCodeLine{00117\ \textcolor{comment}{//}}
+\DoxyCodeLine{00118\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_nal\_unit\_type(\textcolor{keyword}{const}\ uint8\_t\ b)\ \{\ \textcolor{keywordflow}{return}\ (b\ >=\ LCEVC\_NON\_IDR)\ \&\&\ (b\ <=\ LCEVC\_RSV);\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ Extract\ enhancement\ data\ and\ pass\ to\ callback}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//}}
+\DoxyCodeLine{00122\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ extract\_enhancement\_nal(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ emulation\_prevention,\ uint64\_t\ pts,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr,}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{auto}\ pss\ =\ Packet::build();}
+\DoxyCodeLine{00126\ \ \ \ \ pss.timestamp(pts);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{if}\ (emulation\_prevention)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ rbsp\_decoder\ rbsp(data,\ size,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ rbsp.copy(\&pss);}
+\DoxyCodeLine{00131\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ pss.contents(data,\ (\textcolor{keywordtype}{unsigned})size);}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ callback(pss.finish(),\ is\_idr);}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ Find\ any\ enhancement\ data\ in\ native\ LCEVC\ NAL\ Unit\ and\ pass\ to\ callback}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//}}
+\DoxyCodeLine{00139\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_nal(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Scan\ for\ Enhancement\ NALU}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ data\_size\ -\/\ 4;\ ++i)\ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ i)\ \&\&\ (data[i\ +\ 3]\ \&\ 0xc0)\ ==\ 0x40\ \&\&\ data[i\ +\ 4]\ ==\ 0xff)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ nal\_unit\_type\ =\ (data[i\ +\ 3]\ \&\ 0x3e)\ >>\ 1;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_lcevc\_nal\_unit\_type(nal\_unit\_type))\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr\ =\ (nal\_unit\_type\ ==\ NalUnitType::LCEVC\_IDR\ ?\ true\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ size\ of\ NALU}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ e\ =\ (unsigned)data\_size;}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ i\ +\ 4;\ j\ <\ data\_size\ -\/\ 3;\ ++j)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ j))\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ [0,\ 0,\ 0,\ 1]\ case}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (data[j\ -\/\ 1]\ ==\ 0x00)}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ j-\/-\/;}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ j;}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ extract\_enhancement\_nal(data\ +\ (i\ +\ 5),\ e\ -\/\ (i\ +\ 5),\ \textcolor{keyword}{true},\ pts,\ is\_idr,\ callback);}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ enhancement\ data\ from\ bitstream\ leaving\ base\ codec\ bitstream}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ memmove(data\ +\ i,\ data\ +\ e,\ data\_size\ -\/\ e);}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\_size\ =\ data\_size\ +\ i\ -\/\ e;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ Find\ any\ enhancement\ data\ in\ native\ EVC\ NAL\ Unit\ (u32\ length-\/prefix)\ and\ pass\ to\ callback}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//}}
+\DoxyCodeLine{00174\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_nal\_evc(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{while}\ (offset\ <\ data\_size\ -\/\ 6)\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ uint32\_t\ nal\_length\ =\ 0;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ memcpy(\&nal\_length,\ data\ +\ offset,\ 4);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ uint32\_t\ total\_length\ =\ nal\_length\ +\ 4;}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((data[offset\ +\ 4]\ \&\ 0xfe)\ ==\ 0x3c\ \&\&\ (data[offset\ +\ 5]\ \&\ 0x3f)\ ==\ 0x00)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ nal\_unit\_type\ =\ (data[offset\ +\ 4]\ \&\ 0xf8)\ >>\ 3;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr\ =\ (nal\_unit\_type\ ==\ NalUnitType::LCEVC\_IDR\ ?\ true\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ extract\_enhancement\_nal(data\ +\ offset\ +\ 6,\ nal\_length\ -\/\ 2,\ \textcolor{keyword}{false},\ pts,\ is\_idr,\ callback);}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ memmove(data\ +\ offset,\ data\ +\ offset\ +\ total\_length,\ data\_size\ -\/\ (offset\ +\ total\_length));}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ data\_size\ -\/=\ total\_length;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ +=\ total\_length;}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00197\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \textcolor{comment}{//\ Find\ any\ enhancement\ data\ in\ native\ LCEVC\ NAL\ Unit\ and\ pass\ to\ callback\ (without\ memmove!)}}
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ Used\ to\ extract\ LCEVC\ NAL\ Unit\ from\ registered\ SEI\ -\/>\ required\ for\ SDK\ decoding\ workflow}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//}}
+\DoxyCodeLine{00202\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ scan\_enhancement\_nal\_prod(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Scan\ for\ Enhancement\ NALU}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ data\_size\ -\/\ 4;\ ++i)\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ i)\ \&\&\ (data[i\ +\ 3]\ \&\ 0xc0)\ ==\ 0x40\ \&\&\ data[i\ +\ 4]\ ==\ 0xff)\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ nal\_unit\_type\ =\ (data[i\ +\ 3]\ \&\ 0x3e)\ >>\ 1;}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_lcevc\_nal\_unit\_type(nal\_unit\_type))\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr\ =\ (nal\_unit\_type\ ==\ NalUnitType::LCEVC\_IDR\ ?\ true\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ size\ of\ NALU}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ e\ =\ (unsigned)data\_size;}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ i\ +\ 4;\ j\ <\ data\_size\ -\/\ 3;\ ++j)\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ j))\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Handle\ [0,\ 0,\ 0,\ 1]\ case}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (data[j\ -\/\ 1]\ ==\ 0x00)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ j-\/-\/;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ j;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ extract\_enhancement\_nal(data\ +\ (i\ +\ 5),\ e\ -\/\ (i\ +\ 5),\ \textcolor{keyword}{true},\ pts,\ is\_idr,\ callback);}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \textcolor{comment}{//\ Find\ any\ enhancement\ data\ in\ registered\ SEI\ NALU\ and\ pass\ to\ callback}}
+\DoxyCodeLine{00230\ \textcolor{comment}{//\ Used\ as\ a\ template\ parameter\ to\ scan\_enhancement\_sei\_XXX()}}
+\DoxyCodeLine{00231\ \textcolor{comment}{//}}
+\DoxyCodeLine{00232\ \textcolor{keywordtype}{void}\ RegisteredSEI::extract\_enhancement\_sei(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ emulation\_prevention,\ uint64\_t\ pts,}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ USER\_DATA\_REGISTERED\ =\ 4;}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ sei\_code[4]\ =\ \{0xb4,\ 0x00,\ 0x50,\ 0x00\};}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ rbsp\_decoder\ rbsp(data,\ size,\ emulation\_prevention);}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sei\_type\ =\ 0;}
+\DoxyCodeLine{00241\ \ \ \ \ uint8\_t\ byte;}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{byte}\ =\ rbsp.get\_byte();}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ sei\_type\ +=\ byte;}
+\DoxyCodeLine{00246\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (\textcolor{keywordtype}{byte}\ ==\ 0xFF);}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{if}\ (sei\_type\ ==\ USER\_DATA\_REGISTERED)\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sei\_length\ =\ 0;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{byte}\ =\ rbsp.get\_byte();}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ sei\_length\ +=\ byte;}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (\textcolor{keywordtype}{byte}\ ==\ 0xFF);}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sei\_length\ >\ size)\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}SEI\ length\ overflow"{}});}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ tmp[\textcolor{keyword}{sizeof}(sei\_code)];}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ rbsp.copy\_sei(tmp,\ \textcolor{keyword}{sizeof}(tmp));}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(sei\_code,\ tmp,\ \textcolor{keyword}{sizeof}(sei\_code))\ ==\ 0)\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ enhancement\_len\ =\ sei\_length\ -\/\ \textcolor{keyword}{sizeof}(sei\_code);}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vector<uint8\_t>\ buf(enhancement\_len);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rbsp.copy\_sei(buf.data(),\ buf.size());}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Additional\ NAL\ Encapsulation\ (LCEVC\ NALU\ Type)}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scan\_enhancement\_nal\_prod(buf.data(),\ buf.size(),\ pts,\ callback);}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{comment}{//\ Find\ any\ enhancement\ data\ in\ unregistered\ SEI\ NALU\ and\ pass\ to\ callback}}
+\DoxyCodeLine{00275\ \textcolor{comment}{//\ Used\ as\ a\ template\ parameter\ to\ scan\_enhancement\_sei\_XXX()}}
+\DoxyCodeLine{00276\ \textcolor{comment}{//}}
+\DoxyCodeLine{00277\ \textcolor{keywordtype}{void}\ UnregisteredSEI::extract\_enhancement\_sei(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ emulation\_prevention,\ uint64\_t\ pts,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ USER\_DATA\_UNREGISTERED\ =\ 5;}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ uuid[16]\ =\ \{0xa7,\ 0xc4,\ 0x6d,\ 0xed,\ 0x49,\ 0xd8,\ 0x38,\ 0xeb,}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x9a,\ 0xad,\ 0x6d,\ 0xa6,\ 0x84,\ 0x97,\ 0xa7,\ 0x54\};}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ rbsp\_decoder\ rbsp(data,\ size,\ emulation\_prevention);}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sei\_type\ =\ 0;}
+\DoxyCodeLine{00287\ \ \ \ \ uint8\_t\ byte;}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{byte}\ =\ rbsp.get\_byte();}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ sei\_type\ +=\ byte;}
+\DoxyCodeLine{00292\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (\textcolor{keywordtype}{byte}\ ==\ 0xFF);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordflow}{if}\ (sei\_type\ ==\ USER\_DATA\_UNREGISTERED)\ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sei\_length\ =\ 0;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{byte}\ =\ rbsp.get\_byte();}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ sei\_length\ +=\ byte;}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (\textcolor{keywordtype}{byte}\ ==\ 0xFF);}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sei\_length\ >\ size)\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}SEI\ length\ overflow"{}});}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ tmp[\textcolor{keyword}{sizeof}(uuid)];}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ rbsp.copy\_sei(tmp,\ \textcolor{keyword}{sizeof}(tmp));}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (memcmp(uuid,\ tmp,\ \textcolor{keyword}{sizeof}(uuid))\ ==\ 0)\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int64\_t\ enhancement\_len\ =\ sei\_length\ -\/\ \textcolor{keyword}{sizeof}(uuid);}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ pss\ =\ Packet::build();}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss.reserve((\textcolor{keywordtype}{unsigned})enhancement\_len);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss.timestamp(pts);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rbsp.copy\_sei(pss.data(),\ enhancement\_len);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ callback(pss.finish(),\ is\_base\_idr);}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \textcolor{comment}{//\ AVC\ NALUs\ headers\ have\ one\ byte\ for\ type}}
+\DoxyCodeLine{00321\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SEI>}
+\DoxyCodeLine{00322\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_sei\_avc(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{comment}{//\ Scan\ for\ SEI\ NALU}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ data\_size\ -\/\ 4;\ ++i)\ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ i)\ \&\&\ data[i\ +\ 3]\ ==\ 0x6)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ size\ of\ NALU}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ e\ =\ (unsigned)data\_size;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ i\ +\ 4;\ j\ <\ data\_size\ -\/\ 3;\ ++j)\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ j))\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ j;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ SEI::extract\_enhancement\_sei(data\ +\ (i\ +\ 4),\ e\ -\/\ (i\ +\ 4),\ \textcolor{keyword}{true},\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{//\ SEI\ can\ survive\ base\ decoder\ -\/\ don't\ remove}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{comment}{//\ HEVC\ NALUs\ headers\ have\ two\ bytes\ for\ type}}
+\DoxyCodeLine{00344\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SEI>}
+\DoxyCodeLine{00345\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_sei\_hevc(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ Scan\ for\ SEI\ NALU}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ data\_size\ -\/\ 5;\ ++i)\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ i)\ \&\&\ data[i\ +\ 3]\ ==\ 0x4e\ \&\&\ data[i\ +\ 4]\ ==\ 0x01)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ size\ of\ NALU}}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ e\ =\ (unsigned)data\_size;}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ i\ +\ 4;\ j\ <\ data\_size\ -\/\ 3;\ ++j)\ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ j))\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ j;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ SEI::extract\_enhancement\_sei(data\ +\ (i\ +\ 5),\ e\ -\/\ (i\ +\ 5),\ \textcolor{keyword}{true},\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \ \ \ \ \}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ SEI\ can\ survive\ base\ decoder\ -\/\ don't\ remove}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00364\ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{comment}{//\ VVC\ NALUs\ headers\ have\ two\ bytes\ for\ type}}
+\DoxyCodeLine{00367\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SEI>}
+\DoxyCodeLine{00368\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_sei\_vvc(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ Scan\ for\ SEI\ NALU}}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ data\_size\ -\/\ 5;\ ++i)\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ i)\ \&\&\ data[i\ +\ 3]\ ==\ 0x00\ \&\&\ (data[i\ +\ 4]\ \&\ 0xf8)\ ==\ 0xb8)\ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Figure\ size\ of\ NALU}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ e\ =\ (unsigned)data\_size;}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ i\ +\ 4;\ j\ <\ data\_size\ -\/\ 3;\ ++j)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nal\_marker(data\ +\ j))\ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ e\ =\ j;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ SEI::extract\_enhancement\_sei(data\ +\ (i\ +\ 5),\ e\ -\/\ (i\ +\ 5),\ \textcolor{keyword}{true},\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{comment}{//\ SEI\ can\ survive\ base\ decoder\ -\/\ don't\ remove}}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00387\ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \textcolor{comment}{//\ EVC\ NALUs\ are\ u32\ size\ prefixed,\ not\ marker\ delimited}}
+\DoxyCodeLine{00390\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SEI>}
+\DoxyCodeLine{00391\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement\_sei\_evc(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{while}\ (offset\ <\ data\_size\ -\/\ 6)\ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ uint32\_t\ nal\_length\ =\ 0;}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ memcpy(\&nal\_length,\ data\ +\ offset,\ 4);}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ uint32\_t\ total\_length\ =\ nal\_length\ +\ 4;}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((data[offset\ +\ 4]\ \&\ 0xfe)\ ==\ 0x38\ \&\&\ (data[offset\ +\ 5]\ \&\ 0x3f)\ ==\ 0x00)\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ SEI::extract\_enhancement\_sei(data\ +\ 6,\ nal\_length\ -\/\ 2,\ \textcolor{keyword}{false},\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ offset\ +=\ total\_length;}
+\DoxyCodeLine{00405\ \ \ \ \ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ SEI\ can\ survive\ base\ decoder\ -\/\ don't\ remove}}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keywordflow}{return}\ data\_size;}
+\DoxyCodeLine{00409\ \}}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \textcolor{comment}{//\ Scan\ for\ enhancement\ data\ in\ buffer\ -\/\ may\ remove\ data\ and\ returns\ new\ size}}
+\DoxyCodeLine{00412\ \textcolor{comment}{//}}
+\DoxyCodeLine{00413\ \textcolor{keywordtype}{size\_t}\ scan\_enhancement(uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ Encapsulation\ encapsulation,\ BaseCoding\ base\_coding,\ uint64\_t\ pts,}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ std::function<\textcolor{keywordtype}{void}(\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)>\ callback)\ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{switch}\ (encapsulation)\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordflow}{case}\ Encapsulation\_SEI\_Registered:}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (base\_coding)\ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_AVC:}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_avc<RegisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_HEVC:}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_hevc<RegisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_VVC:}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_vvc<RegisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_EVC:}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_evc<RegisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{case}\ Encapsulation\_SEI\_Unregistered:}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (base\_coding)\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_AVC:}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_avc<UnregisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_HEVC:}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_hevc<UnregisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_VVC:}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_vvc<UnregisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_EVC:}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_sei\_evc<UnregisteredSEI>(data,\ data\_size,\ pts,\ is\_base\_idr,\ callback);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordflow}{case}\ Encapsulation\_NAL:}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (base\_coding)\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_AVC:}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_HEVC:}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_VVC:}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_EVC:}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal\_evc(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ BaseCoding\_YUV:}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{keywordflow}{case}\ Encapsulation\_None:}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ scan\_enhancement\_nal(data,\ data\_size,\ pts,\ callback);}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00465\ \ \ \ \ \}}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00468\ \}}
+\DoxyCodeLine{00469\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

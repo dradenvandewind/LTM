@@ -1,0 +1,185 @@
+\doxysection{CABACReader.\+h}
+\label{CABACReader_8h_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/DecoderLib/CABACReader.h@{deps/base\_vvc/minimum\_VTM/source/Lib/DecoderLib/CABACReader.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#ifndef\ \_\_CABACREADER\_\_}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ \_\_CABACREADER\_\_}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}BinDecoder.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}CommonLib/ContextModelling.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}CommonLib/MotionInfo.h"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}CommonLib/UnitPartitioner.h"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }CABACReader}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00052\ \ \ CABACReader(BinDecoderBase\&\ binDecoder)\ :\ m\_BinDecoder(binDecoder),\ m\_Bitstream(0)\ \{\}}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{virtual}\ \string~CABACReader()\ \{\}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00056\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ initCtxModels\ \ \ \ \ \ \ \ \ \ \ \ \ (\ Slice\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slice\ );}
+\DoxyCodeLine{00057\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ initBitstream\ \ \ \ \ \ \ \ \ \ \ \ \ (\ InputBitstream*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitstream\ )\ \ \ \ \ \ \ \ \ \ \ \{\ m\_Bitstream\ =\ bitstream;\ m\_BinDecoder.init(\ m\_Bitstream\ );\ \}}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{const}\ Ctx\&\ \ getCtx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ \ \ }\{\ \textcolor{keywordflow}{return}\ m\_BinDecoder.getCtx();\ \ \}}
+\DoxyCodeLine{00059\ \ \ Ctx\&\ \ \ \ \ \ \ \ getCtx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_BinDecoder.getCtx();\ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00062\ \ \ \textcolor{comment}{//\ slice\ segment\ data\ (clause\ 7.3.8.1)}}
+\DoxyCodeLine{00063\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ terminating\_bit\ \ \ \ \ \ \ \ \ \ \ ();}
+\DoxyCodeLine{00064\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ remaining\_bytes\ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ noTrailingBytesExpected\ );}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \textcolor{comment}{//\ coding\ tree\ unit\ (clause\ 7.3.8.2)}}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ coding\_tree\_unit\ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ \textcolor{keyword}{const}\ UnitArea\&\ area,\ \ \ \ \ \textcolor{keywordtype}{int}\ (\&qps)[2],\ \ \ \textcolor{keywordtype}{unsigned}\ \ ctuRsAddr\ );}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \textcolor{comment}{//\ sao\ (clause\ 7.3.8.3)}}
+\DoxyCodeLine{00070\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ sao\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ ctuRsAddr\ );}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ readAlfCtuFilterIndex(CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ ctuRsAddr);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordtype}{void}\ ccAlfFilterControlIdc(CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ ComponentID\ compID,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ curIdx,\ uint8\_t\ *filterControlIdc,}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Position\ lumaPos,\ \textcolor{keywordtype}{int}\ filterCount);}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \textcolor{comment}{//\ coding\ (quad)tree\ (clause\ 7.3.8.4)}}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ coding\_tree\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ Partitioner\&\ \ \ \ pm,\ \ \ \ \ \ \ CUCtx\&\ cuCtx,\ Partitioner*\ pPartitionerChroma\ =\ \textcolor{keyword}{nullptr},\ CUCtx*\ pCuCtxChroma\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00079\ \ \ PartSplit\ \ \ split\_cu\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ Partitioner\&\ \ \ \ pm\ );}
+\DoxyCodeLine{00080\ \ \ ModeType\ \ \ \ mode\_constraint\ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ Partitioner\&\ \ \ \ pm,\ \ \ \ \ \ \ \textcolor{keyword}{const}\ PartSplit\ splitMode\ );}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \textcolor{comment}{//\ coding\ unit\ (clause\ 7.3.8.5)}}
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ coding\_unit\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ Partitioner\&\ \ \ \ pm,\ \ \ \ \ \ \ CUCtx\&\ cuCtx\ );}
+\DoxyCodeLine{00084\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_skip\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ pred\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ bdpcm\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ );}
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_pred\_data\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_bcw\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ extend\_ref\_line\ \ \ \ \ \ \ \ \ \ \ (CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu);}
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ intra\_luma\_pred\_modes\ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ intra\_chroma\_pred\_modes\ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ intra\_chroma\_lmc\_mode\ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ intra\_chroma\_pred\_mode\ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_residual\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ Partitioner\&\ \ \ \ pm,\ \ \ \ \ \ \ CUCtx\&\ cuCtx\ );}
+\DoxyCodeLine{00095\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ rqt\_root\_cbf\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ adaptive\_color\_transform(CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ cu);}
+\DoxyCodeLine{00097\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ sbt\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00098\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ end\_of\_ctu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ CUCtx\&\ \ \ \ \ \ \ \ \ \ cuCtx\ );}
+\DoxyCodeLine{00099\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mip\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00100\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mip\_pred\_modes\ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mip\_pred\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_palette\_info\ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ ComponentID\ \ \ \ \ compBegin,\ uint32\_t\ numComp,\ CUCtx\&\ cuCtx\ );}
+\DoxyCodeLine{00103\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cuPaletteSubblockInfo\ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ ComponentID\ \ \ \ \ compBegin,\ uint32\_t\ numComp,\ \textcolor{keywordtype}{int}\ subSetId,\ uint32\_t\&\ prevRunPos,\ \textcolor{keywordtype}{unsigned}\&\ prevRunType\ );}
+\DoxyCodeLine{00104\ \ \ \textcolor{comment}{//\ prediction\ unit\ (clause\ 7.3.8.6)}}
+\DoxyCodeLine{00105\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ prediction\_unit\ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu,\ \ \ \ \ MergeCtx\&\ \ \ \ \ \ \ mrgCtx\ );}
+\DoxyCodeLine{00106\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ merge\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00107\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ merge\_data\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ affine\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00109\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ subblock\_merge\_flag\ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00110\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ merge\_idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00111\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mmvd\_merge\_idx(PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu);}
+\DoxyCodeLine{00112\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ imv\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ MergeCtx\&\ \ \ \ \ \ \ mrgCtx\ );}
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ affine\_amvr\_mode\ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ MergeCtx\&\ \ \ \ \ \ \ mrgCtx\ );}
+\DoxyCodeLine{00114\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ inter\_pred\_idc\ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ ref\_idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu,\ \ \ \ \ RefPicList\ \ \ \ \ \ eRefList\ );}
+\DoxyCodeLine{00116\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mvp\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu,\ \ \ \ \ RefPicList\ \ \ \ \ \ eRefList\ );}
+\DoxyCodeLine{00117\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ Ciip\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00118\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ smvd\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ PredictionUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu\ );}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \textcolor{comment}{//\ transform\ tree\ (clause\ 7.3.8.8)}}
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ transform\_tree\ \ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ Partitioner\&\ \ \ \ pm,\ CUCtx\&\ cuCtx,\ \textcolor{keyword}{const}\ PartSplit\ ispType\ =\ TU\_NO\_ISP,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ subTuIdx\ =\ -\/1\ );}
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ cbf\_comp\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingStructure\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ cs,\ \ \ \ \ \textcolor{keyword}{const}\ CompArea\&\ area,\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ depth,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ prevCbf\ =\ \textcolor{keyword}{false},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ useISP\ =\ \textcolor{keyword}{false}\ );}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{comment}{//\ mvd\ coding\ (clause\ 7.3.8.9)}}
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mvd\_coding\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ Mv\ \&rMvd\ );}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ transform\ unit\ (clause\ 7.3.8.10)}}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ transform\_unit\ \ \ \ \ \ \ \ \ \ \ \ (\ TransformUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tu,\ \ \ \ \ CUCtx\&\ \ \ \ \ \ \ \ \ \ cuCtx,\ Partitioner\&\ pm,\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ subTuCounter\ =\ -\/1\ );}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_qp\_delta\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ predQP,\ int8\_t\&\ qp\ );}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ cu\_chroma\_qp\_offset\ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \textcolor{comment}{//\ residual\ coding\ (clause\ 7.3.8.11)}}
+\DoxyCodeLine{00134\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ residual\_coding\ \ \ \ \ \ \ \ \ \ \ (\ TransformUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tu,\ \ \ \ \ ComponentID\ \ \ \ \ compID,\ CUCtx\&\ cuCtx\ );}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ ts\_flag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ TransformUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tu,\ \ \ \ \ ComponentID\ \ \ \ \ compID\ );}
+\DoxyCodeLine{00136\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ mts\_idx\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ CUCtx\&\ \ \ \ \ \ \ \ \ \ cuCtx\ \ );}
+\DoxyCodeLine{00137\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ residual\_lfnst\_mode\ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu,\ \ \ \ \ CUCtx\&\ \ \ \ \ \ \ \ \ \ cuCtx\ \ );}
+\DoxyCodeLine{00138\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ isp\_mode\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu\ );}
+\DoxyCodeLine{00139\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ last\_sig\_coeff\ \ \ \ \ \ \ \ \ \ \ \ (\ CoeffCodingContext\&\ \ \ \ \ \ \ \ \ \ \ cctx,\ \ \ TransformUnit\&\ tu,\ ComponentID\ \ \ compID\ );}
+\DoxyCodeLine{00140\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ residual\_coding\_subblock\ \ (\ CoeffCodingContext\&\ \ \ \ \ \ \ \ \ \ \ cctx,\ \ \ TCoeff*\ \ \ \ \ \ \ \ \ coeff,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ stateTransTable,\ \textcolor{keywordtype}{int}\&\ state\ );}
+\DoxyCodeLine{00141\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ residual\_codingTS\ \ \ \ \ \ \ \ \ (\ TransformUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tu,\ \ \ \ \ ComponentID\ \ \ \ \ compID\ );}
+\DoxyCodeLine{00142\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ residual\_coding\_subblockTS(\ CoeffCodingContext\&\ \ \ \ \ \ \ \ \ \ \ cctx,\ \ \ TCoeff*\ \ \ \ \ \ \ \ \ coeff\ \ );}
+\DoxyCodeLine{00143\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ joint\_cb\_cr\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ TransformUnit\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tu,\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ cbfMask\ );}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00147\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ unary\_max\_symbol\ \ \ \ \ \ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ ctxId0,\ \textcolor{keywordtype}{unsigned}\ ctxIdN,\ \textcolor{keywordtype}{unsigned}\ maxSymbol\ );}
+\DoxyCodeLine{00148\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ unary\_max\_eqprob\ \ \ \ \ \ \ \ \ \ (\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxSymbol\ );}
+\DoxyCodeLine{00149\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ exp\_golomb\_eqprob\ \ \ \ \ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ count\ );}
+\DoxyCodeLine{00150\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ get\_num\_bits\_read\ \ \ \ \ \ \ \ \ ()\ \{\ \textcolor{keywordflow}{return}\ m\_BinDecoder.getNumBitsRead();\ \}}
+\DoxyCodeLine{00151\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ code\_unary\_fixed\ \ \ \ \ \ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ ctxId,\ \textcolor{keywordtype}{unsigned}\ unary\_max,\ \textcolor{keywordtype}{unsigned}\ fixed\ );}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ xReadTruncBinCode(uint32\_t\&\ symbol,\ uint32\_t\ maxSymbol);}
+\DoxyCodeLine{00154\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ parseScanRotationModeFlag\ (\ CodingUnit\&\ cu,\ \ \ \ \ \ \ \ \ \ \ ComponentID\ compBegin\ );}
+\DoxyCodeLine{00155\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ xDecodePLTPredIndicator\ \ \ (\ CodingUnit\&\ cu,\ \ \ \ \ \ \ \ \ \ \ uint32\_t\ maxPLTSize,\ \ \ ComponentID\ compBegin\ );}
+\DoxyCodeLine{00156\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ xAdjustPLTIndex\ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ cu,\ \ \ \ \ \ \ \ \ \ \ Pel\ curLevel,\ \ \ \ \ \ \ \ \ \ uint32\_t\ idx,\ PelBuf\&\ paletteIdx,\ PLTtypeBuf\&\ paletteRunType,\ \textcolor{keywordtype}{int}\ maxSymbol,\ ComponentID\ compBegin\ );}
+\DoxyCodeLine{00157\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00158\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00159\ \ \ BinDecoderBase\&\ m\_BinDecoder;}
+\DoxyCodeLine{00160\ \ \ InputBitstream*\ m\_Bitstream;}
+\DoxyCodeLine{00161\ \ \ ScanElement*\ \ \ \ m\_scanOrder;}
+\DoxyCodeLine{00162\ \};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{keyword}{class\ }CABACDecoder}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00168\ \ \ CABACDecoder()}
+\DoxyCodeLine{00169\ \ \ \ \ :\ m\_CABACReaderStd\ \ (\ m\_BinDecoderStd\ )}
+\DoxyCodeLine{00170\ \ \ \ \ ,\ m\_CABACReader\ \ \ \ \ \{\ \&m\_CABACReaderStd\ \}}
+\DoxyCodeLine{00171\ \ \ \{\}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ CABACReader*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getCABACReader\ \ \ \ (\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}\ \ \ \ )\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_CABACReader[id];\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00176\ \ \ BinDecoder\_Std\ \ \ \ \ \ \ \ \ \ m\_BinDecoderStd;}
+\DoxyCodeLine{00177\ \ \ CABACReader\ \ \ \ \ \ \ \ \ \ \ \ \ m\_CABACReaderStd;}
+\DoxyCodeLine{00178\ \ \ CABACReader*\ \ \ \ \ \ \ \ \ \ \ \ m\_CABACReader[BPM\_NUM-\/1];}
+\DoxyCodeLine{00179\ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

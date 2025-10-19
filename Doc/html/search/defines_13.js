@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['sad_5finc_0',['SAD_INC',['../RdCost_8cpp.html#afdf8cd6715146cc755166531fadcd494',1,'RdCost.cpp']]],
+  ['sad_5fop_1',['SAD_OP',['../RdCost_8cpp.html#a779db6bfc595c19c29cddb85f76b4654',1,'RdCost.cpp']]],
+  ['shared_5fload_2',['SHARED_LOAD',['../SharedLibrary_8hpp.html#aa1404ab99d89ba6b8391bb264fb58330',1,'SharedLibrary.hpp']]],
+  ['shared_5fprefix_3',['SHARED_PREFIX',['../SharedLibrary_8hpp.html#a80c3df2e5c0dfed69404eab1f0aba2c2',1,'SharedLibrary.hpp']]],
+  ['shared_5fsuffix_4',['SHARED_SUFFIX',['../SharedLibrary_8hpp.html#a96d3aa8188105eb95895d00802737b61',1,'SharedLibrary.hpp']]],
+  ['shared_5fsymbol_5',['SHARED_SYMBOL',['../SharedLibrary_8hpp.html#a7fa275035faa1054cc5a011dfba8dc03',1,'SharedLibrary.hpp']]],
+  ['sharp_5fluma_5fdelta_5fqp_6',['SHARP_LUMA_DELTA_QP',['../TypeDef_8h.html#aa3dd5eb258592cca7c1abee6d8bd38b6',1,'TypeDef.h']]],
+  ['sign_7',['SIGN',['../TypeDef_8h.html#a8c5ff70b6b28cd0157c50a22406f92c4',1,'TypeDef.h']]],
+  ['simd_5fenable_8',['SIMD_ENABLE',['../TypeDef_8h.html#ab0fe93a6fe2558c1c449ab644f905a96',1,'TypeDef.h']]],
+  ['simulcast_5fenable_9',['SIMULCAST_ENABLE',['../defines_8h.html#ab59cab4b6cab88ac774bbfdb545d1890',1,'defines.h']]],
+  ['size_5faware_5fper_5fel_5fop_10',['SIZE_AWARE_PER_EL_OP',['../Buffer_8h.html#a9ca9e4fbaf73448fb4be133c4f3d41e9',1,'Buffer.h']]],
+  ['slice_5fb_11',['SLICE_B',['../uBaseDecoderEVC_8cpp.html#a6e589c0fcd9ae0dc855599516f9c30c7',1,'uBaseDecoderEVC.cpp']]],
+  ['slice_5fi_12',['SLICE_I',['../uBaseDecoderEVC_8cpp.html#ace8e4f5904d21a2b9aa3f30c6de12a66',1,'uBaseDecoderEVC.cpp']]],
+  ['slice_5fp_13',['SLICE_P',['../uBaseDecoderEVC_8cpp.html#acffeadb527f5a0c3d68a65af2c552134',1,'uBaseDecoderEVC.cpp']]],
+  ['smb_5fblock_5fsize_14',['SMB_BLOCK_SIZE',['../defines_8h.html#a92258244c1f1847a8bbd5eb90296f31e',1,'defines.h']]],
+  ['sse_5fmemory_5falignment_15',['SSE_MEMORY_ALIGNMENT',['../defines_8h.html#ad3617a8fea98f9aff9f32a4b30854bcd',1,'defines.h']]],
+  ['stat_5fdata_5fsize_16',['STAT_DATA_SIZE',['../BitstreamStatistic_8hpp.html#a87d7c82886b5b8349c9a3295bf375ee6',1,'BitstreamStatistic.hpp']]],
+  ['stat_5fentropy_5fcode_17',['STAT_ENTROPY_CODE',['../BitstreamStatistic_8hpp.html#a83395690a1e154c0d666b51a1e66401e',1,'BitstreamStatistic.hpp']]],
+  ['stat_5fentropy_5fenabled_18',['STAT_ENTROPY_ENABLED',['../BitstreamStatistic_8hpp.html#acd19c06659e63978c0c6c8537226646b',1,'BitstreamStatistic.hpp']]],
+  ['stat_5fentropy_5fsymbol_19',['STAT_ENTROPY_SYMBOL',['../BitstreamStatistic_8hpp.html#acfad44faad655c1bdf0f5565d6a51025',1,'BitstreamStatistic.hpp']]],
+  ['stat_5frle_5fonly_20',['STAT_RLE_ONLY',['../BitstreamStatistic_8hpp.html#ae8ca9f7e4f9fe7d84356b2f7adb2b5b0',1,'BitstreamStatistic.hpp']]],
+  ['static_21',['static',['../ifunctions_8h.html#aa261b98e7b0037f2a9f13cbb4b8539d7',1,'ifunctions.h']]],
+  ['statistic_5fcategories_22',['STATISTIC_CATEGORIES',['../BitstreamStatistic_8hpp.html#a16b9ec2e67edaeb76727f79911cbfd7b',1,'BitstreamStatistic.hpp']]],
+  ['subs_5finc_23',['SUBS_INC',['../Buffer_8h.html#adcf2c983f9356659baf0140bbfe3087f',1,'Buffer.h']]],
+  ['subs_5fop_24',['SUBS_OP',['../Buffer_8h.html#acfc8b8ea5d5ad1c0875484867cb33479',1,'Buffer.h']]]
+];

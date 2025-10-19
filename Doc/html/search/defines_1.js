@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['add_5favg_5fcore_5finc_0',['ADD_AVG_CORE_INC',['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#ab28daf3b8d1a63e20b5b16c9863c0794',1,'Buffer.cpp']]],
+  ['add_5favg_5fcore_5fop_1',['ADD_AVG_CORE_OP',['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#a8ae949649cc50b25259bbbb42c4fc2bf',1,'Buffer.cpp']]],
+  ['add_5favg_5finc_2',['add_avg_inc',['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#ace1f830b58fe125872ee70d2a9dd74d0',1,'ADD_AVG_INC:&#160;Buffer.cpp'],['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#ace1f830b58fe125872ee70d2a9dd74d0',1,'ADD_AVG_INC:&#160;Buffer.cpp']]],
+  ['add_5favg_5fop_3',['add_avg_op',['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#a54abb88c0f5c48d0ac6b3024d8545f1f',1,'ADD_AVG_OP:&#160;Buffer.cpp'],['../deps_2base__vvc_2minimum__VTM_2source_2Lib_2CommonLib_2Buffer_8cpp.html#a54abb88c0f5c48d0ac6b3024d8545f1f',1,'ADD_AVG_OP:&#160;Buffer.cpp']]],
+  ['align_5fdata_4',['ALIGN_DATA',['../CommonDef_8h.html#aa0c44ec55b83a0b64b8bada4ef9da78b',1,'CommonDef.h']]],
+  ['aligned_5fmalloc_5',['ALIGNED_MALLOC',['../CommonDef_8h.html#a1f9d082d1ea749a1ef3b359ac8280377',1,'CommonDef.h']]],
+  ['always_5finline_6',['ALWAYS_INLINE',['../CommonDef_8h.html#aa1dec568e79152c892dcf63f445cbd7a',1,'CommonDef.h']]],
+  ['app_5fpel_5f16bit_7',['APP_PEL_16BIT',['../util_8h.html#abc21e27d32ba7577c1a633f92ed0ed38',1,'util.h']]],
+  ['apply_5fsbt_5fsl_5fon_5fmts_8',['APPLY_SBT_SL_ON_MTS',['../TypeDef_8h.html#a32db6563e5b2491d7dd2f45918f1c660',1,'TypeDef.h']]],
+  ['array_5fsize_9',['ARRAY_SIZE',['../Misc_8hpp.html#a25f003de16c08a4888b69f619d70f427',1,'Misc.hpp']]],
+  ['avcmaxppscount_10',['AVCMaxPPSCount',['../uBaseDecoderAVC_8h.html#a5a8b37ddcc2dda4cec65875ce7d3e232',1,'uBaseDecoderAVC.h']]],
+  ['avcmaxshorttermrefpicsets_11',['AVCMaxShortTermRefPicSets',['../uBaseDecoderAVC_8h.html#a5157404b32ddfc9886a0fb0689bfae92',1,'uBaseDecoderAVC.h']]],
+  ['avcmaxslicegroupids_12',['AVCMaxSliceGroupIDs',['../uBaseDecoderAVC_8h.html#a770aa59b50e3c96dfdae01051cb1a063',1,'uBaseDecoderAVC.h']]],
+  ['avcmaxspscount_13',['AVCMaxSPSCount',['../uBaseDecoderAVC_8h.html#a4ed2bbe0291433c07b139d65f4e30c2b',1,'uBaseDecoderAVC.h']]],
+  ['avcnummmco_14',['AVCNumMMCO',['../uBaseDecoderAVC_8h.html#a03a3045504a1b51b29cc7e3b4d6a7db0',1,'uBaseDecoderAVC.h']]],
+  ['avg_5finc_15',['AVG_INC',['../Buffer_8h.html#ac50f40717a06edfa54e85393c8eef360',1,'Buffer.h']]],
+  ['avg_5fop_16',['AVG_OP',['../Buffer_8h.html#ac6dfc5872c3f6d2ab83fafff904a2820',1,'Buffer.h']]]
+];

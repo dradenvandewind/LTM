@@ -1,0 +1,467 @@
+\doxysection{Entropy\+Decoder.\+cpp}
+\label{EntropyDecoder_8cpp_source}\index{decoder/src/EntropyDecoder.cpp@{decoder/src/EntropyDecoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ EntropyDecoder.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}EntropyDecoder.hpp"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BitstreamUnpacker.hpp"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}HuffmanDecoder.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Abstract\ interface\ for\ reading\ RLE\ symbols\ for\ surface.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }SymbolSource\ \{}
+\DoxyCodeLine{00054\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{virtual}\ \string~SymbolSource()\{\};}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ start()\ =\ 0;}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ get(\textcolor{keywordtype}{unsigned}\ state)\ =\ 0;}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{unsigned}\ get\_byte()\ =\ 0;}
+\DoxyCodeLine{00059\ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ SymbolSourceConstant}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Always\ return\ a\ constant}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//}}
+\DoxyCodeLine{00065\ \textcolor{keyword}{class\ }SymbolSourceConstant\ :\ \textcolor{keyword}{public}\ SymbolSource\ \{}
+\DoxyCodeLine{00066\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \ \ SymbolSourceConstant(\textcolor{keywordtype}{unsigned}\ c)\ :\ c\_(c)\ \{\}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\textcolor{keyword}{\ override\ }\{\}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get(\textcolor{keywordtype}{unsigned}\ state)\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ c\_;\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get\_byte()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ c\_;\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ c\_;}
+\DoxyCodeLine{00077\ \};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ SymbolSourceRaw}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ Treats\ source\ data\ as\ raw\ symbols\ with\ no\ coding}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{class\ }SymbolSourceRaw\ :\ \textcolor{keyword}{public}\ SymbolSource\ \{}
+\DoxyCodeLine{00084\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00085\ \ \ \ \ SymbolSourceRaw(BitstreamUnpacker\ \&b)\ :\ b\_(b)\ \{\}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\textcolor{keyword}{\ override\ }\{\}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get(\textcolor{keywordtype}{unsigned}\ state)\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ b\_.byte();\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get\_byte()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ b\_.byte();\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00094\ \ \ \ \ BitstreamUnpacker\ \&b\_;}
+\DoxyCodeLine{00095\ \};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ SymbolSourceHuffman}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ Source\ is\ huffman\ coded\ data,\ using\ different\ trees\ for\ each\ part\ of\ the\ RLE\ coding.}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{class\ }SymbolSourceHuffman\ :\ \textcolor{keyword}{public}\ SymbolSource\ \{}
+\DoxyCodeLine{00102\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00103\ \ \ \ \ SymbolSourceHuffman(\textcolor{keywordtype}{unsigned}\ num\_states,\ BitstreamUnpacker\ \&b)\ :\ states\_(num\_states),\ b\_(b)\ \{\}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ states\_.size();\ ++i)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ states\_[i].read\_codes(b\_);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get(\textcolor{keywordtype}{unsigned}\ state)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ assert(state\ <\ states\_.size());}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ states\_[state].decode\_symbol(b\_);}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ get\_byte()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ b\_.u(8,\ \textcolor{stringliteral}{"{}first\_symbol"{}});\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00119\ \ \ \ \ std::vector<HuffmanDecoder>\ states\_;}
+\DoxyCodeLine{00120\ \ \ \ \ BitstreamUnpacker\ \&b\_;}
+\DoxyCodeLine{00121\ \};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ Create\ symbol\ source\ for\ given\ encoded\ data}}
+\DoxyCodeLine{00124\ \textcolor{comment}{//}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{static}\ std::unique\_ptr<SymbolSource>\ create\_symbol\_source(\textcolor{keywordtype}{unsigned}\ num\_states,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BitstreamUnpacker\ \&b,\ \textcolor{keywordtype}{unsigned}\ constant)\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled)\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rle\_only)}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<SymbolSource>(\textcolor{keyword}{new}\ SymbolSourceRaw(b));}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<SymbolSource>(\textcolor{keyword}{new}\ SymbolSourceHuffman(num\_states,\ b));}
+\DoxyCodeLine{00132\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<SymbolSource>(\textcolor{keyword}{new}\ SymbolSourceConstant(constant));}
+\DoxyCodeLine{00134\ \ \ \ \ \}}
+\DoxyCodeLine{00135\ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00138\ \textcolor{comment}{//}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ Run\ Length\ coded\ residuals}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//}}
+\DoxyCodeLine{00141\ EntropyDecoderResidualsBase::rle\_pel\_t\ EntropyDecoderResidualsBase::decode\_pel(SymbolSource\ \&source)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00142\ \ \ \ \ rle\_pel\_t\ r\ =\ \{0,\ 0\};}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ symbol\ =\ source.get(STATE\_LSB);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ If\ bit\ 0\ is\ set,\ an\ MS\ byte\ follows}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{if}\ (symbol\ \&\ 0x01)\ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ lsb\_symbol\ =\ symbol;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ symbol\ =\ source.get(STATE\_MSB);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ r.pel\ =\ ((((symbol\ \&\ 0x7f)\ <<\ 8)\ |\ (lsb\_symbol\ \&\ 0xfe))\ >>\ 1)\ -\/\ 0x2000;}
+\DoxyCodeLine{00151\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ r.pel\ =\ ((symbol\ \&\ 0x7e)\ -\/\ 0x40)\ >>\ 1;}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ if\ the\ bit\ 7\ is\ set,\ zero\ run\ count\ follows}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{if}\ (symbol\ \&\ 0x80)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ LSByte\ first}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ \ \ \ \ /***}}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ \ \ \ \ \ \ unsigned\ bit\_offset\ =\ 0;}}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ \ \ \ \ \ \ do\ \{}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ symbol\ =\ source.get(STATE\_ZERO);}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ r.zero\_runlength\ |=\ (symbol\ \&\ 0x7f)\ <<\ bit\_offset;}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ bit\_offset\ +=\ 7;}}
+\DoxyCodeLine{00164\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}\ while\ (symbol\ \&\ 0x80);}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ \ \ \ \ \ \ ***/}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ MSByte\ first}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ r.zero\_runlength\ =\ 0;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ symbol\ =\ source.get(STATE\_ZERO);}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ r.zero\_runlength\ =\ (r.zero\_runlength\ <<\ 7)\ |\ (symbol\ \&\ 0x7f);}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (symbol\ \&\ 0x80);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00177\ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{comment}{//\ Decoding\ full\ frame\ raster\ order}}
+\DoxyCodeLine{00180\ Surface\ EntropyDecoderResiduals::process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BitstreamUnpacker\ \&b)\ \{}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{comment}{//\ Set\ up\ source\ of\ symbols\ -\/\ empty\ layers\ are\ have\ a\ constant\ value\ of\ 0x40}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symbol\_source(create\_symbol\_source(STATE\_COUNT,\ entropy\_enabled,\ rle\_only,\ b,\ 0x40));}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//\ Make\ the\ new\ surface}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00187\ \ \ \ \ dest.reserve(width,\ height);}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ Current\ PEL/run\ value}}
+\DoxyCodeLine{00190\ \ \ \ \ rle\_pel\_t\ current\ =\ \{0,\ 0\};}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ Read\ any\ huffman\ tables}}
+\DoxyCodeLine{00193\ \ \ \ \ symbol\_source-\/>start();}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current.zero\_runlength\ >\ 0)\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ the\ run\ of\ zeros}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ 0);}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ 0;}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/current.zero\_runlength;}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ PEL\ value}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\ =\ decode\_pel(*symbol\_source);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ current.pel);}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ current.pel;}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00213\ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \textcolor{comment}{//\ Decoding\ in\ coding\ unit\ order}}
+\DoxyCodeLine{00216\ Surface\ EntropyDecoderResidualsTiled::process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BitstreamUnpacker\ \&b,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ Set\ up\ source\ of\ symbols\ -\/\ empty\ layers\ are\ have\ a\ constant\ value\ of\ 0x40}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symbol\_source(create\_symbol\_source(STATE\_COUNT,\ entropy\_enabled,\ rle\_only,\ b,\ 0x40));}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ Make\ the\ new\ surface}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00223\ \ \ \ \ dest.reserve(width,\ height);}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ Current\ PEL/run\ value}}
+\DoxyCodeLine{00229\ \ \ \ \ rle\_pel\_t\ current\ =\ \{0,\ 0\};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ Read\ any\ huffman\ tables}}
+\DoxyCodeLine{00232\ \ \ \ \ symbol\_source-\/>start();}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ (unsigned\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ LCEVC\_MIN(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ dest.data(tx,\ y);}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ (unsigned\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ LCEVC\_MIN(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (current.zero\_runlength\ >\ 0)\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ the\ run\ of\ zeros}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x,\ y,\ 0);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ 0;}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/current.zero\_runlength;}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ PEL\ value}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\ =\ decode\_pel(*symbol\_source);}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x,\ y,\ current.pel);}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ current.pel;}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00263\ \textcolor{comment}{//}}
+\DoxyCodeLine{00264\ \textcolor{comment}{//\ Run\ Length\ coded\ temporal\ bits}}
+\DoxyCodeLine{00265\ \textcolor{comment}{//}}
+\DoxyCodeLine{00266\ \textcolor{keywordtype}{unsigned}\ EntropyDecoderTemporal::decode\_run(SymbolSource\ \&source,\ \textcolor{keywordtype}{bool}\ symbol)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ c\ =\ 0;}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ c\ =\ source.get(symbol\ ?\ STATE\_ONE\_RUN\ :\ STATE\_ZERO\_RUN);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ count\ =\ (count\ <<\ 7)\ |\ (c\ \&\ 0x7f);}
+\DoxyCodeLine{00272\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (c\ \&\ 0x80);}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00275\ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ Surface\ EntropyDecoderTemporal::process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{bool}\ entropy\_enabled,\ \textcolor{keywordtype}{bool}\ rle\_only,\ BitstreamUnpacker\ \&b,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{bool}\ use\_reduced\_signalling)\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symbol\_source(create\_symbol\_source(STATE\_COUNT,\ entropy\_enabled,\ rle\_only,\ b,\ 0));}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ Make\ the\ new\ surface}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{00283\ \ \ \ \ dest.reserve(width,\ height);}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{keywordflow}{if}\ (!entropy\_enabled)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ dest.fill(TemporalType::TEMPORAL\_PRED,\ width,\ height).finish();}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ Read\ any\ huffman\ tables}}
+\DoxyCodeLine{00292\ \ \ \ \ symbol\_source-\/>start();}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{comment}{//\ Get\ the\ first\ symbol\ \&\ count}}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordtype}{bool}\ symbol\ =\ (symbol\_source-\/>get\_byte()\ !=\ 0);}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ decode\_run(*symbol\_source,\ symbol);}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ ..}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ intra\_tile\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ (unsigned\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ LCEVC\_MIN(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ *\_\_restrict\ pdst\ =\ dest.data(tx,\ y);}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ (unsigned\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ LCEVC\_MIN(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_reduced\_signalling\ \&\&\ intra\_tile)\ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ whole\ tile\ was\ flagged\ as\ intra}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ TemporalType::TEMPORAL\_INTR;}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ next\ symbol}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (count\ ==\ 0)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flip\ symbol\ and\ get\ next\ count}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ symbol\ =\ !symbol;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ decode\_run(*symbol\_source,\ symbol);}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ for\ intra\ tile}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_reduced\_signalling\ \&\&\ symbol\ \&\&\ tx\ ==\ x\ \&\&\ ty\ ==\ y)}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intra\_tile\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ to\ dst}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ symbol\ ?\ TemporalType::TEMPORAL\_INTR\ :\ TemporalType::TEMPORAL\_PRED);}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (symbol\ ?\ TemporalType::TEMPORAL\_INTR\ :\ TemporalType::TEMPORAL\_PRED);}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count-\/-\/;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00337\ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00340\ \textcolor{comment}{//}}
+\DoxyCodeLine{00341\ \textcolor{comment}{//\ Run\ Length\ coded\ temporal\ bits}}
+\DoxyCodeLine{00342\ \textcolor{comment}{//}}
+\DoxyCodeLine{00343\ \textcolor{keywordtype}{unsigned}\ EntropyDecoderFlags::decode\_run(SymbolSource\ \&source,\ \textcolor{keywordtype}{bool}\ symbol)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ c\ =\ 0;}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ c\ =\ source.get(symbol\ ?\ STATE\_ONE\_RUN\ :\ STATE\_ZERO\_RUN);}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ count\ =\ (count\ <<\ 7)\ |\ (c\ \&\ 0x7f);}
+\DoxyCodeLine{00349\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (c\ \&\ 0x80);}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordflow}{return}\ count;}
+\DoxyCodeLine{00352\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ Surface\ EntropyDecoderFlags::process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ BitstreamUnpacker\ \&b)\ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symbol\_source(create\_symbol\_source(STATE\_COUNT,\ \textcolor{keyword}{true},\ \textcolor{keyword}{true},\ b,\ 0));}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{comment}{//\ Make\ the\ new\ surface}}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{00359\ \ \ \ \ dest.reserve(width,\ height);}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{comment}{//\ Read\ any\ huffman\ tables}}
+\DoxyCodeLine{00362\ \ \ \ \ symbol\_source-\/>start();}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ Get\ the\ first\ symbol\ \&\ count}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keywordtype}{bool}\ symbol\ =\ (symbol\_source-\/>get\_byte()\ !=\ 0);}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ decode\_run(*symbol\_source,\ symbol);}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ ..}}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ uint8\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ intra\_tile\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ next\ symbol}}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (count\ ==\ 0)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flip\ symbol\ and\ get\ next\ count}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ symbol\ =\ !symbol;}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ decode\_run(*symbol\_source,\ symbol);}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Write\ to\ dst}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dest.write(x,\ y,\ symbol\ ?\ 0xff\ :\ 0x00);}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ (symbol\ ?\ 0xff\ :\ 0x00);}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ count-\/-\/;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00388\ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00391\ \textcolor{comment}{//}}
+\DoxyCodeLine{00392\ \textcolor{comment}{//\ Coded\ sizes}}
+\DoxyCodeLine{00393\ \textcolor{comment}{//}}
+\DoxyCodeLine{00394\ uint16\_t\ EntropyDecoderSizes::decode\_size(SymbolSource\ \&source)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ l\ =\ source.get(STATE\_LSB);}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{comment}{//\ If\ bit\ 0\ is\ set,\ an\ MS\ byte\ follows}}
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keywordflow}{if}\ (l\ \&\ 0x01)\ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ m\ =\ source.get(STATE\_MSB);}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (l\ >>\ 1)\ +\ (m\ <<\ 7);}
+\DoxyCodeLine{00402\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ l\ >>\ 1;}
+\DoxyCodeLine{00404\ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ int16\_t\ EntropyDecoderSizes::decode\_size\_delta(SymbolSource\ \&source)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ l\ =\ source.get(STATE\_LSB);}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{comment}{//\ If\ bit\ 0\ is\ set,\ an\ MS\ byte\ follows}}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{comment}{//\ Sign\ extend\ from\ high\ bit\ of\ decoded\ value\ to\ recover\ signed\ delta}}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{if}\ (l\ \&\ 0x01)\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ m\ =\ source.get(STATE\_MSB);}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ r\ =\ (l\ >>\ 1)\ +\ (m\ <<\ 7);}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ |\ ((r\ \&\ 0x4000)\ <<\ 1);}
+\DoxyCodeLine{00419\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ r\ =\ l\ >>\ 1;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int8\_t)(r\ |\ ((r\ \&\ 0x40)\ <<\ 1));}
+\DoxyCodeLine{00422\ \ \ \ \ \}}
+\DoxyCodeLine{00423\ \}}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ Surface\ EntropyDecoderSizes::process(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height,\ BitstreamUnpacker\ \&b,\ \textcolor{keyword}{const}\ std::vector<bool>\ entropy\_enabled,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_idx,\ CompressionType\ compression\_type)\ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ Set\ up\ source\ of\ symbols}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symbol\_source(create\_symbol\_source(STATE\_COUNT,\ \textcolor{keyword}{true},\ \textcolor{keyword}{false},\ b,\ 0));}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{comment}{//\ Make\ the\ new\ surface}}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<uint16\_t>();}
+\DoxyCodeLine{00432\ \ \ \ \ dest.reserve(width,\ height);}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{comment}{//\ Read\ any\ huffman\ tables}}
+\DoxyCodeLine{00435\ \ \ \ \ symbol\_source-\/>start();}
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordflow}{if}\ (compression\_type\ ==\ CompressionType\_Prefix)\ \{}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ decode\_size(*symbol\_source);}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ 0;}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00447\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (compression\_type\ ==\ CompressionType\_Prefix\_OnDiff)\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ uint16\_t\ p\ =\ 0;}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ *\_\_restrict\ pdst\ =\ dest.data(0,\ y);}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ diff\ =\ decode\_size\_delta(*symbol\_source);}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p\ +=\ diff;}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ p;}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ =\ 0;}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00461\ \ \ \ \ \}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{00464\ \}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

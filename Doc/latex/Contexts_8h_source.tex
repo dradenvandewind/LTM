@@ -1,0 +1,478 @@
+\doxysection{Contexts.\+h}
+\label{Contexts_8h_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Contexts.h@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Contexts.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#ifndef\ \_\_CONTEXTS\_\_}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ \_\_CONTEXTS\_\_}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}CommonDef.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Slice.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \ \ \ \ PROB\_BITS\ \ \ =\ 15;\ \ \ \textcolor{comment}{//\ Nominal\ number\ of\ bits\ to\ represent\ probabilities}}
+\DoxyCodeLine{00049\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \ \ \ \ PROB\_BITS\_0\ =\ 10;\ \ \ \textcolor{comment}{//\ Number\ of\ bits\ to\ represent\ 1st\ estimate}}
+\DoxyCodeLine{00050\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \ \ \ \ PROB\_BITS\_1\ =\ 14;\ \ \ \textcolor{comment}{//\ Number\ of\ bits\ to\ represent\ 2nd\ estimate}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \ \ \ \ MASK\_0\ \ \ \ \ \ =\ \string~(\string~0u\ <<\ PROB\_BITS\_0)\ <<\ (PROB\_BITS\ -\/\ PROB\_BITS\_0);}
+\DoxyCodeLine{00052\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{int}\ \ \ \ \ MASK\_1\ \ \ \ \ \ =\ \string~(\string~0u\ <<\ PROB\_BITS\_1)\ <<\ (PROB\_BITS\ -\/\ PROB\_BITS\_1);}
+\DoxyCodeLine{00053\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint8\_t\ DWS\ \ \ \ \ \ \ \ \ =\ 8;\ \ \ \textcolor{comment}{//\ 0x47\ Default\ window\ sizes}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{struct\ }BinFracBits}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ uint32\_t\ intBits[2];}
+\DoxyCodeLine{00058\ \};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{enum}\ BPMType}
+\DoxyCodeLine{00062\ \{}
+\DoxyCodeLine{00063\ \ \ BPM\_Undefined\ =\ 0,}
+\DoxyCodeLine{00064\ \ \ BPM\_Std,}
+\DoxyCodeLine{00065\ \ \ BPM\_NUM}
+\DoxyCodeLine{00066\ \};}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{class\ }ProbModelTables}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ BinFracBits\ m\_binFracBits[256];}
+\DoxyCodeLine{00072\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ \ \ \ \ \ m\_RenormTable\_32\ \ [\ 32];\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Std\ \ \ \ \ \ \ \ \ MP\ \ \ MPI}}
+\DoxyCodeLine{00073\ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{class\ }BinProbModelBase\ :\ \textcolor{keyword}{public}\ ProbModelTables}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00080\ \ \ BinProbModelBase\ ()\ \{\}}
+\DoxyCodeLine{00081\ \ \ \string~BinProbModelBase()\ \{\}}
+\DoxyCodeLine{00082\ \ \ \textcolor{keyword}{static}\ uint32\_t\ estFracBitsEP\ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \ (\ \ \ \ \ \ \ 1\ <<\ SCALE\_BITS\ );\ \}}
+\DoxyCodeLine{00083\ \ \ \textcolor{keyword}{static}\ uint32\_t\ estFracBitsEP\ (\ \textcolor{keywordtype}{unsigned}\ numBins\ )\ \ \{\ \textcolor{keywordflow}{return}\ \ (\ numBins\ <<\ SCALE\_BITS\ );\ \}}
+\DoxyCodeLine{00084\ \};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{class\ }BinProbModel\_Std\ :\ \textcolor{keyword}{public}\ BinProbModelBase}
+\DoxyCodeLine{00090\ \{}
+\DoxyCodeLine{00091\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00092\ \ \ BinProbModel\_Std()}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ uint16\_t\ half\ =\ 1\ <<\ (PROB\_BITS\ -\/\ 1);}
+\DoxyCodeLine{00095\ \ \ \ \ m\_state[0]\ \ \ \ =\ half;}
+\DoxyCodeLine{00096\ \ \ \ \ m\_state[1]\ \ \ \ =\ half;}
+\DoxyCodeLine{00097\ \ \ \ \ m\_rate\ \ \ \ \ \ \ \ =\ DWS;}
+\DoxyCodeLine{00098\ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \string~BinProbModel\_Std\ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00100\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ init\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keywordtype}{int}\ qp,\ \textcolor{keywordtype}{int}\ initId\ );}
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordtype}{void}\ update(\textcolor{keywordtype}{unsigned}\ bin)}
+\DoxyCodeLine{00103\ \ \ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{int}\ rate0\ =\ m\_rate\ >>\ 4;}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{int}\ rate1\ =\ m\_rate\ \&\ 15;}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ m\_state[0]\ -\/=\ (m\_state[0]\ >>\ rate0)\ \&\ MASK\_0;}
+\DoxyCodeLine{00108\ \ \ \ \ m\_state[1]\ -\/=\ (m\_state[1]\ >>\ rate1)\ \&\ MASK\_1;}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{if}\ (bin)}
+\DoxyCodeLine{00110\ \ \ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ m\_state[0]\ +=\ (0x7fffu\ >>\ rate0)\ \&\ MASK\_0;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ m\_state[1]\ +=\ (0x7fffu\ >>\ rate1)\ \&\ MASK\_1;}
+\DoxyCodeLine{00113\ \ \ \ \ \}}
+\DoxyCodeLine{00114\ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordtype}{void}\ setLog2WindowSize(uint8\_t\ log2WindowSize)}
+\DoxyCodeLine{00116\ \ \ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{int}\ rate0\ =\ 2\ +\ ((log2WindowSize\ >>\ 2)\ \&\ 3);}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordtype}{int}\ rate1\ =\ 3\ +\ rate0\ +\ (log2WindowSize\ \&\ 3);}
+\DoxyCodeLine{00119\ \ \ \ \ m\_rate\ \ \ \ =\ 16\ *\ rate0\ +\ rate1;}
+\DoxyCodeLine{00120\ \ \ \ \ CHECK(rate1\ >\ 9,\ \textcolor{stringliteral}{"{}Second\ window\ size\ is\ too\ large!"{}});}
+\DoxyCodeLine{00121\ \ \ \}}
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordtype}{void}\ estFracBitsUpdate(\textcolor{keywordtype}{unsigned}\ bin,\ uint64\_t\ \&b)}
+\DoxyCodeLine{00123\ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ b\ +=\ estFracBits(bin);}
+\DoxyCodeLine{00125\ \ \ \ \ update(bin);}
+\DoxyCodeLine{00126\ \ \ \}}
+\DoxyCodeLine{00127\ \ \ uint32\_t\ \ \ \ \ \ \ \ estFracBits(\textcolor{keywordtype}{unsigned}\ bin)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ getFracBitsArray().intBits[bin];\ \}}
+\DoxyCodeLine{00128\ \ \ \textcolor{keyword}{static}\ uint32\_t\ estFracBitsTrm(\textcolor{keywordtype}{unsigned}\ bin)\ \{\ \textcolor{keywordflow}{return}\ (bin\ ?\ 0x3bfbb\ :\ 0x0010c);\ \}}
+\DoxyCodeLine{00129\ \ \ BinFracBits\ \ \ \ \ getFracBitsArray()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_binFracBits[state()];\ \}}
+\DoxyCodeLine{00130\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00131\ \ \ uint8\_t\ state()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (m\_state[0]\ +\ m\_state[1])\ >>\ 8;\ \}}
+\DoxyCodeLine{00132\ \ \ uint8\_t\ mps()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ state()\ >>\ 7;\ \}}
+\DoxyCodeLine{00133\ \ \ uint8\_t\ getLPS(\textcolor{keywordtype}{unsigned}\ range)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00134\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00135\ \ \ \ \ uint16\_t\ q\ =\ state();}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{if}\ (q\ \&\ 0x80)}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ q\ =\ q\ \string^\ 0xff;}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{return}\ ((q\ >>\ 2)\ *\ (range\ >>\ 5)\ >>\ 1)\ +\ 4;}
+\DoxyCodeLine{00139\ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{static}\ uint8\_t\ \ getRenormBitsLPS\ \ (\ \textcolor{keywordtype}{unsigned}\ LPS\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \ \ \ m\_RenormTable\_32\ \ [LPS>>3];\ \}}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{static}\ uint8\_t\ \ getRenormBitsRange(\ \textcolor{keywordtype}{unsigned}\ range\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \ \ \ 1;\ \}}
+\DoxyCodeLine{00142\ \ \ uint16\_t\ getState()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_state[0]\ +\ m\_state[1];\ \}}
+\DoxyCodeLine{00143\ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ setState(uint16\_t\ pState)}
+\DoxyCodeLine{00144\ \ \ \{}
+\DoxyCodeLine{00145\ \ \ \ \ m\_state[0]\ =\ (pState\ >>\ 1)\ \&\ MASK\_0;}
+\DoxyCodeLine{00146\ \ \ \ \ m\_state[1]\ =\ (pState\ >>\ 1)\ \&\ MASK\_1;}
+\DoxyCodeLine{00147\ \ \ \}}
+\DoxyCodeLine{00148\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00149\ \ \ uint64\_t\ estFracExcessBits(\textcolor{keyword}{const}\ BinProbModel\_Std\ \&r)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00150\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{int}\ n\ =\ 2\ *\ state()\ +\ 1;}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{return}\ ((512\ -\/\ n)\ *\ r.estFracBits(0)\ +\ n\ *\ r.estFracBits(1)\ +\ 256)\ >>\ 9;}
+\DoxyCodeLine{00153\ \ \ \}}
+\DoxyCodeLine{00154\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00155\ \ \ uint16\_t\ m\_state[2];}
+\DoxyCodeLine{00156\ \ \ uint8\_t\ \ m\_rate;}
+\DoxyCodeLine{00157\ \};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{class\ }CtxSet}
+\DoxyCodeLine{00165\ \{}
+\DoxyCodeLine{00166\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00167\ \ \ CtxSet(\ uint16\_t\ offset,\ uint16\_t\ size\ )\ :\ Offset(\ offset\ ),\ Size(\ size\ )\ \{\}}
+\DoxyCodeLine{00168\ \ \ CtxSet(\ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet\ )\ :\ Offset(\ ctxSet.Offset\ ),\ Size(\ ctxSet.Size\ )\ \{\}}
+\DoxyCodeLine{00169\ \ \ CtxSet(\ std::initializer\_list<CtxSet>\ ctxSets\ );}
+\DoxyCodeLine{00170\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00171\ \ \ uint16\_t\ \ operator()\ \ ()\textcolor{keyword}{\ \ const}}
+\DoxyCodeLine{00172\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{return}\ Offset;}
+\DoxyCodeLine{00174\ \ \ \}}
+\DoxyCodeLine{00175\ \ \ uint16\_t\ \ operator()\ \ (\ uint16\_t\ inc\ )\textcolor{keyword}{\ \ const}}
+\DoxyCodeLine{00176\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00177\ \ \ \ \ CHECKD(\ inc\ >=\ Size,\ \textcolor{stringliteral}{"{}Specified\ context\ increment\ ("{}}\ <<\ inc\ <<\ \textcolor{stringliteral}{"{})\ exceed\ range\ of\ context\ set\ [0;"{}}\ <<\ Size\ -\/\ 1\ <<\ \textcolor{stringliteral}{"{}]."{}}\ );}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{return}\ Offset\ +\ inc;}
+\DoxyCodeLine{00179\ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \textcolor{keywordtype}{bool}\ operator==\ (\ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00181\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ Offset\ ==\ ctxSet.Offset\ \&\&\ Size\ ==\ ctxSet.Size\ );}
+\DoxyCodeLine{00183\ \ \ \}}
+\DoxyCodeLine{00184\ \ \ \textcolor{keywordtype}{bool}\ operator!=\ (\ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00185\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{return}\ (\ Offset\ !=\ ctxSet.Offset\ ||\ Size\ !=\ ctxSet.Size\ );}
+\DoxyCodeLine{00187\ \ \ \}}
+\DoxyCodeLine{00188\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00189\ \ \ uint16\_t\ \ Offset;}
+\DoxyCodeLine{00190\ \ \ uint16\_t\ \ Size;}
+\DoxyCodeLine{00191\ \};}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \textcolor{keyword}{class\ }ContextSetCfg}
+\DoxyCodeLine{00196\ \{}
+\DoxyCodeLine{00197\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00198\ \ \ \textcolor{comment}{//\ context\ sets:\ specify\ offset\ and\ size}}
+\DoxyCodeLine{00199\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SplitFlag;}
+\DoxyCodeLine{00200\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SplitQtFlag;}
+\DoxyCodeLine{00201\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SplitHvFlag;}
+\DoxyCodeLine{00202\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ Split12Flag;}
+\DoxyCodeLine{00203\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ModeConsFlag;}
+\DoxyCodeLine{00204\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SkipFlag;}
+\DoxyCodeLine{00205\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MergeFlag;}
+\DoxyCodeLine{00206\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ RegularMergeFlag;}
+\DoxyCodeLine{00207\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MergeIdx;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ PredMode;}
+\DoxyCodeLine{00209\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MultiRefLineIdx;}
+\DoxyCodeLine{00210\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ IntraLumaMpmFlag;}
+\DoxyCodeLine{00211\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ IntraLumaPlanarFlag;}
+\DoxyCodeLine{00212\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ CclmModeFlag;}
+\DoxyCodeLine{00213\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ CclmModeIdx;}
+\DoxyCodeLine{00214\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ IntraChromaPredMode;}
+\DoxyCodeLine{00215\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MipFlag;}
+\DoxyCodeLine{00216\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ DeltaQP;}
+\DoxyCodeLine{00217\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ InterDir;}
+\DoxyCodeLine{00218\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ RefPic;}
+\DoxyCodeLine{00219\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MmvdFlag;}
+\DoxyCodeLine{00220\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MmvdMergeIdx;}
+\DoxyCodeLine{00221\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MmvdStepMvpIdx;}
+\DoxyCodeLine{00222\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SubblockMergeFlag;}
+\DoxyCodeLine{00223\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ AffineFlag;}
+\DoxyCodeLine{00224\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ AffineType;}
+\DoxyCodeLine{00225\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ AffMergeIdx;}
+\DoxyCodeLine{00226\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ Mvd;}
+\DoxyCodeLine{00227\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ BDPCMMode;}
+\DoxyCodeLine{00228\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ QtRootCbf;}
+\DoxyCodeLine{00229\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ACTFlag;}
+\DoxyCodeLine{00230\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ QtCbf\ \ \ \ \ \ \ \ \ \ \ [3];\ \ \ \ \textcolor{comment}{//\ [\ channel\ ]}}
+\DoxyCodeLine{00231\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SigCoeffGroup\ \ \ [2];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ ]}}
+\DoxyCodeLine{00232\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ LastX\ \ \ \ \ \ \ \ \ \ \ [2];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ ]}}
+\DoxyCodeLine{00233\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ LastY\ \ \ \ \ \ \ \ \ \ \ [2];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ ]}}
+\DoxyCodeLine{00234\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SigFlag\ \ \ \ \ \ \ \ \ [6];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ +\ State\ ]}}
+\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ParFlag\ \ \ \ \ \ \ \ \ [2];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ ]}}
+\DoxyCodeLine{00236\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ GtxFlag\ \ \ \ \ \ \ \ \ [4];\ \ \ \ \textcolor{comment}{//\ [\ ChannelType\ +\ x\ ]}}
+\DoxyCodeLine{00237\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsSigCoeffGroup;}
+\DoxyCodeLine{00238\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsSigFlag;}
+\DoxyCodeLine{00239\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsParFlag;}
+\DoxyCodeLine{00240\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsGtxFlag;}
+\DoxyCodeLine{00241\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsLrg1Flag;}
+\DoxyCodeLine{00242\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TsResidualSign;}
+\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MVPIdx;}
+\DoxyCodeLine{00244\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SaoMergeFlag;}
+\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SaoTypeIdx;}
+\DoxyCodeLine{00246\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ TransformSkipFlag;}
+\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ MTSIdx;}
+\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ LFNSTIdx;}
+\DoxyCodeLine{00249\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ PLTFlag;}
+\DoxyCodeLine{00250\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ RotationFlag;}
+\DoxyCodeLine{00251\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ RunTypeFlag;}
+\DoxyCodeLine{00252\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ IdxRunModel;}
+\DoxyCodeLine{00253\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ CopyRunModel;}
+\DoxyCodeLine{00254\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SbtFlag;}
+\DoxyCodeLine{00255\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SbtQuadFlag;}
+\DoxyCodeLine{00256\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SbtHorFlag;}
+\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SbtPosFlag;}
+\DoxyCodeLine{00258\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ChromaQpAdjFlag;}
+\DoxyCodeLine{00259\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ChromaQpAdjIdc;}
+\DoxyCodeLine{00260\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ImvFlag;}
+\DoxyCodeLine{00261\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ BcwIdx;}
+\DoxyCodeLine{00262\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ctbAlfFlag;}
+\DoxyCodeLine{00263\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ctbAlfAlternative;}
+\DoxyCodeLine{00264\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ AlfUseTemporalFilt;}
+\DoxyCodeLine{00265\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ CcAlfFilterControlFlag;}
+\DoxyCodeLine{00266\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ CiipFlag;}
+\DoxyCodeLine{00267\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ SmvdFlag;}
+\DoxyCodeLine{00268\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ IBCFlag;}
+\DoxyCodeLine{00269\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ ISPMode;}
+\DoxyCodeLine{00270\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ JointCbCrFlag;}
+\DoxyCodeLine{00271\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ NumberOfContexts;}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \textcolor{comment}{//\ combined\ sets\ for\ less\ complex\ copying}}
+\DoxyCodeLine{00274\ \ \ \textcolor{comment}{//\ NOTE:\ The\ contained\ CtxSet's\ should\ directly\ follow\ each\ other\ in\ the\ initalization\ list;}}
+\DoxyCodeLine{00275\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ otherwise,\ you\ will\ copy\ more\ elements\ than\ you\ want\ !!!}}
+\DoxyCodeLine{00276\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ Sao;}
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ Alf;}
+\DoxyCodeLine{00278\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ CtxSet\ \ \ Palette;}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00281\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ std::vector<uint8\_t>\&\ \ getInitTable(\ \textcolor{keywordtype}{unsigned}\ initId\ );}
+\DoxyCodeLine{00282\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00283\ \ \ \textcolor{keyword}{static}\ std::vector<std::vector<uint8\_t>\ >\ sm\_InitTables;}
+\DoxyCodeLine{00284\ \ \ \textcolor{keyword}{static}\ CtxSet\ addCtxSet(\ std::initializer\_list<std::initializer\_list<uint8\_t>\ >\ initSet2d\ );}
+\DoxyCodeLine{00285\ \};}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{keyword}{class\ }FracBitsAccess}
+\DoxyCodeLine{00290\ \{}
+\DoxyCodeLine{00291\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00292\ \ \ \textcolor{keyword}{virtual}\ BinFracBits\ getFracBitsArray(\ \textcolor{keywordtype}{unsigned}\ ctxId\ )\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00293\ \};}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ BinProbModel>}
+\DoxyCodeLine{00298\ \textcolor{keyword}{class\ }CtxStore\ :\ \textcolor{keyword}{public}\ FracBitsAccess}
+\DoxyCodeLine{00299\ \{}
+\DoxyCodeLine{00300\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00301\ \ \ CtxStore();}
+\DoxyCodeLine{00302\ \ \ CtxStore(\ \textcolor{keywordtype}{bool}\ dummy\ );}
+\DoxyCodeLine{00303\ \ \ CtxStore(\ \textcolor{keyword}{const}\ CtxStore<BinProbModel>\&\ ctxStore\ );}
+\DoxyCodeLine{00304\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00305\ \ \ \textcolor{keywordtype}{void}\ copyFrom\ \ \ (\ \textcolor{keyword}{const}\ CtxStore<BinProbModel>\&\ src\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ checkInit();\ ::memcpy(\ m\_Ctx,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src.m\_Ctx,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(\ BinProbModel\ )\ *\ ContextSetCfg::NumberOfContexts\ );\ \}}
+\DoxyCodeLine{00306\ \ \ \textcolor{keywordtype}{void}\ copyFrom\ \ \ (\ \textcolor{keyword}{const}\ CtxStore<BinProbModel>\&\ src,\ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet\ )\ \ \{\ checkInit();\ ::memcpy(\ m\_Ctx+ctxSet.Offset,\ src.m\_Ctx+ctxSet.Offset,\ \textcolor{keyword}{sizeof}(\ BinProbModel\ )\ *\ ctxSet.Size\ );\ \}}
+\DoxyCodeLine{00307\ \ \ \textcolor{keywordtype}{void}\ init\ \ \ \ \ \ \ (\ \textcolor{keywordtype}{int}\ qp,\ \textcolor{keywordtype}{int}\ initId\ );}
+\DoxyCodeLine{00308\ \ \ \textcolor{keywordtype}{void}\ setWinSizes(\ \textcolor{keyword}{const}\ std::vector<uint8\_t>\&\ \ \ log2WindowSizes\ );}
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordtype}{void}\ loadPStates(\ \textcolor{keyword}{const}\ std::vector<uint16\_t>\&\ \ probStates\ );}
+\DoxyCodeLine{00310\ \ \ \textcolor{keywordtype}{void}\ savePStates(\ std::vector<uint16\_t>\&\ \ \ \ \ \ \ \ probStates\ )\ \ \textcolor{keyword}{const};}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \textcolor{keyword}{const}\ BinProbModel\&\ operator[]\ \ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ \ ctxId\ \ )\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_Ctx[ctxId];\ \}}
+\DoxyCodeLine{00313\ \ \ BinProbModel\&\ \ \ \ \ \ \ operator[]\ \ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ \ ctxId\ \ )\ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_Ctx[ctxId];\ \}}
+\DoxyCodeLine{00314\ \ \ uint32\_t\ \ \ \ \ \ \ \ \ \ \ \ estFracBits\ \ \ \ \ (\ \textcolor{keywordtype}{unsigned}\ \ bin,}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \ ctxId\ \ )\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_Ctx[ctxId].estFracBits(bin);\ \}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ BinFracBits\ \ \ \ \ \ \ \ \ getFracBitsArray(\ \textcolor{keywordtype}{unsigned}\ \ ctxId\ \ )\textcolor{keyword}{\ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_Ctx[ctxId].getFracBitsArray();\ \}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00320\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ checkInit()\ \{\ \textcolor{keywordflow}{if}(\ m\_Ctx\ )\ \textcolor{keywordflow}{return};\ m\_CtxBuffer.resize(\ ContextSetCfg::NumberOfContexts\ );\ m\_Ctx\ =\ m\_CtxBuffer.data();\ \}}
+\DoxyCodeLine{00321\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00322\ \ \ std::vector<BinProbModel>\ m\_CtxBuffer;}
+\DoxyCodeLine{00323\ \ \ BinProbModel*\ \ \ \ \ \ \ \ \ \ \ \ \ m\_Ctx;}
+\DoxyCodeLine{00324\ \};}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{keyword}{class\ }Ctx;}
+\DoxyCodeLine{00329\ \textcolor{keyword}{class\ }SubCtx}
+\DoxyCodeLine{00330\ \{}
+\DoxyCodeLine{00331\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }Ctx;}
+\DoxyCodeLine{00332\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00333\ \ \ SubCtx(\ \textcolor{keyword}{const}\ CtxSet\&\ ctxSet,\ \textcolor{keyword}{const}\ Ctx\&\ ctx\ )\ :\ m\_CtxSet(\ ctxSet\ \ \ \ \ \ \ \ \ \ ),\ m\_Ctx(\ ctx\ \ \ \ \ \ \ \ \ \ )\ \{\}}
+\DoxyCodeLine{00334\ \ \ SubCtx(\ \textcolor{keyword}{const}\ SubCtx\&\ subCtx\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_CtxSet(\ subCtx.m\_CtxSet\ ),\ m\_Ctx(\ subCtx.m\_Ctx\ )\ \{\}}
+\DoxyCodeLine{00335\ \ \ \textcolor{keyword}{const}\ SubCtx\&\ operator=\ (\ \textcolor{keyword}{const}\ SubCtx\&\ )\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00336\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00337\ \ \ \textcolor{keyword}{const}\ CtxSet\ \ m\_CtxSet;}
+\DoxyCodeLine{00338\ \ \ \textcolor{keyword}{const}\ Ctx\&\ \ \ \ m\_Ctx;}
+\DoxyCodeLine{00339\ \};}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{keyword}{class\ }Ctx\ :\ \textcolor{keyword}{public}\ ContextSetCfg}
+\DoxyCodeLine{00344\ \{}
+\DoxyCodeLine{00345\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00346\ \ \ Ctx();}
+\DoxyCodeLine{00347\ \ \ Ctx(\ \textcolor{keyword}{const}\ BinProbModel\_Std*\ \ \ \ dummy\ );}
+\DoxyCodeLine{00348\ \ \ Ctx(\ \textcolor{keyword}{const}\ Ctx\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ctx\ \ \ );}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00351\ \ \ \textcolor{keyword}{const}\ Ctx\&\ operator=\ (\ \textcolor{keyword}{const}\ Ctx\&\ ctx\ )}
+\DoxyCodeLine{00352\ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ m\_BPMType\ =\ ctx.m\_BPMType;}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00355\ \ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ m\_CtxStore\_Std\ \ .copyFrom(\ ctx.m\_CtxStore\_Std\ \ \ );\ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ ::memcpy(\ m\_GRAdaptStats,\ ctx.m\_GRAdaptStats,\ \textcolor{keyword}{sizeof}(\ \textcolor{keywordtype}{unsigned}\ )\ *\ RExt\_\_GOLOMB\_RICE\_ADAPTATION\_STATISTICS\_SETS\ );}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00361\ \ \ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ SubCtx\ operator=\ (\ SubCtx\&\&\ subCtx\ )}
+\DoxyCodeLine{00364\ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ m\_BPMType\ =\ subCtx.m\_Ctx.m\_BPMType;}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00367\ \ \ \ \ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ m\_CtxStore\_Std\ \ .copyFrom(\ subCtx.m\_Ctx.m\_CtxStore\_Std,\ \ \ subCtx.m\_CtxSet\ );\ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00370\ \ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{return}\ std::move(subCtx);}
+\DoxyCodeLine{00372\ \ \ \}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \textcolor{keywordtype}{void}\ \ init\ (\ \textcolor{keywordtype}{int}\ qp,\ \textcolor{keywordtype}{int}\ initId\ )}
+\DoxyCodeLine{00375\ \ \ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00377\ \ \ \ \ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ m\_CtxStore\_Std\ \ .init(\ qp,\ initId\ );\ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00380\ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordflow}{for}(\ std::size\_t\ k\ =\ 0;\ k\ <\ RExt\_\_GOLOMB\_RICE\_ADAPTATION\_STATISTICS\_SETS;\ k++\ )}
+\DoxyCodeLine{00382\ \ \ \ \ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ m\_GRAdaptStats[k]\ =\ 0;}
+\DoxyCodeLine{00384\ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \textcolor{keywordtype}{void}\ \ loadPStates(\ \textcolor{keyword}{const}\ std::vector<uint16\_t>\&\ probStates\ )}
+\DoxyCodeLine{00388\ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00390\ \ \ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ m\_CtxStore\_Std\ \ .loadPStates(\ probStates\ );\ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00392\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00393\ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \textcolor{keywordtype}{void}\ \ savePStates(\ std::vector<uint16\_t>\&\ probStates\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00397\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00399\ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ m\_CtxStore\_Std\ \ .savePStates(\ probStates\ );\ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00402\ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \textcolor{keywordtype}{void}\ \ initCtxAndWinSize(\ \textcolor{keywordtype}{unsigned}\ ctxId,\ \textcolor{keyword}{const}\ Ctx\&\ ctx,\ \textcolor{keyword}{const}\ uint8\_t\ winSize\ )}
+\DoxyCodeLine{00406\ \ \ \{}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00408\ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ m\_CtxStore\_Std\ \ [ctxId]\ =\ ctx.m\_CtxStore\_Std\ \ [ctxId];}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ m\_CtxStore\_Std\ \ [ctxId]\ .\ setLog2WindowSize\ \ \ (winSize);}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00415\ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \ \ \}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\&\ \ \ \ \ getGRAdaptStats\ (\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \textcolor{keywordtype}{id}\ )\textcolor{keyword}{\ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_GRAdaptStats[id];\ \}}
+\DoxyCodeLine{00419\ \ \ \textcolor{keywordtype}{unsigned}\&\ \ \ \ \ \ \ \ \ \ \ getGRAdaptStats\ (\ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \textcolor{keywordtype}{id}\ )\ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_GRAdaptStats[id];\ \}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00422\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ \ \ getBPMType\ \ \ \ \ \ ()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_BPMType;\ \}}
+\DoxyCodeLine{00423\ \ \ \textcolor{keyword}{const}\ Ctx\&\ \ \ \ \ \ \ \ \ \ getCtx\ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00424\ \ \ Ctx\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ getCtx\ \ \ \ \ \ \ \ \ \ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \textcolor{keyword}{explicit}\ \textcolor{keyword}{operator}\ \ \ \textcolor{keyword}{const}\ CtxStore<BinProbModel\_Std>\ \ \&()\ \ \ \ \ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ m\_CtxStore\_Std;\ \}}
+\DoxyCodeLine{00427\ \ \ \textcolor{keyword}{explicit}\ \textcolor{keyword}{operator}\ \ \ \ \ \ \ \ \ CtxStore<BinProbModel\_Std>\ \ \&()\ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_CtxStore\_Std;\ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \textcolor{keyword}{const}\ FracBitsAccess\&\ \ \ getFracBitsAcess()\textcolor{keyword}{\ \ const}}
+\DoxyCodeLine{00430\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keywordflow}{switch}(\ m\_BPMType\ )}
+\DoxyCodeLine{00432\ \ \ \ \ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{case}\ BPM\_Std:\ \ \ \textcolor{keywordflow}{return}\ m\_CtxStore\_Std;}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keywordflow}{default}:\ \ \ \ \ \ \ \ THROW(\textcolor{stringliteral}{"{}BPMType\ out\ of\ range"{}});}
+\DoxyCodeLine{00435\ \ \ \ \ \}}
+\DoxyCodeLine{00436\ \ \ \}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00439\ \ \ BPMType\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_BPMType;}
+\DoxyCodeLine{00440\ \ \ CtxStore<BinProbModel\_Std>\ \ \ \ m\_CtxStore\_Std;}
+\DoxyCodeLine{00441\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00442\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_GRAdaptStats[RExt\_\_GOLOMB\_RICE\_ADAPTATION\_STATISTICS\_SETS];}
+\DoxyCodeLine{00443\ \textcolor{preprocessor}{\#if\ ENABLE\_SPLIT\_PARALLELISM}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00446\ \ \ int64\_t\ cacheId;}
+\DoxyCodeLine{00447\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ cacheUsed;}
+\DoxyCodeLine{00448\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00449\ \};}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \textcolor{keyword}{typedef}\ dynamic\_cache<Ctx>\ CtxCache;}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \textcolor{keyword}{class\ }TempCtx}
+\DoxyCodeLine{00456\ \{}
+\DoxyCodeLine{00457\ \ \ TempCtx(\ \textcolor{keyword}{const}\ TempCtx\&\ )\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00458\ \ \ \textcolor{keyword}{const}\ TempCtx\&\ operator=(\ \textcolor{keyword}{const}\ TempCtx\&\ )\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00459\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00460\ \ \ TempCtx\ (\ CtxCache*\ cache\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_ctx(\ *cache-\/>get()\ ),\ m\_cache(\ cache\ )\ \{\}}
+\DoxyCodeLine{00461\ \ \ TempCtx\ (\ CtxCache*\ cache,\ \textcolor{keyword}{const}\ Ctx\&\ ctx\ \ \ \ )\ \ :\ m\_ctx(\ *cache-\/>get()\ ),\ m\_cache(\ cache\ )\ \{\ m\_ctx\ =\ ctx;\ \}}
+\DoxyCodeLine{00462\ \ \ TempCtx\ (\ CtxCache*\ cache,\ SubCtx\&\&\ \ \ subCtx\ )\ \ :\ m\_ctx(\ *cache-\/>get()\ ),\ m\_cache(\ cache\ )\ \{\ m\_ctx\ =\ std::forward<SubCtx>(subCtx);\ \}}
+\DoxyCodeLine{00463\ \ \ \string~TempCtx()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ m\_cache-\/>cache(\ \&m\_ctx\ );\ \}}
+\DoxyCodeLine{00464\ \ \ \textcolor{keyword}{const}\ Ctx\&\ operator=(\ \textcolor{keyword}{const}\ Ctx\&\ ctx\ )\ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ (\ m\_ctx\ =\ ctx\ );\ \}}
+\DoxyCodeLine{00465\ \ \ SubCtx\ \ \ \ \ operator=(\ SubCtx\&\&\ \ \ subCtx\ )\ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_ctx\ =\ std::forward<SubCtx>(\ subCtx\ );\ \}}
+\DoxyCodeLine{00466\ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ Ctx\&\ ()\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_ctx;\ \}}
+\DoxyCodeLine{00467\ \ \ \textcolor{keyword}{operator}\ \ \ \ \ \ \ Ctx\&\ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ m\_ctx;\ \}}
+\DoxyCodeLine{00468\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00469\ \ \ Ctx\&\ \ \ \ \ \ m\_ctx;}
+\DoxyCodeLine{00470\ \ \ CtxCache*\ m\_cache;}
+\DoxyCodeLine{00471\ \};}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

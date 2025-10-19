@@ -1,0 +1,146 @@
+\doxysection{Mv.\+cpp}
+\label{Mv_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Mv.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Mv.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Mv.h"{}}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Common.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Slice.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{const}\ MvPrecision\ Mv::m\_amvrPrecision[4]\ =\ \{\ MV\_PRECISION\_QUARTER,\ MV\_PRECISION\_INT,\ MV\_PRECISION\_4PEL,\ MV\_PRECISION\_HALF\ \};\ \textcolor{comment}{//\ for\ cu.imv=0,\ 1,\ 2\ and\ 3}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{const}\ MvPrecision\ Mv::m\_amvrPrecAffine[3]\ =\ \{\ MV\_PRECISION\_QUARTER,\ MV\_PRECISION\_SIXTEENTH,\ MV\_PRECISION\_INT\ \};\ \textcolor{comment}{//\ for\ cu.imv=0,\ 1\ and\ 2}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{const}\ MvPrecision\ Mv::m\_amvrPrecIbc[3]\ =\ \{\ MV\_PRECISION\_INT,\ MV\_PRECISION\_INT,\ MV\_PRECISION\_4PEL\ \};\ \textcolor{comment}{//\ for\ cu.imv=0,\ 1\ and\ 2}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{void}\ roundAffineMv(\ \textcolor{keywordtype}{int}\&\ mvx,\ \textcolor{keywordtype}{int}\&\ mvy,\ \textcolor{keywordtype}{int}\ nShift\ )}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nOffset\ =\ 1\ <<\ (nShift\ -\/\ 1);}
+\DoxyCodeLine{00052\ \ \ mvx\ =\ (mvx\ +\ nOffset\ -\/\ (mvx\ >=\ 0))\ >>\ nShift;}
+\DoxyCodeLine{00053\ \ \ mvy\ =\ (mvy\ +\ nOffset\ -\/\ (mvy\ >=\ 0))\ >>\ nShift;}
+\DoxyCodeLine{00054\ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ void\ (*clipMv)\ (\ Mv\&\ rcMv,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }Position\&\ pos,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }Size\&\ size,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class\ }SPS\&\ sps,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class\ }PPS\&\ pps\ );}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keywordtype}{void}\ clipMvInPic\ (\ Mv\&\ rcMv,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ Position\&\ pos,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ Size\&\ size,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class}\ SPS\&\ sps,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class}\ PPS\&\ pps\ )}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ \textcolor{keywordflow}{if}\ (sps.getWrapAroundEnabledFlag())}
+\DoxyCodeLine{00061\ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ wrapClipMv(rcMv,\ pos,\ size,\ \&sps,\ \&pps);}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00064\ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \textcolor{keywordtype}{int}\ mvShift\ =\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordtype}{int}\ offset\ =\ 8;}
+\DoxyCodeLine{00068\ \ \ \textcolor{keywordtype}{int}\ horMax\ =\ (pps.getPicWidthInLumaSamples()\ +\ offset\ -\/\ (int)pos.x\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00069\ \ \ \textcolor{keywordtype}{int}\ horMin\ =\ (-\/(int)sps.getMaxCUWidth()\ -\/\ offset\ -\/\ (int)pos.x\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \textcolor{keywordtype}{int}\ verMax\ =\ (pps.getPicHeightInLumaSamples()\ +\ offset\ -\/\ (int)pos.y\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00072\ \ \ \textcolor{keywordtype}{int}\ verMin\ =\ (-\/(int)sps.getMaxCUHeight()\ -\/\ offset\ -\/\ (int)pos.y\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ rcMv.setHor(std::min(horMax,\ std::max(horMin,\ rcMv.getHor())));}
+\DoxyCodeLine{00075\ \ \ rcMv.setVer(std::min(verMax,\ std::max(verMin,\ rcMv.getVer())));}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keywordtype}{void}\ clipMvInSubpic\ (\ Mv\&\ rcMv,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ Position\&\ pos,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ Size\&\ size,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class}\ SPS\&\ sps,\ \textcolor{keyword}{const}\ \textcolor{keyword}{class}\ PPS\&\ pps\ )}
+\DoxyCodeLine{00079\ \{}
+\DoxyCodeLine{00080\ \ \ \textcolor{keywordflow}{if}\ (sps.getWrapAroundEnabledFlag())}
+\DoxyCodeLine{00081\ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ wrapClipMv(rcMv,\ pos,\ size,\ \&sps,\ \&pps);}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00084\ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordtype}{int}\ mvShift\ =\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordtype}{int}\ offset\ =\ 8;}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{int}\ horMax\ =\ (pps.getPicWidthInLumaSamples()\ +\ offset\ -\/\ (int)pos.x\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordtype}{int}\ horMin\ =\ (-\/(int)sps.getMaxCUWidth()\ -\/\ offset\ -\/\ (int)pos.x\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{int}\ verMax\ =\ (pps.getPicHeightInLumaSamples()\ +\ offset\ -\/\ (int)pos.y\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{int}\ verMin\ =\ (-\/(int)sps.getMaxCUHeight()\ -\/\ offset\ -\/\ (int)pos.y\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00093\ \ \ \textcolor{keyword}{const}\ SubPic\&\ curSubPic\ =\ pps.getSubPicFromPos(pos);}
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordflow}{if}\ (curSubPic.getTreatedAsPicFlag())}
+\DoxyCodeLine{00095\ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ horMax\ =\ ((curSubPic.getSubPicRight()\ +\ 1)\ +\ offset\ -\/\ (\textcolor{keywordtype}{int})pos.x\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00097\ \ \ \ \ horMin\ =\ (-\/(int)sps.getMaxCUWidth()\ -\/\ offset\ -\/\ ((int)pos.x\ -\/\ curSubPic.getSubPicLeft())\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ verMax\ =\ ((curSubPic.getSubPicBottom()\ +\ 1)\ +\ offset\ -\/\ (\textcolor{keywordtype}{int})pos.y\ -\/\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00100\ \ \ \ \ verMin\ =\ (-\/(int)sps.getMaxCUHeight()\ -\/\ offset\ -\/\ ((int)pos.y\ -\/\ curSubPic.getSubPicTop())\ +\ 1)\ <<\ mvShift;}
+\DoxyCodeLine{00101\ \ \ \}}
+\DoxyCodeLine{00102\ \ \ rcMv.setHor(std::min(horMax,\ std::max(horMin,\ rcMv.getHor())));}
+\DoxyCodeLine{00103\ \ \ rcMv.setVer(std::min(verMax,\ std::max(verMin,\ rcMv.getVer())));}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keywordtype}{bool}\ wrapClipMv(\ Mv\&\ rcMv,\ \textcolor{keyword}{const}\ Position\&\ pos,\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct}\ Size\&\ size,\ \textcolor{keyword}{const}\ SPS\ *sps,\ \textcolor{keyword}{const}\ PPS\ *pps\ )}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordtype}{bool}\ wrapRef\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00109\ \ \ \textcolor{keywordtype}{int}\ iMvShift\ =\ MV\_FRACTIONAL\_BITS\_INTERNAL;}
+\DoxyCodeLine{00110\ \ \ \textcolor{keywordtype}{int}\ iOffset\ =\ 8;}
+\DoxyCodeLine{00111\ \ \ \textcolor{keywordtype}{int}\ iHorMax\ =\ (\ pps-\/>getPicWidthInLumaSamples()\ +\ sps-\/>getMaxCUWidth()\ -\/\ size.width\ +\ iOffset\ -\/\ (int)pos.x\ -\/\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00112\ \ \ \textcolor{keywordtype}{int}\ iHorMin\ =\ (\ -\/(\ int\ )\ sps-\/>getMaxCUWidth()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/\ iOffset\ -\/\ (\ int\ )\ pos.x\ +\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \textcolor{keywordtype}{int}\ iVerMax\ =\ (\ pps-\/>getPicHeightInLumaSamples()\ +\ iOffset\ -\/\ (\ int\ )\ pos.y\ -\/\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordtype}{int}\ iVerMin\ =\ (\ -\/(\ int\ )\ sps-\/>getMaxCUHeight()\ -\/\ iOffset\ -\/\ (\ int\ )\ pos.y\ +\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{keyword}{const}\ SubPic\&\ curSubPic\ =\ pps-\/>getSubPicFromPos(\ pos\ );}
+\DoxyCodeLine{00118\ \ \ \textcolor{keywordflow}{if}(\ curSubPic.getTreatedAsPicFlag()\ )}
+\DoxyCodeLine{00119\ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ iVerMax\ =\ (\ (\ curSubPic.getSubPicBottom()\ +\ 1\ )\ +\ iOffset\ -\/\ (\ \textcolor{keywordtype}{int}\ )\ pos.y\ -\/\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00121\ \ \ \ \ iVerMin\ =\ (\ -\/(\ int\ )\ sps-\/>getMaxCUHeight()\ -\/\ iOffset\ -\/\ (\ (\ int\ )\ pos.y\ -\/\ curSubPic.getSubPicTop()\ )\ +\ 1\ )\ <<\ iMvShift;}
+\DoxyCodeLine{00122\ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordtype}{int}\ mvX\ =\ rcMv.getHor();}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{if}(mvX\ >\ iHorMax)}
+\DoxyCodeLine{00126\ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ mvX\ -\/=\ (\ pps-\/>getWrapAroundOffset()\ <<\ iMvShift\ );}
+\DoxyCodeLine{00128\ \ \ \ \ mvX\ =\ std::min(\ iHorMax,\ std::max(\ iHorMin,\ mvX\ )\ );}
+\DoxyCodeLine{00129\ \ \ \ \ wrapRef\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00130\ \ \ \}}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{if}(mvX\ <\ iHorMin)}
+\DoxyCodeLine{00132\ \ \ \{}
+\DoxyCodeLine{00133\ \ \ \ \ mvX\ +=\ (\ pps-\/>getWrapAroundOffset()\ <<\ iMvShift\ );}
+\DoxyCodeLine{00134\ \ \ \ \ mvX\ =\ std::min(\ iHorMax,\ std::max(\ iHorMin,\ mvX\ )\ );}
+\DoxyCodeLine{00135\ \ \ \ \ wrapRef\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00136\ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ rcMv.setHor(\ mvX\ );}
+\DoxyCodeLine{00139\ \ \ rcMv.setVer(\ std::min(\ iVerMax,\ std::max(\ iVerMin,\ rcMv.getVer()\ )\ )\ );}
+\DoxyCodeLine{00140\ \ \ \textcolor{keywordflow}{return}\ wrapRef;}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+
+\end{DoxyCode}

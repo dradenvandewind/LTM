@@ -1,0 +1,277 @@
+\doxysection{Surface.\+cpp}
+\label{Surface_8cpp_source}\index{util/src/Surface.cpp@{util/src/Surface.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ NB:\ Most\ all\ this\ implementation\ is\ templated\ on\ data\ type\ in\ SurfaceImpl.hpp}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Surface.hpp"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}YUVWriter.hpp"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ Surface::Surface(\textcolor{keyword}{const}\ std::string\ name,\ uint64\_t\ checksum,\ \textcolor{keyword}{const}\ std::shared\_ptr<Buffer>\ \&buffer,\ \textcolor{keywordtype}{unsigned}\ offset,\ \textcolor{keywordtype}{unsigned}\ width,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ height,\ \textcolor{keywordtype}{unsigned}\ stride)}
+\DoxyCodeLine{00055\ \ \ \ \ :\ name\_(name),\ checksum\_(checksum),\ buffer\_(buffer),\ offset\_(offset),\ width\_(width),\ height\_(height),\ stride\_(stride)\ \{\}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ Global\ debug\ state\ for\ surface\ dumping}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ dump\_surfaces\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00060\ \textcolor{keyword}{static}\ std::map<std::string,\ std::unique\_ptr<YUVWriter>>\ yuv\_writers;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{void}\ Surface::set\_dump\_surfaces(\textcolor{keywordtype}{bool}\ b)\ \{\ dump\_surfaces\ =\ b;\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keywordtype}{bool}\ Surface::get\_dump\_surfaces()\ \{\ \textcolor{keywordflow}{return}\ dump\_surfaces;\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ Dump\ surface\ as\ 8bit\ p420,\ with\ dummy\ chroma\ planes}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//}}
+\DoxyCodeLine{00068\ \textcolor{keywordtype}{void}\ Surface::dump\_p420(\textcolor{keyword}{const}\ std::string\ \&name)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{if}\ (!dump\_surfaces)}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ ImageDescription\ desc(IMAGE\_FORMAT\_YUV420P8,\ width(),\ height());}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ Surface\ planes[3];}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{if}\ (bpp()\ ==\ 1)}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Just\ use\ base\ as\ bytes}}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ planes[0]\ =\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Assume\ S87}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ planes[0]\ =\ ConvertToU8().process(*\textcolor{keyword}{this},\ 7);}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ Create\ a\ dummy\ surface\ for\ U\&V}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{auto}\ sb\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ sb.reserve(width()\ /\ 2,\ height()\ /\ 2);}}
+\DoxyCodeLine{00089\ \ \ \ \ sb.reserve(width()\ >>\ 1,\ height()\ >>\ 1);}
+\DoxyCodeLine{00090\ \ \ \ \ memset(sb.data(0,\ 0),\ 0x80,\ sb.width()\ *\ sb.height());}
+\DoxyCodeLine{00091\ \ \ \ \ planes[1]\ =\ planes[2]\ =\ sb.finish();}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ planes));}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ Dump\ surface\ as\ 8bpp,\ 10bpp,\ 12bpp,\ or\ 14bpp\ with\ correct\ chroma\ subsampling\ and\ proper\ chroma\ planes}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//}}
+\DoxyCodeLine{00098\ \textcolor{keywordtype}{void}\ Surface::dump\_yuv(\textcolor{keyword}{const}\ std::string\ \&name,\ Surface\ (\&planes)[3],\ ImageDescription\ desc,\ \textcolor{keywordtype}{bool}\ decorate)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{if}\ (desc.bit\_depth()\ ==\ 8)\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ Surface\ converted[3];}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ decorate);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ desc.num\_planes();\ p++)}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ converted[p]\ =\ ConvertToU8().process(planes[p],\ 7);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ converted));}
+\DoxyCodeLine{00106\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (desc.bit\_depth()\ ==\ 10)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ Surface\ converted[3];}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ decorate);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ desc.num\_planes();\ p++)}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ converted[p]\ =\ ConvertToU16().process(planes[p],\ 5);}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ converted));}
+\DoxyCodeLine{00113\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (desc.bit\_depth()\ ==\ 12)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ Surface\ converted[3];}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ decorate);}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ desc.num\_planes();\ p++)}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ converted[p]\ =\ ConvertToU16().process(planes[p],\ 3);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ converted));}
+\DoxyCodeLine{00120\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (desc.bit\_depth()\ ==\ 14)\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ Surface\ converted[3];}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ decorate);}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ desc.num\_planes();\ p++)}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ converted[p]\ =\ ConvertToU16().process(planes[p],\ 1);}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ converted));}
+\DoxyCodeLine{00127\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Image\ Format\ not\ supported\ \%4d\ bpp"{}},\ desc.bit\_depth());}
+\DoxyCodeLine{00129\ \ \ \ \ \}}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ Dump\ surface\ as\ 8\ or\ 16\ bit\ Y}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \textcolor{keywordtype}{void}\ Surface::dump(\textcolor{keyword}{const}\ std::string\ \&name)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{if}\ (!dump\_surfaces)}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ ImageFormat\ fmt\ =\ IMAGE\_FORMAT\_NONE;}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{switch}\ (bpp())\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ fmt\ =\ IMAGE\_FORMAT\_Y16;}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ fmt\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ ImageDescription\ desc(fmt,\ width(),\ height());}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ Surface\ planes[3];}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ planes[0]\ =\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00158\ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ planes));}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ Dump\ array\ of\ layers/surfaces\ as\ 16\ bit\ Y}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//}}
+\DoxyCodeLine{00163\ \textcolor{keywordtype}{void}\ Surface::dump\_layers(\textcolor{keyword}{const}\ Surface\ surface[],\ \textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordflow}{if}\ (!dump\_surfaces)}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ CHECK(surface[0].bpp()\ ==\ 2);\ \textcolor{comment}{//\ only\ 16\ bit\ supported\ at\ the\ moment}}
+\DoxyCodeLine{00168\ \ \ \ \ ImageDescription\ desc(IMAGE\_FORMAT\_Y16,\ surface[0].width()\ *\ transform\_block\_size,\ surface[0].height()\ *\ transform\_block\_size);}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_writers.find(name)\ ==\ yuv\_writers.end())}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ yuv\_writers[name]\ =\ CreateYUVWriter(name,\ desc,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ Surface\ planes[3];}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{if}\ (transform\_block\_size\ ==\ 2)\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ surface[0].view\_as<int16\_t>();}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ surface[1].view\_as<int16\_t>();}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ surface[2].view\_as<int16\_t>();}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ surface[3].view\_as<int16\_t>();}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ dst.reserve(surface[0].width()\ *\ transform\_block\_size,\ surface[0].height()\ *\ transform\_block\_size);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface[0].width();\ x++)\ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface[0].height();\ y++)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 2\ +\ 0,\ y\ *\ 2\ +\ 0,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 2\ +\ 1,\ y\ *\ 2\ +\ 0,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 2\ +\ 0,\ y\ *\ 2\ +\ 1,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 2\ +\ 1,\ y\ *\ 2\ +\ 1,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ planes[0]\ =\ dst.finish();}
+\DoxyCodeLine{00193\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ surface[0].view\_as<int16\_t>();}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ surface[1].view\_as<int16\_t>();}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ surface[2].view\_as<int16\_t>();}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ surface[3].view\_as<int16\_t>();}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src04\_view\ =\ surface[4].view\_as<int16\_t>();}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src05\_view\ =\ surface[5].view\_as<int16\_t>();}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src06\_view\ =\ surface[6].view\_as<int16\_t>();}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src07\_view\ =\ surface[7].view\_as<int16\_t>();}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src08\_view\ =\ surface[8].view\_as<int16\_t>();}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src09\_view\ =\ surface[9].view\_as<int16\_t>();}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src10\_view\ =\ surface[10].view\_as<int16\_t>();}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src11\_view\ =\ surface[11].view\_as<int16\_t>();}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src12\_view\ =\ surface[12].view\_as<int16\_t>();}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src13\_view\ =\ surface[13].view\_as<int16\_t>();}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src14\_view\ =\ surface[14].view\_as<int16\_t>();}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src15\_view\ =\ surface[15].view\_as<int16\_t>();}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ dst.reserve(surface[0].width()\ *\ transform\_block\_size,\ surface[0].height()\ *\ transform\_block\_size);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ surface[0].width();\ x++)\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ surface[0].height();\ y++)\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 0,\ y\ *\ 4\ +\ 0,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 1,\ y\ *\ 4\ +\ 0,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 2,\ y\ *\ 4\ +\ 0,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 3,\ y\ *\ 4\ +\ 0,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 0,\ y\ *\ 4\ +\ 1,\ src04\_view.read(x,\ y));}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 1,\ y\ *\ 4\ +\ 1,\ src05\_view.read(x,\ y));}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 2,\ y\ *\ 4\ +\ 1,\ src06\_view.read(x,\ y));}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 3,\ y\ *\ 4\ +\ 1,\ src07\_view.read(x,\ y));}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 0,\ y\ *\ 4\ +\ 2,\ src08\_view.read(x,\ y));}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 1,\ y\ *\ 4\ +\ 2,\ src09\_view.read(x,\ y));}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 2,\ y\ *\ 4\ +\ 2,\ src10\_view.read(x,\ y));}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 3,\ y\ *\ 4\ +\ 2,\ src11\_view.read(x,\ y));}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 0,\ y\ *\ 4\ +\ 3,\ src12\_view.read(x,\ y));}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 1,\ y\ *\ 4\ +\ 3,\ src13\_view.read(x,\ y));}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 2,\ y\ *\ 4\ +\ 3,\ src14\_view.read(x,\ y));}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(x\ *\ 4\ +\ 3,\ y\ *\ 4\ +\ 3,\ src15\_view.read(x,\ y));}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ planes[0]\ =\ dst.finish();}
+\DoxyCodeLine{00235\ \ \ \ \ \}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \ \ yuv\_writers[name]-\/>write(Image(name,\ desc,\ 0,\ planes));}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{keywordtype}{void}\ Surface::dump\_image(\textcolor{keyword}{const}\ std::string\ \&name)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00241\ \ \ \ \ ImageFormat\ fmt\ =\ IMAGE\_FORMAT\_NONE;}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordflow}{switch}\ (bpp())\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ fmt\ =\ IMAGE\_FORMAT\_Y16;}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ fmt\ =\ IMAGE\_FORMAT\_Y8;}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00251\ \ \ \ \ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ ImageDescription\ desc(fmt,\ width(),\ height());}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keyword}{auto}\ writer\ =\ CreateYUVWriter(name,\ desc,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ Surface\ planes[3];}
+\DoxyCodeLine{00258\ \ \ \ \ planes[0]\ =\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ writer-\/>write(Image(name,\ desc,\ 0,\ planes));}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ uint64\_t\ Surface::checksum()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordflow}{if}\ (!checksummed\_)\ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ SurfaceView<uint8\_t>\ v(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ checksum\_\ =\ crc64(0,\ v.data(),\ v.size());}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ checksummed\_\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00268\ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordflow}{return}\ checksum\_;}
+\DoxyCodeLine{00271\ \}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

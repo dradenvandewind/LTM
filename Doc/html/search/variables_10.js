@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['qgchromaenable_0',['qgChromaEnable',['../structvtm_1_1PartLevel.html#a590ed12798af42d20c77c815faa54018',1,'vtm::PartLevel']]],
+  ['qgenable_1',['qgEnable',['../structvtm_1_1PartLevel.html#af46928cb9443119f8c36cff2384e0094',1,'vtm::PartLevel']]],
+  ['qgstart_2',['qgStart',['../classvtm_1_1CUCtx.html#a78250ab7891e7afe06aa1d2de64e5fae',1,'vtm::CUCtx']]],
+  ['qm_5fcoefficient_5f1_3',['qm_coefficient_1',['../structlctm_1_1PictureConfiguration.html#a89cf683b7e1ed085509d4e7832bc04d4',1,'lctm::PictureConfiguration']]],
+  ['qm_5fcoefficient_5f1_5fmem_4',['qm_coefficient_1_mem',['../structlctm_1_1PictureConfiguration.html#ab96fba19f048a9441d4a5660175c4f10',1,'lctm::PictureConfiguration']]],
+  ['qm_5fcoefficient_5f1_5fpar_5',['qm_coefficient_1_par',['../structlctm_1_1PictureConfiguration.html#a7bbf99fe4240ac7ccfbf127b0cb1dfd1',1,'lctm::PictureConfiguration']]],
+  ['qm_5fcoefficient_5f2_6',['qm_coefficient_2',['../structlctm_1_1PictureConfiguration.html#a947815dff657db9c93ca25043f572d69',1,'lctm::PictureConfiguration']]],
+  ['qm_5fcoefficient_5f2_5fmem_7',['qm_coefficient_2_mem',['../structlctm_1_1PictureConfiguration.html#a4685e4c2db15a6bbdd3d2a2b010dd31a',1,'lctm::PictureConfiguration']]],
+  ['qm_5fcoefficient_5f2_5fpar_8',['qm_coefficient_2_par',['../structlctm_1_1PictureConfiguration.html#a301fc8f29f569007107f4c298627b432',1,'lctm::PictureConfiguration']]],
+  ['qp_9',['qp',['../structMetadata.html#a01139f3b55ad4efbd223f32b53ef701e',1,'Metadata::qp'],['../structvtm_1_1CodingUnit.html#a333eda257f1cc4a0f8e19389d6307458',1,'vtm::CodingUnit::qp'],['../classvtm_1_1CUCtx.html#ab4723546a88b96f4d18aa7b9c869f931',1,'vtm::CUCtx::qp']]],
+  ['qps_10',['Qps',['../classvtm_1_1QpParam.html#a33fda203e6a674bacc59f03cc18f67d5',1,'vtm::QpParam']]],
+  ['qscale_11',['qScale',['../structvtm_1_1TrQuantParams.html#a568a27193bcaf4c255f41e9fd8a2d1bf',1,'vtm::TrQuantParams']]],
+  ['qtcbf_12',['QtCbf',['../classvtm_1_1ContextSetCfg.html#ae45fb2c466041cfa87a5a65b654d74c7',1,'vtm::ContextSetCfg']]],
+  ['qtdepth_13',['qtDepth',['../structvtm_1_1CodingUnit.html#ac7fccfc91e7318355943c931a2194f24',1,'vtm::CodingUnit']]],
+  ['qtrootcbf_14',['QtRootCbf',['../classvtm_1_1ContextSetCfg.html#aa20fa1c458dbdb39887b0174af01fadb',1,'vtm::ContextSetCfg']]],
+  ['quant_5fmatrix_5fmode_15',['quant_matrix_mode',['../structlctm_1_1PictureConfiguration.html#a0ecde426009f1c4def786f809d791871',1,'lctm::PictureConfiguration']]],
+  ['quant_5freduced_5fdeadzone_16',['quant_reduced_deadzone',['../structlctm_1_1EncoderConfiguration.html#ab4a864a654a4404d7d345e52503e4277',1,'lctm::EncoderConfiguration']]]
+];

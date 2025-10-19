@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['u_0',['u',['../structvtm_1_1ChromaQpAdj.html#a214dc97afdf4aa576450afcfa2151b9d',1,'vtm::ChromaQpAdj']]],
+  ['unitscale_1',['unitScale',['../classvtm_1_1CodingStructure.html#a7faa1255eca337d59aaca50db0765c96',1,'vtm::CodingStructure']]],
+  ['unitscalearray_2',['UnitScaleArray',['../namespacevtm.html#ac46aa9ec8180f649706ce45809d95f08',1,'vtm']]],
+  ['unscaledpic_3',['unscaledPic',['../structvtm_1_1Picture.html#a2fa339f2544bc6fe6cff0b55e16a5eda',1,'vtm::Picture']]],
+  ['updatectrl_4',['updateCtrl',['../structvtm_1_1ReshapeCW.html#a6c7f01df034f868bdf2ec5e970015110',1,'vtm::ReshapeCW']]],
+  ['upsample_5',['upsample',['../structlctm_1_1GlobalConfiguration.html#aa54a5f1e426e7324ffa487abc8b653de',1,'lctm::GlobalConfiguration']]],
+  ['upsample_5f_6',['upsample_',['../classlctm_1_1FileEncoderImpl.html#a8d56a5483f828e7255da6af26191fbae',1,'lctm::FileEncoderImpl']]],
+  ['upsampling_5fcoefficients_7',['upsampling_coefficients',['../structlctm_1_1GlobalConfiguration.html#a9376bf2d444c7da42bb658e6f3701a8f',1,'lctm::GlobalConfiguration']]],
+  ['upsampling_5fcoefficients_5f_8',['upsampling_coefficients_',['../classlctm_1_1FileEncoderImpl.html#a2670012d77492b2419341fd95dc929bf',1,'lctm::FileEncoderImpl']]],
+  ['usealthpelif_9',['usealthpelif',['../structvtm_1_1MotionInfo.html#a5d7c49e3f3be9239814ddc4b431097dc',1,'vtm::MotionInfo::useAltHpelIf'],['../classvtm_1_1MergeCtx.html#a4122f1576f9b30c50fc94c853c5f94e5',1,'vtm::MergeCtx::useAltHpelIf']]],
+  ['used_10',['used',['../structvtm_1_1ClpRngs.html#a82835e81ce3fb71be8b6f8458456ee70',1,'vtm::ClpRngs']]],
+  ['usedbcost_11',['useDbCost',['../classvtm_1_1CodingStructure.html#a0fa49a5cdd0def4a010aa4262fb11a5d',1,'vtm::CodingStructure']]],
+  ['usedbycurr_12',['usedByCurr',['../structvtm_1_1Picture.html#a3f4c1195ed327aab69e1dc06ca1b0cdc',1,'vtm::Picture']]],
+  ['useescape_13',['useEscape',['../structvtm_1_1CodingUnit.html#ae2dcd5b3f11579b5bc792fe1e2aacb5f',1,'vtm::CodingUnit']]],
+  ['usemr_14',['useMR',['../classvtm_1_1DistParam.html#aaf6a0980c75d40a119db7bc0107cde13',1,'vtm::DistParam']]],
+  ['user_5fdata_5fenabled_15',['user_data_enabled',['../structlctm_1_1GlobalConfiguration.html#a905ae8dbf18290e37a01c492d95ab333',1,'lctm::GlobalConfiguration']]],
+  ['user_5fdata_5fmethod_16',['user_data_method',['../structlctm_1_1EncoderConfiguration.html#aa0457c7dd43692a1656ce97c9ebc64f2',1,'lctm::EncoderConfiguration']]],
+  ['userdata_17',['userData',['../classvtm_1_1SEIuserDataUnregistered.html#ad823915fccf30b43e28a5da4eaaa3f0c',1,'vtm::SEIuserDataUnregistered']]],
+  ['userdatalength_18',['userDataLength',['../classvtm_1_1SEIuserDataUnregistered.html#a768151f1e39555ce7c42bbe8fbaace4e',1,'vtm::SEIuserDataUnregistered']]],
+  ['userotation_19',['useRotation',['../structvtm_1_1CodingUnit.html#a43aa10e065de4ee1c86694212e1cb764',1,'vtm::CodingUnit']]],
+  ['uuid_5fiso_5fiec_5f11578_20',['uuid_iso_iec_11578',['../structlctm_1_1SeiUserDataUnrgistered.html#a441871cc77964aefac78031aec2e02cc',1,'lctm::SeiUserDataUnrgistered::uuid_iso_iec_11578'],['../classvtm_1_1SEIuserDataUnregistered.html#af6683cb900bf3a96abec3a34fc13e79a',1,'vtm::SEIuserDataUnregistered::uuid_iso_iec_11578']]]
+];

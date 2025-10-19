@@ -1,0 +1,138 @@
+\doxysection{Layer\+Encode\+Flags.\+cpp}
+\label{LayerEncodeFlags_8cpp_source}\index{encoder/src/LayerEncodeFlags.cpp@{encoder/src/LayerEncodeFlags.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Martin\ Vymazal(martin.vymazal@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ LayerEncodeFlags.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Store\ an\ array\ of\ flags\ indicating\ which\ residual\ layers\ should}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ be\ encoded\ and\ which\ should\ be\ dropped}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}LayerEncodeFlags.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ EncodeBits::EncodeBits(EncodingMode\ enc\_mode)\ :\ enc\_mode\_(enc\_mode)\ \{\}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ EncodingMode\ EncodeBits::encoding\_mode()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ enc\_mode\_;\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ EncodeBits\_DD::EncodeBits\_DD(EncodingMode\ enc\_mode)\ :\ EncodeBits(enc\_mode)\ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Do\ not\ allow\ AA\ for\ DD,\ only\ for\ DDS}}
+\DoxyCodeLine{00052\ \ \ \ \ assert(enc\_mode\ !=\ EncodingMode::AA);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ encode\_flags\_.reset();}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordflow}{switch}\ (enc\_mode)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordflow}{case}\ ENCODE\_ALL:}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ encode\_flags\_.size();\ ++i)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ encode\_flags\_.set(i,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{case}\ Ax:}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ encode\_flags\_.set(0,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{case}\ ENCODE\_NONE:}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ encode\_flags\_.reset();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00069\ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ TransformType\ EncodeBits\_DD::transform\_type()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TransformType::TransformType\_DD;\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keywordtype}{bool}\ EncodeBits\_DD::encode\_residual(\textcolor{keywordtype}{unsigned}\ layer)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00075\ \ \ \ \ assert(layer\ <\ encode\_flags\_.size());}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{return}\ encode\_flags\_[layer];}
+\DoxyCodeLine{00077\ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{size\_t}\ EncodeBits\_DD::size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_.size();\ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ EncodeBits\_DDS::EncodeBits\_DDS(EncodingMode\ enc\_mode)\ :\ EncodeBits(enc\_mode)\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ encode\_flags\_.reset();}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{switch}\ (enc\_mode)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{case}\ ENCODE\_ALL:}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ encode\_flags\_.size();\ ++i)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ encode\_flags\_[i]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{case}\ Ax:}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ encode\_flags\_[0]\ =\ encode\_flags\_[1]\ =\ encode\_flags\_[2]\ =\ encode\_flags\_[3]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{case}\ AA:}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ encode\_flags\_[0]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{case}\ NA:}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ encode\_flags\_[1]\ =\ encode\_flags\_[2]\ =\ encode\_flags\_[3]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{case}\ ENCODE\_NONE:}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ encode\_flags\_.reset();}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ TransformType\ EncodeBits\_DDS::transform\_type()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ TransformType::TransformType\_DDS;\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{keywordtype}{bool}\ EncodeBits\_DDS::encode\_residual(\textcolor{keywordtype}{unsigned}\ layer)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ assert(layer\ <\ encode\_flags\_.size());}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{return}\ encode\_flags\_[layer];}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{size\_t}\ EncodeBits\_DDS::size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_.size();\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ LayerEncodeFlags::LayerEncodeFlags(TransformType\ transform\_type,\ EncodingMode\ enc\_mode)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ assert(transform\_type\ ==\ TransformType::TransformType\_DD\ ||\ transform\_type\ ==\ TransformType::TransformType\_DDS);}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (transform\_type\ ==\ TransformType::TransformType\_DD)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ encode\_flags\_\ =\ std::unique\_ptr<EncodeBits\_DD>(\textcolor{keyword}{new}\ EncodeBits\_DD(enc\_mode));}
+\DoxyCodeLine{00119\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (transform\_type\ ==\ TransformType::TransformType\_DDS)\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ encode\_flags\_\ =\ std::unique\_ptr<EncodeBits\_DDS>(\textcolor{keyword}{new}\ EncodeBits\_DDS(enc\_mode));}
+\DoxyCodeLine{00121\ \ \ \ \ \}}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ TransformType\ LayerEncodeFlags::transform\_type()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_-\/>transform\_type();\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ EncodingMode\ LayerEncodeFlags::encoding\_mode()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_-\/>encoding\_mode();\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{keywordtype}{bool}\ LayerEncodeFlags::encode\_residual(\textcolor{keywordtype}{unsigned}\ layer)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_-\/>encode\_residual(layer);\ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keywordtype}{size\_t}\ LayerEncodeFlags::size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ encode\_flags\_-\/>size();\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

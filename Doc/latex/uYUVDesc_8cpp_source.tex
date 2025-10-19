@@ -1,0 +1,257 @@
+\doxysection{u\+YUVDesc.\+cpp}
+\label{uYUVDesc_8cpp_source}\index{src/uYUVDesc.cpp@{src/uYUVDesc.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}uYUVDesc.h"{}}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ "{}uEnumMap.h"{}}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{struct\ }YUVFormatInfo\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ YUVFormatInfo(uint32\_t\ planeCount,\ uint32\_t\ sizeMult,\ uint32\_t\ sizeDiv,\ uint8\_t\ bitDepth,\ uint32\_t\ horizontalDownsample,}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ verticalDownsample)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ :\ m\_planeCount(planeCount),\ m\_sizeMult(sizeMult),\ m\_sizeDiv(sizeDiv),\ m\_bitDepth(bitDepth),}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ m\_horizontalDownsample(horizontalDownsample),\ m\_verticalDownsample(verticalDownsample)\ \{\}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ uint32\_t\ m\_planeCount;}
+\DoxyCodeLine{00049\ \ \ \ \ uint32\_t\ m\_sizeMult;}
+\DoxyCodeLine{00050\ \ \ \ \ uint32\_t\ m\_sizeDiv;}
+\DoxyCodeLine{00051\ \ \ \ \ uint8\_t\ m\_bitDepth;}
+\DoxyCodeLine{00052\ \ \ \ \ uint32\_t\ m\_horizontalDownsample;}
+\DoxyCodeLine{00053\ \ \ \ \ uint32\_t\ m\_verticalDownsample;}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{const}\ YUVFormatInfo\ kFormatInfo[YUVFormat::Count]\ =\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ YUVFormatInfo(3,\ 3,\ 2,\ 8,\ 2,\ 2),\ \textcolor{comment}{//\ YUV8Planar420}}
+\DoxyCodeLine{00058\ \ \ \ \ YUVFormatInfo(3,\ 2,\ 1,\ 8,\ 2,\ 1),\ \textcolor{comment}{//\ YUV8Planar422}}
+\DoxyCodeLine{00059\ \ \ \ \ YUVFormatInfo(3,\ 3,\ 1,\ 8,\ 1,\ 1),\ \textcolor{comment}{//\ YUV8Planar444}}
+\DoxyCodeLine{00060\ \ \ \ \ YUVFormatInfo(1,\ 1,\ 1,\ 8,\ 1,\ 1),\ \textcolor{comment}{//\ Y8Planar}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ YUVFormatInfo(3,\ 3,\ 1,\ 10,\ 2,\ 2),\ \textcolor{comment}{//\ YUV10Planar420}}
+\DoxyCodeLine{00063\ \ \ \ \ YUVFormatInfo(3,\ 4,\ 1,\ 10,\ 2,\ 1),\ \textcolor{comment}{//\ YUV10Planar422}}
+\DoxyCodeLine{00064\ \ \ \ \ YUVFormatInfo(3,\ 6,\ 1,\ 10,\ 1,\ 1),\ \textcolor{comment}{//\ YUV10Planar444}}
+\DoxyCodeLine{00065\ \ \ \ \ YUVFormatInfo(1,\ 2,\ 1,\ 10,\ 1,\ 1),\ \textcolor{comment}{//\ Y10Planar}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ YUVFormatInfo(3,\ 3,\ 1,\ 12,\ 2,\ 2),\ \textcolor{comment}{//\ YUV12Planar420}}
+\DoxyCodeLine{00068\ \ \ \ \ YUVFormatInfo(3,\ 4,\ 1,\ 12,\ 2,\ 1),\ \textcolor{comment}{//\ YUV12Planar422}}
+\DoxyCodeLine{00069\ \ \ \ \ YUVFormatInfo(3,\ 6,\ 1,\ 12,\ 1,\ 1),\ \textcolor{comment}{//\ YUV12Planar444}}
+\DoxyCodeLine{00070\ \ \ \ \ YUVFormatInfo(1,\ 2,\ 1,\ 12,\ 1,\ 1),\ \textcolor{comment}{//\ Y12Planar}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ YUVFormatInfo(3,\ 3,\ 1,\ 14,\ 2,\ 2),\ \textcolor{comment}{//\ YUV14Planar420}}
+\DoxyCodeLine{00073\ \ \ \ \ YUVFormatInfo(3,\ 4,\ 1,\ 14,\ 2,\ 1),\ \textcolor{comment}{//\ YUV14Planar422}}
+\DoxyCodeLine{00074\ \ \ \ \ YUVFormatInfo(3,\ 6,\ 1,\ 14,\ 1,\ 1),\ \textcolor{comment}{//\ YUV14Planar444}}
+\DoxyCodeLine{00075\ \ \ \ \ YUVFormatInfo(1,\ 2,\ 1,\ 14,\ 1,\ 1)\ \ \textcolor{comment}{//\ Y14Planar}}
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ clang-\/format\ off}}
+\DoxyCodeLine{00079\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ EnumMap<YUVFormat::Enum>\ kYUVFormatMap\ =\ EnumMap<YUVFormat::Enum>}
+\DoxyCodeLine{00080\ \ \ \ \ (YUVFormat::YUV8Planar420,\ \textcolor{stringliteral}{"{}yuv420p"{}})}
+\DoxyCodeLine{00081\ \ \ \ \ (YUVFormat::YUV8Planar422,\ \textcolor{stringliteral}{"{}yuv422p"{}})}
+\DoxyCodeLine{00082\ \ \ \ \ (YUVFormat::YUV8Planar444,\ \textcolor{stringliteral}{"{}yuv444p"{}})}
+\DoxyCodeLine{00083\ \ \ \ \ (YUVFormat::Y8Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y8"{}})}
+\DoxyCodeLine{00084\ \ \ \ \ (YUVFormat::YUV10Planar420,\ \textcolor{stringliteral}{"{}yuv420p10"{}})}
+\DoxyCodeLine{00085\ \ \ \ \ (YUVFormat::YUV10Planar422,\ \textcolor{stringliteral}{"{}yuv422p10"{}})}
+\DoxyCodeLine{00086\ \ \ \ \ (YUVFormat::YUV10Planar444,\ \textcolor{stringliteral}{"{}yuv444p10"{}})}
+\DoxyCodeLine{00087\ \ \ \ \ (YUVFormat::Y10Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y10"{}})}
+\DoxyCodeLine{00088\ \ \ \ \ (YUVFormat::YUV12Planar420,\ \textcolor{stringliteral}{"{}yuv420p12"{}})}
+\DoxyCodeLine{00089\ \ \ \ \ (YUVFormat::YUV12Planar422,\ \textcolor{stringliteral}{"{}yuv422p12"{}})}
+\DoxyCodeLine{00090\ \ \ \ \ (YUVFormat::YUV12Planar444,\ \textcolor{stringliteral}{"{}yuv444p12"{}})}
+\DoxyCodeLine{00091\ \ \ \ \ (YUVFormat::Y12Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y12"{}})}
+\DoxyCodeLine{00092\ \ \ \ \ (YUVFormat::YUV14Planar420,\ \textcolor{stringliteral}{"{}yuv420p14"{}})}
+\DoxyCodeLine{00093\ \ \ \ \ (YUVFormat::YUV14Planar422,\ \textcolor{stringliteral}{"{}yuv422p14"{}})}
+\DoxyCodeLine{00094\ \ \ \ \ (YUVFormat::YUV14Planar444,\ \textcolor{stringliteral}{"{}yuv444p14"{}})}
+\DoxyCodeLine{00095\ \ \ \ \ (YUVFormat::Y14Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y14"{}});}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ EnumMap<YUVFormat::Enum>\ kYUVFormatMapEPI\ =\ EnumMap<YUVFormat::Enum>}
+\DoxyCodeLine{00098\ \ \ \ \ (YUVFormat::YUV8Planar420,\ \textcolor{stringliteral}{"{}yuv8planar420"{}})}
+\DoxyCodeLine{00099\ \ \ \ \ (YUVFormat::YUV8Planar422,\ \textcolor{stringliteral}{"{}yuv8planar422"{}})}
+\DoxyCodeLine{00100\ \ \ \ \ (YUVFormat::YUV8Planar444,\ \textcolor{stringliteral}{"{}yuv8planar444"{}})}
+\DoxyCodeLine{00101\ \ \ \ \ (YUVFormat::Y8Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y8"{}})}
+\DoxyCodeLine{00102\ \ \ \ \ (YUVFormat::YUV10Planar420,\ \textcolor{stringliteral}{"{}yuv10planar420"{}})}
+\DoxyCodeLine{00103\ \ \ \ \ (YUVFormat::YUV10Planar422,\ \textcolor{stringliteral}{"{}yuv10planar422"{}})}
+\DoxyCodeLine{00104\ \ \ \ \ (YUVFormat::YUV10Planar444,\ \textcolor{stringliteral}{"{}yuv10planar444"{}})}
+\DoxyCodeLine{00105\ \ \ \ \ (YUVFormat::Y10Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y10"{}})}
+\DoxyCodeLine{00106\ \ \ \ \ (YUVFormat::YUV12Planar420,\ \textcolor{stringliteral}{"{}yuv12planar420"{}})}
+\DoxyCodeLine{00107\ \ \ \ \ (YUVFormat::YUV12Planar422,\ \textcolor{stringliteral}{"{}yuv12planar422"{}})}
+\DoxyCodeLine{00108\ \ \ \ \ (YUVFormat::YUV12Planar444,\ \textcolor{stringliteral}{"{}yuv12planar444"{}})}
+\DoxyCodeLine{00109\ \ \ \ \ (YUVFormat::Y12Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y12"{}})}
+\DoxyCodeLine{00110\ \ \ \ \ (YUVFormat::YUV14Planar420,\ \textcolor{stringliteral}{"{}yuv14planar420"{}})}
+\DoxyCodeLine{00111\ \ \ \ \ (YUVFormat::YUV14Planar422,\ \textcolor{stringliteral}{"{}yuv14planar422"{}})}
+\DoxyCodeLine{00112\ \ \ \ \ (YUVFormat::YUV14Planar444,\ \textcolor{stringliteral}{"{}yuv14planar444"{}})}
+\DoxyCodeLine{00113\ \ \ \ \ (YUVFormat::Y14Planar,\ \ \ \ \ \ \textcolor{stringliteral}{"{}y14"{}});}
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ clang-\/format\ on}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keywordtype}{bool}\ YUVFormat::FromString(Enum\ \&res,\ \textcolor{keyword}{const}\ std::string\ \&str)\ \{\ \textcolor{keywordflow}{return}\ kYUVFormatMap.FindEnum(res,\ str,\ YUVFormat::Invalid);\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ YUVFormat::Enum\ YUVFormat::FromString2(\textcolor{keyword}{const}\ std::string\ \&str)\ \{\ \textcolor{keywordflow}{return}\ FromString2Helper(FromString,\ str);\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keywordtype}{bool}\ YUVFormat::ToString(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ **res,\ Enum\ type)\ \{\ \textcolor{keywordflow}{return}\ kYUVFormatMap.FindName(res,\ type,\ \textcolor{stringliteral}{"{}YUVFormat-\/ERROR"{}});\ \}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *YUVFormat::ToString2(Enum\ val)\ \{\ \textcolor{keywordflow}{return}\ ToString2Helper(ToString,\ val);\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ @todo\ (rob):\ These\ functions\ are\ currently\ a\ necessary\ evil\ to\ translate\ from\ the}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ FFmpeg\ inspired\ formats\ to\ EPI\ legacy\ formats.\ EPI\ API\ changes\ should}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ work\ to\ eliminate\ this.}}
+\DoxyCodeLine{00131\ \textcolor{keywordtype}{bool}\ YUVFormat::ToStringEPI(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ **res,\ Enum\ type)\ \{\ \textcolor{keywordflow}{return}\ kYUVFormatMapEPI.FindName(res,\ type,\ \textcolor{stringliteral}{"{}YUVFormat-\/ERROR"{}});\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *YUVFormat::ToStringEPI2(Enum\ val)\ \{\ \textcolor{keywordflow}{return}\ ToString2Helper(ToStringEPI,\ val);\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ YUVDesc::PlaneDesc::PlaneDesc(uint32\_t\ width,\ uint32\_t\ height,\ uint32\_t\ stridePixels,\ uint32\_t\ strideBytes)}
+\DoxyCodeLine{00138\ \ \ \ \ :\ m\_width(width),\ m\_height(height),\ m\_stridePixels(stridePixels),\ m\_strideBytes(strideBytes)\ \{\}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ YUVDesc::YUVDesc()\ :\ m\_format(YUVFormat::Invalid),\ m\_planeCount(0),\ m\_byteSize(0),\ m\_bitDepth(0),\ m\_bitDepthContainer(0)\ \{\}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{keywordtype}{void}\ YUVDesc::Initialise(YUVFormat::Enum\ format,\ uint32\_t\ width,\ uint32\_t\ height)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{const}\ YUVFormatInfo\ \&info\ =\ kFormatInfo[format];}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ m\_format\ =\ format;}
+\DoxyCodeLine{00148\ \ \ \ \ m\_planeCount\ =\ info.m\_planeCount;}
+\DoxyCodeLine{00149\ \ \ \ \ assert(m\_planeCount\ <=\ kMaxNumPlanes);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ m\_bitDepth\ =\ info.m\_bitDepth;}
+\DoxyCodeLine{00152\ \ \ \ \ m\_bitDepthContainer\ =\ (m\_bitDepth\ +\ 7)\ \&\ \string~7;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ byteDepth\ =\ GetByteDepth();}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ planeIndex\ =\ 0;\ planeIndex\ <\ m\_planeCount;\ ++planeIndex)\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ planeWidth\ =}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ (planeIndex\ ==\ 0\ ||\ (info.m\_horizontalDownsample\ ==\ 1))\ ?\ width\ :\ ((width\ +\ 1)\ /\ info.m\_horizontalDownsample);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ planeHeight\ =}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ (planeIndex\ ==\ 0\ ||\ (info.m\_verticalDownsample\ ==\ 1))\ ?\ height\ :\ ((height\ +\ 1)\ /\ info.m\_verticalDownsample);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ m\_planeDesc[planeIndex]\ =\ PlaneDesc(planeWidth,\ planeHeight,\ planeWidth,\ byteDepth\ *\ planeWidth);}
+\DoxyCodeLine{00162\ \ \ \ \ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ m\_byteSize\ =\ (width\ *\ height\ *\ info.m\_sizeMult)\ /\ info.m\_sizeDiv;}
+\DoxyCodeLine{00165\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ uint32\_t\ YUVDesc::GetWidth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ GetPlaneWidth(0);\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ uint32\_t\ YUVDesc::GetHeight()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ GetPlaneHeight(0);\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ uint32\_t\ *YUVDesc::GetWidthPtr()\ \{\ \textcolor{keywordflow}{return}\ GetPlaneWidthPtr(0);\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ uint32\_t\ *YUVDesc::GetHeightPtr()\ \{\ \textcolor{keywordflow}{return}\ GetPlaneHeightPtr(0);\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ YUVFormat::Enum\ YUVDesc::GetFormat()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_format;\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ uint8\_t\ YUVDesc::GetBitDepth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_bitDepth;\ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ uint8\_t\ YUVDesc::GetBitDepthContainer()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_bitDepthContainer;\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ uint8\_t\ YUVDesc::GetByteDepth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_bitDepthContainer\ >>\ 3;\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ uint32\_t\ YUVDesc::GetMemorySize()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_byteSize;\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ uint32\_t\ YUVDesc::GetPlaneCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_planeCount;\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ uint32\_t\ YUVDesc::GetPlaneWidth(uint32\_t\ planeIndex)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00188\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_planeDesc[planeIndex].m\_width;}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ uint32\_t\ YUVDesc::GetPlaneHeight(uint32\_t\ planeIndex)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00193\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_planeDesc[planeIndex].m\_height;}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ uint32\_t\ *YUVDesc::GetPlaneWidthPtr(uint32\_t\ planeIndex)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_planeDesc[planeIndex].m\_width;}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ uint32\_t\ *YUVDesc::GetPlaneHeightPtr(uint32\_t\ planeIndex)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{return}\ \&m\_planeDesc[planeIndex].m\_height;}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ uint32\_t\ YUVDesc::GetPlaneStrideBytes(uint32\_t\ planeIndex)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00208\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_planeDesc[planeIndex].m\_strideBytes;}
+\DoxyCodeLine{00210\ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ uint32\_t\ YUVDesc::GetPlaneStridePixels(uint32\_t\ planeIndex)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00213\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_planeDesc[planeIndex].m\_stridePixels;}
+\DoxyCodeLine{00215\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ uint32\_t\ YUVDesc::GetPlaneMemorySize(uint32\_t\ planeIndex)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00218\ \ \ \ \ assert(planeIndex\ <\ kMaxNumPlanes);}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{const}\ PlaneDesc\ \&desc\ =\ m\_planeDesc[planeIndex];}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{return}\ (desc.m\_strideBytes\ *\ desc.m\_height);}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \textcolor{keywordtype}{void}\ YUVDesc::GetPlanePointers(uint8\_t\ *memoryPtr,\ uint8\_t\ **planePtrs,\ uint32\_t\ *planePixelStrides)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//\ Assumes\ that\ the\ out\ arrays\ are\ the\ correct\ size.}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ planeIndex\ =\ 0;\ planeIndex\ <\ m\_planeCount;\ ++planeIndex)\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ planePtrs[planeIndex]\ =\ memoryPtr;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (planePixelStrides)\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ planePixelStrides[planeIndex]\ =\ GetPlaneStridePixels(planeIndex);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ memoryPtr\ +=\ GetPlaneMemorySize(planeIndex);}
+\DoxyCodeLine{00233\ \ \ \ \ \}}
+\DoxyCodeLine{00234\ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keywordtype}{void}\ YUVDesc::GetPlanePointers(\textcolor{keyword}{const}\ uint8\_t\ *memoryPtr,\ \textcolor{keyword}{const}\ uint8\_t\ **planePtrs,\ uint32\_t\ *planePixelStrides)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ Assumes\ that\ the\ out\ arrays\ are\ the\ correct\ size.}}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ planeIndex\ =\ 0;\ planeIndex\ <\ m\_planeCount;\ ++planeIndex)\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ planePtrs[planeIndex]\ =\ memoryPtr;}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (planePixelStrides)\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ planePixelStrides[planeIndex]\ =\ GetPlaneStridePixels(planeIndex);}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ memoryPtr\ +=\ GetPlaneMemorySize(planeIndex);}
+\DoxyCodeLine{00246\ \ \ \ \ \}}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00250\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00251\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+
+\end{DoxyCode}

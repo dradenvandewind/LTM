@@ -1,0 +1,720 @@
+\doxysection{Decoder.\+cpp}
+\label{Decoder_8cpp_source}\index{decoder/src/Decoder.cpp@{decoder/src/Decoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ Decoder.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Decoder\ implementation\ -\/\ marshals\ other\ objects\ to\ decode\ base+enhancement\ to\ YUV\ image}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Decoder.hpp"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Add.hpp"{}}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Conform.hpp"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}Deblocking.hpp"{}}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Deserializer.hpp"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}Dithering.hpp"{}}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}Expand.hpp"{}}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ "{}InverseQuantize.hpp"{}}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ "{}InverseTransformDD.hpp"{}}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ "{}InverseTransformDDS.hpp"{}}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ "{}InverseTransformDDS\_1D.hpp"{}}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ "{}InverseTransformDD\_1D.hpp"{}}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ "{}LcevcMd5.hpp"{}}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#include\ "{}PredictedResidual.hpp"{}}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#include\ "{}Upsampling.hpp"{}}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{extern}\ PsnrStatistic\ goPsnr;}
+\DoxyCodeLine{00071\ \textcolor{keyword}{extern}\ uint8\_t\ gaucMd5Digest[][16];}
+\DoxyCodeLine{00072\ \textcolor{keyword}{extern}\ ReportStructure\ goReportStructure;}
+\DoxyCodeLine{00073\ \textcolor{keyword}{extern}\ priority\_queue<ReportStructure,\ vector<ReportStructure,\ allocator<ReportStructure>>,\ ReportStructureComp>\ goReportQueue;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ Decoder::Decoder()\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ all\ configuration\ settings\ are\ at\ a\ sensible\ setting}}
+\DoxyCodeLine{00079\ \ \ \ \ memset(\&configuration\_,\ 0,\ \textcolor{keyword}{sizeof}(configuration\_));}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Size\ of\ transform\ block}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//}}
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{unsigned}\ Decoder::transform\_block\_size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ configuration\_.global\_configuration.transform\_block\_size;\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{unsigned}\ Decoder::num\_residual\_layers()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ configuration\_.global\_configuration.num\_residual\_layers;\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keywordtype}{bool}\ Decoder::is\_tiled()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ configuration\_.global\_configuration.tile\_dimensions\_type\ !=\ TileDimensions\_None;\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ Does\ this\ layer\ has\ user\_data\ embedded?}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//}}
+\DoxyCodeLine{00092\ \textcolor{keywordtype}{bool}\ Decoder::is\_user\_data\_layer(\textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keywordtype}{unsigned}\ layer)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_1\ \&\&\ configuration\_.global\_configuration.user\_data\_enabled\ !=\ UserData\_None)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (layer\ ==\ 5);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (layer\ ==\ 1);}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ Derive\ and\ return\ temporal\ mask}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//}}
+\DoxyCodeLine{00104\ Surface\ Decoder::get\_temporal\_mask(Surface\ temporal\_symbols)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordflow}{if}\ (!configuration\_.global\_configuration.temporal\_enabled)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface();}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.picture\_configuration.temporal\_signalling\_present)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ temporal\_symbols;}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.picture\_configuration.temporal\_refresh)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint8\_t>()}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ .fill(TEMPORAL\_INTR,\ configuration\_.global\_configuration.resolution\_width\ /\ transform\_block\_size(),}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.resolution\_height\ /\ transform\_block\_size())}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<uint8\_t>()}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ .fill(TEMPORAL\_PRED,\ configuration\_.global\_configuration.resolution\_width\ /\ transform\_block\_size(),}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.resolution\_height\ /\ transform\_block\_size())}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00119\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ Decode\ residuals\ of\ an\ enhancement\ sub-\/layer}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//}}
+\DoxyCodeLine{00123\ Surface\ Decoder::decode\_residuals(\textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq,\ Surface\ \&temporal\_mask,\ Surface\ symbols[MAX\_NUM\_LAYERS])\ \{}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00126\ \ \ \ \ Surface\ coefficients[MAX\_NUM\_LAYERS];}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00128\ \ \ \ \ int32\_t\ dirq\_step\_width[MAX\_NUM\_LAYERS][2];}
+\DoxyCodeLine{00129\ \ \ \ \ int32\_t\ invq\_step\_width[MAX\_NUM\_LAYERS][2];}
+\DoxyCodeLine{00130\ \ \ \ \ int32\_t\ invq\_offset[MAX\_NUM\_LAYERS][2];}
+\DoxyCodeLine{00131\ \ \ \ \ int32\_t\ invq\_deadzone[MAX\_NUM\_LAYERS][2];}
+\DoxyCodeLine{00132\ \ \ \ \ int32\_t\ invq\_applied\_offset[MAX\_NUM\_LAYERS][2];}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ horizontal\_only\ =\ (configuration\_.global\_configuration.scaling\_mode[loq]\ ==\ ScalingMode\_1D\ ?\ true\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ passes\ =\ 1;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Get\ temporal\ mask}}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2\ \&\&\ configuration\_.global\_configuration.temporal\_enabled)\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ temporal\_mask\ =\ get\_temporal\_mask(symbols[num\_residual\_layers()]);}
+\DoxyCodeLine{00139\ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ Apply\ temporal\ step\ width\ modifier,\ if\ required}}
+\DoxyCodeLine{00142\ \ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ int16\_t\ step\_width[2];}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ int16\_t\ calculated\_step\_width\ =\ configuration\_.picture\_configuration.step\_width\_loq[loq];}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2\ \&\&\ plane\ >\ 0)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ calculated\_step\_width\ =}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ clamp((int16\_t)((calculated\_step\_width\ *\ configuration\_.global\_configuration.chroma\_step\_width\_multiplier)\ >>\ 6),}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (int16\_t)MIN\_STEP\_WIDTH,\ (int16\_t)MAX\_STEP\_WIDTH);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (loq\ ==\ LOQ\_LEVEL\_2\ \&\&\ configuration\_.global\_configuration.temporal\_enabled\ \&\&}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ !configuration\_.picture\_configuration.temporal\_refresh)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ step\_width[0]\ =}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ clamp((int16\_t)(calculated\_step\_width\ *}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (1\ -\/\ clamp(((\textcolor{keywordtype}{float})configuration\_.global\_configuration.temporal\_step\_width\_modifier\ /\ (\textcolor{keywordtype}{float})255),}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{float})0,\ (\textcolor{keywordtype}{float})0.5))),}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (int16\_t)MIN\_STEP\_WIDTH,\ (int16\_t)MAX\_STEP\_WIDTH);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ step\_width[1]\ =\ calculated\_step\_width;}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ passes\ =\ 2;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ step\_width[0]\ =\ calculated\_step\_width;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ pass\ =\ 0;\ pass\ <\ passes;\ pass++)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_residual\_layers();\ ++layer)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dirq\_step\_width[layer][pass]\ =\ find\_dirq\_step\_width(step\_width[pass],\ quant\_matrix\_coeffs\_[plane][loq][layer]);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_offset[layer][pass]\ =}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ find\_invq\_offset(configuration\_.picture\_configuration,\ step\_width[pass],\ dirq\_step\_width[layer][pass]);}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_step\_width[layer][pass]\ =\ find\_invq\_step\_width(configuration\_.picture\_configuration,}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dirq\_step\_width[layer][pass],\ invq\_offset[layer][pass]);}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_deadzone[layer][pass]\ =\ find\_layer\_deadzone(step\_width[pass],\ invq\_step\_width[layer][pass]);}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_applied\_offset[layer][pass]\ =\ find\_invq\_applied\_offset(configuration\_.picture\_configuration,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_offset[layer][pass],\ invq\_deadzone[layer][pass]);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_residual\_layers();\ ++layer)\ \{}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ symbols[layer].view\_as<int16\_t>();}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extract\ UserData\ if\ it\ is\ embedded\ in\ the\ coefficients}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_user\_data\_layer(loq,\ layer))\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ size;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration\_.global\_configuration.user\_data\_enabled)\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ lctm::UserData\_2bits:}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ =\ 2;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ lctm::UserData\_6bits:}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ size\ =\ 6;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\#if\ USER\_DATA\_EXTRACTION}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ FILE\ *file\ =\ fopen(\textcolor{stringliteral}{"{}userdata\_dec.bin"{}},\ \textcolor{stringliteral}{"{}ab"{}});}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pview\ =\ (int16\_t\ *)view.data(0,\ 0);}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ view.height()\ *\ view.width();\ ++y)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ value\ =\ *pview;}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\#if\ USER\_DATA\_EXTRACTION}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ data\ =\ value\ \&\ (size\ ==\ 6\ ?\ 0x3f\ :\ 0x03);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fwrite(\&data,\ 1,\ 1,\ file);}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ >>=\ size;}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ sign\ =\ (value\ \&\ 0x01)\ ==\ 0x00\ ?\ \textcolor{keyword}{false}\ :\ true;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ >>=\ 1;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pview++\ =\ (int16\_t)(sign\ ?\ (-\/value)\ :\ (value));}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\#if\ USER\_DATA\_EXTRACTION}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fclose(file);}
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ Surface\ syms;}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extract\ UserData\ if\ it\ is\ embedded\ in\ the\ coefficients}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_user\_data\_layer(loq,\ layer))\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ syms\ =\ UserDataClear().process(symbols[layer],\ configuration\_.global\_configuration.user\_data\_enabled);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ syms\ =\ symbols[layer];}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Dequantize}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (passes\ ==\ 1)\ \{}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pview\ =\ (int16\_t\ *)view.data(0,\ 0);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ view.height()\ *\ view.width();\ ++y)\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ coef\ =\ *pview;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ res\ =\ (coef\ *\ invq\_step\_width[layer][0])\ +}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (coef\ >\ 0\ ?\ invq\_applied\_offset[layer][0]\ :\ (coef\ <\ 0\ ?\ -\/invq\_applied\_offset[layer][0]\ :\ 0));}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pview++\ =\ clamp\_int16(res);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ coefficients[layer]\ =\ InverseQuantize().process(syms,\ invq\_step\_width[layer][0],\ invq\_applied\_offset[layer][0]);}
+\DoxyCodeLine{00242\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mask\ =\ temporal\_mask.view\_as<uint8\_t>();}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pview\ =\ (int16\_t\ *)view.data(0,\ 0);}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ view.height();\ ++y)\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ view.width();\ ++x)\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ sw\_index\ =\ (mask.read(x,\ y)\ ==\ TEMPORAL\_PRED)\ ?\ 0\ :\ 1;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ coef\ =\ *pview;}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pview++\ =\ clamp\_int16(coef\ *\ invq\_step\_width[layer][sw\_index]\ +}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (coef\ >\ 0\ ?\ invq\_applied\_offset[layer][sw\_index]}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (coef\ <\ 0\ ?\ -\/invq\_applied\_offset[layer][sw\_index]\ :\ 0)));}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ coefficients[layer]\ =\ InverseQuantize\_SWM().process(syms,\ transform\_block\_size(),\ invq\_step\_width[layer],}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ invq\_applied\_offset[layer],\ temporal\_mask);}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ Surface\ residuals;}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordflow}{if}\ (!horizontal\_only)\ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inverse\ Transform\ Horizontal\ and\ Vertical}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InverseTransformDDS().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),\ symbols);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 2)}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InverseTransformDD().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),\ symbols);}
+\DoxyCodeLine{00278\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inverse\ Transform\ Horizontal\ only}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ InverseTransformDDS\_1D().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ symbols);}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 2)}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ InverseTransformDD\_1D().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),\ symbols);}
+\DoxyCodeLine{00287\ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordflow}{if}\ (!horizontal\_only)\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inverse\ Transform\ Horizontal\ and\ Vertical}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ InverseTransformDDS().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coefficients);}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 2)}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ InverseTransformDD().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coefficients);}
+\DoxyCodeLine{00298\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inverse\ Transform\ Horizontal\ only}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ InverseTransformDDS\_1D().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coefficients);}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.transform\_block\_size\ ==\ 2)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ InverseTransformDD\_1D().process(dimensions\_.plane\_width(plane,\ loq),\ dimensions\_.plane\_height(plane,\ loq),}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ coefficients);}
+\DoxyCodeLine{00307\ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keywordflow}{return}\ residuals;}
+\DoxyCodeLine{00311\ \}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{keywordtype}{void}\ Decoder::initialize\_decode(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data,\ Surface\ (\&symbols)[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS])\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ Parse\ the\ bitstream\ -\/-\/\ XXX\ check\ for\ seeing\ blocks\ in\ correct\ order}}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ Deserializer\ will\ popluate\ configuration\_\ and\ symbols\ during\ parsing}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{comment}{//\ Initialize\ quantization\ matrix}}
+\DoxyCodeLine{00318\ \ \ \ \ std::fill\_n(\&quant\_matrix\_coeffs\_[0][0][0],\ MAX\_NUM\_PLANES\ *\ MAX\_NUM\_LOQS\ *\ MAX\_NUM\_LAYERS,\ -\/1);}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ Deserializer\ deserializer(enhancement\_data,\ configuration\_,\ symbols);}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordflow}{while}\ (deserializer.has\_more())\ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\ =\ deserializer.parse\_block();}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Has\ there\ been\ a\ new\ global\ config?}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (block\ ==\ SyntaxBlock\_Global)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Resize\ surfaces}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ dimensions\_.set(configuration\_,\ configuration\_.global\_configuration.resolution\_width,}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.resolution\_height);}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Copy\ coordinates\ and\ sizes\ into\ layer\ surface\ info}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ configuration\_.global\_configuration.num\_image\_planes;\ ++plane)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ 2;\ ++loq)\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_residual\_layers();\ ++layer)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.surface\_configuration[plane][loq][layer].width\ =\ dimensions\_.layer\_width(plane,\ loq);}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.surface\_configuration[plane][loq][layer].height\ =\ dimensions\_.layer\_height(plane,\ loq);}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ temporal\ layer?}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.temporal\_enabled\ \&\&}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ plane\ <\ configuration\_.global\_configuration.num\_processed\_planes)\ \{}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.surface\_configuration[plane][LOQ\_LEVEL\_2][num\_residual\_layers()].width\ =}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dimensions\_.layer\_width(plane,\ LOQ\_LEVEL\_2);}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.surface\_configuration[plane][LOQ\_LEVEL\_2][num\_residual\_layers()].height\ =}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dimensions\_.layer\_height(plane,\ LOQ\_LEVEL\_2);}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (temporal\_buffer\_[plane].empty()\ ||}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dimensions\_.plane\_width(plane,\ LOQ\_LEVEL\_2)\ !=\ temporal\_buffer\_[plane].width()\ ||}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dimensions\_.plane\_height(plane,\ LOQ\_LEVEL\_2)\ !=\ temporal\_buffer\_[plane].height())}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .reserve(dimensions\_.plane\_width(plane,\ LOQ\_LEVEL\_2),\ dimensions\_.plane\_height(plane,\ LOQ\_LEVEL\_2))}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ Image\ Decoder::decode(\textcolor{keyword}{const}\ Image\ \&ext\_base,\ Surface\ (\&symbols)[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS],}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ \&src\_image,\ \textcolor{keywordtype}{bool}\ report,\ \textcolor{keywordtype}{bool}\ dithering\_switch,\ \textcolor{keywordtype}{bool}\ dithering\_fixed,\ \textcolor{keywordtype}{bool}\ apply\_enhancement)\ \{}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ CHECK(configuration\_.global\_configuration.transform\_block\_size\ ==\ 4\ ||}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.transform\_block\_size\ ==\ 2);}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordflow}{if}\ (dithering\_.getInitialised()\ ==\ \textcolor{keyword}{false})\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Dither\ init\ \%4d\ \ bitdepth\ \%d"{}},\ configuration\_.picture\_configuration.dithering\_strength,}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.enhancement\_depth);}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ dithering\_.make\_buffer(configuration\_.picture\_configuration.dithering\_strength,}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.enhancement\_depth,\ dithering\_fixed);}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ dithering\_.setInitialised(\textcolor{keyword}{true});}
+\DoxyCodeLine{00373\ \ \ \ \ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr\ =\ configuration\_.picture\_configuration.coding\_type\ ==\ CodingType::CodingType\_IDR;}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{comment}{//\ Verify\ dimensions\ of\ base\ image}}
+\DoxyCodeLine{00378\ \ \ \ \ CHECK(ext\_base.description().width()\ ==\ dimensions\_.base\_width());}
+\DoxyCodeLine{00379\ \ \ \ \ CHECK(ext\_base.description().height()\ ==\ dimensions\_.base\_height());}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{comment}{//\ Process\ each\ plane...}}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00383\ \ \ \ \ Surface\ base\_reco[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00384\ \ \ \ \ Surface\ full\_reco[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00385\ \ \ \ \ Surface\ outp\_reco[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ ext\_base.description().num\_planes();\ ++plane)\ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enhancement\_enabled\ =\ configuration\_.picture\_configuration.enhancement\_enabled\ \&\&}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ plane\ <\ configuration\_.global\_configuration.num\_processed\_planes;}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ between\ base\ and\ enhancement\ bit\ depth}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ Surface\ base\_plane;}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ base\_bit\_depth\ =\ configuration\_.global\_configuration.base\_depth;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.enhancement\_depth\ >\ configuration\_.global\_configuration.base\_depth\ \&\&}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.level1\_depth\_flag)\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ base\_plane\ =\ ConvertBitShift().process(ext\_base.plane(plane),\ configuration\_.global\_configuration.base\_depth,}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.enhancement\_depth);}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ base\_bit\_depth\ =\ configuration\_.global\_configuration.enhancement\_depth;}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ +\ Correction}}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ base\_plane\ =\ ConvertToInternal().process(}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ base\_bit\_depth\ ==\ configuration\_.global\_configuration.base\_depth\ ?\ ext\_base.plane(plane)\ :\ base\_plane,\ base\_bit\_depth);}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ Surface\ base\_upsampled;}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration\_.global\_configuration.scaling\_mode[LOQ\_LEVEL\_1])\ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ base\_upsampled\ =\ Upsampling\_1D().process(base\_plane,\ configuration\_.global\_configuration.upsample,}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.upsampling\_coefficients);}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.predicted\_residual\_enabled)\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ base\_upsampled\ =\ PredictedResidualAdjust\_1D().process(base\_plane,\ base\_upsampled,}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PredictedResidualSum\_1D().process(base\_upsampled));}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ base\_plane.dump(format(\textcolor{stringliteral}{"{}dec\_base\_deco\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ base\_upsampled\ =\ Upsampling().process(base\_plane,\ configuration\_.global\_configuration.upsample,}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.upsampling\_coefficients);}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.predicted\_residual\_enabled)\ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ base\_upsampled\ =}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PredictedResidualAdjust().process(base\_plane,\ base\_upsampled,\ PredictedResidualSum().process(base\_upsampled));}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ base\_plane.dump(format(\textcolor{stringliteral}{"{}dec\_base\_deco\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ base\_upsampled\ =\ base\_plane;}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ base\_upsampled.dump(format(\textcolor{stringliteral}{"{}dec\_base\_pred\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Work\ out\ quantization\ matrix\ for\ each\ LoQ}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ loq\ =\ 0;\ loq\ <\ MAX\_NUM\_LOQS;\ ++loq)\ \{}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ horizontal\_only\ =\ (configuration\_.global\_configuration.scaling\_mode[loq]\ ==\ ScalingMode\_1D\ ?\ true\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_residual\_layers();\ ++layer)\ \{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ quant\_matrix\_coeffs\_[plane][loq][layer]\ =}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ find\_quant\_matrix\_coeff(configuration\_.picture\_configuration,\ num\_residual\_layers(),\ horizontal\_only,\ loq,}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ layer,\ is\_idr,\ quant\_matrix\_coeffs\_[plane][loq][layer]);}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (enhancement\_enabled\ \&\&\ apply\_enhancement)\ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ residuals}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ unused\_mask;}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ residuals\ =\ decode\_residuals(plane,\ LOQ\_LEVEL\_1,\ unused\_mask,\ symbols[plane][LOQ\_LEVEL\_1]);}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Deblocking}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.picture\_configuration.level\_1\_filtering\_enabled\ \&\&}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.transform\_block\_size\ ==\ 4)\ \{}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residuals\ =\ Deblocking().process(residuals,\ configuration\_.global\_configuration.level\_1\_filtering\_first\_coefficient,}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.level\_1\_filtering\_second\_coefficient);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Add\ to\ (upsampled)\ base}}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ residuals.dump(format(\textcolor{stringliteral}{"{}dec\_base\_resi\_reco\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00462\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewa\ =\ base\_upsampled.view\_as<int16\_t>();}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewb\ =\ residuals.view\_as<int16\_t>();}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrcb\ =\ viewb.data(0,\ 0);}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ (int16\_t\ *)viewa.data(0,\ 0);}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ base\_upsampled.height()\ *\ base\_upsampled.width();\ ++y)\ \{}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ +=\ (*psrcb++);}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ base\_reco[plane]\ =\ base\_upsampled;}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ base\_reco[plane]\ =\ Add().process(base\_upsampled,\ residuals);}
+\DoxyCodeLine{00475\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ base\_reco[plane]\ =\ base\_upsampled;}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \ \ \ \ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00482\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00483\ \ \ \ \ Surface\ upsampled\_planes[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ ext\_base.description().num\_planes();\ ++plane)\ \{}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (configuration\_.global\_configuration.scaling\_mode[LOQ\_LEVEL\_2])\ \{}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ upsampled\_planes[plane]\ =\ Upsampling\_1D().process(base\_reco[plane],\ configuration\_.global\_configuration.upsample,}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.upsampling\_coefficients);}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.predicted\_residual\_enabled)\ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ upsampled\_planes[plane]\ =\ PredictedResidualAdjust\_1D().process(}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ base\_reco[plane],\ upsampled\_planes[plane],\ PredictedResidualSum\_1D().process(upsampled\_planes[plane]));}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ upsampled\_planes[plane]\ =\ Upsampling().process(base\_reco[plane],\ configuration\_.global\_configuration.upsample,}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.global\_configuration.upsampling\_coefficients);}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.predicted\_residual\_enabled)\ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ upsampled\_planes[plane]\ =\ PredictedResidualAdjust().process(}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ base\_reco[plane],\ upsampled\_planes[plane],\ PredictedResidualSum().process(upsampled\_planes[plane]));}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_None:}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ upsampled\_planes[plane]\ =\ base\_reco[plane];}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ upsampled\_planes[plane].dump(format(\textcolor{stringliteral}{"{}dec\_full\_pred\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00509\ \ \ \ \ \}}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ ext\_base.description().num\_planes();\ ++plane)\ \{}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enhancement\_enabled\ =\ configuration\_.picture\_configuration.enhancement\_enabled\ \&\&}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ plane\ <\ configuration\_.global\_configuration.num\_processed\_planes;}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (enhancement\_enabled\ \&\&\ apply\_enhancement)\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Enhacement\ residuals}}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ temporal\_mask;}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ residuals\ =\ decode\_residuals(plane,\ LOQ\_LEVEL\_2,\ temporal\_mask,\ symbols[plane][LOQ\_LEVEL\_2]);}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ residuals.dump(format(\textcolor{stringliteral}{"{}dec\_full\_resi\_reco\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.temporal\_enabled)\ \{}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ temporal\ map\ (intra\ /\ pred)}}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(!temporal\_mask.empty());}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (temporal\_buffer\_[plane].empty())\ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .generate(upsampled\_planes[plane].width(),\ upsampled\_planes[plane].height(),}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{\ \textcolor{keywordflow}{return}\ 0;\ \})}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ApplyTemporalMap().process(temporal\_buffer\_[plane],\ temporal\_mask,\ transform\_block\_size());}
+\DoxyCodeLine{00534\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewa\ =\ temporal\_buffer\_[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewb\ =\ residuals.view\_as<int16\_t>();}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrcb\ =\ viewb.data(0,\ 0);}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ (int16\_t\ *)viewa.data(0,\ 0);}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ temporal\_buffer\_[plane].height()\ *\ temporal\_buffer\_[plane].width();\ ++y)\ \{}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ +=\ (*psrcb++);}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =\ Add().process(temporal\_buffer\_[plane],\ residuals);}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane].dump(format(\textcolor{stringliteral}{"{}dec\_full\_temp\_buff\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_mask.dump(format(\textcolor{stringliteral}{"{}dec\_full\_temp\_mask\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewa\ =\ upsampled\_planes[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewb\ =\ temporal\_buffer\_[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrcb\ =\ viewb.data(0,\ 0);}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ (int16\_t\ *)viewa.data(0,\ 0);}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ upsampled\_planes[plane].height()\ *\ upsampled\_planes[plane].width();\ ++y)\ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ +=\ (*psrcb++);}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ upsampled\_planes[plane];}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ Add().process(upsampled\_planes[plane],\ temporal\_buffer\_[plane]);}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temporal\ disabled}}
+\DoxyCodeLine{00566\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewa\ =\ upsampled\_planes[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewb\ =\ residuals.view\_as<int16\_t>();}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrcb\ =\ viewb.data(0,\ 0);}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ (int16\_t\ *)viewa.data(0,\ 0);}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ upsampled\_planes[plane].height()\ *\ upsampled\_planes[plane].width();\ ++y)\ \{}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ +=\ (*psrcb++);}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ upsampled\_planes[plane];}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ Add().process(upsampled\_planes[plane],\ residuals);}
+\DoxyCodeLine{00579\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (plane\ <\ configuration\_.global\_configuration.num\_processed\_planes\ \&\&\ apply\_enhancement)\ \{}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ enhancement\ -\/\ but\ temporal\ layer\ can\ still\ be\ added}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.global\_configuration.temporal\_enabled)\ \{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ temporal\_mask\ =\ get\_temporal\_mask(symbols[plane][LOQ\_LEVEL\_2][num\_residual\_layers()]);}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(!temporal\_mask.empty());}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (temporal\_buffer\_[plane].empty())\ \{}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .generate(upsampled\_planes[plane].width(),\ upsampled\_planes[plane].height(),}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{\ \textcolor{keywordflow}{return}\ 0;\ \})}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ temporal\ map\ (intra\ /\ pred)}}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane]\ =}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ApplyTemporalMap().process(temporal\_buffer\_[plane],\ temporal\_mask,\ transform\_block\_size());}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_buffer\_[plane].dump(format(\textcolor{stringliteral}{"{}dec\_full\_temp\_buff\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temporal\_mask.dump(format(\textcolor{stringliteral}{"{}dec\_full\_temp\_mask\_P\%1d"{}},\ plane));}
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_INPLACE\_\_}}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewa\ =\ upsampled\_planes[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ viewb\ =\ temporal\_buffer\_[plane].view\_as<int16\_t>();}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ psrcb\ =\ viewb.data(0,\ 0);}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ *\_\_restrict\ pdst\ =\ (int16\_t\ *)viewa.data(0,\ 0);}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ upsampled\_planes[plane].height()\ *\ upsampled\_planes[plane].width();\ ++y)\ \{}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pdst++\ +=\ (*psrcb++);}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ upsampled\_planes[plane];}
+\DoxyCodeLine{00610\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ Add().process(upsampled\_planes[plane],\ temporal\_buffer\_[plane]);}
+\DoxyCodeLine{00612\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temporal\ disabled}}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ upsampled\_planes[plane];}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ upsampled\_planes[plane];}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ INFO("{}dither\ flag\ \%4d\ type\ \%4d\ stre\ \%4d"{},\ configuration\_.picture\_configuration.dithering\_control,}}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ configuration\_.picture\_configuration.dithering\_type,\ configuration\_.picture\_configuration.dithering\_strength);}}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dithering\_switch\ \&\&\ configuration\_.picture\_configuration.dithering\_control\ \&\&\ (plane\ ==\ 0))\ \{}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ outp\_reco[plane]\ =\ dithering\_.process(full\_reco[plane],\ transform\_block\_size());}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dithering\_fixed)\ \{}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ PSNR\ calculation\ after\ dithering\ if\ using\ fixed\ seed}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ full\_reco[plane]\ =\ outp\_reco[plane];}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ outp\_reco[plane]\ =\ full\_reco[plane];}
+\DoxyCodeLine{00630\ \ \ \ \ \}}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \ \ Surface\ output[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ ext\_base.description().num\_planes();\ ++p)\ \{}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ Surface\ o;}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (configuration\_.sequence\_configuration.conformance\_window)\ \{}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ conformance\ windowing}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ cw\ =\ dimensions\_.crop\_unit\_width(p),\ ch\ =\ dimensions\_.crop\_unit\_height(p);}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ o\ =\ Conform().process(outp\_reco[p],\ configuration\_.sequence\_configuration.conf\_win\_left\_offset\ *\ cw,}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.sequence\_configuration.conf\_win\_top\_offset\ *\ ch,}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.sequence\_configuration.conf\_win\_right\_offset\ *\ cw,}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ configuration\_.sequence\_configuration.conf\_win\_bottom\_offset\ *\ ch);}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ o\ =\ outp\_reco[p];}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ output[p]\ =\ ConvertFromInternal().process(o,\ configuration\_.global\_configuration.enhancement\_depth);}
+\DoxyCodeLine{00647\ \ \ \ \ \}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ output\_desc\ =\ ImageDescription(ext\_base.description().format(),\ output[0].width(),\ output[0].height())}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .with\_depth(configuration\_.global\_configuration.enhancement\_depth);}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \ \ goReportStructure\ =\ goReportQueue.top();}
+\DoxyCodeLine{00653\ \ \ \ \ goReportQueue.pop();}
+\DoxyCodeLine{00654\ \ \ \ \ goPsnr.miBaseBytes\ +=\ goReportStructure.miBaseSize;}
+\DoxyCodeLine{00655\ \ \ \ \ goPsnr.miEnhancementBytes\ +=\ goReportStructure.miEnhancementSize;}
+\DoxyCodeLine{00656\ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}DEC.\ [pts.\ \%4d]\ [type\ \%4d]\ [base\ \%8d]\ [enha\ \%8d]\ "{}},\ goReportStructure.miTimeStamp,}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miPictureType,\ goReportStructure.miBaseSize,\ goReportStructure.miEnhancementSize);}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \ \ \ \ \textcolor{comment}{//\ XXX\ THis\ should\ get\ hoisted\ into\ App.}}
+\DoxyCodeLine{00660\ \ \ \ \ \textcolor{keywordflow}{if}\ (report)\ \{}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ std::vector<SurfaceView<int16\_t>>\ out;}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ src\_image.description().num\_planes();\ plane++)}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ out.push\_back(full\_reco[plane].view\_as<int16\_t>());}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!src\_image.empty())\ \{}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ src\_image.description().num\_planes();\ plane++)\ \{}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ src\ =\ ConvertToInternal().process(src\_image.plane(plane),\ src\_image.description().bit\_depth());}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ in\ =\ src.view\_as<int16\_t>();}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PicturePsnr15bpp((int16\_t\ *)in.data(),\ (int16\_t\ *)out[plane].data(),\ plane,\ output\_desc.width(plane),}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output\_desc.height(plane),\ goPsnr);}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[psnrY\ \%8.4f]\ "{}},\ goPsnr.mfCurPsnr[0]);}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (src\_image.description().num\_planes()\ >\ 1)}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[psnrU\ \%8.4f]\ [psnrV\ \%8.4f]\ \(\backslash\)n"{}},\ (goPsnr.mfCurPsnr[1]),\ (goPsnr.mfCurPsnr[2]));}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ LCEVC\_IMGB\ oImageBuffer;}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ oImageBuffer.np\ =\ output\_desc.num\_planes();}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ oImageBuffer.y[0]\ =\ oImageBuffer.y[1]\ =\ oImageBuffer.y[2]\ =\ 0;}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ oImageBuffer.x[0]\ =\ oImageBuffer.x[1]\ =\ oImageBuffer.x[2]\ =\ 0;}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ output\_desc.num\_planes();\ plane++)\ \{}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ oImageBuffer.h[plane]\ =\ full\_reco[plane].height();}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ oImageBuffer.w[plane]\ =\ full\_reco[plane].width();}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ oImageBuffer.s[plane]\ =\ full\_reco[plane].width()\ *\ 2;}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ oImageBuffer.a[plane]\ =\ (\textcolor{keywordtype}{void}\ *)out[plane].data();}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ lcevc\_md5\_imgb(\&oImageBuffer,\ gaucMd5Digest);}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ off}}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5Y\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ "{}},}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][0],\ \ gaucMd5Digest[0][1],\ \ gaucMd5Digest[0][2],\ \ gaucMd5Digest[0][3],}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][4],\ \ gaucMd5Digest[0][5],\ \ gaucMd5Digest[0][6],\ \ gaucMd5Digest[0][7],}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][8],\ \ gaucMd5Digest[0][9],\ \ gaucMd5Digest[0][10],\ gaucMd5Digest[0][11],}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][12],\ gaucMd5Digest[0][13],\ gaucMd5Digest[0][14],\ gaucMd5Digest[0][15]);}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (output\_desc.num\_planes()\ >\ 1)\ \{}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5U\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ "{}},}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][0],\ \ gaucMd5Digest[1][1],\ \ gaucMd5Digest[1][2],\ \ gaucMd5Digest[1][3],}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][4],\ \ gaucMd5Digest[1][5],\ \ gaucMd5Digest[1][6],\ \ gaucMd5Digest[1][7],}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][8],\ \ gaucMd5Digest[1][9],\ \ gaucMd5Digest[1][10],\ gaucMd5Digest[1][11],}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][12],\ gaucMd5Digest[1][13],\ gaucMd5Digest[1][14],\ gaucMd5Digest[1][15]);}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5V\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ \(\backslash\)n"{}},}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][0],\ \ gaucMd5Digest[2][1],\ \ gaucMd5Digest[2][2],\ \ gaucMd5Digest[2][3],}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][4],\ \ gaucMd5Digest[2][5],\ \ gaucMd5Digest[2][6],\ \ gaucMd5Digest[2][7],}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][8],\ \ gaucMd5Digest[2][9],\ \ gaucMd5Digest[2][10],\ gaucMd5Digest[2][11],}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][12],\ gaucMd5Digest[2][13],\ gaucMd5Digest[2][14],\ gaucMd5Digest[2][15]);}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ on}}
+\DoxyCodeLine{00709\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00711\ \ \ \ \ \}}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00714\ }
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keywordflow}{return}\ Image(std::string(\textcolor{stringliteral}{"{}output"{}}),\ output\_desc,\ ext\_base.timestamp(),\ output);}
+\DoxyCodeLine{00716\ \}}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

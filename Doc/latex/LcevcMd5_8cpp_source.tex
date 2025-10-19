@@ -1,0 +1,309 @@
+\doxysection{Lcevc\+Md5.\+cpp}
+\label{LcevcMd5_8cpp_source}\index{util/src/LcevcMd5.cpp@{util/src/LcevcMd5.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ \ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ \ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ Copyright\ (c)\ 2019-\/2021,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ \ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ \ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ \ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ \ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ \ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ \ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ \ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ \ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ \ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ \ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ \ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ EVC\ test\ model}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Stefano\ Battista(bautz66\ @gmail.com)}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}LcevcMd5.hpp"{}}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#if\ BD\_CF\_EXT}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#define\ TX\_SHIFT1(log2\_size,\ bd)\ ((log2\_size)-\/1\ +\ bd\ -\/\ 8)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#define\ TX\_SHIFT1(log2\_size)\ ((log2\_size)-\/1\ +\ BIT\_DEPTH\ -\/\ 8)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ TX\_SHIFT2(log2\_size)\ ((log2\_size)\ +\ 6)}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{/*\ MD5\ functions\ */}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ MD5FUNC(f,\ w,\ x,\ y,\ z,\ msg1,\ s,\ msg2)\ (w\ +=\ f(x,\ y,\ z)\ +\ msg1\ +\ msg2,\ w\ =\ w\ <<\ s\ |\ w\ >>\ (32\ -\/\ s),\ w\ +=\ x)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ FF(x,\ y,\ z)\ (z\ \string^\ (x\ \&\ (y\ \string^\ z)))}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ GG(x,\ y,\ z)\ (y\ \string^\ (z\ \&\ (x\ \string^\ y)))}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#define\ HH(x,\ y,\ z)\ (x\ \string^\ y\ \string^\ z)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#define\ II(x,\ y,\ z)\ (y\ \string^\ (x\ |\ \string~z))}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ lcevc\_md5\_trans(u32\ *buf,\ u32\ *msg)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{register}\ u32\ a,\ b,\ c,\ d;}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ a\ =\ buf[0];}
+\DoxyCodeLine{00059\ \ \ \ \ b\ =\ buf[1];}
+\DoxyCodeLine{00060\ \ \ \ \ c\ =\ buf[2];}
+\DoxyCodeLine{00061\ \ \ \ \ d\ =\ buf[3];}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ MD5FUNC(FF,\ a,\ b,\ c,\ d,\ msg[0],\ 7,\ 0xd76aa478);\ \ \textcolor{comment}{/*\ 1\ */}}
+\DoxyCodeLine{00064\ \ \ \ \ MD5FUNC(FF,\ d,\ a,\ b,\ c,\ msg[1],\ 12,\ 0xe8c7b756);\ \textcolor{comment}{/*\ 2\ */}}
+\DoxyCodeLine{00065\ \ \ \ \ MD5FUNC(FF,\ c,\ d,\ a,\ b,\ msg[2],\ 17,\ 0x242070db);\ \textcolor{comment}{/*\ 3\ */}}
+\DoxyCodeLine{00066\ \ \ \ \ MD5FUNC(FF,\ b,\ c,\ d,\ a,\ msg[3],\ 22,\ 0xc1bdceee);\ \textcolor{comment}{/*\ 4\ */}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ MD5FUNC(FF,\ a,\ b,\ c,\ d,\ msg[4],\ 7,\ 0xf57c0faf);\ \ \textcolor{comment}{/*\ 5\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ MD5FUNC(FF,\ d,\ a,\ b,\ c,\ msg[5],\ 12,\ 0x4787c62a);\ \textcolor{comment}{/*\ 6\ */}}
+\DoxyCodeLine{00070\ \ \ \ \ MD5FUNC(FF,\ c,\ d,\ a,\ b,\ msg[6],\ 17,\ 0xa8304613);\ \textcolor{comment}{/*\ 7\ */}}
+\DoxyCodeLine{00071\ \ \ \ \ MD5FUNC(FF,\ b,\ c,\ d,\ a,\ msg[7],\ 22,\ 0xfd469501);\ \textcolor{comment}{/*\ 8\ */}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ MD5FUNC(FF,\ a,\ b,\ c,\ d,\ msg[8],\ 7,\ 0x698098d8);\ \ \ \textcolor{comment}{/*\ 9\ */}}
+\DoxyCodeLine{00074\ \ \ \ \ MD5FUNC(FF,\ d,\ a,\ b,\ c,\ msg[9],\ 12,\ 0x8b44f7af);\ \ \textcolor{comment}{/*\ 10\ */}}
+\DoxyCodeLine{00075\ \ \ \ \ MD5FUNC(FF,\ c,\ d,\ a,\ b,\ msg[10],\ 17,\ 0xffff5bb1);\ \textcolor{comment}{/*\ 11\ */}}
+\DoxyCodeLine{00076\ \ \ \ \ MD5FUNC(FF,\ b,\ c,\ d,\ a,\ msg[11],\ 22,\ 0x895cd7be);\ \textcolor{comment}{/*\ 12\ */}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ MD5FUNC(FF,\ a,\ b,\ c,\ d,\ msg[12],\ 7,\ 0x6b901122);\ \ \textcolor{comment}{/*\ 13\ */}}
+\DoxyCodeLine{00079\ \ \ \ \ MD5FUNC(FF,\ d,\ a,\ b,\ c,\ msg[13],\ 12,\ 0xfd987193);\ \textcolor{comment}{/*\ 14\ */}}
+\DoxyCodeLine{00080\ \ \ \ \ MD5FUNC(FF,\ c,\ d,\ a,\ b,\ msg[14],\ 17,\ 0xa679438e);\ \textcolor{comment}{/*\ 15\ */}}
+\DoxyCodeLine{00081\ \ \ \ \ MD5FUNC(FF,\ b,\ c,\ d,\ a,\ msg[15],\ 22,\ 0x49b40821);\ \textcolor{comment}{/*\ 16\ */}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{/*\ Round\ 2\ */}}
+\DoxyCodeLine{00084\ \ \ \ \ MD5FUNC(GG,\ a,\ b,\ c,\ d,\ msg[1],\ 5,\ 0xf61e2562);\ \ \ \textcolor{comment}{/*\ 17\ */}}
+\DoxyCodeLine{00085\ \ \ \ \ MD5FUNC(GG,\ d,\ a,\ b,\ c,\ msg[6],\ 9,\ 0xc040b340);\ \ \ \textcolor{comment}{/*\ 18\ */}}
+\DoxyCodeLine{00086\ \ \ \ \ MD5FUNC(GG,\ c,\ d,\ a,\ b,\ msg[11],\ 14,\ 0x265e5a51);\ \textcolor{comment}{/*\ 19\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ MD5FUNC(GG,\ b,\ c,\ d,\ a,\ msg[0],\ 20,\ 0xe9b6c7aa);\ \ \textcolor{comment}{/*\ 20\ */}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ MD5FUNC(GG,\ a,\ b,\ c,\ d,\ msg[5],\ 5,\ 0xd62f105d);\ \ \ \textcolor{comment}{/*\ 21\ */}}
+\DoxyCodeLine{00090\ \ \ \ \ MD5FUNC(GG,\ d,\ a,\ b,\ c,\ msg[10],\ 9,\ 0x2441453);\ \ \ \textcolor{comment}{/*\ 22\ */}}
+\DoxyCodeLine{00091\ \ \ \ \ MD5FUNC(GG,\ c,\ d,\ a,\ b,\ msg[15],\ 14,\ 0xd8a1e681);\ \textcolor{comment}{/*\ 23\ */}}
+\DoxyCodeLine{00092\ \ \ \ \ MD5FUNC(GG,\ b,\ c,\ d,\ a,\ msg[4],\ 20,\ 0xe7d3fbc8);\ \ \textcolor{comment}{/*\ 24\ */}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ MD5FUNC(GG,\ a,\ b,\ c,\ d,\ msg[9],\ 5,\ 0x21e1cde6);\ \ \textcolor{comment}{/*\ 25\ */}}
+\DoxyCodeLine{00095\ \ \ \ \ MD5FUNC(GG,\ d,\ a,\ b,\ c,\ msg[14],\ 9,\ 0xc33707d6);\ \textcolor{comment}{/*\ 26\ */}}
+\DoxyCodeLine{00096\ \ \ \ \ MD5FUNC(GG,\ c,\ d,\ a,\ b,\ msg[3],\ 14,\ 0xf4d50d87);\ \textcolor{comment}{/*\ 27\ */}}
+\DoxyCodeLine{00097\ \ \ \ \ MD5FUNC(GG,\ b,\ c,\ d,\ a,\ msg[8],\ 20,\ 0x455a14ed);\ \textcolor{comment}{/*\ 28\ */}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ MD5FUNC(GG,\ a,\ b,\ c,\ d,\ msg[13],\ 5,\ 0xa9e3e905);\ \ \textcolor{comment}{/*\ 29\ */}}
+\DoxyCodeLine{00100\ \ \ \ \ MD5FUNC(GG,\ d,\ a,\ b,\ c,\ msg[2],\ 9,\ 0xfcefa3f8);\ \ \ \textcolor{comment}{/*\ 30\ */}}
+\DoxyCodeLine{00101\ \ \ \ \ MD5FUNC(GG,\ c,\ d,\ a,\ b,\ msg[7],\ 14,\ 0x676f02d9);\ \ \textcolor{comment}{/*\ 31\ */}}
+\DoxyCodeLine{00102\ \ \ \ \ MD5FUNC(GG,\ b,\ c,\ d,\ a,\ msg[12],\ 20,\ 0x8d2a4c8a);\ \textcolor{comment}{/*\ 32\ */}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{/*\ Round\ 3\ */}}
+\DoxyCodeLine{00105\ \ \ \ \ MD5FUNC(HH,\ a,\ b,\ c,\ d,\ msg[5],\ 4,\ 0xfffa3942);\ \ \ \textcolor{comment}{/*\ 33\ */}}
+\DoxyCodeLine{00106\ \ \ \ \ MD5FUNC(HH,\ d,\ a,\ b,\ c,\ msg[8],\ 11,\ 0x8771f681);\ \ \textcolor{comment}{/*\ 34\ */}}
+\DoxyCodeLine{00107\ \ \ \ \ MD5FUNC(HH,\ c,\ d,\ a,\ b,\ msg[11],\ 16,\ 0x6d9d6122);\ \textcolor{comment}{/*\ 35\ */}}
+\DoxyCodeLine{00108\ \ \ \ \ MD5FUNC(HH,\ b,\ c,\ d,\ a,\ msg[14],\ 23,\ 0xfde5380c);\ \textcolor{comment}{/*\ 36\ */}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ MD5FUNC(HH,\ a,\ b,\ c,\ d,\ msg[1],\ 4,\ 0xa4beea44);\ \ \ \textcolor{comment}{/*\ 37\ */}}
+\DoxyCodeLine{00111\ \ \ \ \ MD5FUNC(HH,\ d,\ a,\ b,\ c,\ msg[4],\ 11,\ 0x4bdecfa9);\ \ \textcolor{comment}{/*\ 38\ */}}
+\DoxyCodeLine{00112\ \ \ \ \ MD5FUNC(HH,\ c,\ d,\ a,\ b,\ msg[7],\ 16,\ 0xf6bb4b60);\ \ \textcolor{comment}{/*\ 39\ */}}
+\DoxyCodeLine{00113\ \ \ \ \ MD5FUNC(HH,\ b,\ c,\ d,\ a,\ msg[10],\ 23,\ 0xbebfbc70);\ \textcolor{comment}{/*\ 40\ */}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ MD5FUNC(HH,\ a,\ b,\ c,\ d,\ msg[13],\ 4,\ 0x289b7ec6);\ \textcolor{comment}{/*\ 41\ */}}
+\DoxyCodeLine{00116\ \ \ \ \ MD5FUNC(HH,\ d,\ a,\ b,\ c,\ msg[0],\ 11,\ 0xeaa127fa);\ \textcolor{comment}{/*\ 42\ */}}
+\DoxyCodeLine{00117\ \ \ \ \ MD5FUNC(HH,\ c,\ d,\ a,\ b,\ msg[3],\ 16,\ 0xd4ef3085);\ \textcolor{comment}{/*\ 43\ */}}
+\DoxyCodeLine{00118\ \ \ \ \ MD5FUNC(HH,\ b,\ c,\ d,\ a,\ msg[6],\ 23,\ 0x4881d05);\ \ \textcolor{comment}{/*\ 44\ */}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ MD5FUNC(HH,\ a,\ b,\ c,\ d,\ msg[9],\ 4,\ 0xd9d4d039);\ \ \ \textcolor{comment}{/*\ 45\ */}}
+\DoxyCodeLine{00121\ \ \ \ \ MD5FUNC(HH,\ d,\ a,\ b,\ c,\ msg[12],\ 11,\ 0xe6db99e5);\ \textcolor{comment}{/*\ 46\ */}}
+\DoxyCodeLine{00122\ \ \ \ \ MD5FUNC(HH,\ c,\ d,\ a,\ b,\ msg[15],\ 16,\ 0x1fa27cf8);\ \textcolor{comment}{/*\ 47\ */}}
+\DoxyCodeLine{00123\ \ \ \ \ MD5FUNC(HH,\ b,\ c,\ d,\ a,\ msg[2],\ 23,\ 0xc4ac5665);\ \ \textcolor{comment}{/*\ 48\ */}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{/*\ Round\ 4\ */}}
+\DoxyCodeLine{00126\ \ \ \ \ MD5FUNC(II,\ a,\ b,\ c,\ d,\ msg[0],\ 6,\ 0xf4292244);\ \ \ \textcolor{comment}{/*\ 49\ */}}
+\DoxyCodeLine{00127\ \ \ \ \ MD5FUNC(II,\ d,\ a,\ b,\ c,\ msg[7],\ 10,\ 0x432aff97);\ \ \textcolor{comment}{/*\ 50\ */}}
+\DoxyCodeLine{00128\ \ \ \ \ MD5FUNC(II,\ c,\ d,\ a,\ b,\ msg[14],\ 15,\ 0xab9423a7);\ \textcolor{comment}{/*\ 51\ */}}
+\DoxyCodeLine{00129\ \ \ \ \ MD5FUNC(II,\ b,\ c,\ d,\ a,\ msg[5],\ 21,\ 0xfc93a039);\ \ \textcolor{comment}{/*\ 52\ */}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ MD5FUNC(II,\ a,\ b,\ c,\ d,\ msg[12],\ 6,\ 0x655b59c3);\ \ \textcolor{comment}{/*\ 53\ */}}
+\DoxyCodeLine{00132\ \ \ \ \ MD5FUNC(II,\ d,\ a,\ b,\ c,\ msg[3],\ 10,\ 0x8f0ccc92);\ \ \textcolor{comment}{/*\ 54\ */}}
+\DoxyCodeLine{00133\ \ \ \ \ MD5FUNC(II,\ c,\ d,\ a,\ b,\ msg[10],\ 15,\ 0xffeff47d);\ \textcolor{comment}{/*\ 55\ */}}
+\DoxyCodeLine{00134\ \ \ \ \ MD5FUNC(II,\ b,\ c,\ d,\ a,\ msg[1],\ 21,\ 0x85845dd1);\ \ \textcolor{comment}{/*\ 56\ */}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ MD5FUNC(II,\ a,\ b,\ c,\ d,\ msg[8],\ 6,\ 0x6fa87e4f);\ \ \ \textcolor{comment}{/*\ 57\ */}}
+\DoxyCodeLine{00137\ \ \ \ \ MD5FUNC(II,\ d,\ a,\ b,\ c,\ msg[15],\ 10,\ 0xfe2ce6e0);\ \textcolor{comment}{/*\ 58\ */}}
+\DoxyCodeLine{00138\ \ \ \ \ MD5FUNC(II,\ c,\ d,\ a,\ b,\ msg[6],\ 15,\ 0xa3014314);\ \ \textcolor{comment}{/*\ 59\ */}}
+\DoxyCodeLine{00139\ \ \ \ \ MD5FUNC(II,\ b,\ c,\ d,\ a,\ msg[13],\ 21,\ 0x4e0811a1);\ \textcolor{comment}{/*\ 60\ */}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ MD5FUNC(II,\ a,\ b,\ c,\ d,\ msg[4],\ 6,\ 0xf7537e82);\ \ \ \textcolor{comment}{/*\ 61\ */}}
+\DoxyCodeLine{00142\ \ \ \ \ MD5FUNC(II,\ d,\ a,\ b,\ c,\ msg[11],\ 10,\ 0xbd3af235);\ \textcolor{comment}{/*\ 62\ */}}
+\DoxyCodeLine{00143\ \ \ \ \ MD5FUNC(II,\ c,\ d,\ a,\ b,\ msg[2],\ 15,\ 0x2ad7d2bb);\ \ \textcolor{comment}{/*\ 63\ */}}
+\DoxyCodeLine{00144\ \ \ \ \ MD5FUNC(II,\ b,\ c,\ d,\ a,\ msg[9],\ 21,\ 0xeb86d391);\ \ \textcolor{comment}{/*\ 64\ */}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ buf[0]\ +=\ a;}
+\DoxyCodeLine{00147\ \ \ \ \ buf[1]\ +=\ b;}
+\DoxyCodeLine{00148\ \ \ \ \ buf[2]\ +=\ c;}
+\DoxyCodeLine{00149\ \ \ \ \ buf[3]\ +=\ d;}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keywordtype}{void}\ lcevc\_md5\_init(LCEVC\_MD5\ *md5)\ \{}
+\DoxyCodeLine{00155\ \ \ \ \ md5-\/>h[0]\ =\ 0x67452301;}
+\DoxyCodeLine{00156\ \ \ \ \ md5-\/>h[1]\ =\ 0xefcdab89;}
+\DoxyCodeLine{00157\ \ \ \ \ md5-\/>h[2]\ =\ 0x98badcfe;}
+\DoxyCodeLine{00158\ \ \ \ \ md5-\/>h[3]\ =\ 0x10325476;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ md5-\/>bits[0]\ =\ 0;}
+\DoxyCodeLine{00161\ \ \ \ \ md5-\/>bits[1]\ =\ 0;}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{keywordtype}{void}\ lcevc\_md5\_update(LCEVC\_MD5\ *md5,\ \textcolor{keywordtype}{void}\ *buf\_t,\ u32\ len)\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ u8\ *buf;}
+\DoxyCodeLine{00168\ \ \ \ \ u32\ i,\ idx,\ part\_len;}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ buf\ =\ (u8\ *)buf\_t;}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ idx\ =\ (u32)((md5-\/>bits[0]\ >>\ 3)\ \&\ 0x3f);}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ md5-\/>bits[0]\ +=\ (len\ <<\ 3);}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{if}\ (md5-\/>bits[0]\ <\ (len\ <<\ 3))\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ (md5-\/>bits[1])++;}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ md5-\/>bits[1]\ +=\ (len\ >>\ 29);}
+\DoxyCodeLine{00180\ \ \ \ \ part\_len\ =\ 64\ -\/\ idx;}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ >=\ part\_len)\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ lcevc\_mcpy(md5-\/>msg\ +\ idx,\ buf,\ part\_len);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)md5-\/>msg);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ part\_len;\ i\ +\ 63\ <\ len;\ i\ +=\ 64)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)(buf\ +\ i));}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ idx\ =\ 0;}
+\DoxyCodeLine{00190\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ i\ =\ 0;}
+\DoxyCodeLine{00192\ \ \ \ \ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ -\/\ i\ >\ 0)\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ lcevc\_mcpy(md5-\/>msg\ +\ idx,\ buf\ +\ i,\ len\ -\/\ i);}
+\DoxyCodeLine{00196\ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{keywordtype}{void}\ lcevc\_md5\_update\_16(LCEVC\_MD5\ *md5,\ \textcolor{keywordtype}{void}\ *buf\_t,\ u32\ len)\ \{}
+\DoxyCodeLine{00202\ \ \ \ \ u16\ *buf;}
+\DoxyCodeLine{00203\ \ \ \ \ u32\ i,\ idx,\ part\_len,\ j;}
+\DoxyCodeLine{00204\ \ \ \ \ u8\ t[512];}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ buf\ =\ (u16\ *)buf\_t;}
+\DoxyCodeLine{00207\ \ \ \ \ idx\ =\ (u32)((md5-\/>bits[0]\ >>\ 3)\ \&\ 0x3f);}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ len\ =\ len\ *\ 2;}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ len;\ j\ +=\ 2)\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ t[j]\ =\ (u8)(*(buf));}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ t[j\ +\ 1]\ =\ *(buf)\ >>\ 8;}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ buf++;}
+\DoxyCodeLine{00214\ \ \ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ md5-\/>bits[0]\ +=\ (len\ <<\ 3);}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (md5-\/>bits[0]\ <\ (len\ <<\ 3))\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ (md5-\/>bits[1])++;}
+\DoxyCodeLine{00219\ \ \ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ md5-\/>bits[1]\ +=\ (len\ >>\ 29);}
+\DoxyCodeLine{00222\ \ \ \ \ part\_len\ =\ 64\ -\/\ idx;}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ >=\ part\_len)\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ lcevc\_mcpy(md5-\/>msg\ +\ idx,\ t,\ part\_len);}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)md5-\/>msg);}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ part\_len;\ i\ +\ 63\ <\ len;\ i\ +=\ 64)\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)(t\ +\ i));}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ idx\ =\ 0;}
+\DoxyCodeLine{00232\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ i\ =\ 0;}
+\DoxyCodeLine{00234\ \ \ \ \ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ -\/\ i\ >\ 0)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ lcevc\_mcpy(md5-\/>msg\ +\ idx,\ t\ +\ i,\ len\ -\/\ i);}
+\DoxyCodeLine{00238\ \ \ \ \ \}}
+\DoxyCodeLine{00239\ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \textcolor{keywordtype}{void}\ lcevc\_md5\_finish(LCEVC\_MD5\ *md5,\ u8\ digest[16])\ \{}
+\DoxyCodeLine{00244\ \ \ \ \ u8\ *pos;}
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keywordtype}{int}\ cnt;}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \ \ cnt\ =\ (md5-\/>bits[0]\ >>\ 3)\ \&\ 0x3F;}
+\DoxyCodeLine{00248\ \ \ \ \ pos\ =\ md5-\/>msg\ +\ cnt;}
+\DoxyCodeLine{00249\ \ \ \ \ *pos++\ =\ 0x80;}
+\DoxyCodeLine{00250\ \ \ \ \ cnt\ =\ 64\ -\/\ 1\ -\/\ cnt;}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{if}\ (cnt\ <\ 8)\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ lcevc\_mset(pos,\ 0,\ cnt);}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)md5-\/>msg);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ lcevc\_mset(md5-\/>msg,\ 0,\ 56);}
+\DoxyCodeLine{00256\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ lcevc\_mset(pos,\ 0,\ cnt\ -\/\ 8);}
+\DoxyCodeLine{00258\ \ \ \ \ \}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ lcevc\_mcpy((md5-\/>msg\ +\ 14\ *\ \textcolor{keyword}{sizeof}(u32)),\ \&md5-\/>bits[0],\ \textcolor{keyword}{sizeof}(u32));}
+\DoxyCodeLine{00261\ \ \ \ \ lcevc\_mcpy((md5-\/>msg\ +\ 15\ *\ \textcolor{keyword}{sizeof}(u32)),\ \&md5-\/>bits[1],\ \textcolor{keyword}{sizeof}(u32));}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ lcevc\_md5\_trans(md5-\/>h,\ (u32\ *)md5-\/>msg);}
+\DoxyCodeLine{00264\ \ \ \ \ lcevc\_mcpy(digest,\ md5-\/>h,\ 16);}
+\DoxyCodeLine{00265\ \ \ \ \ lcevc\_mset(md5,\ 0,\ \textcolor{keyword}{sizeof}(LCEVC\_MD5));}
+\DoxyCodeLine{00266\ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ int\ np;\ number\ of\ planes}}
+\DoxyCodeLine{00271\ \textcolor{comment}{//\ int\ w[LCEVC\_IMGB\_MAX\_PLANE];\ //\ width\ in\ pixels}}
+\DoxyCodeLine{00272\ \textcolor{comment}{//\ int\ h[LCEVC\_IMGB\_MAX\_PLANE];\ //\ heoght\ in\ pixels}}
+\DoxyCodeLine{00273\ \textcolor{comment}{//\ int\ x[LCEVC\_IMGB\_MAX\_PLANE];\ //\ x\ position\ of\ top\ left\ pixel}}
+\DoxyCodeLine{00274\ \textcolor{comment}{//\ int\ y[LCEVC\_IMGB\_MAX\_PLANE];\ //\ y\ position\ of\ top\ left\ pixel}}
+\DoxyCodeLine{00275\ \textcolor{comment}{//\ int\ s[LCEVC\_IMGB\_MAX\_PLANE];\ //\ stride\ in\ bytes}}
+\DoxyCodeLine{00276\ \textcolor{comment}{//\ int\ e[LCEVC\_IMGB\_MAX\_PLANE];\ //\ elevation\ in\ bytes}}
+\DoxyCodeLine{00277\ \textcolor{comment}{//\ void\ *a[LCEVC\_IMGB\_MAX\_PLANE];\ //\ data\ address}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00280\ \textcolor{comment}{p\ planes}}
+\DoxyCodeLine{00281\ \textcolor{comment}{y\ position}}
+\DoxyCodeLine{00282\ \textcolor{comment}{x\ position}}
+\DoxyCodeLine{00283\ \textcolor{comment}{h\ height}}
+\DoxyCodeLine{00284\ \textcolor{comment}{w\ width}}
+\DoxyCodeLine{00285\ \textcolor{comment}{s\ stride}}
+\DoxyCodeLine{00286\ \textcolor{comment}{a\ address}}
+\DoxyCodeLine{00287\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{keywordtype}{int}\ lcevc\_md5\_imgb(LCEVC\_IMGB\ *imgb,\ u8\ digest[N\_C][16])\ \{}
+\DoxyCodeLine{00292\ \ \ \ \ LCEVC\_MD5\ md5[N\_C];}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordtype}{int}\ i,\ j;}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ imgb-\/>np;\ i++)\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ lcevc\_md5\_init(\&md5[i]);}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fprintf(stdout,\ "{}p\ \%4d\ -\/\ h\ \%4d\ -\/\ w\ \%4d\ -\/\ s\ \%4d\ \(\backslash\)n"{},\ i,\ imgb-\/>h[i],\ imgb-\/>w[i],\ imgb-\/>s[i]);\ fflush(stdout);}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ imgb-\/>y[i];\ j\ <\ imgb-\/>h[i];\ j++)\ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ lcevc\_md5\_update(\&md5[i],\ ((u8\ *)imgb-\/>a[i])\ +\ j\ *\ imgb-\/>s[i]\ +\ imgb-\/>x[i],\ imgb-\/>w[i]\ *\ 2);}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ lcevc\_md5\_finish(\&md5[i],\ digest[i]);}
+\DoxyCodeLine{00305\ \ \ \ \ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordflow}{return}\ LCEVC\_OK;}
+\DoxyCodeLine{00308\ \}}
+\DoxyCodeLine{00309\ }
+
+\end{DoxyCode}

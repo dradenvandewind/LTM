@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['_5f_5fbase_5fvvc_5f_5f_0',['__BASE_VVC__',['../uBaseDecoderVVC_8h.html#afbab831f1aef17ceec280bc5ccec4266',1,'uBaseDecoderVVC.h']]],
+  ['_5f_5fdepquant_5f_5f_1',['__DEPQUANT__',['../DepQuant_8h.html#aed44a4718ba305c2de646d2d93613d7a',1,'DepQuant.h']]],
+  ['_5f_5fnal_5f_5f_2',['__NAL__',['../NAL_8h.html#aa5226027c0914e7bf8f6c205f76c9712',1,'NAL.h']]],
+  ['_5f_5fopt_5fdivision_5f_5f_3',['__OPT_DIVISION__',['../Config_8hpp.html#a7f7e5a9cf2b25addc2ac7660c06b0894',1,'Config.hpp']]],
+  ['_5f_5fopt_5finplace_5f_5f_4',['__OPT_INPLACE__',['../Config_8hpp.html#aa54da83bef2ec8e62b5ccae3cbcae93b',1,'Config.hpp']]],
+  ['_5f_5fopt_5fmatrix_5f_5f_5',['__OPT_MATRIX__',['../Config_8hpp.html#a8ef9b31863247e3697abe64fb71843a8',1,'Config.hpp']]],
+  ['_5f_5fopt_5fmodulo_5f_5f_6',['__OPT_MODULO__',['../Config_8hpp.html#a7d8e2adb7e2e553eb34fcbecd1827122',1,'Config.hpp']]],
+  ['_5f_5fparametersetmanager_5f_5f_7',['__PARAMETERSETMANAGER__',['../ParameterSetManager_8h.html#a92c43f3dd0b3ce728ffc37114f326f58',1,'ParameterSetManager.h']]],
+  ['_5f_5fstdc_5fformat_5fmacros_8',['__stdc_format_macros',['../uTypes_8h.html#aacbb9e1f38be71e22df1584a37c56693',1,'__STDC_FORMAT_MACROS:&#160;uTypes.h'],['../CacheModel_8cpp.html#aacbb9e1f38be71e22df1584a37c56693',1,'__STDC_FORMAT_MACROS:&#160;CacheModel.cpp']]],
+  ['_5f_5fstdc_5flimit_5fmacros_9',['__STDC_LIMIT_MACROS',['../uTypes_8h.html#aeb7e7a856ab7a794b05b6b63ef36ea3e',1,'uTypes.h']]],
+  ['_5farea_5fat_10',['_AREA_AT',['../CommonDef_8h.html#a1ba1cbcdbbfd4efc8da82ab9d5669a94',1,'CommonDef.h']]],
+  ['_5farea_5fcontains_11',['_AREA_CONTAINS',['../CommonDef_8h.html#a88891d5ff61d182b3abd1df737f62fc7',1,'CommonDef.h']]],
+  ['_5fbreak_12',['_BREAK',['../CommonDef_8h.html#ad5c266077e6fd0fceab2049d762716fc',1,'CommonDef.h']]],
+  ['_5fcase_13',['_CASE',['../CommonDef_8h.html#aac7406d41bb6071e20e392657c6f0073',1,'CommonDef.h']]],
+  ['_5fcrt_5fsecure_5fno_5fwarnings_14',['_CRT_SECURE_NO_WARNINGS',['../util_8h.html#af08ec37a8c99d747fb60fa15bc28678b',1,'util.h']]],
+  ['_5fdebug_15',['_DEBUG',['../TypeDef_8h.html#a152fc5203b90b1cff03b7b78579b8f52',1,'TypeDef.h']]],
+  ['_5funit_5farea_5fat_16',['_UNIT_AREA_AT',['../CommonDef_8h.html#ae28e9d8d9f4f3ef0333710bdde3c24d3',1,'CommonDef.h']]]
+];

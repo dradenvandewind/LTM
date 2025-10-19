@@ -1,0 +1,256 @@
+\doxysection{Inverse\+Transform\+DDS.\+cpp}
+\label{InverseTransformDDS_8cpp_source}\index{decoder/src/InverseTransformDDS.cpp@{decoder/src/InverseTransformDDS.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ InverseTransformDDS.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}InverseTransformDDS.hpp"{}}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ Basis\ for\ the\ Inverse\ DDS}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ indexed\ by\ x\%4,\ y\%4,\ surface}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ This\ has\ been\ inlines\ for\ performance.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \{\{}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1\},\ //\ 0,0}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1\},\ //\ 1,0}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1\},\ //\ 2,0}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1\},\ //\ 3,0}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ \ \},\ \{}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1\},\ //\ 0,1}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1,\ +1,\ +1\},\ //\ 1,1}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1\},\ //\ 2,1}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1,\ +1,\ -\/1\},\ //\ 3,1}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ \ \},\ \{}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1\},\ //\ 0,2}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1\},\ //\ 1,2}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1\},\ //\ 2,2}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1\},\ //\ 3,2}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ \},\ \{}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1\},\ //\ 0,3}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ +1,\ -\/1,\ -\/1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ +1,\ +1,\ -\/1,\ -\/1\},\ //\ 1,3}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1\},\ //\ 2,3}}
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ \ \ \ \ \ \{+1,\ -\/1,\ -\/1,\ +1,\ -\/1,\ +1,\ +1,\ -\/1,\ -\/1,\ +1,\ +1,\ -\/1,\ +1,\ -\/1,\ -\/1,\ +1\},\ //\ 3,3}}
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ \ \}\};}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ Surface\ InverseTransformDDS::process(\textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keyword}{const}\ Surface\ src\_layers[])\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{const}\ SurfaceView<int16\_t>\ coeffs[16]\ =\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[0]),\ \ SurfaceView<int16\_t>(src\_layers[1]),\ \ SurfaceView<int16\_t>(src\_layers[2]),}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[3]),\ \ SurfaceView<int16\_t>(src\_layers[4]),\ \ SurfaceView<int16\_t>(src\_layers[5]),}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[6]),\ \ SurfaceView<int16\_t>(src\_layers[7]),\ \ SurfaceView<int16\_t>(src\_layers[8]),}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[9]),\ \ SurfaceView<int16\_t>(src\_layers[10]),\ SurfaceView<int16\_t>(src\_layers[11]),}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[12]),\ SurfaceView<int16\_t>(src\_layers[13]),\ SurfaceView<int16\_t>(src\_layers[14]),}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ SurfaceView<int16\_t>(src\_layers[15])\};}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{auto}\ dst\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{00080\ \ \ \ \ dst.reserve(width,\ height);}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MATRIX\_\_}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ static\_cast<unsigned>(height)\ /\ 4;\ y++)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ dy\ =\ y\ *\ 4;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc00\ =\ coeffs[0].data(0,\ y);}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc01\ =\ coeffs[1].data(0,\ y);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc02\ =\ coeffs[2].data(0,\ y);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc03\ =\ coeffs[3].data(0,\ y);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc04\ =\ coeffs[4].data(0,\ y);}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc05\ =\ coeffs[5].data(0,\ y);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc06\ =\ coeffs[6].data(0,\ y);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc07\ =\ coeffs[7].data(0,\ y);}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc08\ =\ coeffs[8].data(0,\ y);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc09\ =\ coeffs[9].data(0,\ y);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc10\ =\ coeffs[10].data(0,\ y);}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc11\ =\ coeffs[11].data(0,\ y);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc12\ =\ coeffs[12].data(0,\ y);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc13\ =\ coeffs[13].data(0,\ y);}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc14\ =\ coeffs[14].data(0,\ y);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int16\_t\ *pc15\ =\ coeffs[15].data(0,\ y);}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ int16\_t\ *pd00\ =\ dst.data(0,\ dy\ +\ 0);}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ int16\_t\ *pd01\ =\ dst.data(0,\ dy\ +\ 1);}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ int16\_t\ *pd02\ =\ dst.data(0,\ dy\ +\ 2);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ int16\_t\ *pd03\ =\ dst.data(0,\ dy\ +\ 3);}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ static\_cast<unsigned>(width)\ /\ 4;\ x++)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ unsigned\ dx\ =\ x\ *\ 4;}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c00\ =\ *pc00++;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c01\ =\ *pc01++;}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c02\ =\ *pc02++;}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c03\ =\ *pc03++;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c04\ =\ *pc04++;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c05\ =\ *pc05++;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c06\ =\ *pc06++;}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c07\ =\ *pc07++;}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c08\ =\ *pc08++;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c09\ =\ *pc09++;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c10\ =\ *pc10++;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c11\ =\ *pc11++;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c12\ =\ *pc12++;}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c13\ =\ *pc13++;}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c14\ =\ *pc14++;}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ c15\ =\ *pc15++;}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ *pd00++\ =\ c00\ +\ c01\ +\ c02\ +\ c03\ +\ c04\ +\ c05\ +\ c06\ +\ c07\ +\ c08\ +\ c09\ +\ c10\ +\ c11\ +\ c12\ +\ c13\ +\ c14\ +\ c15;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ *pd00++\ =\ c00\ +\ c01\ +\ c02\ +\ c03\ -\/\ c04\ -\/\ c05\ -\/\ c06\ -\/\ c07\ +\ c08\ +\ c09\ +\ c10\ +\ c11\ -\/\ c12\ -\/\ c13\ -\/\ c14\ -\/\ c15;}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ *pd00++\ =\ c00\ -\/\ c01\ +\ c02\ -\/\ c03\ +\ c04\ -\/\ c05\ +\ c06\ -\/\ c07\ +\ c08\ -\/\ c09\ +\ c10\ -\/\ c11\ +\ c12\ -\/\ c13\ +\ c14\ -\/\ c15;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ *pd00++\ =\ c00\ -\/\ c01\ +\ c02\ -\/\ c03\ -\/\ c04\ +\ c05\ -\/\ c06\ +\ c07\ +\ c08\ -\/\ c09\ +\ c10\ -\/\ c11\ -\/\ c12\ +\ c13\ -\/\ c14\ +\ c15;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ *pd01++\ =\ c00\ +\ c01\ +\ c02\ +\ c03\ +\ c04\ +\ c05\ +\ c06\ +\ c07\ -\/\ c08\ -\/\ c09\ -\/\ c10\ -\/\ c11\ -\/\ c12\ -\/\ c13\ -\/\ c14\ -\/\ c15;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ *pd01++\ =\ c00\ +\ c01\ +\ c02\ +\ c03\ -\/\ c04\ -\/\ c05\ -\/\ c06\ -\/\ c07\ -\/\ c08\ -\/\ c09\ -\/\ c10\ -\/\ c11\ +\ c12\ +\ c13\ +\ c14\ +\ c15;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ *pd01++\ =\ c00\ -\/\ c01\ +\ c02\ -\/\ c03\ +\ c04\ -\/\ c05\ +\ c06\ -\/\ c07\ -\/\ c08\ +\ c09\ -\/\ c10\ +\ c11\ -\/\ c12\ +\ c13\ -\/\ c14\ +\ c15;}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ *pd01++\ =\ c00\ -\/\ c01\ +\ c02\ -\/\ c03\ -\/\ c04\ +\ c05\ -\/\ c06\ +\ c07\ -\/\ c08\ +\ c09\ -\/\ c10\ +\ c11\ +\ c12\ -\/\ c13\ +\ c14\ -\/\ c15;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ *pd02++\ =\ c00\ +\ c01\ -\/\ c02\ -\/\ c03\ +\ c04\ +\ c05\ -\/\ c06\ -\/\ c07\ +\ c08\ +\ c09\ -\/\ c10\ -\/\ c11\ +\ c12\ +\ c13\ -\/\ c14\ -\/\ c15;}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ *pd02++\ =\ c00\ +\ c01\ -\/\ c02\ -\/\ c03\ -\/\ c04\ -\/\ c05\ +\ c06\ +\ c07\ +\ c08\ +\ c09\ -\/\ c10\ -\/\ c11\ -\/\ c12\ -\/\ c13\ +\ c14\ +\ c15;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ *pd02++\ =\ c00\ -\/\ c01\ -\/\ c02\ +\ c03\ +\ c04\ -\/\ c05\ -\/\ c06\ +\ c07\ +\ c08\ -\/\ c09\ -\/\ c10\ +\ c11\ +\ c12\ -\/\ c13\ -\/\ c14\ +\ c15;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ *pd02++\ =\ c00\ -\/\ c01\ -\/\ c02\ +\ c03\ -\/\ c04\ +\ c05\ +\ c06\ -\/\ c07\ +\ c08\ -\/\ c09\ -\/\ c10\ +\ c11\ -\/\ c12\ +\ c13\ +\ c14\ -\/\ c15;}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ *pd03++\ =\ c00\ +\ c01\ -\/\ c02\ -\/\ c03\ +\ c04\ +\ c05\ -\/\ c06\ -\/\ c07\ -\/\ c08\ -\/\ c09\ +\ c10\ +\ c11\ -\/\ c12\ -\/\ c13\ +\ c14\ +\ c15;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ *pd03++\ =\ c00\ +\ c01\ -\/\ c02\ -\/\ c03\ -\/\ c04\ -\/\ c05\ +\ c06\ +\ c07\ -\/\ c08\ -\/\ c09\ +\ c10\ +\ c11\ +\ c12\ +\ c13\ -\/\ c14\ -\/\ c15;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ *pd03++\ =\ c00\ -\/\ c01\ -\/\ c02\ +\ c03\ +\ c04\ -\/\ c05\ -\/\ c06\ +\ c07\ -\/\ c08\ +\ c09\ +\ c10\ -\/\ c11\ -\/\ c12\ +\ c13\ +\ c14\ -\/\ c15;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ *pd03++\ =\ c00\ -\/\ c01\ -\/\ c02\ +\ c03\ -\/\ c04\ +\ c05\ +\ c06\ -\/\ c07\ -\/\ c08\ +\ c09\ +\ c10\ -\/\ c11\ +\ c12\ -\/\ c13\ -\/\ c14\ +\ c15;}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ static\_cast<unsigned>(height)\ /\ 4;\ y++)\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ static\_cast<unsigned>(width)\ /\ 4;\ x++)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ dx\ =\ x\ *\ 4,\ dy\ =\ y\ *\ 4;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 0,\ dy\ +\ 0,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 1,\ dy\ +\ 0,}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 2,\ dy\ +\ 0,}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 3,\ dy\ +\ 0,}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 0,\ dy\ +\ 1,}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 1,\ dy\ +\ 1,}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 2,\ dy\ +\ 1,}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 3,\ dy\ +\ 1,}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (+coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 0,\ dy\ +\ 2,}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 1,\ dy\ +\ 2,}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 2,\ dy\ +\ 2,}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 3,\ dy\ +\ 2,}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (-\/coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 0,\ dy\ +\ 3,}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 1,\ dy\ +\ 3,}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (+coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (-\/coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (-\/coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (+coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 2,\ dy\ +\ 3,}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[4].read(x,\ y))\ +\ (-\/coeffs[5].read(x,\ y))\ +\ (-\/coeffs[6].read(x,\ y))\ +\ (+coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[12].read(x,\ y))\ +\ (+coeffs[13].read(x,\ y))\ +\ (+coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ dst.write(dx\ +\ 3,\ dy\ +\ 3,}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[0].read(x,\ y))\ +\ (-\/coeffs[1].read(x,\ y))\ +\ (-\/coeffs[2].read(x,\ y))\ +\ (+coeffs[3].read(x,\ y))\ +}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[4].read(x,\ y))\ +\ (+coeffs[5].read(x,\ y))\ +\ (+coeffs[6].read(x,\ y))\ +\ (-\/coeffs[7].read(x,\ y))\ +}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (-\/coeffs[8].read(x,\ y))\ +\ (+coeffs[9].read(x,\ y))\ +\ (+coeffs[10].read(x,\ y))\ +\ (-\/coeffs[11].read(x,\ y))\ +}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[12].read(x,\ y))\ +\ (-\/coeffs[13].read(x,\ y))\ +\ (-\/coeffs[14].read(x,\ y))\ +}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+coeffs[15].read(x,\ y)));}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \ \ \ \ \}}
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordflow}{return}\ dst.finish();}
+\DoxyCodeLine{00248\ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

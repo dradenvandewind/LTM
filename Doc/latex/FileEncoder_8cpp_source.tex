@@ -1,0 +1,1271 @@
+\doxysection{File\+Encoder.\+cpp}
+\label{FileEncoder_8cpp_source}\index{encoder/src/FileEncoder.cpp@{encoder/src/FileEncoder.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ FileEncoder.cpp}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Reads\ input\ file(s),\ manages\ enahancement\ \&\ base\ codec,\ merges\ data,\ and\ writes\ to\ output}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}FileEncoder.hpp"{}}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ "{}Downsampling.hpp"{}}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ "{}Encoder.hpp"{}}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ "{}Expand.hpp"{}}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ "{}Types.hpp"{}}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#include\ "{}Upsampling.hpp"{}}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ "{}BitstreamPacker.hpp"{}}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#include\ "{}Probe.hpp"{}}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#include\ "{}YUVReader.hpp"{}}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#include\ "{}YUVWriter.hpp"{}}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#include\ "{}uESFile.h"{}}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
+\DoxyCodeLine{00084\ \textcolor{keyword}{extern}\ PsnrStatistic\ goPsnr;}
+\DoxyCodeLine{00085\ \textcolor{keyword}{extern}\ uint8\_t\ gaucMd5Digest[][16];}
+\DoxyCodeLine{00086\ \textcolor{keyword}{extern}\ ReportStructure\ goReportStructure;}
+\DoxyCodeLine{00087\ \textcolor{keyword}{extern}\ priority\_queue<ReportStructure,\ vector<ReportStructure,\ allocator<ReportStructure>>,\ ReportStructureComp>\ goReportQueue;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{keyword}{using\ namespace\ }vnova::utility;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#include\ "{}nlohmann/json.hpp"{}}}
+\DoxyCodeLine{00092\ \textcolor{keyword}{using\ }json\ =\ nlohmann::json;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ Implementation\ is\ specialised\ for\ base\ codec}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{class\ }FileEncoderImpl\ :\ \textcolor{keyword}{public}\ FileEncoder\ \{}
+\DoxyCodeLine{00099\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00101\ \ \ \ \ FileEncoderImpl(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters);}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \string~FileEncoderImpl()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ Encode\ from\ 'src'\ YUV\ file,\ up\ to\ 'limit'\ frames\ (if\ limit\ >\ 0)}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ limit)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Encode\ from\ 'src'\ base\ file\ which\ will\ run\ the\ base\ deocoder\ first}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_file\_with\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\ Encode\ from\ 'src'\ YUV\ file,\ base,\ base\_recon\ \&\ preprocessed\ info}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_file\_with\_base(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_recon\_filename,}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{void}\ downsample\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,\ \textcolor{keywordtype}{unsigned}\ limit)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{void}\ upsample\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,\ \textcolor{keywordtype}{unsigned}\ limit)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{virtual}\ BaseDecoder::Codec\ es\_file\_type()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{virtual}\ BaseCoding\ base\_coding()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ Body\ of\ encode\ loop}}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordtype}{void}\ encode(\textcolor{keyword}{const}\ YUVReader\ \&src\_file,\ \textcolor{keyword}{const}\ YUVReader\ \&recon\_file,\ FILE\ *output\_file,\ ESFile\ \&es\_file,}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit);}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{bool}\ read\_au(ESFile\ \&es\_file,\ ESFile::AccessUnit\ \&au);}
+\DoxyCodeLine{00132\ \ \ \ \ Packet\ rbsp\_encapsulate(\textcolor{keyword}{const}\ Packet\ \&src)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ initialize\_encoder(\textcolor{keyword}{const}\ YUVReader\ \&src\_file,\ \textcolor{keywordtype}{unsigned}\ limit);}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{struct\ }RegisteredSEI\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ Packet\ sei\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data);}
+\DoxyCodeLine{00137\ \ \ \ \ \};}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{struct\ }UnregisteredSEI\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ Packet\ sei\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data);}
+\DoxyCodeLine{00140\ \ \ \ \ \};}
+\DoxyCodeLine{00141\ \ \ \ \ Packet\ nal\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\ =\ 0;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ ESFile::NalUnit\ build\_nalu(\textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ intra\_period()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&stream\_output,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_output,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\ =\ 0;}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ Size,\ format\ \&\ depth\ -\/\ base,\ intermediate\ \&\ full\ resolution}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ fps\_;}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keyword}{const}\ Parameters\ parameters\_;}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{const}\ ScalingMode\ scaling\_mode\_[MAX\_NUM\_LOQS];}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{const}\ Downsample\ downsample\_luma\_;}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{const}\ Downsample\ downsample\_chroma\_;}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{const}\ Upsample\ upsample\_;}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ upsampling\_coefficients\_[4];}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{const}\ Encapsulation\ encapsulation\_;}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ Encoder\ encoder\_;}
+\DoxyCodeLine{00167\ \};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ FileEncoderImpl::FileEncoderImpl(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{00170\ \ \ \ \ :\ fps\_(fps),\ parameters\_(parameters),\ scaling\_mode\_\{parameters\_[\textcolor{stringliteral}{"{}scaling\_mode\_level1"{}}].get\_enum<ScalingMode>(ScalingMode\_None),}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ parameters\_[\textcolor{stringliteral}{"{}scaling\_mode\_level2"{}}].get\_enum<ScalingMode>(ScalingMode\_2D)\},}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ downsample\_luma\_(parameters\_[\textcolor{stringliteral}{"{}encoding\_downsample\_luma"{}}].get\_enum<Downsample>(Downsample\_Lanczos3)),}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ downsample\_chroma\_(parameters\_[\textcolor{stringliteral}{"{}encoding\_downsample\_chroma"{}}].get\_enum<Downsample>(Downsample\_Lanczos3)),}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ upsample\_(parameters\_[\textcolor{stringliteral}{"{}encoding\_upsample"{}}].get\_enum<Upsample>(Upsample\_ModifiedCubic)),}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ encapsulation\_(parameters\_[\textcolor{stringliteral}{"{}encapsulation"{}}].get\_enum<Encapsulation>(Encapsulation\_None)),}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ encoder\_(image\_description,\ parameters)\ \{}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ parameters\_[\textcolor{stringliteral}{"{}encoding\_upsample"{}}].get\_vector<\textcolor{keywordtype}{unsigned}>(upsampling\_coefficients\_,\ 4);}
+\DoxyCodeLine{00179\ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ FileEncoderImpl::\string~FileEncoderImpl()\ \{\}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{comment}{//}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//}}
+\DoxyCodeLine{00185\ \textcolor{keywordtype}{void}\ FileEncoderImpl::encode\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ Temp.\ input\ file\ to\ encode}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordtype}{string}\ base\_yuv\_filename\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.yuv"{}});}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Output\ files}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{string}\ base\_bin\_filename;}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordtype}{string}\ base\_recon\_filename;}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{if}\ (!parameters\_[\textcolor{stringliteral}{"{}keep\_base"{}}].get<bool>(\textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ base\_bin\_filename\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.bin"{}});}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ base\_recon\_filename\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base\_recon.yuv"{}});}
+\DoxyCodeLine{00199\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ base\_bin\_filename\ =\ \textcolor{stringliteral}{"{}base.bin"{}};}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ base\_recon\_filename\ =\ \textcolor{stringliteral}{"{}base\_recon.yuv"{}};}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ base\ YUV:\ \%s"{}},\ base\_yuv\_filename.c\_str());}
+\DoxyCodeLine{00205\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ base\ stream:\ \%s"{}},\ base\_bin\_filename.c\_str());}
+\DoxyCodeLine{00206\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ base\ recon:\ \%s"{}},\ base\_recon\_filename.c\_str());}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{comment}{//\ Read\ source\ and\ downsample\ into\ base}}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00210\ \ \ \ \ unique\_ptr<YUVReader>\ src\_file(CHECK(CreateYUVReader(src\_filename,\ encoder\_.src\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00211\ \ \ \ \ initialize\_encoder(*src\_file,\ limit);}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{auto}\ base\_yuv\ =\ CHECK(CreateYUVWriter(base\_yuv\_filename,\ encoder\_.base\_image\_description(),\ \textcolor{keyword}{true}));}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ int64\_t\ pts\ =\ 0;}
+\DoxyCodeLine{00215\ \ \ \ \ int64\_t\ duration\ =\ 90000L\ /\ fps\_;}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ frame\_count\ =\ min(src\_file-\/>length(),\ limit);}
+\DoxyCodeLine{00218\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}input\ limit\ \%8d\ -\/\ local\ count\ \%8d"{}},\ limit,\ frame\_count);}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ level1\_depth\_flag\ =\ encoder\_.level1\_depth\_flag();}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ f\ =\ 0;\ f\ <\ frame\_count;\ ++f,\ pts\ +=\ duration)\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Writing\ base\ \%d"{}},\ f);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ src\ =\ ExpandImage(src\_file-\/>read(f,\ pts),\ encoder\_.enhancement\_image\_description());}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Downsample\ and\ bit\ shifting\ depending\ base\ and\ enhancement\ bit\ depths}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ img\ =\ DownsampleImage(DownsampleImage(src,\ downsample\_luma\_,\ downsample\_chroma\_,\ scaling\_mode\_[LOQ\_LEVEL\_2],}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level1\_depth\_flag\ ?\ 0\ :\ encoder\_.base\_image\_description().bit\_depth()),}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ downsample\_luma\_,\ downsample\_chroma\_,\ scaling\_mode\_[LOQ\_LEVEL\_1],}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ level1\_depth\_flag\ ?\ encoder\_.base\_image\_description().bit\_depth()\ \ :\ 0);}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ base\_yuv-\/>write(img);}
+\DoxyCodeLine{00230\ \ \ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{comment}{//\ Run\ the\ base\ encoder\ yuv-\/file-\/>\ es-\/file\ and\ recon}}
+\DoxyCodeLine{00233\ \ \ \ \ run\_base\_encoder(base\_yuv-\/>filename(),\ base\_bin\_filename,\ base\_recon\_filename,\ frame\_count);}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{comment}{//\ Open\ file}}
+\DoxyCodeLine{00236\ \ \ \ \ unique\_ptr<YUVReader>\ recon\_file(CHECK(CreateYUVReader(base\_recon\_filename,\ encoder\_.base\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ UniquePtrFile\ output\_file(CHECK(fopen(format(\textcolor{stringliteral}{"{}\%s"{}},\ dst\_filename.c\_str()).c\_str(),\ \textcolor{stringliteral}{"{}wb"{}})));}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ ESFile\ es\_file;}
+\DoxyCodeLine{00241\ \ \ \ \ CHECK(es\_file.Open(base\_bin\_filename,\ es\_file\_type()));}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ Encode\ enhancement\ given\ src,\ base\ and\ base\_recon}}
+\DoxyCodeLine{00244\ \ \ \ \ clock\_t\ EnhaClock1\ =\ clock();}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ encode(*src\_file,\ *recon\_file,\ output\_file.get(),\ es\_file,\ dst\_filename\_yuv,\ limit);}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ clock\_t\ EnhaClock2\ =\ clock();}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}****\ Encode\ enhancement.\ delta.\ \%16d\ secs"{}},\ (EnhaClock2\ -\/\ EnhaClock1)\ /\ CLOCKS\_PER\_SEC);}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ Clear\ up}}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{if}\ (!parameters\_[\textcolor{stringliteral}{"{}keep\_base"{}}].get<bool>(\textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ ::remove(base\_yuv\_filename.c\_str());}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ ::remove(base\_bin\_filename.c\_str());}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ ::remove(base\_recon\_filename.c\_str());}
+\DoxyCodeLine{00256\ \ \ \ \ \}}
+\DoxyCodeLine{00257\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{keywordtype}{void}\ FileEncoderImpl::encode\_file\_with\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ Initialize\ encoder\ to\ derive\ final\ dimensions}}
+\DoxyCodeLine{00263\ \ \ \ \ unique\_ptr<YUVReader>\ src\_file(CHECK(CreateYUVReader(src\_filename,\ encoder\_.src\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00264\ \ \ \ \ initialize\_encoder(*src\_file,\ limit);}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{comment}{//\ Verify\ dimensions\ of\ base\ input}}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ base\_width\ =\ 0,\ base\_height\ =\ 0,\ base\_depth\ =\ 0,\ chroma\_format\_idc;}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_es\_file(base\_filename,\ base\_coding(),\ base\_width,\ base\_height,\ base\_depth,\ chroma\_format\_idc))\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ CHECK(base\_width\ ==\ encoder\_.base\_image\_description().width());}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ CHECK(base\_height\ ==\ encoder\_.base\_image\_description().height());}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ CHECK(base\_depth\ ==\ encoder\_.base\_image\_description().bit\_depth());}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ CHECK(chroma\_format\_idc\ ==\ (\textcolor{keywordtype}{unsigned})encoder\_.base\_image\_description().colourspace());}
+\DoxyCodeLine{00273\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Cannot\ find\ dimension\ of\ base."{}});}
+\DoxyCodeLine{00275\ \ \ \ \ \}}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ Generate\ base\ recon.}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{string}\ base\_recon\_filename\ =\ make\_temporary\_filename(}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\_base\_recon\_\%dx\%d.yuv"{}},\ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height()));}
+\DoxyCodeLine{00280\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ base\ recon:\ \%s"{}},\ base\_recon\_filename.c\_str());}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}-\/-\/\ Starting\ decoding\ process:\ \%.3f"{}},\ system\_timestamp()\ /\ 1000000.0);}
+\DoxyCodeLine{00283\ \ \ \ \ run\_base\_decoder(base\_filename,\ base\_recon\_filename);}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ Open\ file}}
+\DoxyCodeLine{00286\ \ \ \ \ unique\_ptr<YUVReader>\ recon\_file(CHECK(CreateYUVReader(base\_recon\_filename,\ encoder\_.base\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \ \ UniquePtrFile\ output\_file(CHECK(fopen(format(\textcolor{stringliteral}{"{}\%s"{}},\ dst\_filename.c\_str()).c\_str(),\ \textcolor{stringliteral}{"{}wb"{}})));}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ ESFile\ es\_file;}
+\DoxyCodeLine{00291\ \ \ \ \ CHECK(es\_file.Open(base\_filename,\ es\_file\_type()));}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ encode(*src\_file,\ *recon\_file,\ output\_file.get(),\ es\_file,\ dst\_filename\_yuv,\ limit);}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{comment}{//\ Clear\ up}}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{if}\ (!parameters\_[\textcolor{stringliteral}{"{}keep\_base"{}}].get<bool>(\textcolor{keyword}{false}))\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ ::remove(base\_recon\_filename.c\_str());}
+\DoxyCodeLine{00298\ \ \ \ \ \}}
+\DoxyCodeLine{00299\ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{comment}{//\ Fetch\ next\ AU\ from\ an\ ES\ file\ -\/\ return\ true\ if\ not\ EOF}}
+\DoxyCodeLine{00302\ \textcolor{comment}{//}}
+\DoxyCodeLine{00303\ \textcolor{keywordtype}{bool}\ FileEncoderImpl::read\_au(ESFile\ \&es\_file,\ ESFile::AccessUnit\ \&au)\ \{}
+\DoxyCodeLine{00304\ \ \ \ \ ESFile::Result\ rc\ =\ ESFile::EndOfFile;}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ rc\ =\ es\_file.NextAccessUnit(au);}
+\DoxyCodeLine{00308\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ runtime\_error\ \&)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ rc\ =\ ESFile::NalParsingError;}
+\DoxyCodeLine{00310\ \ \ \ \ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordflow}{return}\ rc\ ==\ ESFile::Success;}
+\DoxyCodeLine{00313\ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \textcolor{keyword}{static}\ BaseFrameType\ frame\_type(BaseDecPictType::Enum\ pt)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{switch}\ (pt)\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::IDR:}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_IDR;}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::I:}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_Intra;}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::P:}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ BaseFrame\_Inter;}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_Pred;}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::B:}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ BaseFrame\_Inter;}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_Bidi;}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::BR:}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ BaseFrame\_Inter;}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_Bidi;}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecPictType::Unknown:}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_Inter;}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseFrame\_IDR;}
+\DoxyCodeLine{00335\ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \textcolor{keywordtype}{void}\ FileEncoderImpl::encode\_file\_with\_base(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&src\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_filename,}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ base\_recon\_filename,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename,}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Open\ files}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00343\ \ \ \ \ unique\_ptr<YUVReader>\ src\_file(CHECK(CreateYUVReader(src\_filename,\ encoder\_.src\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00344\ \ \ \ \ unique\_ptr<YUVReader>\ recon\_file(CHECK(CreateYUVReader(base\_recon\_filename,\ encoder\_.base\_image\_description(),\ fps\_)));}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ \ \ initialize\_encoder(*src\_file,\ limit);}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{comment}{//\ Verify\ dimensions\ of\ base\ input}}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ base\_width\ =\ 0,\ base\_height\ =\ 0,\ base\_depth\ =\ 0,\ chroma\_format\_idc;}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordflow}{if}\ (probe\_es\_file(base\_filename,\ base\_coding(),\ base\_width,\ base\_height,\ base\_depth,\ chroma\_format\_idc))\ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ CHECK(base\_width\ ==\ encoder\_.base\_image\_description().width());}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ CHECK(base\_height\ ==\ encoder\_.base\_image\_description().height());}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ CHECK(base\_depth\ ==\ encoder\_.base\_image\_description().bit\_depth());}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ CHECK(chroma\_format\_idc\ ==\ (\textcolor{keywordtype}{unsigned})encoder\_.base\_image\_description().colourspace());}
+\DoxyCodeLine{00355\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Cannot\ find\ dimension\ of\ base."{}});}
+\DoxyCodeLine{00357\ \ \ \ \ \}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ UniquePtrFile\ output\_file(CHECK(fopen(format(\textcolor{stringliteral}{"{}\%s"{}},\ dst\_filename.c\_str()).c\_str(),\ \textcolor{stringliteral}{"{}wb"{}})));}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ ESFile\ es\_file;}
+\DoxyCodeLine{00362\ \ \ \ \ CHECK(es\_file.Open(base\_filename,\ es\_file\_type()));}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ encode(*src\_file,\ *recon\_file,\ output\_file.get(),\ es\_file,\ dst\_filename\_yuv,\ limit);}
+\DoxyCodeLine{00365\ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Args>\ std::unique\_ptr<T>\ make\_unique(Args\ \&\&...args)\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{return}\ std::unique\_ptr<T>(\textcolor{keyword}{new}\ T(std::forward<Args>(args)...));}
+\DoxyCodeLine{00369\ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \textcolor{keywordtype}{void}\ FileEncoderImpl::encode(\textcolor{keyword}{const}\ YUVReader\ \&src\_file,\ \textcolor{keyword}{const}\ YUVReader\ \&recon\_file,\ FILE\ *output\_file,\ ESFile\ \&es\_file,}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&dst\_filename\_yuv,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{comment}{//\ Queue\ of\ pending\ AUs,\ so\ that\ enhancment\ can\ be\ encoded\ in\ display\ order}}
+\DoxyCodeLine{00375\ \ \ \ \ deque<ESFile::AccessUnit>\ pending;}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ display\_frame\ =\ 0;}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ written\_count\ =\ 0;}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordtype}{bool}\ end\_of\_es\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00380\ \ \ \ \ encoder\_.set\_last\_idr\_frame\_num(0);}
+\DoxyCodeLine{00381\ \ \ \ \ std::vector<std::unique\_ptr<Image>>\ src;}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ num\_frames\ =\ std::min(src\_file.length(),\ limit);}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_frames\ ==\ 0)}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Frames\ cannot\ be\ read\ from\ source."{}});}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ Fill\ with\ initial\ frame}}
+\DoxyCodeLine{00388\ \ \ \ \ src.push\_back(make\_unique<Image>(ExpandImage(src\_file.read(0,\ 0),\ encoder\_.enhancement\_image\_description())));}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordflow}{while}\ (written\_count\ <\ limit\ \&\&\ !end\_of\_es)\ \{}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ next\ AU\ from\ base\ stream}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ ESFile::AccessUnit\ au;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (read\_au(es\_file,\ au))}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ pending.push\_front(au);}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ end\_of\_es\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Advance\ 'enhancement\_poc'\ past\ AUs\ that\ are\ present\ in\ queue,\ adding\ enhancement\ as\ needed}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_looking\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ keep\_looking\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \&a\ :\ pending)\ \{}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ AVC\ POCs\ are\ increased\ by\ 2\ XXX\ move\ to\ virtual\ fn}}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ enhance\_poc\ =\ (es\_file\_type()\ ==\ BaseDecoder::AVC)\ ?\ 2\ *\ display\_frame\ :\ display\_frame;}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (a.m\_poc\ ==\ enhance\_poc)\ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (display\_frame\ !=\ 0)}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src.erase(src.begin());}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (src.size()\ <\ 2\ \&\&\ (display\_frame\ +\ 1)\ <\ src\_file.length())\ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ src.push\_back(make\_unique<Image>(ExpandImage(src\_file.read(display\_frame\ +\ 1,\ display\_frame\ +\ 1),}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.enhancement\_image\_description())));}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ recon\ =\ recon\_file.read(display\_frame,\ display\_frame);}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ src\_intermediate\ =}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DownsampleImage(*src[0],\ downsample\_luma\_,\ downsample\_chroma\_,\ scaling\_mode\_[LOQ\_LEVEL\_2],}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.intermediate\_image\_description().bit\_depth());}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Enhancement\ encoding}}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr\ =\ a.m\_pictureType\ ==\ BaseDecPictType::IDR;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ pss\ =\ encoder\_.encode(src,\ src\_intermediate,\ recon,\ frame\_type(a.m\_pictureType),\ is\_idr,\ display\_frame,}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dst\_filename\_yuv);}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miTimeStamp\ =\ (int)a.m\_poc;}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miPictureType\ =\ (int)a.m\_pictureType;}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miBaseSize\ =\ (int)a.m\_size;}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pss.empty())}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miEnhancementSize\ =\ add\_enhancement(a,\ is\_idr,\ pss);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportQueue.push(goReportStructure);}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goPsnr.miBaseBytes\ +=\ goReportStructure.miBaseSize;}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goPsnr.miEnhancementBytes\ +=\ goReportStructure.miEnhancementSize;}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ off}}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}ENC.\ [pts.\ \%4d]\ [type\ \%4d]\ [base\ \%8d]\ [enha\ \%8d]\ "{}},}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ goReportStructure.miTimeStamp,\ goReportStructure.miPictureType,\ goReportStructure.miBaseSize,\ goReportStructure.miEnhancementSize);}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[psnrY\ \%8.4f]\ "{}},\ goPsnr.mfCurPsnr[0]);}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.src\_image\_description().num\_planes()\ >\ 1)}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[psnrU\ \%8.4f]\ [psnrV\ \%8.4f]\ \(\backslash\)n"{}},\ (goPsnr.mfCurPsnr[1]),\ (goPsnr.mfCurPsnr[2]));}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5Y\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ "{}},\ }
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][0],\ \ gaucMd5Digest[0][1],\ \ gaucMd5Digest[0][2],\ \ gaucMd5Digest[0][3],\ \ }
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][4],\ \ gaucMd5Digest[0][5],\ \ gaucMd5Digest[0][6],\ \ gaucMd5Digest[0][7],\ \ }
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][8],\ \ gaucMd5Digest[0][9],\ \ gaucMd5Digest[0][10],\ gaucMd5Digest[0][11],\ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[0][12],\ gaucMd5Digest[0][13],\ gaucMd5Digest[0][14],\ gaucMd5Digest[0][15]);}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.src\_image\_description().num\_planes()\ >\ 1)\ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5U\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ "{}},\ }
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][0],\ \ gaucMd5Digest[1][1],\ \ gaucMd5Digest[1][2],\ \ gaucMd5Digest[1][3],\ \ }
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][4],\ \ gaucMd5Digest[1][5],\ \ gaucMd5Digest[1][6],\ \ gaucMd5Digest[1][7],\ \ }
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][8],\ \ gaucMd5Digest[1][9],\ \ gaucMd5Digest[1][10],\ gaucMd5Digest[1][11],\ }
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[1][12],\ gaucMd5Digest[1][13],\ gaucMd5Digest[1][14],\ gaucMd5Digest[1][15]);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}[MD5V\ \%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X\%02X]\ \(\backslash\)n"{}},\ }
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][0],\ \ gaucMd5Digest[2][1],\ \ gaucMd5Digest[2][2],\ \ gaucMd5Digest[2][3],\ \ }
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][4],\ \ gaucMd5Digest[2][5],\ \ gaucMd5Digest[2][6],\ \ gaucMd5Digest[2][7],\ \ }
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][8],\ \ gaucMd5Digest[2][9],\ \ gaucMd5Digest[2][10],\ gaucMd5Digest[2][11],\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gaucMd5Digest[2][12],\ gaucMd5Digest[2][13],\ gaucMd5Digest[2][14],\ gaucMd5Digest[2][15]);}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fprintf(stdout,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fflush(stdout);}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clang-\/format\ on}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ display\_frame++;}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keep\_looking\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ INFO("{}base\ -\/-\/\ \%4u\ \%8u\ \%4u"{},\ display\_frame,\ pss.size(),\ a.m\_pictureType);}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (keep\_looking);}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Consume\ AUs\ that\ have\ been\ enhanced\ from\ the\ back\ of\ queue\ and\ write\ to\ output\ stream}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ write\_poc\ =\ (es\_file\_type()\ ==\ BaseDecoder::AVC)\ ?\ 2\ *\ display\_frame\ :\ display\_frame;}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!pending.empty()\ \&\&\ (pending.back().m\_poc\ <\ write\_poc))\ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&n\ :\ pending.back().m\_nalUnits)\ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sz\ =\ n.m\_data.size();}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ INFO("{}lvc\ \ -\/-\/\ \%4u\ \%8u"{},\ written\_count,\ sz);}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fwrite(n.m\_data.data(),\ 1,\ sz,\ output\_file)\ ==\ sz);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ pending.pop\_back();}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ ++written\_count;}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00491\ \ \ \ \ \}}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{keywordflow}{if}\ (written\_count\ >\ 0)\ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iFrames\ =\ written\_count;}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fAccMse[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fPsnr[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ encoder\_.src\_image\_description().num\_planes();\ plane++)\ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ fAccMse[plane]\ =\ goPsnr.mfAccMse[plane]\ /\ iFrames;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[plane]\ =\ (float)(10.0f\ *\ log10((32767.0f\ *\ 32767.0f)\ /\ fAccMse[plane]));}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.src\_image\_description().num\_planes()\ >\ 1)}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ YUV\ \%8.4f\ -\/-\/\ Y\ \%8.4f\ U\ \%8.4f\ V\ \%8.4f"{}},\ (6\ *\ fPsnr[0]\ +\ fPsnr[1]\ +\ fPsnr[2])\ /\ 8,\ fPsnr[0],\ fPsnr[1],}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[2]);}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ Y\ \%8.4f"{}},\ fPsnr[0]);}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}BITS\ -\/-\/\ base\ \%8d\ bps\ -\/-\/\ enha\ \%8d\ bps\ "{}},\ (goPsnr.miBaseBytes\ *\ 8\ *\ this-\/>fps\_)\ /\ iFrames,}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (goPsnr.miEnhancementBytes\ *\ 8\ *\ this-\/>fps\_)\ /\ iFrames);}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{00513\ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ }
+\DoxyCodeLine{00515\ \}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \textcolor{comment}{//\ RBSP\ encapsualtion\ (0b00000000\ 0b00000000\ 0b000000xx\ -\/>\ 0b00000000\ 0b00000000\ 0b00000011\ 0b000000xx)}}
+\DoxyCodeLine{00518\ \textcolor{comment}{//}}
+\DoxyCodeLine{00519\ Packet\ FileEncoderImpl::rbsp\_encapsulate(\textcolor{keyword}{const}\ Packet\ \&src)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00520\ \ \ \ \ PacketView\ in(src);}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \ \ vector<uint8\_t>\ out;}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ in.size();\ ++i)\ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ uint8\_t\ b\ =\ in.data()[i];}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ ==\ 2\ \&\&\ (b\ \&\ \string~3)\ ==\ 0)\ \{}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ out.push\_back(0x03);}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ ==\ 0)}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ ++zeros;}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ out.push\_back(b);}
+\DoxyCodeLine{00539\ \ \ \ \ \}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ out.push\_back(0x80);}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{keywordflow}{return}\ Packet::build().contents(out).finish();}
+\DoxyCodeLine{00544\ \}}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \textcolor{comment}{//\ Make\ the\ SEI\ encapsulated\ payload\ data\ given\ enhancement\ data}}
+\DoxyCodeLine{00547\ \textcolor{comment}{//}}
+\DoxyCodeLine{00548\ Packet\ FileEncoderImpl::RegisteredSEI::sei\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data)\ \{}
+\DoxyCodeLine{00549\ \ \ \ \ BitstreamPacker\ sei;}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{comment}{//\ SEI\ Type:\ Registered}}
+\DoxyCodeLine{00552\ \ \ \ \ sei.u(8,\ 0x04);}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{comment}{//\ SEI\ Length}}
+\DoxyCodeLine{00555\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ l\ =\ enhancement\_data.size()\ +\ 4;}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keywordflow}{while}\ (l\ >=\ 255)\ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ sei.u(8,\ 255);}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ l\ -\/=\ 255;}
+\DoxyCodeLine{00559\ \ \ \ \ \}}
+\DoxyCodeLine{00560\ \ \ \ \ sei.u(8,\ l);}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{comment}{//\ SEI\ code}}
+\DoxyCodeLine{00563\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ sei\_code[4]\ =\ \{0xb4,\ 0x00,\ 0x50,\ 0x00\};}
+\DoxyCodeLine{00564\ \ \ \ \ sei.bytes(sei\_code,\ 4);}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{comment}{//\ Enhancement\ part\ of\ payload}}
+\DoxyCodeLine{00567\ \ \ \ \ sei.bytes(enhancement\_data);}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keywordflow}{return}\ sei.finish();}
+\DoxyCodeLine{00570\ \}}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ Packet\ FileEncoderImpl::UnregisteredSEI::sei\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data)\ \{}
+\DoxyCodeLine{00573\ \ \ \ \ BitstreamPacker\ sei;}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{comment}{//\ SEI\ Type:\ Unregistered}}
+\DoxyCodeLine{00576\ \ \ \ \ sei.u(8,\ 0x05);}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{comment}{//\ SEI\ Length}}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ l\ =\ enhancement\_data.size()\ +\ 16;}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordflow}{while}\ (l\ >=\ 255)\ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ sei.u(8,\ 255);}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ l\ -\/=\ 255;}
+\DoxyCodeLine{00583\ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ sei.u(8,\ l);}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{comment}{//\ UUID}}
+\DoxyCodeLine{00587\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ uuid[16]\ =\ \{0xa7,\ 0xc4,\ 0x6d,\ 0xed,\ 0x49,\ 0xd8,\ 0x38,\ 0xeb,}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0x9a,\ 0xad,\ 0x6d,\ 0xa6,\ 0x84,\ 0x97,\ 0xa7,\ 0x54\};}
+\DoxyCodeLine{00589\ \ \ \ \ sei.bytes(uuid,\ 16);}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \ \ \ \ \textcolor{comment}{//\ Enhancement\ part\ of\ payload}}
+\DoxyCodeLine{00592\ \ \ \ \ sei.bytes(enhancement\_data);}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keywordflow}{return}\ sei.finish();}
+\DoxyCodeLine{00595\ \}}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \textcolor{comment}{//\ Make\ the\ NAL\ encapsulated\ payload\ data\ given\ enhancement\ data}}
+\DoxyCodeLine{00598\ \textcolor{comment}{//}}
+\DoxyCodeLine{00599\ Packet\ FileEncoderImpl::nal\_payload(\textcolor{keyword}{const}\ Packet\ \&enhancement\_data)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00600\ \ \ \ \ BitstreamPacker\ p;}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \textcolor{comment}{//\ Enhancement\ part\ of\ payload}}
+\DoxyCodeLine{00603\ \ \ \ \ p.bytes(enhancement\_data);}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ \ \ \ \ \textcolor{keywordflow}{return}\ p.finish();}
+\DoxyCodeLine{00606\ \}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \textcolor{comment}{//\ Build\ \ a\ standard\ LCEV\ NALU}}
+\DoxyCodeLine{00609\ \textcolor{comment}{//}}
+\DoxyCodeLine{00610\ ESFile::NalUnit\ FileEncoderImpl::build\_nalu(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00611\ \ \ \ \ \textcolor{comment}{//\ nal\_marker,\ forbidden\_zero\_bit,\ forbidden\_one\_bit,\ nal\_unit\_type=28/29,\ reserved\_flag}}
+\DoxyCodeLine{00612\ \ \ \ \ \textcolor{keyword}{const}\ NalUnitType\ nal\_type\ =\ is\_idr\ ?\ NalUnitType::LCEVC\_IDR\ :\ NalUnitType::LCEVC\_NON\_IDR;}
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header\_lcevc[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ (uint8\_t)(is\_idr\ ?\ 0x7b\ :\ 0x79),\ 0xff\};}
+\DoxyCodeLine{00614\ \ \ \ \ ESFile::NalUnit\ nal\_unit\ =\ \{(uint32\_t)nal\_type,\ DataBuffer(nalu\_header\_lcevc,\ nalu\_header\_lcevc\ +\ \textcolor{keyword}{sizeof}(nalu\_header\_lcevc))\};}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \ \ \ \ \textcolor{keyword}{const}\ Packet\ rbsp\ =\ rbsp\_encapsulate(nal\_payload(payload));}
+\DoxyCodeLine{00617\ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00618\ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{keywordflow}{return}\ nal\_unit;}
+\DoxyCodeLine{00621\ \}}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \textcolor{comment}{//\ Figure\ out\ IntraPeriod\ for\ base\ layer}}
+\DoxyCodeLine{00624\ \textcolor{comment}{//}}
+\DoxyCodeLine{00625\ \textcolor{keywordtype}{unsigned}\ FileEncoderImpl::intra\_period()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00626\ \ \ \ \ \textcolor{comment}{//\ Check\ for\ explicit\ set}}
+\DoxyCodeLine{00627\ \ \ \ \ \textcolor{keywordflow}{if}\ (!parameters\_[\textcolor{stringliteral}{"{}intra\_period"{}}].empty())}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ parameters\_[\textcolor{stringliteral}{"{}intra\_period"{}}].get<\textcolor{keywordtype}{unsigned}>();}
+\DoxyCodeLine{00629\ }
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{comment}{//\ ..\ otherwise\ derive\ from\ frame\ rate}}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordflow}{switch}\ (fps\_)\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keywordflow}{case}\ 30:}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 32;}
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{keywordflow}{case}\ 50:}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 48;}
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{keywordflow}{case}\ 60:}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 64;}
+\DoxyCodeLine{00638\ }
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Unrecognised\ frame\ rate:\ \%u"{}},\ fps\_);}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 64;}
+\DoxyCodeLine{00642\ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \textcolor{comment}{//\ Initialize\ Encoder\ configuration\ to\ figure\ out\ final\ dimensions\ (after\ possible\ conformance\ window)}}
+\DoxyCodeLine{00646\ \textcolor{comment}{//}}
+\DoxyCodeLine{00647\ \textcolor{keywordtype}{void}\ FileEncoderImpl::initialize\_encoder(\textcolor{keyword}{const}\ YUVReader\ \&src\_file,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{00648\ \ \ \ \ std::vector<std::unique\_ptr<Image>>\ src;}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ num\_frames\ =\ std::min(src\_file.length(),\ limit);}
+\DoxyCodeLine{00650\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_frames\ ==\ 0)}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Frames\ cannot\ be\ read\ from\ source."{}});}
+\DoxyCodeLine{00652\ }
+\DoxyCodeLine{00653\ \ \ \ \ \textcolor{comment}{//\ Fill\ vector\ with\ first\ 5\ frames}}
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ n\ =\ 0;\ n\ <\ std::min(5u,\ num\_frames);\ n++)}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ src.push\_back(make\_unique<Image>(ExpandImage(src\_file.read(n,\ n),\ encoder\_.enhancement\_image\_description())));}
+\DoxyCodeLine{00656\ \ \ \ \ encoder\_.initialise\_config(parameters\_,\ src);}
+\DoxyCodeLine{00657\ \}}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00660\ \textcolor{comment}{//}}
+\DoxyCodeLine{00661\ \textcolor{keyword}{class\ }FileEncoderImplAVC\ :\ \textcolor{keyword}{public}\ FileEncoderImpl\ \{}
+\DoxyCodeLine{00662\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00663\ \ \ \ \ FileEncoderImplAVC(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ :\ FileEncoderImpl(image\_description,\ fps,\ parameters)\ \{\}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \ \ \ \ BaseDecoder::Codec\ es\_file\_type()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseDecoder::AVC;\ \};}
+\DoxyCodeLine{00667\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_AVC;\ \}}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_file,}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ prog\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/lencod"{}});}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ default\_cfg\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/encoder.cfg"{}});}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ cfg\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/encoder\_randomaccess.cfg"{}});}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\_islice\ =\ encoder\_.base\_qp();}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\_pslice\ =\ qp\_islice\ +\ 1;}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\_bslice\ =\ qp\_islice\ +\ 1;}
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ cmd\_line\ =}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/d\ \%s\ -\/f\ \%s\ -\/p\ InputFile=\%s\ -\/p\ OutputFile=\%s\ -\/p\ ReconFile=\%s\ "{}}}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/p\ SourceWidth=\%u\ -\/p\ SourceHeight=\%u\ "{}}}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/p\ SourceBitDepthLuma=\%u\ -\/p\ SourceBitDepthChroma=\%u\ -\/p\ OutputBitDepthLuma=\%u\ -\/p\ OutputBitDepthChroma=\%u\ "{}}}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/p\ FrameRate=\%u\ -\/p\ YUVFormat=\%u\ "{}}}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/p\ QPISlice=\%u\ -\/p\ QPPSlice=\%u\ -\/p\ QPBSlice=\%u\ -\/p\ IntraPeriod=\%u\ -\/p\ FramesToBeEncoded=\%u"{}},}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prog.c\_str(),\ default\_cfg.c\_str(),\ cfg.c\_str(),\ yuv\_file.c\_str(),\ es\_file.c\_str(),\ recon\_file.c\_str(),}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height(),}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ encoder\_.base\_image\_description().bit\_depth(),}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ encoder\_.base\_image\_description().bit\_depth(),\ fps\_,}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{unsigned})encoder\_.base\_image\_description().colourspace(),\ qp\_islice,\ qp\_pslice,\ qp\_bslice,\ intra\_period(),}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ frame\_count);}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().colourspace()\ ==\ Colourspace\_YUV444)}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ cmd\_line.append(\textcolor{stringliteral}{"{}\ -\/p\ WeightedPrediction=0\ -\/p\ WeightedBiprediction=0\ -\/p\ ProfileIDC=244"{}});}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().colourspace()\ ==\ Colourspace\_YUV422)}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ cmd\_line.append(\textcolor{stringliteral}{"{}\ -\/p\ ProfileIDC=122"{}});}
+\DoxyCodeLine{00696\ }
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Running:\ \%s"{}},\ cmd\_line.c\_str());}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(cmd\_line.c\_str())\ ==\ 0;}
+\DoxyCodeLine{00699\ \ \ \ \ \}}
+\DoxyCodeLine{00700\ }
+\DoxyCodeLine{00701\ \ \ \ \ \textcolor{comment}{//\ Insert\ enhancement\ data}}
+\DoxyCodeLine{00702\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00703\ \ \ \ \ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit;}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_None\ ||\ encapsulation\_\ ==\ Encapsulation\_NAL)\ \{}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ LCEVC\ Standard\ NALU}}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Registered)\ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encapsulate\ LCEVC\ Data\ into\ a\ NAL\ unit}}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit\_lcevc\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ payload\_lcevc\ =\ Packet::build().contents(nal\_unit\_lcevc.m\_data).finish();}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regsitered\ SEI\ Encapsulation\ of\ LCEVC\ NAL\ unit}}
+\DoxyCodeLine{00715\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ nal\_marker,\ forbidden\_zero\_bit,\ nal\_unit\_type=6,\ reserved\_flag}}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[4]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x06\};}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{6,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00718\ }
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(RegisteredSEI::sei\_payload(payload\_lcevc));}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Unregistered)\ \{}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ungreistered\ SEI\ Encapsulation}}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ nal\_marker,\ forbidden\_zero\_bit,\ nal\_unit\_type=6,\ reserved\_flag}}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[4]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x06\};}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{6,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(UnregisteredSEI::sei\_payload(payload));}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00734\ }
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Insert\ after\ -\/\ after\ AUD\ and\ PPS/SPS}}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (offset\ =\ 0;\ offset\ <\ au.m\_nalUnits.size();\ ++offset)\ \{}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (au.m\_nalUnits[offset].m\_type\ <\ 7\ ||\ au.m\_nalUnits[offset].m\_type\ >\ 9)}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ au.m\_nalUnits.insert(au.m\_nalUnits.begin()\ +\ offset,\ nal\_unit);}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(nal\_unit.m\_data.size());}
+\DoxyCodeLine{00744\ \ \ \ \ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/ldecod"{}});}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(format(\textcolor{stringliteral}{"{}\%s\ -\/p\ InputFile=\%s\ -\/p\ OutputFile=\%s\ "{}}}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/p\ WriteUV=0"{}},}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p.c\_str(),\ input.c\_str(),\ output.c\_str())}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c\_str())\ ==\ 0;}
+\DoxyCodeLine{00755\ \ \ \ \ \}}
+\DoxyCodeLine{00756\ \};}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00759\ \textcolor{comment}{//}}
+\DoxyCodeLine{00760\ \textcolor{keyword}{class\ }FileEncoderImplHEVC\ :\ \textcolor{keyword}{public}\ FileEncoderImpl\ \{}
+\DoxyCodeLine{00761\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00762\ \ \ \ \ FileEncoderImplHEVC(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ :\ FileEncoderImpl(image\_description,\ fps,\ parameters)\ \{\}}
+\DoxyCodeLine{00764\ }
+\DoxyCodeLine{00765\ \ \ \ \ BaseDecoder::Codec\ es\_file\_type()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseDecoder::HEVC;\ \};}
+\DoxyCodeLine{00766\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_HEVC;\ \}}
+\DoxyCodeLine{00767\ }
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_file,}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ prog\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppEncoder"{}});}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ cfg\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/encoder\_randomaccess\_main10.cfg"{}});}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)\ \{}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ \ \ \ prog.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\ =\ encoder\_.base\_qp();}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ chroma\_format;}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (encoder\_.base\_image\_description().colourspace())\ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_Y:}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 400;}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV420:}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 420;}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV422:}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 422;}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV444:}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 444;}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Not\ a\ colour\ space"{}});}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ cmd\_line\ =}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/c\ \%s\ -\/-\/InputFile=\%s\ -\/-\/-\/BitstreamFile=\%s\ -\/-\/ReconFile=\%s\ "{}}}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/SourceWidth=\%d\ -\/-\/SourceHeight=\%d\ -\/-\/InputBitDepth=\%d\ -\/-\/OutputBitDepth=\%d\ -\/-\/InternalBitDepth=\%d\ -\/-\/FrameRate=\%d\ "{}}}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/Level=4.1\ -\/-\/QP=\%d\ -\/-\/IntraPeriod=\%d\ -\/-\/FramesToBeEncoded=\%d\ -\/-\/ConformanceWindowMode=1\ -\/-\/InputChromaFormat=\%u"{}},}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prog.c\_str(),\ cfg.c\_str(),\ yuv\_file.c\_str(),\ es\_file.c\_str(),\ recon\_file.c\_str(),}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height(),}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ encoder\_.base\_image\_description().bit\_depth(),}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ fps\_,\ qp,\ intra\_period(),\ frame\_count,\ chroma\_format);}
+\DoxyCodeLine{00804\ }
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_12)\ \{}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ cmd\_line.append(\textcolor{stringliteral}{"{}\ -\/-\/Profile=main\_444\_16"{}});}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().colourspace()\ !=\ Colourspace\_YUV420\ ||}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \ \ \ \ cmd\_line.append(\textcolor{stringliteral}{"{}\ -\/-\/Profile=main-\/RExt"{}});}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Running:\ \%s"{}},\ cmd\_line.c\_str());}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(cmd\_line.c\_str())\ ==\ 0;}
+\DoxyCodeLine{00813\ \ \ \ \ \}}
+\DoxyCodeLine{00814\ }
+\DoxyCodeLine{00815\ \ \ \ \ \textcolor{comment}{//\ Insert\ enhancement\ data\ NALU}}
+\DoxyCodeLine{00816\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00817\ \ \ \ \ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit;}
+\DoxyCodeLine{00819\ }
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_None\ ||\ encapsulation\_\ ==\ Encapsulation\_NAL)\ \{}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ LCEVC\ Standard\ NALU}}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Registered)\ \{}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encapsulate\ LCEVC\ Data\ into\ a\ NAL\ unit}}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit\_lcevc\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ payload\_lcevc\ =\ Packet::build().contents(nal\_unit\_lcevc.m\_data).finish();}
+\DoxyCodeLine{00827\ }
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regsitered\ SEI\ Encapsulation\ of\ LCEVC\ NAL\ unit}}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x4e,\ 0x01\};\ \textcolor{comment}{//\ nal\_unit\_type=39\ (SEI)}}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{39,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(RegisteredSEI::sei\_payload(payload\_lcevc));}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Unregistered)\ \{}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unregistered\ SEI\ Encapsulation}}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x4e,\ 0x01\};\ \textcolor{comment}{//\ nal\_unit\_type=39\ (SEI)}}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{39,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00839\ }
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(UnregisteredSEI::sei\_payload(payload));}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00846\ }
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (offset\ =\ 0;\ offset\ <\ au.m\_nalUnits.size();\ ++offset)\ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (au.m\_nalUnits[offset].m\_type\ <\ 32\ ||\ au.m\_nalUnits[offset].m\_type\ >\ 35)}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ au.m\_nalUnits.insert(au.m\_nalUnits.begin()\ +\ offset,\ nal\_unit);}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(nal\_unit.m\_data.size());}
+\DoxyCodeLine{00855\ \ \ \ \ \}}
+\DoxyCodeLine{00856\ }
+\DoxyCodeLine{00857\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppDecoder"{}});}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)\ \{}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \ \ \ \ p.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00865\ }
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/d\ \%u\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ encoder\_.base\_image\_description().bit\_depth(),\ input.c\_str(),}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output.c\_str())}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c\_str())\ ==\ 0;}
+\DoxyCodeLine{00869\ \ \ \ \ \}}
+\DoxyCodeLine{00870\ \};}
+\DoxyCodeLine{00871\ }
+\DoxyCodeLine{00872\ }
+\DoxyCodeLine{00873\ \textcolor{keyword}{class\ }FileEncoderImplX265\ :\ \textcolor{keyword}{public}\ FileEncoderImpl\ \{}
+\DoxyCodeLine{00874\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00875\ \ \ \ \ FileEncoderImplX265(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ :\ FileEncoderImpl(image\_description,\ fps,\ parameters)\ \{\}}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ BaseDecoder::Codec\ es\_file\_type()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseDecoder::HEVC;\ \};}
+\DoxyCodeLine{00879\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_X265;\ \}}
+\DoxyCodeLine{00880\ }
+\DoxyCodeLine{00881\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_file,}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ prog\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/x265/x265"{}});}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)\ \{}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ \ \ \ \ prog.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\ =\ encoder\_.base\_qp();}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ chroma\_format;}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (encoder\_.base\_image\_description().colourspace())\ \{}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_Y:}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 400;}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV420:}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 420;}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV422:}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 422;}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV444:}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 444;}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Not\ a\ colour\ space"{}});}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00907\ }
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ cmd\_line\ =}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/-\/input\ \%s\ -\/-\/input-\/res\ \%dx\%d\ -\/-\/fps\ \%d\ -\/-\/qp\ \%d\ -\/-\/input-\/depth\ \%d\ -\/-\/frames\ \%d\ -\/-\/log-\/level\ 2\ -\/o\ \%s\ -\/-\/recon\ \%s\ -\/-\/recon-\/depth\ \%d"{}},}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ \ \ \ prog.c\_str(),\ yuv\_file.c\_str(),\ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height(),}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \ \ \ \ fps\_,\ qp,\ encoder\_.base\_image\_description().bit\_depth(),\ frame\_count,\ es\_file.c\_str(),}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \ \ \ \ recon\_file.c\_str(),\ encoder\_.base\_image\_description().bit\_depth()}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_12)\ \{}}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ cmd\_line.append("{}\ -\/-\/Profile=main\_444\_16"{});}}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \}\ else\ if\ (encoder\_.base\_image\_description().colourspace()\ !=\ Colourspace\_YUV420\ ||}}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)}}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ cmd\_line.append("{}\ -\/-\/Profile=main-\/RExt"{});}}
+\DoxyCodeLine{00920\ }
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Running:\ \%s"{}},\ cmd\_line.c\_str());}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(cmd\_line.c\_str())\ ==\ 0;}
+\DoxyCodeLine{00923\ \ \ \ \ \}}
+\DoxyCodeLine{00924\ }
+\DoxyCodeLine{00925\ \ \ \ \ \textcolor{comment}{//\ Insert\ enhancement\ data\ NALU}}
+\DoxyCodeLine{00926\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00927\ \ \ \ \ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit;}
+\DoxyCodeLine{00929\ }
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_None\ ||\ encapsulation\_\ ==\ Encapsulation\_NAL)\ \{}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ LCEVC\ Standard\ NALU}}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Registered)\ \{}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encapsulate\ LCEVC\ Data\ into\ a\ NAL\ unit}}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit\_lcevc\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ payload\_lcevc\ =\ Packet::build().contents(nal\_unit\_lcevc.m\_data).finish();}
+\DoxyCodeLine{00937\ }
+\DoxyCodeLine{00938\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regsitered\ SEI\ Encapsulation\ of\ LCEVC\ NAL\ unit}}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x4e,\ 0x01\};\ \textcolor{comment}{//\ nal\_unit\_type=39\ (SEI)}}
+\DoxyCodeLine{00940\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{39,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(RegisteredSEI::sei\_payload(payload\_lcevc));}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Unregistered)\ \{}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unregistered\ SEI\ Encapsulation}}
+\DoxyCodeLine{00947\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x4e,\ 0x01\};\ \textcolor{comment}{//\ nal\_unit\_type=39\ (SEI)}}
+\DoxyCodeLine{00948\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{39,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(UnregisteredSEI::sei\_payload(payload));}
+\DoxyCodeLine{00951\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00956\ }
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (offset\ =\ 0;\ offset\ <\ au.m\_nalUnits.size();\ ++offset)\ \{}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (au.m\_nalUnits[offset].m\_type\ <\ 32\ ||\ au.m\_nalUnits[offset].m\_type\ >\ 35)}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00962\ }
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ au.m\_nalUnits.insert(au.m\_nalUnits.begin()\ +\ offset,\ nal\_unit);}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(nal\_unit.m\_data.size());}
+\DoxyCodeLine{00965\ \ \ \ \ \}}
+\DoxyCodeLine{00966\ }
+\DoxyCodeLine{00967\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppDecoder"{}});}
+\DoxyCodeLine{00969\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().bit\_depth()\ >\ Bitdepth\_10)\ \{}
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \ \ \ \ p.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00973\ }
+\DoxyCodeLine{00974\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{00975\ }
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/d\ \%u\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ encoder\_.base\_image\_description().bit\_depth(),\ input.c\_str(),}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output.c\_str())}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c\_str())\ ==\ 0;}
+\DoxyCodeLine{00979\ \ \ \ \ \}}
+\DoxyCodeLine{00980\ \};}
+\DoxyCodeLine{00981\ }
+\DoxyCodeLine{00982\ }
+\DoxyCodeLine{00983\ }
+\DoxyCodeLine{00985\ \textcolor{comment}{//}}
+\DoxyCodeLine{00986\ \textcolor{keyword}{class\ }FileEncoderImplVVC\ :\ \textcolor{keyword}{public}\ FileEncoderImpl\ \{}
+\DoxyCodeLine{00987\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00988\ \ \ \ \ FileEncoderImplVVC(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ \ \ :\ FileEncoderImpl(image\_description,\ fps,\ parameters)\ \{\}}
+\DoxyCodeLine{00990\ }
+\DoxyCodeLine{00991\ \ \ \ \ BaseDecoder::Codec\ es\_file\_type()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseDecoder::VVC;\ \};}
+\DoxyCodeLine{00992\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_VVC;\ \}}
+\DoxyCodeLine{00993\ }
+\DoxyCodeLine{00994\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_file,}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ prog\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/VTM/EncoderApp"{}});}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ cfg\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/VTM/vtm\_encoder\_randomaccess.cfg"{}});}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\ =\ encoder\_.base\_qp();}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ chroma\_format;}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (encoder\_.base\_image\_description().colourspace())\ \{}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_Y:}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 400;}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01005\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV420:}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 420;}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV422:}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 422;}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ Colourspace\_YUV444:}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ \ \ \ chroma\_format\ =\ 444;}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Not\ a\ colour\ space"{}});}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01017\ }
+\DoxyCodeLine{01018\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ intra\_period\_vvc\ =\ intra\_period();}
+\DoxyCodeLine{01019\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ since\ VTM\ 11,\ intra\ period\ must\ be\ multiple\ of\ 32\ gop\ period}}
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((intra\_period\_vvc\ \%\ 32)\ !=\ 0)}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ \ \ \ \ intra\_period\_vvc\ =\ round(intra\_period\_vvc\ /\ 32)\ *\ 32;}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (intra\_period\_vvc\ <\ 32)}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \ \ \ \ intra\_period\_vvc\ =\ 32;}
+\DoxyCodeLine{01024\ }
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ cmd\_line\ =}
+\DoxyCodeLine{01026\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/c\ \%s\ -\/-\/InputFile=\%s\ -\/-\/-\/BitstreamFile=\%s\ -\/-\/ReconFile=\%s\ "{}}}
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/SourceWidth=\%d\ -\/-\/SourceHeight=\%d\ -\/-\/InputBitDepth=\%d\ -\/-\/OutputBitDepth=\%d\ -\/-\/InternalBitDepth=\%d\ -\/-\/FrameRate=\%d\ "{}}}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/QP=\%d\ -\/-\/IntraPeriod=\%d\ -\/-\/FramesToBeEncoded=\%d\ -\/-\/ConformanceWindowMode=1\ -\/-\/InputChromaFormat=\%u"{}},}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prog.c\_str(),\ cfg.c\_str(),\ yuv\_file.c\_str(),\ es\_file.c\_str(),\ recon\_file.c\_str(),}
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height(),}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ encoder\_.base\_image\_description().bit\_depth(),}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ fps\_,\ qp,\ intra\_period\_vvc,\ frame\_count,\ chroma\_format);}
+\DoxyCodeLine{01033\ }
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Running:\ \%s"{}},\ cmd\_line.c\_str());}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(cmd\_line.c\_str())\ ==\ 0;}
+\DoxyCodeLine{01036\ \ \ \ \ \}}
+\DoxyCodeLine{01037\ }
+\DoxyCodeLine{01038\ \ \ \ \ \textcolor{comment}{//\ Insert\ enhancement\ data\ NALU}}
+\DoxyCodeLine{01039\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01040\ \ \ \ \ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{01041\ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit;}
+\DoxyCodeLine{01042\ }
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_None\ ||\ encapsulation\_\ ==\ Encapsulation\_NAL)\ \{}
+\DoxyCodeLine{01044\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ LCEVC\ Standard\ NALU}}
+\DoxyCodeLine{01045\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{01046\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Registered)\ \{}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encapsulate\ LCEVC\ Data\ into\ a\ NAL\ unit}}
+\DoxyCodeLine{01048\ \ \ \ \ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit\_lcevc\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ payload\_lcevc\ =\ Packet::build().contents(nal\_unit\_lcevc.m\_data).finish();}
+\DoxyCodeLine{01050\ }
+\DoxyCodeLine{01051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regsitered\ SEI\ Encapsulation\ of\ LCEVC\ NAL\ unit}}
+\DoxyCodeLine{01052\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x00,}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0xb8\ |\ (au.m\_temporalId\ +\ 1))\};\ \textcolor{comment}{//\ nal\_unit\_type=23\ (SEI)}}
+\DoxyCodeLine{01054\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{23,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{01055\ }
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(RegisteredSEI::sei\_payload(payload\_lcevc));}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Unregistered)\ \{}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unregistered\ SEI\ Encapsulation}}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x00,}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0xb8\ |\ (au.m\_temporalId\ +\ 1))\};\ \textcolor{comment}{//\ nal\_unit\_type=23\ (SEI)}}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{23,\ DataBuffer(nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header))\};}
+\DoxyCodeLine{01064\ }
+\DoxyCodeLine{01065\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(UnregisteredSEI::sei\_payload(payload));}
+\DoxyCodeLine{01066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01069\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{01070\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01071\ }
+\DoxyCodeLine{01072\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{01073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (offset\ =\ 0;\ offset\ <\ au.m\_nalUnits.size();\ ++offset)\ \{}
+\DoxyCodeLine{01074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (au.m\_nalUnits[offset].m\_type\ <\ 12)}
+\DoxyCodeLine{01075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01076\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01077\ }
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ au.m\_nalUnits.insert(au.m\_nalUnits.begin()\ +\ offset,\ nal\_unit);}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(nal\_unit.m\_data.size());}
+\DoxyCodeLine{01080\ \ \ \ \ \}}
+\DoxyCodeLine{01081\ }
+\DoxyCodeLine{01082\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/VTM/DecoderApp"{}});}
+\DoxyCodeLine{01084\ }
+\DoxyCodeLine{01085\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{01086\ }
+\DoxyCodeLine{01087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/d\ \%u\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ encoder\_.base\_image\_description().bit\_depth(),\ input.c\_str(),}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ output.c\_str())}
+\DoxyCodeLine{01089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c\_str())\ ==\ 0;}
+\DoxyCodeLine{01090\ \ \ \ \ \}}
+\DoxyCodeLine{01091\ \};}
+\DoxyCodeLine{01092\ }
+\DoxyCodeLine{01094\ \textcolor{comment}{//}}
+\DoxyCodeLine{01095\ \textcolor{keyword}{class\ }FileEncoderImplEVC\ :\ \textcolor{keyword}{public}\ FileEncoderImpl\ \{}
+\DoxyCodeLine{01096\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{01097\ \ \ \ \ FileEncoderImplEVC(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,\ \textcolor{keyword}{const}\ Parameters\ \&parameters)}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ :\ FileEncoderImpl(image\_description,\ fps,\ parameters)\ \{\}}
+\DoxyCodeLine{01099\ }
+\DoxyCodeLine{01100\ \ \ \ \ BaseDecoder::Codec\ es\_file\_type()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseDecoder::EVC;\ \};}
+\DoxyCodeLine{01101\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_EVC;\ \}}
+\DoxyCodeLine{01102\ }
+\DoxyCodeLine{01103\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_encoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&recon\_file,}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ frame\_count)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encoder\_.base\_image\_description().colourspace()\ !=\ Colourspace\_YUV420)}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Only\ encodings\ with\ a\ 4:2:0\ colourspace\ are\ supported\ by\ the\ current\ version\ of\ ETM."{}});}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ prog\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/ETM/evca\_encoder"{}});}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ cfg\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/ETM/etm\_encoder\_randomaccess\_main.cfg"{}});}
+\DoxyCodeLine{01109\ }
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ qp\ =\ encoder\_.base\_qp();}
+\DoxyCodeLine{01111\ }
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ cmd\_line\ =\ format(\textcolor{stringliteral}{"{}\%s\ -\/-\/config\ \%s\ -\/-\/input\ \%s\ -\/-\/output\ \%s\ -\/-\/recon\ \%s\ "{}}}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/width\ \%d\ -\/-\/height\ \%d\ -\/-\/input\_bit\_depth\ \%d\ -\/-\/output\_bit\_depth\ \%d\ -\/-\/hz\ \%d\ "{}}}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}-\/-\/op\_qp\ \%d\ -\/-\/iperiod\ \%d\ -\/-\/frames\ \%d"{}},}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prog.c\_str(),\ cfg.c\_str(),\ yuv\_file.c\_str(),\ es\_file.c\_str(),\ recon\_file.c\_str(),}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().width(),\ encoder\_.base\_image\_description().height(),}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ encoder\_.base\_image\_description().bit\_depth(),\ fps\_,}
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ qp,\ intra\_period(),\ frame\_count);}
+\DoxyCodeLine{01119\ }
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Running:\ \%s"{}},\ cmd\_line.c\_str());}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(cmd\_line.c\_str())\ ==\ 0;}
+\DoxyCodeLine{01122\ \ \ \ \ \}}
+\DoxyCodeLine{01123\ }
+\DoxyCodeLine{01124\ \ \ \ \ \textcolor{comment}{//\ Insert\ enhancement\ data\ NALU}}
+\DoxyCodeLine{01125\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01126\ \ \ \ \ \textcolor{keywordtype}{int}\ add\_enhancement(ESFile::AccessUnit\ \&au,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keyword}{const}\ Packet\ \&payload)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit;}
+\DoxyCodeLine{01128\ }
+\DoxyCodeLine{01129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_None)\ \{}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ No\ encapsulation\ -\/\ use\ LCEVC\ Standard\ NALU}}
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ build\_nalu(is\_idr,\ payload);}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Registered)\ \{}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encapsulate\ LCEVC\ Data\ into\ a\ NAL\ unit}}
+\DoxyCodeLine{01134\ }
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \ \ \ \ ESFile::NalUnit\ nal\_unit\_lcevc;}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header\_lcevc[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ 0x79,\ 0xff\};}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\_lcevc\ =\ \{29,\ DataBuffer(nalu\_header\_lcevc,\ nalu\_header\_lcevc\ +\ \textcolor{keyword}{sizeof}(nalu\_header\_lcevc))\};}
+\DoxyCodeLine{01138\ }
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\_lcevc\ =\ rbsp\_encapsulate(nal\_payload(payload));}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v\_lcevc(rbsp\_lcevc);}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\_lcevc.m\_data.insert(nal\_unit\_lcevc.m\_data.end(),\ v\_lcevc.data(),\ v\_lcevc.data()\ +\ v\_lcevc.size());}
+\DoxyCodeLine{01142\ }
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ payload\_lcevc\ =\ Packet::build().contents(nal\_unit\_lcevc.m\_data).finish();}
+\DoxyCodeLine{01144\ }
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Regsitered\ SEI\ Encapsulation\ of\ LCEVC\ NAL\ unit,\ nal\_unit\_type\_plus1=29\ (28\ -\/>\ SEI)}}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[2]\ =\ \{\textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x3a\ |\ (au.m\_temporalId\ >>\ 2)),}
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}((au.m\_temporalId\ <<\ 6)\ \&\ 255)\};}
+\DoxyCodeLine{01148\ }
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ p\ =\ RegisteredSEI::sei\_payload(payload\_lcevc);}
+\DoxyCodeLine{01150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(p);}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ payload\_length\ =\ v.size()\ +\ \textcolor{keyword}{sizeof}(nalu\_header);}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{27,\ DataBuffer((uint8\_t\ *)\&payload\_length,\ (uint8\_t\ *)\&payload\_length\ +\ \textcolor{keyword}{sizeof}(payload\_length))\};}
+\DoxyCodeLine{01153\ }
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header));}
+\DoxyCodeLine{01155\ }
+\DoxyCodeLine{01156\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{01157\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_SEI\_Unregistered)\ \{}
+\DoxyCodeLine{01158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Unregistered\ SEI\ Encapsulation,\ nal\_unit\_type\_plus1=29\ (28\ -\/>\ SEI)}}
+\DoxyCodeLine{01159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[2]\ =\ \{\textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x3a\ |\ (au.m\_temporalId\ >>\ 2)),}
+\DoxyCodeLine{01160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}((au.m\_temporalId\ <<\ 6)\ \&\ 255)\};}
+\DoxyCodeLine{01161\ }
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ p\ =\ UnregisteredSEI::sei\_payload(payload);}
+\DoxyCodeLine{01163\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(p);}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ payload\_length\ =\ v.size()\ +\ \textcolor{keyword}{sizeof}(nalu\_header);}
+\DoxyCodeLine{01165\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{27,\ DataBuffer((uint8\_t\ *)\&payload\_length,\ (uint8\_t\ *)\&payload\_length\ +\ \textcolor{keyword}{sizeof}(payload\_length))\};}
+\DoxyCodeLine{01166\ }
+\DoxyCodeLine{01167\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header));}
+\DoxyCodeLine{01168\ }
+\DoxyCodeLine{01169\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{01170\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (encapsulation\_\ ==\ Encapsulation\_NAL)\ \{}
+\DoxyCodeLine{01171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NAL\ Encapsulation,\ nal\_unit\_type\_plus1=30\ (29\ -\/>\ Reserved)}}
+\DoxyCodeLine{01172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[2]\ =\ \{\textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x3c\ |\ (au.m\_temporalId\ >>\ 2)),}
+\DoxyCodeLine{01173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}((au.m\_temporalId\ <<\ 6)\ \&\ 255)\};}
+\DoxyCodeLine{01174\ }
+\DoxyCodeLine{01175\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ p\ =\ nal\_payload(payload);}
+\DoxyCodeLine{01176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(p);}
+\DoxyCodeLine{01177\ }
+\DoxyCodeLine{01178\ \ \ \ \ \ \ \ \ \ \ \ \ uint32\_t\ payload\_length\ =\ v.size()\ +\ \textcolor{keyword}{sizeof}(nalu\_header);}
+\DoxyCodeLine{01179\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit\ =\ \{28,\ DataBuffer((uint8\_t\ *)\&payload\_length,\ (uint8\_t\ *)\&payload\_length\ +\ \textcolor{keyword}{sizeof}(payload\_length))\};}
+\DoxyCodeLine{01180\ }
+\DoxyCodeLine{01181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NAL\ Encapsulation}}
+\DoxyCodeLine{01182\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ nalu\_header,\ nalu\_header\ +\ \textcolor{keyword}{sizeof}(nalu\_header));}
+\DoxyCodeLine{01183\ }
+\DoxyCodeLine{01184\ \ \ \ \ \ \ \ \ \ \ \ \ nal\_unit.m\_data.insert(nal\_unit.m\_data.end(),\ v.data(),\ v.data()\ +\ v.size());}
+\DoxyCodeLine{01185\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01186\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{01187\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01188\ }
+\DoxyCodeLine{01189\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ offset\ =\ 0;}
+\DoxyCodeLine{01190\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (offset\ =\ 0;\ offset\ <\ au.m\_nalUnits.size();\ ++offset)\ \{}
+\DoxyCodeLine{01191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (au.m\_nalUnits[offset].m\_type\ <\ 24\ ||\ au.m\_nalUnits[offset].m\_type\ >\ 26)}
+\DoxyCodeLine{01192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01193\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01194\ }
+\DoxyCodeLine{01195\ \ \ \ \ \ \ \ \ au.m\_nalUnits.insert(au.m\_nalUnits.begin()\ +\ offset,\ nal\_unit);}
+\DoxyCodeLine{01196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(nal\_unit.m\_data.size());}
+\DoxyCodeLine{01197\ \ \ \ \ \}}
+\DoxyCodeLine{01198\ }
+\DoxyCodeLine{01199\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_base\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{01200\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/ETM/evca\_decoder"{}});}
+\DoxyCodeLine{01201\ }
+\DoxyCodeLine{01202\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{01203\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/-\/output\_bit\_depth\ \%d\ -\/-\/input\ \%s\ -\/-\/output\ \%s"{}},\ p.c\_str(),}
+\DoxyCodeLine{01204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ encoder\_.base\_image\_description().bit\_depth(),\ input.c\_str(),\ output.c\_str())}
+\DoxyCodeLine{01205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c\_str())\ ==\ 0;}
+\DoxyCodeLine{01206\ \ \ \ \ \}}
+\DoxyCodeLine{01207\ \};}
+\DoxyCodeLine{01208\ }
+\DoxyCodeLine{01209\ \textcolor{comment}{//\ Downsample\ input\ according\ to\ current\ settings\ and\ write\ to\ output\ file}}
+\DoxyCodeLine{01210\ \textcolor{comment}{//}}
+\DoxyCodeLine{01211\ \textcolor{keywordtype}{void}\ FileEncoderImpl::downsample\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output\_file,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{01212\ \ \ \ \ \textcolor{keyword}{auto}\ input\ =\ CHECK(CreateYUVReader(input\_file,\ encoder\_.src\_image\_description(),\ fps\_));}
+\DoxyCodeLine{01213\ \ \ \ \ \textcolor{keyword}{auto}\ output\ =\ CHECK(CreateYUVWriter(output\_file,\ encoder\_.base\_image\_description(),\ \textcolor{keyword}{true}));}
+\DoxyCodeLine{01214\ }
+\DoxyCodeLine{01215\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ frame\_count\ =\ min(input-\/>length(),\ limit);}
+\DoxyCodeLine{01216\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Downsampling\ \%d\ frames"{}},\ frame\_count);}
+\DoxyCodeLine{01217\ }
+\DoxyCodeLine{01218\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ f\ =\ 0;\ f\ <\ frame\_count;\ ++f)\ \{}
+\DoxyCodeLine{01219\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}\ \ Writing\ downsampled\ \%d"{}},\ f);}
+\DoxyCodeLine{01220\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ src\ =\ input-\/>read(f,\ f);}
+\DoxyCodeLine{01221\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ img\ =\ DownsampleImage(DownsampleImage(src,\ downsample\_luma\_,\ downsample\_chroma\_,\ scaling\_mode\_[LOQ\_LEVEL\_2]),}
+\DoxyCodeLine{01222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ downsample\_luma\_,\ downsample\_chroma\_,\ scaling\_mode\_[LOQ\_LEVEL\_1]);}
+\DoxyCodeLine{01223\ \ \ \ \ \ \ \ \ output-\/>write(img);}
+\DoxyCodeLine{01224\ \ \ \ \ \}}
+\DoxyCodeLine{01225\ \}}
+\DoxyCodeLine{01226\ }
+\DoxyCodeLine{01227\ \textcolor{comment}{//\ Upsample\ input\ according\ to\ current\ settings\ and\ write\ to\ output\ file}}
+\DoxyCodeLine{01228\ \textcolor{comment}{//}}
+\DoxyCodeLine{01229\ \textcolor{keywordtype}{void}\ FileEncoderImpl::upsample\_file(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output\_file,\ \textcolor{keywordtype}{unsigned}\ limit)\ \{}
+\DoxyCodeLine{01230\ \ \ \ \ \textcolor{keyword}{auto}\ input\ =\ CHECK(CreateYUVReader(input\_file,\ encoder\_.base\_image\_description(),\ fps\_));}
+\DoxyCodeLine{01231\ \ \ \ \ \textcolor{keyword}{auto}\ output\ =\ CHECK(CreateYUVWriter(output\_file,\ encoder\_.src\_image\_description(),\ \textcolor{keyword}{true}));}
+\DoxyCodeLine{01232\ }
+\DoxyCodeLine{01233\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ frame\_count\ =\ min(input-\/>length(),\ limit);}
+\DoxyCodeLine{01234\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Upsampling\ \%d\ frames"{}},\ frame\_count);}
+\DoxyCodeLine{01235\ }
+\DoxyCodeLine{01236\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ f\ =\ 0;\ f\ <\ frame\_count;\ ++f)\ \{}
+\DoxyCodeLine{01237\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}\ \ Writing\ upsampled\ \%d"{}},\ f);}
+\DoxyCodeLine{01238\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ src\ =\ input-\/>read(f,\ f);}
+\DoxyCodeLine{01239\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Image\ img\ =\ UpsampleImage(UpsampleImage(src,\ upsample\_,\ upsampling\_coefficients\_,\ scaling\_mode\_[LOQ\_LEVEL\_2]),}
+\DoxyCodeLine{01240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ upsample\_,\ upsampling\_coefficients\_,\ scaling\_mode\_[LOQ\_LEVEL\_1]);}
+\DoxyCodeLine{01241\ \ \ \ \ \ \ \ \ output-\/>write(img);}
+\DoxyCodeLine{01242\ \ \ \ \ \}}
+\DoxyCodeLine{01243\ \}}
+\DoxyCodeLine{01244\ }
+\DoxyCodeLine{01245\ \textcolor{comment}{//\ Factory\ function}}
+\DoxyCodeLine{01246\ \textcolor{comment}{//}}
+\DoxyCodeLine{01247\ unique\_ptr<FileEncoder>\ CreateFileEncoder(BaseCoding\ base\_encoder,\ \textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ fps,}
+\DoxyCodeLine{01248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Parameters\ \&parameters)\ \{}
+\DoxyCodeLine{01249\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{01250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_encoder\ ==\ BaseCoding\_AVC)}
+\DoxyCodeLine{01251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<FileEncoder>(\textcolor{keyword}{new}\ FileEncoderImplAVC(image\_description,\ fps,\ parameters));}
+\DoxyCodeLine{01252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\_encoder\ ==\ BaseCoding\_HEVC)}
+\DoxyCodeLine{01253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<FileEncoder>(\textcolor{keyword}{new}\ FileEncoderImplHEVC(image\_description,\ fps,\ parameters));}
+\DoxyCodeLine{01254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\_encoder\ ==\ BaseCoding\_VVC)}
+\DoxyCodeLine{01255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<FileEncoder>(\textcolor{keyword}{new}\ FileEncoderImplVVC(image\_description,\ fps,\ parameters));}
+\DoxyCodeLine{01256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\_encoder\ ==\ BaseCoding\_EVC)}
+\DoxyCodeLine{01257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<FileEncoder>(\textcolor{keyword}{new}\ FileEncoderImplEVC(image\_description,\ fps,\ parameters));}
+\DoxyCodeLine{01258\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\_encoder\ ==\ BaseCoding\_X265)}
+\DoxyCodeLine{01259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<FileEncoder>(\textcolor{keyword}{new}\ FileEncoderImplX265(image\_description,\ fps,\ parameters));}
+\DoxyCodeLine{01260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01261\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unknown\ base\ codec"{}});}
+\DoxyCodeLine{01262\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keywordtype}{string}\ e)\ \{}
+\DoxyCodeLine{01263\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}CreateFileEncoderImpl:\ Caught:\ \%s\(\backslash\)n"{}},\ e.c\_str());}
+\DoxyCodeLine{01264\ \ \ \ \ \}}
+\DoxyCodeLine{01265\ }
+\DoxyCodeLine{01266\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{01267\ \}}
+\DoxyCodeLine{01268\ }
+\DoxyCodeLine{01269\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

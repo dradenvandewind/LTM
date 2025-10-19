@@ -1,0 +1,145 @@
+\doxysection{Encoder.\+hpp}
+\label{Encoder_8hpp_source}\index{encoder/include/Encoder.hpp@{encoder/include/Encoder.hpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Lorenzo\ Ciccarelli\ (lorenzo.ciccarelli@v-\/nova.com)}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Encoder.hpp}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ Decode/Encode\ pipeline}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}Dimensions.hpp"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}EncoderConfiguration.hpp"{}}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}LayerEncodeFlags.hpp"{}}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ "{}Parameters.hpp"{}}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ "{}SignaledConfiguration.hpp"{}}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ "{}Dithering.hpp"{}}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ "{}PriorityConfiguration.hpp"{}}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{namespace\ }lctm\ \{}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ Describes\ padding\ applied\ around\ image\ to\ make\ it\ conformant}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{struct\ }ConformancePadding\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ left;}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ top;}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ right;}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ bottom;}
+\DoxyCodeLine{00064\ \};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{class\ }Encoder\ \{}
+\DoxyCodeLine{00067\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00068\ \ \ \ \ Encoder(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keyword}{const}\ Parameters\ \&parameters);}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{void}\ initialise\_config(\textcolor{keyword}{const}\ Parameters\ \&parameters,\ std::vector<std::unique\_ptr<Image>>\ \&src\_image);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{const}\ Dimensions\ \&dimensions()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ dimensions\_;\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ Packet\ encode(std::vector<std::unique\_ptr<Image>>\ \&src,\ \textcolor{keyword}{const}\ Image\ \&intermediate\_src,\ \textcolor{keyword}{const}\ Image\ \&base\_recon,}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BaseFrameType\ frame\_type,\ \textcolor{keywordtype}{bool}\ is\_idr,\ \textcolor{keywordtype}{int}\ gop\_frame\_num,\ \textcolor{keyword}{const}\ std::string\ \&output\_file);}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ num\_residual\_layers()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordtype}{bool}\ level1\_depth\_flag()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ base\_qp()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ \&src\_image\_description()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ src\_image\_description\_;\ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ \&base\_image\_description()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ base\_image\_description\_;\ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ \&intermediate\_image\_description()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ intermediate\_image\_description\_;\ \}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ \&enhancement\_image\_description()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ enhancement\_image\_description\_;\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ set\_last\_idr\_frame\_num(int32\_t\ frame\_num)\ \{\ last\_idr\_frame\_num\ =\ frame\_num;\ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ update\_encoder\_configuration(\textcolor{keyword}{const}\ Parameters\ \&p,\ \textcolor{keyword}{const}\ Parameters\ \&d);}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordtype}{void}\ update\_global\_configuration(\textcolor{keyword}{const}\ Parameters\ \&p,\ \textcolor{keyword}{const}\ Parameters\ \&d,\ \textcolor{keyword}{const}\ ImageDescription\ \&image\_description);}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{void}\ update\_sequence\_configuration(\textcolor{keyword}{const}\ Parameters\ \&p,\ \textcolor{keyword}{const}\ Parameters\ \&d,\ \textcolor{keyword}{const}\ ImageDescription\ \&image\_description);}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{void}\ update\_picture\_configuration(\textcolor{keyword}{const}\ Parameters\ \&p,\ \textcolor{keyword}{const}\ Parameters\ \&d);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ update\_picture\_configuration\_in\_loop();}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_user\_data\_layer(\textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keywordtype}{unsigned}\ layer)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_residuals(\textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keyword}{const}\ Surface\ \&residuals,\ Surface\ symbols[MAX\_NUM\_LAYERS],}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Temporal\_SWM\ swm\_type,\ EncodingMode\ mode,\ \textcolor{keyword}{const}\ Surface\ \&temporal\_mask,\ \textcolor{keyword}{const}\ Surface\ \&priority\_type,}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PriorityMBType\ priority\_mb\_type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \textcolor{keyword}{final}\ =\ \textcolor{keyword}{false},\ \textcolor{keyword}{const}\ Surface\ \&pixel\_sad\ =\ Surface())\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ Surface\ decode\_residuals(\textcolor{keywordtype}{unsigned}\ plane,\ \textcolor{keywordtype}{unsigned}\ loq,\ \textcolor{keyword}{const}\ Surface\ symbols[MAX\_NUM\_LAYERS],\ Temporal\_SWM\ swm\_type,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ \&temporal\_mask)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ Configuration\ that\ is\ local\ to\ encoder}}
+\DoxyCodeLine{00106\ \ \ \ \ EncoderConfiguration\ encoder\_configuration\_;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{//\ Configuration\ that\ is\ sent\ to\ decoder}}
+\DoxyCodeLine{00109\ \ \ \ \ SignaledConfiguration\ configuration\_;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{comment}{//\ Dimensions\ of\ the\ surfaces\ for\ the\ current\ configuration}}
+\DoxyCodeLine{00112\ \ \ \ \ Dimensions\ dimensions\_;}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ Image\ descriptions\ (dimensions\ +\ format\ +\ bitdepth)}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ Input}}
+\DoxyCodeLine{00117\ \ \ \ \ ImageDescription\ src\_image\_description\_;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ Base\ image}}
+\DoxyCodeLine{00120\ \ \ \ \ ImageDescription\ base\_image\_description\_;}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ Layer\ 1}}
+\DoxyCodeLine{00123\ \ \ \ \ ImageDescription\ intermediate\_image\_description\_;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ Layer\ 2}}
+\DoxyCodeLine{00126\ \ \ \ \ ImageDescription\ enhancement\_image\_description\_;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Residuals\ from\ previous\ frame}}
+\DoxyCodeLine{00129\ \ \ \ \ Surface\ previous\_residuals\_[MAX\_NUM\_PLANES];}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Quantization\ coefficients\ remembered\ for\ use\ next\ frame}}
+\DoxyCodeLine{00132\ \ \ \ \ int32\_t\ quant\_matrix\_coeffs\_[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS]\ =\ \{-\/1\};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ int32\_t\ last\_idr\_frame\_num;}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ Dithering\ dithering\_;}
+\DoxyCodeLine{00137\ \};}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+
+\end{DoxyCode}

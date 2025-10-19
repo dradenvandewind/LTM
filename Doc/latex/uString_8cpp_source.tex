@@ -1,0 +1,148 @@
+\doxysection{u\+String.\+cpp}
+\label{uString_8cpp_source}\index{src/uString.cpp@{src/uString.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ "{}uString.h"{}}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <cctype>}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00040\ \textcolor{keyword}{namespace\ }string\ \{}
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ PathLastSlash(\textcolor{keyword}{const}\ std::string\ \&path)\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ p\ =\ path.rfind(\textcolor{charliteral}{'/'});}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#if\ WIN32}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ p1\ =\ path.rfind(\textcolor{charliteral}{'\(\backslash\)\(\backslash\)'});}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordflow}{if}\ ((p1\ !=\ std::string::npos)\ \&\&\ ((p1\ >\ p)\ ||\ (p\ ==\ std::string::npos)))}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ p\ =\ p1;}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordflow}{return}\ p;}
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{bool}\ IEquals(\textcolor{keyword}{const}\ std::string\ \&a,\ \textcolor{keyword}{const}\ std::string\ \&b)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{if}\ (a.length()\ !=\ b.length())\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00056\ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *aptr\ =\ a.c\_str();}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *bptr\ =\ b.c\_str();}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{while}\ (*aptr\ \&\&\ *bptr)\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::toupper(*aptr)\ !=\ std::toupper(*bptr))\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ aptr++;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ bptr++;}
+\DoxyCodeLine{00068\ \ \ \ \ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{const}\ std::string\ \&ToLower(std::string\ \&str)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ std::transform(str.begin(),\ str.end(),\ str.begin(),\ (int\ (*)(\textcolor{keywordtype}{int}))std::tolower);}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{return}\ str;}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ std::string\ ToLowerCopy(\textcolor{keyword}{const}\ std::string\ \&str)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ std::string\ res\ =\ str;}
+\DoxyCodeLine{00080\ \ \ \ \ std::transform(res.begin(),\ res.end(),\ res.begin(),\ (int\ (*)(\textcolor{keywordtype}{int}))std::tolower);}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00082\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{keyword}{const}\ std::string\ \&ToUpper(std::string\ \&str)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ std::transform(str.begin(),\ str.end(),\ str.begin(),\ (int\ (*)(\textcolor{keywordtype}{int}))std::toupper);}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ str;}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ std::string\ ToUpperCopy(\textcolor{keyword}{const}\ std::string\ \&str)\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ std::string\ res\ =\ str;}
+\DoxyCodeLine{00091\ \ \ \ \ std::transform(res.begin(),\ res.end(),\ res.begin(),\ (int\ (*)(\textcolor{keywordtype}{int}))std::toupper);}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ std::string\ PathDirectory(\textcolor{keyword}{const}\ std::string\ \&path)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ p\ =\ PathLastSlash(path);}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\ !=\ std::string::npos)}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path.substr(0,\ p\ +\ 1);}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ std::string\ PathFile(\textcolor{keyword}{const}\ std::string\ \&path)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ p\ =\ PathLastSlash(path);}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\ ==\ std::string::npos)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{return}\ path.substr(p\ +\ 1,\ path.length()\ -\/\ p);}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ std::string\ PathExtension(\textcolor{keyword}{const}\ std::string\ \&path)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ p\ =\ path.rfind(\textcolor{charliteral}{'.'});}
+\DoxyCodeLine{00115\ \ \ \ \ std::string\ res;}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (p\ !=\ std::string::npos)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ res\ =\ path.substr(p\ +\ 1,\ res.length()\ -\/\ p);}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{return}\ ToLower(res);}
+\DoxyCodeLine{00122\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{keyword}{const}\ std::string\ \&PathNormalise(std::string\ \&path,\ \textcolor{keywordtype}{bool}\ bDirectory)\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (path.length()\ ==\ 0)}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Convert\ backslashes\ to\ forward.}}
+\DoxyCodeLine{00129\ \ \ \ \ std::replace(path.begin(),\ path.end(),\ \textcolor{charliteral}{'\(\backslash\)\(\backslash\)'},\ \textcolor{charliteral}{'/'});}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ Cap\ with\ a\ slash}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{if}\ (bDirectory)\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (path[path.length()\ -\/\ 1]\ !=\ \textcolor{charliteral}{'/'})\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ path.append(\textcolor{stringliteral}{"{}/"{}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{return}\ path;}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ \}\ \textcolor{comment}{//\ namespace\ string}}
+\DoxyCodeLine{00141\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00142\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+
+\end{DoxyCode}

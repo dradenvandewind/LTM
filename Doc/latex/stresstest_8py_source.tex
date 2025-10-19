@@ -1,0 +1,491 @@
+\doxysection{stresstest.\+py}
+\label{stresstest_8py_source}\index{stress\_tests/stresstest.py@{stress\_tests/stresstest.py}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{\#!/usr/bin/env\ python3.7}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\#\ encodertest.py\ [-\/-\/encoder=<encoder>]}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/decoder=<decoder>]}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/test\_file=<tests-\/json>]}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/checksums\_file=<checksums-\/json>]}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/label=<label>]}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/input\_dir=<dir>]}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/base\_dir=<dir>]}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/progress=none|spinner|verbose]}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/sets=<string>,..]}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/single=<string>]}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/parallel=<number>]}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\#\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [-\/-\/generate\_checksums\_file=<file>]}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\#\ JSON\ schema:}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\#\ [\ //\ Array\ of\ tests}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\#\ \ \ \{}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}description"{}\ :\ <string>\ \ //\ optional,\ human\ readable\ description}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}name"{}\ :\ <string>\ \ \ \ \ \ \ \ \ //\ identifier\ used\ to\ identity\ directory\ and\ files\ generated\ by\ test}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}include-\/parameters"{}\ :\ <filename>\ //\ optional,\ start\ with\ parameters\ in\ named\ file\ then\ apply\ 'paramaters'}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}parameters"{}\ :\ \{\ ...\ \}\ \ \ \ //\ json\ dictionary\ of\ codec\ parameters}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}sets"{}\ :\ [\ <strings>\ ]\ \ \ \ //\ optional,\ list\ \ of\ sets\ that\ include\ this\ test\ -\/\ controller\ by\ \ command\ line\ -\/-\/sets=...}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\#\ \ \ \ \ \ \ "{}generate\_base"{}\ :\ <bool>\ \ //\ optional,\ control\ whether\ base+ercon\ should\ be\ encoded\ for\ this\ test,\ overriding\ command\ line}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\#\ \ \ \}}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\#\ \ \ \ ...}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\#\ ]}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\#\ NB:\ Some\ parameters\ are\ treated\ specially:}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\#\ \ \ -\/\ input\_file:\ width,\ height,\ fps,\ bit\_depth\ and\ format\ are\ extracted\ from\ filename\ if\ present\ (but\ are\ overridden\ by\ expicit\ params)}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\#\ \ \ -\/\ input\_file,\ base,\ \ base\_recon:\ Input\ directory\ is\ prepended}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\#}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{import}\ json}
+\DoxyCodeLine{00037\ \textcolor{keyword}{import}\ csv}
+\DoxyCodeLine{00038\ \textcolor{keyword}{import}\ xxhash,hashlib}
+\DoxyCodeLine{00039\ \textcolor{keyword}{import}\ os,\ os.path}
+\DoxyCodeLine{00040\ \textcolor{keyword}{import}\ re}
+\DoxyCodeLine{00041\ \textcolor{keyword}{import}\ subprocess}
+\DoxyCodeLine{00042\ \textcolor{keyword}{import}\ sys}
+\DoxyCodeLine{00043\ \textcolor{keyword}{import}\ concurrent.futures}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{def\ }platform\_exe(path,\ name):}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}Given\ a\ directory\ and\ an\ executable\ file\ name,\ return\ platform\ specifix\ path."{}"{}"{}}}
+\DoxyCodeLine{00047\ \ \ \ \ exesuffix\ =\ \{\textcolor{stringliteral}{"{}win32"{}}:\textcolor{stringliteral}{"{}.exe"{}},\textcolor{stringliteral}{"{}linux"{}}:\textcolor{stringliteral}{"{}"{}}\}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordflow}{return}\ os.path.join(path,\ name+exesuffix.get(sys.platform,\textcolor{stringliteral}{"{}"{}}))}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{def\ }prefix\_path(d,\ f):}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ os.path.isabs(v):}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ os.path.join(d,\ f)}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ f}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \textcolor{keyword}{def\ }hash(filename,\ blocksize=65536):}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}}}
+\DoxyCodeLine{00059\ \textcolor{stringliteral}{\ \ \ \ Compute\ hash\ of\ named\ file.}}
+\DoxyCodeLine{00060\ \textcolor{stringliteral}{\ \ \ \ "{}"{}"{}}}
+\DoxyCodeLine{00061\ \ \ \ \ hash\ =\ xxhash.xxh3\_64()}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{with}\ open(filename,\ \textcolor{stringliteral}{"{}rb"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ block\ \textcolor{keywordflow}{in}\ iter(\textcolor{keyword}{lambda}:\ f.read(blocksize),\ b\textcolor{stringliteral}{"{}"{}}):}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ hash.update(block)}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{return}\ hash.hexdigest()}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{def\ }hash\_md5(filename,\ blocksize=65536):}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}}}
+\DoxyCodeLine{00069\ \textcolor{stringliteral}{\ \ \ \ Compute\ md5\ hash\ of\ named\ file.}}
+\DoxyCodeLine{00070\ \textcolor{stringliteral}{\ \ \ \ "{}"{}"{}}}
+\DoxyCodeLine{00071\ \ \ \ \ hash\ =\ hashlib.md5()}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{with}\ open(filename,\ \textcolor{stringliteral}{"{}rb"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ block\ \textcolor{keywordflow}{in}\ iter(\textcolor{keyword}{lambda}:\ f.read(blocksize),\ b\textcolor{stringliteral}{"{}"{}}):}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ hash.update(block)}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{return}\ hash.hexdigest()}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ IMAGE\_NAME\_PARAMS\ =\ [}
+\DoxyCodeLine{00078\ \ \ \ \ (\textcolor{stringliteral}{"{}width"{}},\ re.compile(\textcolor{stringliteral}{"{}([0-\/9]+)x[0-\/9]+"{}})),}
+\DoxyCodeLine{00079\ \ \ \ \ (\textcolor{stringliteral}{"{}height"{}},\ re.compile(\textcolor{stringliteral}{"{}[0-\/9]+x([0-\/9]+)"{}})),}
+\DoxyCodeLine{00080\ \ \ \ \ (\textcolor{stringliteral}{"{}fps"{}},\ re.compile(\textcolor{stringliteral}{"{}([0-\/9]+)(fps|hz)"{}})),}
+\DoxyCodeLine{00081\ \ \ \ \ (\textcolor{stringliteral}{"{}bit\_depth"{}},\ re.compile(\textcolor{stringliteral}{"{}([0-\/9]+)(bits?|bpp)"{}})),}
+\DoxyCodeLine{00082\ \ \ \ \ (\textcolor{stringliteral}{"{}format"{}},\ re.compile(\textcolor{stringliteral}{"{}\string^(420p|422p|yuv|yuyv|y|)\$"{}}))}
+\DoxyCodeLine{00083\ ]}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{def\ }parse\_vooya\_filename(name):}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}}}
+\DoxyCodeLine{00087\ \textcolor{stringliteral}{\ \ \ \ Extract\ vooya-\/ish\ image\ metadata\ from\ filename\ in\ form\ suitable\ for\ use\ as\ encoder\ parameters.}}
+\DoxyCodeLine{00088\ \textcolor{stringliteral}{\ \ \ \ "{}"{}"{}}}
+\DoxyCodeLine{00089\ \ \ \ \ params\ =\ \{\}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{for}\ p\ \textcolor{keywordflow}{in}\ name.split(\textcolor{stringliteral}{"{}\_"{}}):}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ n,r\ \textcolor{keywordflow}{in}\ IMAGE\_NAME\_PARAMS:}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ m\ =\ r.match(p)}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ m:}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ params[n]\ =\ m.group(1)}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'bit\_depth'}\ \textcolor{keywordflow}{in}\ params:}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'format'}\ \textcolor{keywordflow}{not}\ \textcolor{keywordflow}{in}\ params:}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'format'}]\ =\ \textcolor{stringliteral}{"{}420p"{}}}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'format'}]\ +=\ params.pop(\textcolor{stringliteral}{'bit\_depth'})}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'format'}\ \textcolor{keywordflow}{in}\ params\ \textcolor{keywordflow}{and}\ params[\textcolor{stringliteral}{'format'}].startswith(\textcolor{stringliteral}{'4'}):}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'format'}]\ =\ \textcolor{stringliteral}{'yuv'}\ +\ params[\textcolor{stringliteral}{'format'}]}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'width'}\ \textcolor{keywordflow}{in}\ params:}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'width'}]\ =\ int(params[\textcolor{stringliteral}{'width'}])}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'height'}\ \textcolor{keywordflow}{in}\ params:}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'height'}]\ =\ int(params[\textcolor{stringliteral}{'height'}])}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'fps'}\ \textcolor{keywordflow}{in}\ params:}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ params[\textcolor{stringliteral}{'fps'}]\ =\ int(params[\textcolor{stringliteral}{'fps'}])}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{return}\ params}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{def\ }create\_opl\_file(width,\ height,\ output):}
+\DoxyCodeLine{00114\ \ \ \ \ data\ =\ []}
+\DoxyCodeLine{00115\ \ \ \ \ log\ =\ open(f\textcolor{stringliteral}{"{}\{output\}\_encoder.log"{}},\ \textcolor{stringliteral}{"{}r"{}})}
+\DoxyCodeLine{00116\ \ \ \ \ poc\ =\ 0}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{for}\ line\ \textcolor{keywordflow}{in}\ log:}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ line[:6]\ ==\ \textcolor{stringliteral}{"{}[MD5Y\ "{}}:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_data\ =\ [poc,\ width,\ height]}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_data.append(line[6:38])}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_data.append(line[46:78])}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_data.append(line[86:118])}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ data.append(frame\_data)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ poc\ +=\ 1}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{with}\ open(f\textcolor{stringliteral}{"{}\{output\}.opl"{}},\ \textcolor{stringliteral}{'w'},\ newline=\textcolor{stringliteral}{''})\ \textcolor{keyword}{as}\ csvfile:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ writer\ =\ csv.writer(csvfile)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ writer.writerow([\textcolor{stringliteral}{"{}PicOrderCntVal"{}},\ \textcolor{stringliteral}{"{}pic\_width\_max"{}},\ \textcolor{stringliteral}{"{}pic\_height\_max"{}},\ \textcolor{stringliteral}{"{}md5\_y"{}},\ \textcolor{stringliteral}{"{}md5\_u"{}},\ \textcolor{stringliteral}{"{}md5\_v"{}}])}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ writer.writerows(data)}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{def\ }create\_txt\_file(width,\ height,\ output,\ description):}
+\DoxyCodeLine{00132\ \ \ \ \ sample\_rate\ =\ width\ *\ height\ *\ 50}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{if}\ sample\_rate\ <=\ 29410000:}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ level\ =\ 1}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{elif}\ sample\_rate\ <=\ 124560000:}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ level\ =\ 2}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{elif}\ sample\_rate\ <=\ 527650000:}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ level\ =\ 3}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ level\ =\ 4}
+\DoxyCodeLine{00141\ \ \ \ \ lines\ =\ [}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Bitstream\ file\ name:\ \{output\}.bit\(\backslash\)n"{}},}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Explanation\ of\ bitstream\ features:\ \{description\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Profile:\ Main\(\backslash\)n"{}},}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Level:\ \{level\}.1\(\backslash\)n"{}},}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Max\ picture\ width:\ \{width\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Max\ picture\ height:\ \{height\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Picture\ rate:\ 50\(\backslash\)n"{}},}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}LTM\ release\ version\ number\ used\ to\ generate\ the\ bitstream:\ LTM\ 5.1.1.4\(\backslash\)n"{}},}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}Contact\ name\ and\ email:\ ???\(\backslash\)n"{}},}
+\DoxyCodeLine{00151\ \ \ \ \ ]}
+\DoxyCodeLine{00152\ \ \ \ \ f\ =\ open(f\textcolor{stringliteral}{"{}\{output\}.txt"{}},\ \textcolor{stringliteral}{'w'})}
+\DoxyCodeLine{00153\ \ \ \ \ f.writelines(lines)}
+\DoxyCodeLine{00154\ \ \ \ \ f.close()}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{keyword}{def\ }run\_subprocess(title,\ args,\ logfile,\ scriptfile,\ show\_progress):}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}Run\ a\ comamnd\ as\ a\ subprocess\ -\/\ report\ progress\ and\ capture\ output\ (both\ stderr\ and\ stdout)\ to\ a\ log\ file."{}"{}"{}}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{with}\ open(logfile,\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ log:}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ sys.stderr.write(f\textcolor{stringliteral}{"{}\ \ \ \ \{title\}:\ Start\(\backslash\)r"{}})}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ show\_progress:}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ sys.stderr.write(\textcolor{stringliteral}{"{}\(\backslash\)r"{}})}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ sys.stderr.write(\textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ print(\textcolor{stringliteral}{"{}\ "{}}.join(args),\ file=log)}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ subprocess.Popen(args,\ bufsize=1,\ stdout=subprocess.PIPE,\ stderr=subprocess.STDOUT,}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ universal\_newlines=\textcolor{keyword}{True})\ \textcolor{keyword}{as}\ p:}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ n,l\ \textcolor{keywordflow}{in}\ enumerate(p.stdout):}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Progress}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ show\_progress\ ==\ \textcolor{stringliteral}{"{}spinner"{}}:}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ progress\_indicator\ =\ \textcolor{stringliteral}{"{}|/-\/\(\backslash\)\(\backslash\)|/-\/\(\backslash\)\(\backslash\)"{}}[n\ \%\ 8]}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sys.stderr.write(f\textcolor{stringliteral}{"{}\ \ \ \ \{title\}:\ \{progress\_indicator\}\ \ \ \ \ \ \(\backslash\)r"{}})}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{elif}\ show\_progress\ ==\ \textcolor{stringliteral}{"{}verbose"{}}:}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sys.stderr.write(l)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Log\ file}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ print(l.strip(),\ file=log)}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ p.wait()\ !=\ 0:}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sys.stderr.write(f\textcolor{stringliteral}{"{}\ \ \ \ \{title\}:\ FAILED\(\backslash\)n"{}})}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{False}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \ \ sys.stderr.write(f\textcolor{stringliteral}{"{}\ \ \ \ \{title\}:\ OK\(\backslash\)n"{}})}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{\#\ Write\ scripts}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordflow}{if}\ scriptfile:}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ open(scriptfile\ +\ \textcolor{stringliteral}{"{}.sh"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}\#!/bin/bash\(\backslash\)n"{}})}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}\$\{LTM\_PATH\}"{}}\ +\ os.path.basename(args[0])\ +\ \textcolor{stringliteral}{"{}\ "{}}\ +\ \textcolor{stringliteral}{"{}\ "{}}.join(args[1:]))}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ open(scriptfile\ +\ \textcolor{stringliteral}{"{}.bat"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}@echo\ off\(\backslash\)n"{}})}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}\%LTM\_PATH\%"{}}\ +\ os.path.basename(args[0])\ +\ \textcolor{stringliteral}{"{}.exe\ "{}}\ +\ \textcolor{stringliteral}{"{}\ "{}}.join(args[1:]))}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ f.write(\textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{True}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keyword}{def\ }test\_encode\_decode(number,\ encoder,\ decoder,\ input\_dir,\ base\_dir,\ test,\ default\_parameters,\ label,\ update\_checksums,\ show\_progress,\ decode\_only):}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}}}
+\DoxyCodeLine{00202\ \textcolor{stringliteral}{\ \ \ \ Run\ an\ encode\ followed\ by\ decode\ of\ given\ file\ (using\ given\ params)}}
+\DoxyCodeLine{00203\ \textcolor{stringliteral}{\ \ \ \ Return\ true\ if\ recon\ \&\ decoded\ yuv\ match\ required\ checksum.}}
+\DoxyCodeLine{00204\ \textcolor{stringliteral}{\ \ \ \ "{}"{}"{}}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ }
+\DoxyCodeLine{00207\ \ \ \ \ parameters\ =\ \{**test[\textcolor{stringliteral}{'parameters'}],\ **default\_parameters\}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{\#\ Are\ any\ parameters\ read\ from\ file?}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'include-\/parameters'}\ \textcolor{keywordflow}{in}\ test:}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ open(test[\textcolor{stringliteral}{'include-\/parameters'}])\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ include\_params\ =\ json.load(f)}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ parameters\ =\ \{\ **include\_params,\ **parameters\ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{\#\ Extract\ any\ parameters\ from\ input\ name}}
+\DoxyCodeLine{00216\ \ \ \ \ input\_file\_params\ =\ parse\_vooya\_filename(parameters[\textcolor{stringliteral}{'input\_file'}])}
+\DoxyCodeLine{00217\ \ \ \ \ parameters\ =\ \{\ **input\_file\_params,\ **parameters\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{\#\ Supress\ base\ if\ this\ test\ needs\ to\ generate\ its\ own}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{if}\ test.get(\textcolor{stringliteral}{'generate\_base'},\ \textcolor{keyword}{False}):}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ parameters.pop(\textcolor{stringliteral}{'base'})}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base\_recon'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ parameters.pop(\textcolor{stringliteral}{'base\_recon'})}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{\#\ Add\ input\ dirs}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'input\_file'}\ \textcolor{keywordflow}{in}\ parameters\ \textcolor{keywordflow}{and}\ \textcolor{keywordflow}{not}\ os.path.isabs(parameters[\textcolor{stringliteral}{'input\_file'}]):}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'input\_file'}]\ =\ os.path.abspath(os.path.join(input\_dir,\ parameters[\textcolor{stringliteral}{'input\_file'}]))}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base'}\ \textcolor{keywordflow}{in}\ parameters\ \textcolor{keywordflow}{and}\ parameters[\textcolor{stringliteral}{'base'}]\ !=\ \textcolor{stringliteral}{"{}"{}}\ \textcolor{keywordflow}{and}\ \textcolor{keywordflow}{not}\ os.path.isabs(parameters[\textcolor{stringliteral}{'base'}]):}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'base'}]\ =\ os.path.abspath(os.path.join(base\_dir,\ parameters[\textcolor{stringliteral}{'base'}]))}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base\_recon'}\ \textcolor{keywordflow}{in}\ parameters\ \textcolor{keywordflow}{and}\ parameters[\textcolor{stringliteral}{'base\_recon'}]\ !=\ \textcolor{stringliteral}{"{}"{}}\ \textcolor{keywordflow}{and}\ \textcolor{keywordflow}{not}\ os.path.isabs(parameters[\textcolor{stringliteral}{'base\_recon'}]):}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'base\_recon'}]\ =\ os.path.abspath(os.path.join(base\_dir,\ parameters[\textcolor{stringliteral}{'base\_recon'}]))}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{comment}{\#\ Figure\ input\ name\ and\ output\ name}}
+\DoxyCodeLine{00237\ \ \ \ \ basename\ =\ str(os.path.splitext(os.path.basename(parameters[\textcolor{stringliteral}{'input\_file'}]))[0])}
+\DoxyCodeLine{00238\ \ \ \ \ output\ =\ f\textcolor{stringliteral}{"{}test\_\{label\}\{test['name']\}"{}}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{\#\ Change\ to\ a\ subdirectory\ for\ each\ test}}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{comment}{\#\ Avoids\ any\ issues\ with\ parallel\ runs\ clashing\ over\ temp\ files.}}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{\#}}
+\DoxyCodeLine{00243\ \ \ \ \ current\_dir\ =\ os.getcwd()}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ os.path.exists(output):}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ os.mkdir(output)}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ os.path.isdir(output):}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}Cannot\ make\ test\ directory:\{output\}"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{False}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ os.chdir(output)}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{comment}{\#\ Convert\ paths\ back\ to\ relative}}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{comment}{\#\ (All\ a\ bit\ of\ a\ dance\ -\/\ but\ means\ everything\ survives\ interesting\ filesystem\ layouts\ and\ is\ readable)}}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{comment}{\#}}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'input\_file'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'input\_file'}]\ =\ os.path.relpath(parameters[\textcolor{stringliteral}{'input\_file'}])}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'base'}]\ =\ os.path.relpath(parameters[\textcolor{stringliteral}{'base'}])}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'base\_recon'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ parameters[\textcolor{stringliteral}{'base\_recon'}]\ =\ os.path.relpath(parameters[\textcolor{stringliteral}{'base\_recon'}])}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{\#\ Create\ the\ parameter\ file}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{with}\ open(output\ +\ \textcolor{stringliteral}{"{}.json"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ json.dump(parameters,\ f,\ indent=4)}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ sys.stderr.write(f\textcolor{stringliteral}{"{}Encode/Decode\ \{number\}:\ \{label\}\ \{basename\}\ :\ \{test['description']\}"{}})}
+\DoxyCodeLine{00269\ \ \ \ \ sys.stderr.write(\textcolor{stringliteral}{"{}\(\backslash\)n"{}}\ +\ json.dumps(parameters,\ indent=4)\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{\#}}
+\DoxyCodeLine{00272\ \ \ \ \ encode\_arguments\ =\ [}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ os.path.relpath(encoder),}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/width=\{parameters['width']\}"{}},}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/height=\{parameters['height']\}"{}},}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/format=\{parameters['format']\}"{}},}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/base\_encoder=\{parameters['base\_encoder']\}"{}},}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/encapsulation=\{parameters['encapsulation']\}"{}},}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/parameters=\{output\}.json"{}},}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/output\_file=\{output\}.lvc"{}},}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/output\_recon=\{output\}\_recon.yuv"{}},}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/keep\_base=false"{}},}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/parameter\_config=conformance"{}},}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/qp=\{parameters['qp']\}"{}}\ ]}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'limit'}\ \textcolor{keywordflow}{in}\ test:}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ encode\_arguments.append(f\textcolor{stringliteral}{"{}-\/-\/limit=\{test['limit']\}"{}})}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{comment}{\#}}
+\DoxyCodeLine{00290\ \ \ \ \ decode\_arguments\ =\ [}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ os.path.relpath(decoder),}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/base\_encoder=\{parameters['base\_encoder']\}"{}},}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/encapsulation=\{parameters['encapsulation']\}"{}},}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/input\_file=\{output\}.lvc"{}},}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}-\/-\/output\_file=\{output\}\_decoded.yuv"{}}\ ]}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{\#\ Use\ fixed\ seed\ for\ dithering}}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'dithering\_control'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ decode\_arguments.append(\textcolor{stringliteral}{"{}-\/-\/dithering\_fixed=true"{}})}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{\#\ Use\ external\ base\ decoder\ for\ monochrome\ input\ or\ 12/14\ bpp}}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'format'}\ \textcolor{keywordflow}{in}\ parameters:}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ parameters[\textcolor{stringliteral}{'format'}].startswith(\textcolor{stringliteral}{'yuv'}):}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ decode\_arguments.append(\textcolor{stringliteral}{"{}-\/-\/base\_external=true"{}})}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{elif}\ parameters[\textcolor{stringliteral}{'format'}].endswith(\textcolor{stringliteral}{'12'})\ \textcolor{keywordflow}{or}\ parameters[\textcolor{stringliteral}{'format'}].endswith(\textcolor{stringliteral}{'14'}):}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ decode\_arguments.append(\textcolor{stringliteral}{"{}-\/-\/base\_external=true"{}})}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{comment}{\#\ Encode}}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{if}\ decode\_only:}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ encoder\_ok\ =\ \textcolor{keyword}{True}}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ encoder\_ok\ =\ run\_subprocess(f\textcolor{stringliteral}{"{}\ \ Encode\ \{number\}"{}},\ encode\_arguments,}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}\{output\}\_encoder.log"{}},\ f\textcolor{stringliteral}{"{}\{output\}\_encode"{}},\ show\_progress)}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{\#\ Encode\ recon\ checksums}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{if}\ \ os.path.exists(f\textcolor{stringliteral}{"{}\{output\}\_recon.yuv"{}}):}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ encoded\_checksum\ =\ hash(f\textcolor{stringliteral}{"{}\{output\}\_recon.yuv"{}})}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ encoded\_checksum\ =\ \textcolor{stringliteral}{"{}No\ encoded\ output"{}};}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ encoded\_checksum\_md5\ =\ hash\_md5(f\textcolor{stringliteral}{"{}\{output\}\_recon.yuv"{}})}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{comment}{\#\ Encode\ bitstream\ checksums}}
+\DoxyCodeLine{00324\ \ \ \ \ encoded\_bitstream\_checksum\_md5\ =\ hash\_md5(f\textcolor{stringliteral}{"{}\{output\}.lvc"{}})}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{comment}{\#\ Decode}}
+\DoxyCodeLine{00327\ \ \ \ \ decoder\_ok\ =\ run\_subprocess(f\textcolor{stringliteral}{"{}\ \ Decode\ \{number\}"{}},\ decode\_arguments,}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f\textcolor{stringliteral}{"{}\{output\}\_decoder.log"{}},\ f\textcolor{stringliteral}{"{}\{output\}\_decode"{}},\ show\_progress)}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{\#\ Decode\ checksum}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{if}\ os.path.exists(f\textcolor{stringliteral}{"{}\{output\}\_decoded.yuv"{}}):}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ decoded\_checksum\ =\ hash(f\textcolor{stringliteral}{"{}\{output\}\_decoded.yuv"{}})}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ decoded\_checksum\ =\ \textcolor{stringliteral}{"{}No\ decoded\ output"{}};}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{\#}}
+\DoxyCodeLine{00337\ \ \ \ \ test\_checksum\ =\ test[\textcolor{stringliteral}{'checksums'}].get(basename,\ \textcolor{stringliteral}{"{}-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/"{}})}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{comment}{\#\ Record\ recon\ md5\ checksum}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keyword}{with}\ open(output\ +\ \textcolor{stringliteral}{"{}.yuv.md5"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ f.write(encoded\_checksum\_md5\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{comment}{\#\ Record\ checksum\ status}}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keyword}{with}\ open(output\ +\ \textcolor{stringliteral}{"{}\_status.txt"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ f.write(f\textcolor{stringliteral}{"{}encode:\{encoded\_checksum\}\ decode:\{decoded\_checksum\}\ reference:\{test\_checksum\}\ ok:\{encoded\_checksum==decoded\_checksum\}\(\backslash\)n"{}})}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{\#\ Record\ recon\ md5\ checksum}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keyword}{with}\ open(output\ +\ \textcolor{stringliteral}{"{}.md5"{}},\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ f.write(encoded\_bitstream\_checksum\_md5\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}})}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ check\_encode\ =\ \textcolor{keyword}{True}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{if}\ update\_checksums:}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Update\ checksum\ (keyed\ by\ input\ name)}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'checksums'}\ \textcolor{keywordflow}{not}\ \textcolor{keywordflow}{in}\ test:}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ test[\textcolor{stringliteral}{'checksums'}]\ =\ \{\}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ test[\textcolor{stringliteral}{'checksums'}][basename]\ =\ encoded\_checksum}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}Encoded\ checksum\ updated\ \{number\}"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00358\ \ \ \ \ \textcolor{keywordflow}{elif}\ \textcolor{stringliteral}{'checksums'}\ \textcolor{keywordflow}{in}\ test\ \textcolor{keywordflow}{and}\ basename\ \textcolor{keywordflow}{in}\ test[\textcolor{stringliteral}{'checksums'}]:}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Check\ against\ stored\ checksum}}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ check\_encode\ =\ test[\textcolor{stringliteral}{'checksums'}][basename]\ ==\ encoded\_checksum}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}\ Encoded\ checksum\ \{number\}:\ "{}},\ check\_encode\ \textcolor{keywordflow}{and}\ \textcolor{stringliteral}{"{}OK"{}}\ \textcolor{keywordflow}{or}\ \textcolor{stringliteral}{"{}FAILED"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ check\_match\ =\ encoded\_checksum\ ==\ decoded\_checksum}
+\DoxyCodeLine{00364\ \ \ \ \ print(f\textcolor{stringliteral}{"{}Encoded\ vs\ decoded\ checksum\ \{number\}:\ "{}},\ check\_match\ \textcolor{keywordflow}{and}\ \textcolor{stringliteral}{"{}OK"{}}\ \textcolor{keywordflow}{or}\ \textcolor{stringliteral}{"{}FAILED"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{\#\ Option\ to\ remove\ yuv\ outputs}}
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{comment}{\#\ if\ check\_match:}}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{comment}{\#\ \ \ os.remove(output\ +\ "{}\_recon.yuv"{})}}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{comment}{\#\ \ \ os.remove(output\ +\ "{}\_decoded.yuv"{})}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{comment}{\#\ Create\ .opl\ and\ .txt\ files\ as\ specified\ in\ MPEG\ Conformance\ Test}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordflow}{if}\ check\_match:}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ create\_opl\_file(parameters[\textcolor{stringliteral}{'width'}],\ parameters[\textcolor{stringliteral}{'height'}],\ output)}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ create\_txt\_file(parameters[\textcolor{stringliteral}{'width'}],\ parameters[\textcolor{stringliteral}{'height'}],\ output,\ test[\textcolor{stringliteral}{'description'}])}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{comment}{\#\ Rename\ UserData\ files}}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordflow}{if}\ os.path.isfile(\textcolor{stringliteral}{"{}userdata\_enc.bin"{}}):}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ os.rename(\textcolor{stringliteral}{"{}userdata\_enc.bin"{}},\ f\textcolor{stringliteral}{"{}\{output\}\_userdata\_enc.bin"{}})}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordflow}{if}\ os.path.isfile(\textcolor{stringliteral}{"{}userdata\_dec.bin"{}}):}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ os.rename(\textcolor{stringliteral}{"{}userdata\_dec.bin"{}},\ f\textcolor{stringliteral}{"{}\{output\}\_userdata.bin"{}})}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \ \ os.chdir(current\_dir)}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordflow}{return}\ (encoder\_ok\ \textcolor{keywordflow}{and}\ decoder\_ok\ \textcolor{keywordflow}{and}\ check\_encode\ \textcolor{keywordflow}{and}\ check\_match)}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{keyword}{def\ }run\_test(test\_job):}
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}Wrapper\ for\ running\ a\ parallel\ test\ instance\ -\/\ unpacks\ arguments\ and\ forwards\ to\ real\ function."{}"{}"{}}}
+\DoxyCodeLine{00388\ \ \ \ \ print(f\textcolor{stringliteral}{"{}-\/-\/\ Parallel\ Test\ \{test\_job['number']\}\ \{test\_job['test']['description']\}"{}})}
+\DoxyCodeLine{00389\ \ \ \ \ ok\ =\ test\_encode\_decode(**test\_job)}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordflow}{return}\ ok,\ test\_job[\textcolor{stringliteral}{'number'}],\ test\_job[\textcolor{stringliteral}{'test'}]}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \textcolor{keyword}{def\ }run\_tests(args):}
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{stringliteral}{"{}"{}"{}Read\ a\ JSON\ array\ and\ run\ test\ described\ by\ each\ entry."{}"{}"{}}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ fails\ =\ 0}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{comment}{\#\ Load\ tests}}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{with}\ open(args.test\_file)\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ tests\ =\ json.load(f)}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{keywordflow}{if}\ type(tests)\ !=\ list:}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ print(\textcolor{stringliteral}{"{}Top\ level\ of\ tests\ JSON\ must\ be\ an\ array."{}},\ file=sys.stderr)}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ default\_parameters\ =\ json.loads(args.parameters)}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordflow}{if}\ args.sets:}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ test\_set\ =\ set(args.sets.split(\textcolor{stringliteral}{','}))}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ test\_set\ =\ set()}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ }
+\DoxyCodeLine{00413\ \ \ \ \ test\_jobs\ =\ []}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{for}\ n,test\ \textcolor{keywordflow}{in}\ enumerate(tests):}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Single\ test}}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ args.single\ \textcolor{keywordflow}{and}\ test[\textcolor{stringliteral}{'name'}]\ !=\ args.single:}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Sets\ of\ tests}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ test\_set:}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{stringliteral}{'sets'}\ \textcolor{keywordflow}{not}\ \textcolor{keywordflow}{in}\ test\ \textcolor{keywordflow}{or}\ test\_set.isdisjoint(set(test[\textcolor{stringliteral}{'sets'}])):}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue}}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ test\_jobs.append(\{}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'number'}:n,}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'test'}:test,}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'encoder'}:os.path.abspath(args.encoder),}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'decoder'}:os.path.abspath(args.decoder),}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'input\_dir'}:args.input\_dir,}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'base\_dir'}:args.base\_dir,}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'default\_parameters'}:default\_parameters,}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'label'}:args.label,}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'update\_checksums'}:args.updated\_checksums\ !=\ \textcolor{stringliteral}{"{}"{}},}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'show\_progress'}:\ args.progress,}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{'decode\_only'}:\ args.decode\_only\})}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \ \ \ \ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{if}\ args.parallel\ ==\ \textcolor{stringliteral}{"{}0"{}}:}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}Running\ \{len(test\_jobs)\}\ tests"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Run\ jobs\ serially\ in\ process}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ j\ \textcolor{keywordflow}{in}\ test\_jobs:}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ ok\ =\ test\_encode\_decode(**j)}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ ok:}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fails\ +=\ 1}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordflow}{else}:}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}Running\ \{len(test\_jobs)\}\ tests\ using\ \{args.parallel\}\ workers"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Run\ jobs\ in\ parallel\ in\ seperate\ processes}}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ concurrent.futures.ProcessPoolExecutor(max\_workers=int(args.parallel))\ \textcolor{keyword}{as}\ executor:}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ ok,n,updated\_test\ \textcolor{keywordflow}{in}\ executor.map(run\_test,\ test\_jobs):}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keywordflow}{not}\ ok:}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fails\ +=\ 1}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ok\ \textcolor{keywordflow}{and}\ args.updated\_checksums:}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{\#\ Collect\ updated\ data\ from\ subprocess}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tests[n]\ =\ updated\_test}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keywordflow}{if}\ fails\ !=\ 0:}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ print(f\textcolor{stringliteral}{"{}Tests\ failed:\ \{fails\}"{}},\ file=sys.stderr)}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ }
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordflow}{if}\ args.updated\_checksums:}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \textcolor{keyword}{with}\ open(args.updated\_checksums,\ \textcolor{stringliteral}{"{}wt"{}})\ \textcolor{keyword}{as}\ f:}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ json.dump(tests,\ f,\ indent=4)}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordflow}{return}\ fails}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \textcolor{keywordflow}{if}\ \_\_name\_\_\ ==\ \textcolor{stringliteral}{"{}\_\_main\_\_"{}}:}
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{keyword}{import}\ argparse}
+\DoxyCodeLine{00469\ \ \ \ \ parser\ =\ argparse.ArgumentParser()}
+\DoxyCodeLine{00470\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/label"{}},\ help=\textcolor{stringliteral}{"{}label\ for\ test\ outputs"{}},\ default=\textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00471\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/encoder"{}},\ help=\textcolor{stringliteral}{"{}Test\ Model\ encoder"{}},\ default=platform\_exe(\textcolor{stringliteral}{"{}.."{}},\textcolor{stringliteral}{"{}ModelEncoder"{}}))}
+\DoxyCodeLine{00472\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/decoder"{}},\ help=\textcolor{stringliteral}{"{}Test\ Model\ decoder"{}},\ default=platform\_exe(\textcolor{stringliteral}{"{}.."{}},\textcolor{stringliteral}{"{}ModelDecoder"{}}))}
+\DoxyCodeLine{00473\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/test\_file"{}},\ help=\textcolor{stringliteral}{"{}JSON\ file\ of\ tests"{}},\ default=\textcolor{stringliteral}{"{}tests.json"{}})}
+\DoxyCodeLine{00474\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/input\_dir"{}},\ help=\textcolor{stringliteral}{"{}Base\ for\ test\ inputs"{}},\ default=\textcolor{stringliteral}{"{}inputs"{}})}
+\DoxyCodeLine{00475\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/base\_dir"{}},\ help=\textcolor{stringliteral}{"{}Base\ for\ test\ input\ base\ and\ base\ recon."{}},\ default=\textcolor{stringliteral}{"{}bases"{}})}
+\DoxyCodeLine{00476\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/parameters"{}},\ help=\textcolor{stringliteral}{"{}Default\ parameters\ for\ all\ tests"{}},\ default=\textcolor{stringliteral}{"{}\{\}"{}})}
+\DoxyCodeLine{00477\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/progress"{}},\ help=\textcolor{stringliteral}{"{}Display\ progresss\ spinner\ while\ coding"{}},\ default=\textcolor{stringliteral}{"{}spinner"{}})}
+\DoxyCodeLine{00478\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/updated\_checksums"{}},\ help=\textcolor{stringliteral}{"{}Write\ a\ new\ version\ of\ test\ file\ with\ updated\ checksums"{}},\ default=\textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00479\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/single"{}},\ help=\textcolor{stringliteral}{"{}Select\ single\ test\ to\ be\ run"{}},\ default=\textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00480\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/sets"{}},\ help=\textcolor{stringliteral}{"{}Select\ set\ of\ tests\ to\ be\ run"{}},\ default=\textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00481\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/parallel"{}},\ help=\textcolor{stringliteral}{"{}Number\ of\ parallel\ workers\ to\ use"{}},\ default=\textcolor{stringliteral}{"{}0"{}})}
+\DoxyCodeLine{00482\ \ \ \ \ parser.add\_argument(\textcolor{stringliteral}{"{}-\/-\/decode\_only"{}},\ help=\textcolor{stringliteral}{"{}Perform\ decoding\ only"{}},\ default=\textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{00483\ \ \ \ \ args\ =\ parser.parse\_args()}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ sys.exit(run\_tests(args))}
+
+\end{DoxyCode}

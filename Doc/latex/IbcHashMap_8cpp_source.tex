@@ -1,0 +1,431 @@
+\doxysection{Ibc\+Hash\+Map.\+cpp}
+\label{IbcHashMap_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/IbcHashMap.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/IbcHashMap.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}CommonLib/dtrace\_codingstruct.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}CommonLib/Picture.h"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}CommonLib/UnitTools.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}IbcHashMap.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{using\ namespace\ }std;}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ create\ /\ destroy}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ IbcHashMap::IbcHashMap()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ m\_picWidth\ =\ 0;}
+\DoxyCodeLine{00056\ \ \ m\_picHeight\ =\ 0;}
+\DoxyCodeLine{00057\ \ \ m\_pos2Hash\ =\ NULL;}
+\DoxyCodeLine{00058\ \ \ m\_computeCrc32c\ =\ xxComputeCrc32c16bit;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#if\ ENABLE\_SIMD\_OPT\_IBC}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#ifdef\ TARGET\_SIMD\_X86}}
+\DoxyCodeLine{00062\ \ \ initIbcHashMapX86();}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ IbcHashMap::\string~IbcHashMap()}
+\DoxyCodeLine{00069\ \{}
+\DoxyCodeLine{00070\ \ \ destroy();}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{void}\ IbcHashMap::init(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ picHeight)}
+\DoxyCodeLine{00074\ \{}
+\DoxyCodeLine{00075\ \ \ \textcolor{keywordflow}{if}\ (picWidth\ !=\ m\_picWidth\ ||\ picHeight\ !=\ m\_picHeight)}
+\DoxyCodeLine{00076\ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ destroy();}
+\DoxyCodeLine{00078\ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ m\_picWidth\ =\ picWidth;}
+\DoxyCodeLine{00081\ \ \ m\_picHeight\ =\ picHeight;}
+\DoxyCodeLine{00082\ \ \ m\_pos2Hash\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*[m\_picHeight];}
+\DoxyCodeLine{00083\ \ \ m\_pos2Hash[0]\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}[m\_picWidth\ *\ m\_picHeight];}
+\DoxyCodeLine{00084\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 1;\ n\ <\ m\_picHeight;\ n++)}
+\DoxyCodeLine{00085\ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ m\_pos2Hash[n]\ =\ m\_pos2Hash[n\ -\/\ 1]\ +\ m\_picWidth;}
+\DoxyCodeLine{00087\ \ \ \}}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}\ IbcHashMap::destroy()}
+\DoxyCodeLine{00091\ \{}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{if}\ (m\_pos2Hash\ !=\ NULL)}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pos2Hash[0]\ !=\ NULL)}
+\DoxyCodeLine{00095\ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ m\_pos2Hash[0];}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{delete}[]\ m\_pos2Hash;}
+\DoxyCodeLine{00099\ \ \ \}}
+\DoxyCodeLine{00100\ \ \ m\_pos2Hash\ =\ NULL;}
+\DoxyCodeLine{00101\ \}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ CRC32C\ calculation\ in\ C\ code,\ same\ results\ as\ SSE\ 4.2's\ implementation}}
+\DoxyCodeLine{00104\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ crc32Table[256]\ =\ \{}
+\DoxyCodeLine{00105\ \ \ 0x00000000L,\ 0xF26B8303L,\ 0xE13B70F7L,\ 0x1350F3F4L,}
+\DoxyCodeLine{00106\ \ \ 0xC79A971FL,\ 0x35F1141CL,\ 0x26A1E7E8L,\ 0xD4CA64EBL,}
+\DoxyCodeLine{00107\ \ \ 0x8AD958CFL,\ 0x78B2DBCCL,\ 0x6BE22838L,\ 0x9989AB3BL,}
+\DoxyCodeLine{00108\ \ \ 0x4D43CFD0L,\ 0xBF284CD3L,\ 0xAC78BF27L,\ 0x5E133C24L,}
+\DoxyCodeLine{00109\ \ \ 0x105EC76FL,\ 0xE235446CL,\ 0xF165B798L,\ 0x030E349BL,}
+\DoxyCodeLine{00110\ \ \ 0xD7C45070L,\ 0x25AFD373L,\ 0x36FF2087L,\ 0xC494A384L,}
+\DoxyCodeLine{00111\ \ \ 0x9A879FA0L,\ 0x68EC1CA3L,\ 0x7BBCEF57L,\ 0x89D76C54L,}
+\DoxyCodeLine{00112\ \ \ 0x5D1D08BFL,\ 0xAF768BBCL,\ 0xBC267848L,\ 0x4E4DFB4BL,}
+\DoxyCodeLine{00113\ \ \ 0x20BD8EDEL,\ 0xD2D60DDDL,\ 0xC186FE29L,\ 0x33ED7D2AL,}
+\DoxyCodeLine{00114\ \ \ 0xE72719C1L,\ 0x154C9AC2L,\ 0x061C6936L,\ 0xF477EA35L,}
+\DoxyCodeLine{00115\ \ \ 0xAA64D611L,\ 0x580F5512L,\ 0x4B5FA6E6L,\ 0xB93425E5L,}
+\DoxyCodeLine{00116\ \ \ 0x6DFE410EL,\ 0x9F95C20DL,\ 0x8CC531F9L,\ 0x7EAEB2FAL,}
+\DoxyCodeLine{00117\ \ \ 0x30E349B1L,\ 0xC288CAB2L,\ 0xD1D83946L,\ 0x23B3BA45L,}
+\DoxyCodeLine{00118\ \ \ 0xF779DEAEL,\ 0x05125DADL,\ 0x1642AE59L,\ 0xE4292D5AL,}
+\DoxyCodeLine{00119\ \ \ 0xBA3A117EL,\ 0x4851927DL,\ 0x5B016189L,\ 0xA96AE28AL,}
+\DoxyCodeLine{00120\ \ \ 0x7DA08661L,\ 0x8FCB0562L,\ 0x9C9BF696L,\ 0x6EF07595L,}
+\DoxyCodeLine{00121\ \ \ 0x417B1DBCL,\ 0xB3109EBFL,\ 0xA0406D4BL,\ 0x522BEE48L,}
+\DoxyCodeLine{00122\ \ \ 0x86E18AA3L,\ 0x748A09A0L,\ 0x67DAFA54L,\ 0x95B17957L,}
+\DoxyCodeLine{00123\ \ \ 0xCBA24573L,\ 0x39C9C670L,\ 0x2A993584L,\ 0xD8F2B687L,}
+\DoxyCodeLine{00124\ \ \ 0x0C38D26CL,\ 0xFE53516FL,\ 0xED03A29BL,\ 0x1F682198L,}
+\DoxyCodeLine{00125\ \ \ 0x5125DAD3L,\ 0xA34E59D0L,\ 0xB01EAA24L,\ 0x42752927L,}
+\DoxyCodeLine{00126\ \ \ 0x96BF4DCCL,\ 0x64D4CECFL,\ 0x77843D3BL,\ 0x85EFBE38L,}
+\DoxyCodeLine{00127\ \ \ 0xDBFC821CL,\ 0x2997011FL,\ 0x3AC7F2EBL,\ 0xC8AC71E8L,}
+\DoxyCodeLine{00128\ \ \ 0x1C661503L,\ 0xEE0D9600L,\ 0xFD5D65F4L,\ 0x0F36E6F7L,}
+\DoxyCodeLine{00129\ \ \ 0x61C69362L,\ 0x93AD1061L,\ 0x80FDE395L,\ 0x72966096L,}
+\DoxyCodeLine{00130\ \ \ 0xA65C047DL,\ 0x5437877EL,\ 0x4767748AL,\ 0xB50CF789L,}
+\DoxyCodeLine{00131\ \ \ 0xEB1FCBADL,\ 0x197448AEL,\ 0x0A24BB5AL,\ 0xF84F3859L,}
+\DoxyCodeLine{00132\ \ \ 0x2C855CB2L,\ 0xDEEEDFB1L,\ 0xCDBE2C45L,\ 0x3FD5AF46L,}
+\DoxyCodeLine{00133\ \ \ 0x7198540DL,\ 0x83F3D70EL,\ 0x90A324FAL,\ 0x62C8A7F9L,}
+\DoxyCodeLine{00134\ \ \ 0xB602C312L,\ 0x44694011L,\ 0x5739B3E5L,\ 0xA55230E6L,}
+\DoxyCodeLine{00135\ \ \ 0xFB410CC2L,\ 0x092A8FC1L,\ 0x1A7A7C35L,\ 0xE811FF36L,}
+\DoxyCodeLine{00136\ \ \ 0x3CDB9BDDL,\ 0xCEB018DEL,\ 0xDDE0EB2AL,\ 0x2F8B6829L,}
+\DoxyCodeLine{00137\ \ \ 0x82F63B78L,\ 0x709DB87BL,\ 0x63CD4B8FL,\ 0x91A6C88CL,}
+\DoxyCodeLine{00138\ \ \ 0x456CAC67L,\ 0xB7072F64L,\ 0xA457DC90L,\ 0x563C5F93L,}
+\DoxyCodeLine{00139\ \ \ 0x082F63B7L,\ 0xFA44E0B4L,\ 0xE9141340L,\ 0x1B7F9043L,}
+\DoxyCodeLine{00140\ \ \ 0xCFB5F4A8L,\ 0x3DDE77ABL,\ 0x2E8E845FL,\ 0xDCE5075CL,}
+\DoxyCodeLine{00141\ \ \ 0x92A8FC17L,\ 0x60C37F14L,\ 0x73938CE0L,\ 0x81F80FE3L,}
+\DoxyCodeLine{00142\ \ \ 0x55326B08L,\ 0xA759E80BL,\ 0xB4091BFFL,\ 0x466298FCL,}
+\DoxyCodeLine{00143\ \ \ 0x1871A4D8L,\ 0xEA1A27DBL,\ 0xF94AD42FL,\ 0x0B21572CL,}
+\DoxyCodeLine{00144\ \ \ 0xDFEB33C7L,\ 0x2D80B0C4L,\ 0x3ED04330L,\ 0xCCBBC033L,}
+\DoxyCodeLine{00145\ \ \ 0xA24BB5A6L,\ 0x502036A5L,\ 0x4370C551L,\ 0xB11B4652L,}
+\DoxyCodeLine{00146\ \ \ 0x65D122B9L,\ 0x97BAA1BAL,\ 0x84EA524EL,\ 0x7681D14DL,}
+\DoxyCodeLine{00147\ \ \ 0x2892ED69L,\ 0xDAF96E6AL,\ 0xC9A99D9EL,\ 0x3BC21E9DL,}
+\DoxyCodeLine{00148\ \ \ 0xEF087A76L,\ 0x1D63F975L,\ 0x0E330A81L,\ 0xFC588982L,}
+\DoxyCodeLine{00149\ \ \ 0xB21572C9L,\ 0x407EF1CAL,\ 0x532E023EL,\ 0xA145813DL,}
+\DoxyCodeLine{00150\ \ \ 0x758FE5D6L,\ 0x87E466D5L,\ 0x94B49521L,\ 0x66DF1622L,}
+\DoxyCodeLine{00151\ \ \ 0x38CC2A06L,\ 0xCAA7A905L,\ 0xD9F75AF1L,\ 0x2B9CD9F2L,}
+\DoxyCodeLine{00152\ \ \ 0xFF56BD19L,\ 0x0D3D3E1AL,\ 0x1E6DCDEEL,\ 0xEC064EEDL,}
+\DoxyCodeLine{00153\ \ \ 0xC38D26C4L,\ 0x31E6A5C7L,\ 0x22B65633L,\ 0xD0DDD530L,}
+\DoxyCodeLine{00154\ \ \ 0x0417B1DBL,\ 0xF67C32D8L,\ 0xE52CC12CL,\ 0x1747422FL,}
+\DoxyCodeLine{00155\ \ \ 0x49547E0BL,\ 0xBB3FFD08L,\ 0xA86F0EFCL,\ 0x5A048DFFL,}
+\DoxyCodeLine{00156\ \ \ 0x8ECEE914L,\ 0x7CA56A17L,\ 0x6FF599E3L,\ 0x9D9E1AE0L,}
+\DoxyCodeLine{00157\ \ \ 0xD3D3E1ABL,\ 0x21B862A8L,\ 0x32E8915CL,\ 0xC083125FL,}
+\DoxyCodeLine{00158\ \ \ 0x144976B4L,\ 0xE622F5B7L,\ 0xF5720643L,\ 0x07198540L,}
+\DoxyCodeLine{00159\ \ \ 0x590AB964L,\ 0xAB613A67L,\ 0xB831C993L,\ 0x4A5A4A90L,}
+\DoxyCodeLine{00160\ \ \ 0x9E902E7BL,\ 0x6CFBAD78L,\ 0x7FAB5E8CL,\ 0x8DC0DD8FL,}
+\DoxyCodeLine{00161\ \ \ 0xE330A81AL,\ 0x115B2B19L,\ 0x020BD8EDL,\ 0xF0605BEEL,}
+\DoxyCodeLine{00162\ \ \ 0x24AA3F05L,\ 0xD6C1BC06L,\ 0xC5914FF2L,\ 0x37FACCF1L,}
+\DoxyCodeLine{00163\ \ \ 0x69E9F0D5L,\ 0x9B8273D6L,\ 0x88D28022L,\ 0x7AB90321L,}
+\DoxyCodeLine{00164\ \ \ 0xAE7367CAL,\ 0x5C18E4C9L,\ 0x4F48173DL,\ 0xBD23943EL,}
+\DoxyCodeLine{00165\ \ \ 0xF36E6F75L,\ 0x0105EC76L,\ 0x12551F82L,\ 0xE03E9C81L,}
+\DoxyCodeLine{00166\ \ \ 0x34F4F86AL,\ 0xC69F7B69L,\ 0xD5CF889DL,\ 0x27A40B9EL,}
+\DoxyCodeLine{00167\ \ \ 0x79B737BAL,\ 0x8BDCB4B9L,\ 0x988C474DL,\ 0x6AE7C44EL,}
+\DoxyCodeLine{00168\ \ \ 0xBE2DA0A5L,\ 0x4C4623A6L,\ 0x5F16D052L,\ 0xAD7D5351L}
+\DoxyCodeLine{00169\ \};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ uint32\_t\ IbcHashMap::xxComputeCrc32c16bit(uint32\_t\ crc,\ \textcolor{keyword}{const}\ Pel\ pel)}
+\DoxyCodeLine{00172\ \{}
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *buf\ =\ \&pel;}
+\DoxyCodeLine{00174\ \ \ \textcolor{keyword}{const}\ uint8\_t\ *p\ =\ (\textcolor{keyword}{const}\ uint8\_t\ *)buf;}
+\DoxyCodeLine{00175\ \ \ \textcolor{keywordtype}{size\_t}\ size\ =\ 2;}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordflow}{while}\ (size-\/-\/)}
+\DoxyCodeLine{00178\ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ crc\ =\ crc32Table[(crc\ \string^\ *p++)\ \&\ 0xff]\ \string^\ (crc\ >>\ 8);}
+\DoxyCodeLine{00180\ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \textcolor{keywordflow}{return}\ crc;}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ CRC\ calculation\ in\ C\ code}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ IbcHashMap::xxCalcBlockHash(\textcolor{keyword}{const}\ Pel*\ pel,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ crc)}
+\DoxyCodeLine{00188\ \{}
+\DoxyCodeLine{00189\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height;\ y++)}
+\DoxyCodeLine{00190\ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width;\ x++)}
+\DoxyCodeLine{00192\ \ \ \ \ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ crc\ =\ m\_computeCrc32c(crc,\ pel[x]);}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ \ \ \ \ pel\ +=\ stride;}
+\DoxyCodeLine{00196\ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \textcolor{keywordflow}{return}\ crc;}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{keyword}{template}<ChromaFormat\ chromaFormat>}
+\DoxyCodeLine{00201\ \textcolor{keywordtype}{void}\ IbcHashMap::xxBuildPicHashMap(\textcolor{keyword}{const}\ PelUnitBuf\&\ pic)}
+\DoxyCodeLine{00202\ \{}
+\DoxyCodeLine{00203\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ chromaScalingX\ =\ getChannelTypeScaleX(CHANNEL\_TYPE\_CHROMA,\ chromaFormat);}
+\DoxyCodeLine{00204\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ chromaScalingY\ =\ getChannelTypeScaleY(CHANNEL\_TYPE\_CHROMA,\ chromaFormat);}
+\DoxyCodeLine{00205\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ chromaMinBlkWidth\ =\ MIN\_PU\_SIZE\ >>\ chromaScalingX;}
+\DoxyCodeLine{00206\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ chromaMinBlkHeight\ =\ MIN\_PU\_SIZE\ >>\ chromaScalingY;}
+\DoxyCodeLine{00207\ \ \ \textcolor{keyword}{const}\ Pel*\ pelY\ =\ NULL;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{const}\ Pel*\ pelCb\ =\ NULL;}
+\DoxyCodeLine{00209\ \ \ \textcolor{keyword}{const}\ Pel*\ pelCr\ =\ NULL;}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ Position\ pos;}
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordflow}{for}\ (pos.y\ =\ 0;\ pos.y\ +\ MIN\_PU\_SIZE\ <=\ pic.Y().height;\ pos.y++)}
+\DoxyCodeLine{00213\ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ row\ pointer}}
+\DoxyCodeLine{00215\ \ \ \ \ pelY\ =\ pic.Y().bufAt(0,\ pos.y);}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{if}\ (chromaFormat\ !=\ CHROMA\_400)}
+\DoxyCodeLine{00217\ \ \ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ chromaY\ =\ pos.y\ >>\ chromaScalingY;}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ pelCb\ =\ pic.Cb().bufAt(0,\ chromaY);}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ pelCr\ =\ pic.Cr().bufAt(0,\ chromaY);}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordflow}{for}\ (pos.x\ =\ 0;\ pos.x\ +\ MIN\_PU\_SIZE\ <=\ pic.Y().width;\ pos.x++)}
+\DoxyCodeLine{00224\ \ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{comment}{//\ 0x1FF\ is\ just\ an\ initial\ value}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hashValue\ =\ 0x1FF;}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \textcolor{comment}{//\ luma\ part}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ hashValue\ =\ xxCalcBlockHash(\&pelY[pos.x],\ pic.Y().stride,\ MIN\_PU\_SIZE,\ MIN\_PU\_SIZE,\ hashValue);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{comment}{//\ chroma\ part}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (chromaFormat\ !=\ CHROMA\_400)}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ chromaX\ =\ pos.x\ >>\ chromaScalingX;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ hashValue\ =\ xxCalcBlockHash(\&pelCb[chromaX],\ pic.Cb().stride,\ chromaMinBlkWidth,\ chromaMinBlkHeight,\ hashValue);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ hashValue\ =\ xxCalcBlockHash(\&pelCr[chromaX],\ pic.Cr().stride,\ chromaMinBlkWidth,\ chromaMinBlkHeight,\ hashValue);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \textcolor{comment}{//\ hash\ table}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ m\_hash2Pos[hashValue].push\_back(pos);}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ m\_pos2Hash[pos.y][pos.x]\ =\ hashValue;}
+\DoxyCodeLine{00242\ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \}}
+\DoxyCodeLine{00244\ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{keywordtype}{void}\ IbcHashMap::rebuildPicHashMap(\textcolor{keyword}{const}\ PelUnitBuf\&\ pic)}
+\DoxyCodeLine{00247\ \{}
+\DoxyCodeLine{00248\ \ \ m\_hash2Pos.clear();}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{keywordflow}{switch}\ (pic.chromaFormat)}
+\DoxyCodeLine{00251\ \ \ \{}
+\DoxyCodeLine{00252\ \ \ \textcolor{keywordflow}{case}\ CHROMA\_400:}
+\DoxyCodeLine{00253\ \ \ \ \ xxBuildPicHashMap<CHROMA\_400>(pic);}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00255\ \ \ \textcolor{keywordflow}{case}\ CHROMA\_420:}
+\DoxyCodeLine{00256\ \ \ \ \ xxBuildPicHashMap<CHROMA\_420>(pic);}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00258\ \ \ \textcolor{keywordflow}{case}\ CHROMA\_422:}
+\DoxyCodeLine{00259\ \ \ \ \ xxBuildPicHashMap<CHROMA\_422>(pic);}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00261\ \ \ \textcolor{keywordflow}{case}\ CHROMA\_444:}
+\DoxyCodeLine{00262\ \ \ \ \ xxBuildPicHashMap<CHROMA\_444>(pic);}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00264\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00265\ \ \ \ \ THROW(\textcolor{stringliteral}{"{}invalid\ chroma\ fomat"{}});}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00267\ \ \ \}}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{keywordtype}{bool}\ IbcHashMap::ibcHashMatch(\textcolor{keyword}{const}\ Area\&\ lumaArea,\ std::vector<Position>\&\ cand,\ \textcolor{keyword}{const}\ CodingStructure\&\ cs,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxCand,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ searchRange4SmallBlk)}
+\DoxyCodeLine{00271\ \{}
+\DoxyCodeLine{00272\ \ \ cand.clear();}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \textcolor{comment}{//\ find\ the\ block\ with\ least\ candidates}}
+\DoxyCodeLine{00275\ \ \ \textcolor{keywordtype}{size\_t}\ minSize\ =\ MAX\_UINT;}
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ targetHashOneBlock\ =\ 0;}
+\DoxyCodeLine{00277\ \ \ Position\ targetBlockOffsetInCu(0,\ 0);}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordflow}{for}\ (SizeType\ y\ =\ 0;\ y\ <\ lumaArea.height\ \&\&\ minSize\ >\ 1;\ y\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00279\ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{for}\ (SizeType\ x\ =\ 0;\ x\ <\ lumaArea.width\ \&\&\ minSize\ >\ 1;\ x\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00281\ \ \ \ \ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hash\ =\ m\_pos2Hash[lumaArea.pos().y\ +\ y][lumaArea.pos().x\ +\ x];}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_hash2Pos[hash].size()\ <\ minSize)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ minSize\ =\ m\_hash2Pos[hash].size();}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ targetHashOneBlock\ =\ hash;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ targetBlockOffsetInCu.repositionTo(Position(x,\ y));}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00289\ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \textcolor{keywordflow}{if}\ (m\_hash2Pos[targetHashOneBlock].size()\ >\ 1)}
+\DoxyCodeLine{00293\ \ \ \{}
+\DoxyCodeLine{00294\ \ \ \ \ std::vector<Position>\&\ candOneBlock\ =\ m\_hash2Pos[targetHashOneBlock];}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ check\ whether\ whole\ block\ match}}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{for}\ (std::vector<Position>::iterator\ refBlockPos\ =\ candOneBlock.begin();\ refBlockPos\ !=\ candOneBlock.end();\ refBlockPos++)}
+\DoxyCodeLine{00298\ \ \ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ Position\ topLeft\ =\ refBlockPos-\/>offset(-\/targetBlockOffsetInCu.x,\ -\/targetBlockOffsetInCu.y);}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ Position\ bottomRight\ =\ topLeft.offset(lumaArea.width\ -\/\ 1,\ lumaArea.height\ -\/\ 1);}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ wholeBlockMatch\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (lumaArea.width\ >\ MIN\_PU\_SIZE\ ||\ lumaArea.height\ >\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!cs.isDecomp(bottomRight,\ CHANNEL\_TYPE\_LUMA)\ ||\ bottomRight.x\ >=\ m\_picWidth\ ||\ bottomRight.y\ >=\ m\_picHeight\ ||\ topLeft.x\ <\ 0\ ||\ topLeft.y\ <\ 0)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SizeType\ y\ =\ 0;\ y\ <\ lumaArea.height\ \&\&\ wholeBlockMatch;\ y\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (SizeType\ x\ =\ 0;\ x\ <\ lumaArea.width\ \&\&\ wholeBlockMatch;\ x\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ whether\ the\ reference\ block\ and\ current\ block\ has\ the\ same\ hash}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ wholeBlockMatch\ \&=\ (m\_pos2Hash[lumaArea.pos().y\ +\ y][lumaArea.pos().x\ +\ x]\ ==\ m\_pos2Hash[topLeft.y\ +\ y][topLeft.x\ +\ x]);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ CHECK(topLeft\ !=\ *refBlockPos,\ \textcolor{stringliteral}{"{}4x4\ target\ block\ should\ not\ have\ offset!"{}});}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(topLeft.x\ -\/\ lumaArea.x)\ >\ searchRange4SmallBlk\ ||\ abs(topLeft.y\ -\/\ lumaArea.y)\ >\ searchRange4SmallBlk\ ||\ !cs.isDecomp(bottomRight,\ CHANNEL\_TYPE\_LUMA))}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (wholeBlockMatch)}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ cand.push\_back(topLeft);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cand.size()\ >\ maxCand)}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00333\ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \textcolor{keywordflow}{return}\ cand.size()\ >\ 0;}
+\DoxyCodeLine{00337\ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \textcolor{keywordtype}{int}\ IbcHashMap::getHashHitRatio(\textcolor{keyword}{const}\ Area\&\ lumaArea)}
+\DoxyCodeLine{00340\ \{}
+\DoxyCodeLine{00341\ \ \ \textcolor{keywordtype}{int}\ maxX\ =\ std::min((\textcolor{keywordtype}{int})(lumaArea.x\ +\ lumaArea.width),\ m\_picWidth);}
+\DoxyCodeLine{00342\ \ \ \textcolor{keywordtype}{int}\ maxY\ =\ std::min((\textcolor{keywordtype}{int})(lumaArea.y\ +\ lumaArea.height),\ m\_picHeight);}
+\DoxyCodeLine{00343\ \ \ \textcolor{keywordtype}{int}\ hit\ =\ 0,\ total\ =\ 0;}
+\DoxyCodeLine{00344\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ lumaArea.y;\ y\ <\ maxY;\ y\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00345\ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ lumaArea.x;\ x\ <\ maxX;\ x\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00347\ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hash\ =\ m\_pos2Hash[y][x];}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ hit\ +=\ (m\_hash2Pos[hash].size()\ >\ 1);}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ total++;}
+\DoxyCodeLine{00351\ \ \ \ \ \}}
+\DoxyCodeLine{00352\ \ \ \}}
+\DoxyCodeLine{00353\ \ \ \textcolor{keywordflow}{return}\ 100\ *\ hit\ /\ total;}
+\DoxyCodeLine{00354\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{keywordtype}{int}\ IbcHashMap::calHashBlkMatchPerc(\textcolor{keyword}{const}\ Area\&\ lumaArea)}
+\DoxyCodeLine{00357\ \{}
+\DoxyCodeLine{00358\ \ \ \textcolor{keywordtype}{int}\ maxX\ =\ std::min((\textcolor{keywordtype}{int})(lumaArea.x\ +\ lumaArea.width),\ m\_picWidth);}
+\DoxyCodeLine{00359\ \ \ \textcolor{keywordtype}{int}\ maxY\ =\ std::min((\textcolor{keywordtype}{int})(lumaArea.y\ +\ lumaArea.height),\ m\_picHeight);}
+\DoxyCodeLine{00360\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ maxUsage[100];}
+\DoxyCodeLine{00361\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ mostSelHash[100];}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \textcolor{keyword}{static}\ \ \ \textcolor{keywordtype}{int}\ numExcludedHashValue\ =\ 36;}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ numExcludedHashValue;\ i++)}
+\DoxyCodeLine{00366\ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ maxUsage[i]\ =\ 0;}
+\DoxyCodeLine{00368\ \ \ \ \ mostSelHash[i]\ =\ 0;}
+\DoxyCodeLine{00369\ \ \ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \textcolor{keywordflow}{for}\ (std::unordered\_map<\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int},\ std::vector<Position>>::iterator\ it\ =\ m\_hash2Pos.begin();\ it\ !=\ m\_hash2Pos.end();\ ++it)}
+\DoxyCodeLine{00372\ \ \ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hash\ =\ it-\/>first;}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{int}\ usage\ =\ (int)it-\/>second.size();}
+\DoxyCodeLine{00375\ \ \ \ \ assert(usage\ ==\ m\_hash2Pos[hash].size());}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordtype}{int}\ insertPos\ =\ -\/1;}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{for}\ (insertPos\ =\ 0;\ insertPos\ <\ numExcludedHashValue;\ insertPos++)}
+\DoxyCodeLine{00379\ \ \ \ \ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usage\ >\ maxUsage[insertPos])}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00384\ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ assert(insertPos\ <=\ numExcludedHashValue);}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordflow}{if}\ (insertPos\ <\ numExcludedHashValue)}
+\DoxyCodeLine{00388\ \ \ \ \ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ (numExcludedHashValue\ -\/\ 1);\ i\ >=\ (insertPos\ +\ 1);\ i-\/-\/)}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ maxUsage[i]\ =\ maxUsage[i\ -\/\ 1];}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ mostSelHash[i]\ =\ mostSelHash[i\ -\/\ 1];}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ maxUsage[insertPos]\ =\ usage;}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ mostSelHash[insertPos]\ =\ hash;}
+\DoxyCodeLine{00396\ \ \ \ \ \}}
+\DoxyCodeLine{00397\ \ \ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \textcolor{keywordtype}{int}\ hit\ =\ 0,\ total\ =\ 0;}
+\DoxyCodeLine{00400\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ lumaArea.y;\ y\ <\ maxY;\ y\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00401\ \ \ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x\ =\ lumaArea.x;\ x\ <\ maxX;\ x\ +=\ MIN\_PU\_SIZE)}
+\DoxyCodeLine{00403\ \ \ \ \ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hash\ =\ m\_pos2Hash[y][x];}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ excludedHash\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ numExcludedHashValue\ \&\&\ !excludedHash;\ i++)}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hash\ ==\ mostSelHash[i])}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ excludedHash\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (excludedHash)}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \ \ \ \ hit\ +=\ (m\_hash2Pos[hash].size()\ >\ 1);}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ total++;}
+\DoxyCodeLine{00422\ \ \ \ \ \}}
+\DoxyCodeLine{00423\ \ \ \}}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \textcolor{keywordflow}{if}\ (total\ ==\ 0)}
+\DoxyCodeLine{00426\ \ \ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00428\ \ \ \}}
+\DoxyCodeLine{00429\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00430\ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keywordflow}{return}\ 100\ *\ hit\ /\ total;}
+\DoxyCodeLine{00432\ \ \ \}}
+\DoxyCodeLine{00433\ \}}
+
+\end{DoxyCode}

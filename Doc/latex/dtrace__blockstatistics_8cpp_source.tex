@@ -1,0 +1,1179 @@
+\doxysection{dtrace\+\_\+blockstatistics.\+cpp}
+\label{dtrace__blockstatistics_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/dtrace\_blockstatistics.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/dtrace\_blockstatistics.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}dtrace\_blockstatistics.h"{}}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}dtrace.h"{}}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}dtrace\_next.h"{}}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}CommonLib/Unit.h"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}CommonLib/Picture.h"{}}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}CommonLib/UnitTools.h"{}}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\#include\ "{}CommonLib/CodingStructure.h"{}}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ BLOCK\_STATS\_POLYGON\_MIN\_POINTS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 3}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ BLOCK\_STATS\_POLYGON\_MAX\_POINTS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 5}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#if\ K0149\_BLOCK\_STATISTICS}}
+\DoxyCodeLine{00051\ std::string\ GetBlockStatisticName(BlockStatistic\ statistic)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{auto}\ statisticIterator\ =\ blockstatistic2description.find(statistic);}
+\DoxyCodeLine{00054\ \ \ \textcolor{comment}{//\ enforces\ that\ all\ delcared\ statistic\ enum\ items\ are\ also\ part\ of\ the\ map}}
+\DoxyCodeLine{00055\ \ \ assert(statisticIterator\ !=\ blockstatistic2description.end()\ \&\&\ \textcolor{stringliteral}{"{}A\ block\ statistics\ declared\ in\ the\ enum\ is\ missing\ in\ the\ map\ for\ statistic\ description."{}});}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \textcolor{keywordflow}{return}\ std::get<0>(statisticIterator-\/>second);}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ std::string\ GetBlockStatisticTypeString(BlockStatistic\ statistic)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \textcolor{keyword}{auto}\ statisticIterator\ =\ blockstatistic2description.find(statistic);}
+\DoxyCodeLine{00063\ \ \ \textcolor{comment}{//\ enforces\ that\ all\ delcared\ statistic\ enum\ items\ are\ also\ part\ of\ the\ map}}
+\DoxyCodeLine{00064\ \ \ assert(statisticIterator\ !=\ blockstatistic2description.end()\ \&\&\ \textcolor{stringliteral}{"{}A\ block\ statistics\ declared\ in\ the\ enum\ is\ missing\ in\ the\ map\ for\ statistic\ description."{}});}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ BlockStatisticType\ statisticType\ =\ std::get<1>(statisticIterator-\/>second);}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordflow}{switch}\ (statisticType)\ \{}
+\DoxyCodeLine{00068\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::Flag:}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}Flag"{}});}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00071\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::Vector:}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}Vector"{}});}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::Integer:}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}Integer"{}});}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00077\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::AffineTFVectors:}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}AffineTFVectors"{}});}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00080\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::Line:}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}Line"{}});}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::FlagPolygon:}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}FlagPolygon"{}});}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::VectorPolygon:}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}VectorPolygon"{}});}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordflow}{case}\ BlockStatisticType::IntegerPolygon:}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string(\textcolor{stringliteral}{"{}IntegerPolygon"{}});}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00093\ \ \ \ \ assert(0);}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00095\ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordflow}{return}\ std::string();}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ std::string\ GetBlockStatisticTypeSpecificInfo(BlockStatistic\ statistic)}
+\DoxyCodeLine{00100\ \{}
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{auto}\ statisticIterator\ =\ blockstatistic2description.find(statistic);}
+\DoxyCodeLine{00102\ \ \ \textcolor{comment}{//\ enforces\ that\ all\ delcared\ statistic\ enum\ items\ are\ also\ part\ of\ the\ map}}
+\DoxyCodeLine{00103\ \ \ assert(statisticIterator\ !=\ blockstatistic2description.end()\ \&\&\ \textcolor{stringliteral}{"{}A\ block\ statistics\ declared\ in\ the\ enum\ is\ missing\ in\ the\ map\ for\ statistic\ description."{}});}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \textcolor{keywordflow}{return}\ std::get<2>(statisticIterator-\/>second);}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_scalar(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ value\ )}
+\DoxyCodeLine{00109\ \{}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00111\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cs.area.lx(),\ cs.area.ly(),\ cs.area.lwidth(),\ cs.area.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00113\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cs.area.lx(),\ cs.area.ly(),\ cs.area.lwidth(),\ cs.area.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_scalar(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ CodingUnit\ \&cu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ value,\ \ \textcolor{keywordtype}{bool}\ isChroma\ \textcolor{comment}{/*=\ false*/}\ \ )}
+\DoxyCodeLine{00118\ \{}
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *cu.cs;}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00122\ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.Cb().x*2,\ cu.Cb().y*2,\ cu.Cb().width*2,\ cu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00124\ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00126\ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00128\ \ \ \}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00131\ \ \ \{}
+\DoxyCodeLine{00132\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.Cb().x*2,\ cu.Cb().y*2,\ cu.Cb().width*2,\ cu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00133\ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00135\ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00137\ \ \ \}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_vector(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ CodingUnit\ \&cu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ val\_x,\ \textcolor{keywordtype}{signed}\ val\_y\ )}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *cu.cs;}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00145\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y\ );}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00147\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},\ cs.picture-\/>poc,\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y\ );}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00149\ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_scalar(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ value,\ \textcolor{keywordtype}{bool}\ isChroma\ \textcolor{comment}{/*=\ false*/}\ \ )}
+\DoxyCodeLine{00152\ \{}
+\DoxyCodeLine{00153\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *pu.cs;}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00155\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00156\ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.Cb().x*2,\ pu.Cb().y*2,\ pu.Cb().width*2,\ pu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00158\ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00160\ \ \ \{}
+\DoxyCodeLine{00161\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00162\ \ \ \}}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00165\ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.Cb().x*2,\ pu.Cb().y*2,\ pu.Cb().width*2,\ pu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00167\ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00169\ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00171\ \ \ \}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00173\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_vector(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ val\_x,\ \textcolor{keywordtype}{signed}\ val\_y,\ \textcolor{keywordtype}{bool}\ isChroma\ \textcolor{comment}{/*=\ false*/}\ \ )}
+\DoxyCodeLine{00176\ \{}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *pu.cs;}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00179\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00180\ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ \ pu.Cb().x*2,\ pu.Cb().y*2,\ pu.Cb().width*2,\ pu.Cb().height*2,\ stat\_type.c\_str(),\ val\_x*2,\ val\_y*2\ );}
+\DoxyCodeLine{00182\ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00184\ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y\ );}
+\DoxyCodeLine{00186\ \ \ \}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00188\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00189\ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.Cb().x*2,\ pu.Cb().y*2,\ pu.Cb().width*2,\ pu.Cb().height*2,\ stat\_type.c\_str(),\ val\_x*2,\ val\_y*2\ );}
+\DoxyCodeLine{00191\ \ \ \}}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00193\ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},\ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y\ );}
+\DoxyCodeLine{00195\ \ \ \}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00197\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_scalar(\textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ TransformUnit\ \&tu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ value,\ \textcolor{keywordtype}{bool}\ isChroma\ \textcolor{comment}{/*=\ false*/}\ \ )}
+\DoxyCodeLine{00200\ \{}
+\DoxyCodeLine{00201\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *tu.cs;}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00203\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00204\ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.Cb().x*2,\ tu.Cb().y*2,\ tu.Cb().width*2,\ tu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00206\ \ \ \}}
+\DoxyCodeLine{00207\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00208\ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.lx(),\ tu.ly(),\ tu.lwidth(),\ tu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00210\ \ \ \}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordflow}{if}(isChroma)}
+\DoxyCodeLine{00213\ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.Cb().x*2,\ tu.Cb().y*2,\ tu.Cb().width*2,\ tu.Cb().height*2,\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00215\ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00217\ \ \ \{}
+\DoxyCodeLine{00218\ \ \ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\%d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.lx(),\ tu.ly(),\ tu.lwidth(),\ tu.lheight(),\ stat\_type.c\_str(),\ value\ );}
+\DoxyCodeLine{00219\ \ \ \}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_vector(\textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ TransformUnit\ \&tu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ val\_x,\ \textcolor{keywordtype}{signed}\ val\_y)}
+\DoxyCodeLine{00224\ \{}
+\DoxyCodeLine{00225\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *tu.cs;}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00227\ \ \ dtrace<false>(k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.lx(),\ tu.ly(),\ tu.lwidth(),\ tu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y);}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00229\ \ \ dtrace<false>(k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},\ cs.picture-\/>poc,\ tu.lx(),\ tu.ly(),\ tu.lwidth(),\ tu.lheight(),\ stat\_type.c\_str(),\ val\_x,\ val\_y);}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_affinetf(\ \textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ val\_x0,\ \textcolor{keywordtype}{signed}\ val\_y0,\ \textcolor{keywordtype}{signed}\ val\_x1,\ \textcolor{keywordtype}{signed}\ val\_y1,\ \textcolor{keywordtype}{signed}\ val\_x2,\ \textcolor{keywordtype}{signed}\ val\_y2\ )}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ =\ *pu.cs;}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00237\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d;\%4d;\%4d;\%4d;\%4d\(\backslash\)n"{}},}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ val\_x0,\ val\_y0,\ val\_x1,\ val\_y1\ ,\ val\_x2,\ val\_y2\ \ );}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00241\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d,\%4d,\%4d,\%4d,\%4d\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,\ pu.lx(),\ pu.ly(),\ pu.lwidth(),\ pu.lheight(),\ stat\_type.c\_str(),}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ val\_x0,\ val\_y0,\ val\_x1,\ val\_y1\ ,\ val\_x2,\ val\_y2\ \ );}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00245\ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_block\_line(\textcolor{keywordtype}{int}\ k,\ \textcolor{keyword}{const}\ CodingUnit\ \&cu,\ std::string\ stat\_type,\ \textcolor{keywordtype}{int}\ x0,\ \textcolor{keywordtype}{int}\ y0,\ \textcolor{keywordtype}{int}\ x1,\ \textcolor{keywordtype}{int}\ y1)}
+\DoxyCodeLine{00248\ \{}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00250\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d;\%4d;\%4d;\(\backslash\)n"{}},\ cu.slice-\/>getPOC(),\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ x0,\ y0,\ x1,\ y1);}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00252\ \ \ dtrace<false>(k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d,\%4d,\%4d\}\(\backslash\)n"{}},\ cu.slice-\/>getPOC(),\ cu.lx(),\ cu.ly(),\ cu.lwidth(),\ cu.lheight(),\ stat\_type.c\_str(),\ x0,\ y0,\ x1,\ y1);}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00254\ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_polygon\_scalar(\textcolor{keywordtype}{int}\ k,\ \textcolor{keywordtype}{int}\ poc,\ \textcolor{keyword}{const}\ std::vector<Position>\ \&polygon,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ value)}
+\DoxyCodeLine{00257\ \{}
+\DoxyCodeLine{00258\ \ \ assert(polygon.size()\ >=\ BLOCK\_STATS\_POLYGON\_MIN\_POINTS\ \&\&\ \textcolor{stringliteral}{"{}Not\ enough\ points\ to\ from\ polygon!"{}});}
+\DoxyCodeLine{00259\ \ \ assert(polygon.size()\ <=\ BLOCK\_STATS\_POLYGON\_MAX\_POINTS\ \&\&\ \textcolor{stringliteral}{"{}Too\ many\ points.\ Unsupported\ polygon!"{}});}
+\DoxyCodeLine{00260\ \ \ std::string\ polygonDescription;}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00262\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ position\ :\ polygon)}
+\DoxyCodeLine{00263\ \ \ \{}
+\DoxyCodeLine{00264\ \ \ \ \ polygonDescription\ +=\ std::to\_string(position.x)\ +\ \textcolor{stringliteral}{"{};"{}}\ +\ std::to\_string(position.y)\ +\ \textcolor{stringliteral}{"{};"{}};}
+\DoxyCodeLine{00265\ \ \ \}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%s\%s;\%d\(\backslash\)n"{}},poc,\ polygonDescription.c\_str(),\ stat\_type.c\_str(),\ value);}
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00269\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ position\ :\ polygon)}
+\DoxyCodeLine{00270\ \ \ \{}
+\DoxyCodeLine{00271\ \ \ \ \ polygonDescription\ +=\ \textcolor{stringliteral}{"{}("{}}\ +\ std::to\_string(position.x)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ std::to\_string(position.y)\ +\ \textcolor{stringliteral}{"{})-\/-\/"{}};}
+\DoxyCodeLine{00272\ \ \ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ dtrace<false>(k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @[\%s]\ \%s=\%d\(\backslash\)n"{}},\ poc,\ polygonDescription.c\_str(),\ stat\_type.c\_str(),\ value);}
+\DoxyCodeLine{00275\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00276\ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \textcolor{keywordtype}{void}\ CDTrace::dtrace\_polygon\_vector(\textcolor{keywordtype}{int}\ k,\ \textcolor{keywordtype}{int}\ poc,\ \textcolor{keyword}{const}\ std::vector<Position>\ \&polygon,\ std::string\ stat\_type,\ \textcolor{keywordtype}{signed}\ val\_x,\ \textcolor{keywordtype}{signed}\ val\_y)}
+\DoxyCodeLine{00279\ \{}
+\DoxyCodeLine{00280\ \ \ assert(polygon.size()\ >=\ BLOCK\_STATS\_POLYGON\_MIN\_POINTS\ \&\&\ \textcolor{stringliteral}{"{}Not\ enough\ points\ to\ from\ polygon!"{}});}
+\DoxyCodeLine{00281\ \ \ assert(polygon.size()\ <=\ BLOCK\_STATS\_POLYGON\_MAX\_POINTS\ \&\&\ \textcolor{stringliteral}{"{}Too\ many\ points.\ Unsupported\ polygon!"{}});}
+\DoxyCodeLine{00282\ \ \ std::string\ polygonDescription;}
+\DoxyCodeLine{00283\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00284\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ position\ :\ polygon)}
+\DoxyCodeLine{00285\ \ \ \{}
+\DoxyCodeLine{00286\ \ \ \ \ polygonDescription\ +=\ std::to\_string(position.x)\ +\ \textcolor{stringliteral}{"{};"{}}\ +\ std::to\_string(position.y)\ +\ \textcolor{stringliteral}{"{};"{}};}
+\DoxyCodeLine{00287\ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ dtrace<false>(\ k,\ \textcolor{stringliteral}{"{}BlockStat;\%d;\%s\%s;\%d;\%d\(\backslash\)n"{}},poc,\ polygonDescription.c\_str(),\ stat\_type.c\_str(),\ val\_x,\ val\_y);}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00291\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ position\ :\ polygon)}
+\DoxyCodeLine{00292\ \ \ \{}
+\DoxyCodeLine{00293\ \ \ \ \ polygonDescription\ +=\ \textcolor{stringliteral}{"{}("{}}\ +\ std::to\_string(position.x)\ +\ \textcolor{stringliteral}{"{},\ "{}}\ +\ std::to\_string(position.y)\ +\ \textcolor{stringliteral}{"{})-\/-\/"{}};}
+\DoxyCodeLine{00294\ \ \ \}}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ dtrace<false>(k,\ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @[\%s]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},\ poc,\ polygonDescription.c\_str(),\ stat\_type.c\_str(),\ val\_x,\ val\_y);}
+\DoxyCodeLine{00297\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \textcolor{keywordtype}{void}\ retrieveGeoPolygons(\textcolor{keyword}{const}\ CodingUnit\&\ cu,\ std::vector<Position>\ (\&geoPartitions)[2],\ Position\ (\&linePositions)[2])}
+\DoxyCodeLine{00301\ \{}
+\DoxyCodeLine{00302\ \ \ \textcolor{comment}{//\ adapted\ code\ from\ interpolation\ filter\ to\ find\ geo\ partition\ polygons\ like\ this:}}
+\DoxyCodeLine{00303\ \ \ \textcolor{comment}{//\ use\ SAD\ mask,\ which\ should\ clearly\ partition\ the\ two\ polygons.}}
+\DoxyCodeLine{00304\ \ \ \textcolor{comment}{//\ loop\ over\ boundary\ pixels\ and\ find\ positions\ where\ there\ is\ a\ change,\ these\ should\ be\ the\ polygon\ corners}}
+\DoxyCodeLine{00305\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ isInitialized\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00306\ \ \ \textcolor{keyword}{static}\ std::vector<Position>\ allGeoPartitionings[GEO\_NUM\_CU\_SIZE][GEO\_NUM\_CU\_SIZE][GEO\_NUM\_PARTITION\_MODE][2];}
+\DoxyCodeLine{00307\ \ \ \textcolor{keyword}{static}\ Position\ allGeoPartitioningLines[GEO\_NUM\_CU\_SIZE][GEO\_NUM\_CU\_SIZE][GEO\_NUM\_PARTITION\_MODE][2];}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{if}(!isInitialized)}
+\DoxyCodeLine{00310\ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ hIdx\ =\ 0;\ hIdx\ <\ GEO\_NUM\_CU\_SIZE;\ hIdx++\ )}
+\DoxyCodeLine{00312\ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ int16\_t\ height\ =\ 1\ <<\ (\ hIdx\ +\ GEO\_MIN\_CU\_LOG2);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ wIdx\ =\ 0;\ wIdx\ <\ GEO\_NUM\_CU\_SIZE;\ wIdx++\ )}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ int16\_t\ width\ =\ 1\ <<\ (wIdx\ +\ GEO\_MIN\_CU\_LOG2);}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ splitDir\ =\ 0;\ splitDir\ <\ GEO\_NUM\_PARTITION\_MODE;\ splitDir++\ )}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ int16\_t\ angle\ \ \ \ \ \ \ \ \ =\ g\_GeoParams[splitDir][0];}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ maskStride\ =\ 0;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ stepX\ =\ 1;}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ Pel*\ SADmask;}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (g\_angle2mirror[angle]\ ==\ 2)}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ maskStride\ =\ -\/GEO\_WEIGHT\_MASK\_SIZE;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ =\ \&g\_globalGeoEncSADmask[g\_angle2mask[g\_GeoParams[splitDir][0]]][(GEO\_WEIGHT\_MASK\_SIZE\ -\/\ 1\ -\/\ g\_weightOffset[splitDir][hIdx][wIdx][1])\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ g\_weightOffset[splitDir][hIdx][wIdx][0]];}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (g\_angle2mirror[angle]\ ==\ 1)}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ stepX\ =\ -\/1;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ maskStride\ =\ GEO\_WEIGHT\_MASK\_SIZE;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ =\ \&g\_globalGeoEncSADmask[g\_angle2mask[g\_GeoParams[splitDir][0]]][g\_weightOffset[splitDir][hIdx][wIdx][1]\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ (GEO\_WEIGHT\_MASK\_SIZE\ -\/\ 1\ -\/\ g\_weightOffset[splitDir][hIdx][wIdx][0])];}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ maskStride\ =\ GEO\_WEIGHT\_MASK\_SIZE;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ =\ \&g\_globalGeoEncSADmask[g\_angle2mask[g\_GeoParams[splitDir][0]]][g\_weightOffset[splitDir][hIdx][wIdx][1]\ *\ GEO\_WEIGHT\_MASK\_SIZE\ +\ g\_weightOffset[splitDir][hIdx][wIdx][0]];}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ currentPartition\ =\ 0;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ std::vector<Pel>\ boundaryOfMask;\ \textcolor{comment}{//\ for\ debugging}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ Area\ partitionArea\ =\ Area(0,\ 0,\ width,\ height);}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ Position\ TL\ =\ partitionArea.topLeft();}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ Position\ TR\ =\ partitionArea.topRight();\ \ \ \ TR\ =\ TR.offset(1,\ 0);}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ Position\ BL\ =\ partitionArea.bottomLeft();\ \ BL\ =\ BL.offset(0,\ 1);}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ Position\ BR\ =\ partitionArea.bottomRight();\ BR\ =\ BR.offset(1,\ 1);}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ std::vector<Position>\ oneGeoPartitioning[2];}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ Position\ oneGeoPartitioningLine[2];}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ corner\ of\ block\ is\ a\ corner\ of\ the\ first\ partition}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(TL);}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ top\ boundary}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ width-\/1;\ x++\ )}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ boundaryOfMask.push\_back(*SADmask);}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*SADmask\ !=\ *(SADmask+stepX))}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\ a\ change\ of\ partitions,\ it\ is\ a\ corner\ of\ both\ partition\ polygons}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TL.x\ +\ x,\ TL.y));}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioningLine[currentPartition]\ =\ Position(TL.x\ +\ x,\ TL.y);}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentPartition\ \string^=\ 0x01;}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TL.x\ +\ x,\ TL.y));}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ +=\ stepX;}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ corner\ of\ block\ is\ a\ corner\ of\ the\ current\ partition}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(TR);}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ right\ boundary}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ height-\/1;\ y++\ )}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ boundaryOfMask.push\_back(*SADmask);}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*SADmask\ !=\ *(SADmask+maskStride))}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\ a\ change\ of\ partitions,\ it\ is\ a\ corner\ of\ both\ partition\ polygons}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TR.x,\ TR.y\ +\ y));}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioningLine[currentPartition]\ =\ Position(TR.x,\ TR.y\ +\ y);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentPartition\ \string^=\ 0x01;}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TR.x,\ TR.y\ +\ y));}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ +=\ maskStride;}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ corner\ of\ block\ is\ a\ corner\ of\ the\ current\ partition}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(BR);}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ bottom\ boundary}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ width-\/1;\ x\ >\ 0;\ x-\/-\/\ )}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ boundaryOfMask.push\_back(*SADmask);}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*SADmask\ !=\ *(SADmask-\/stepX))}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\ a\ change\ of\ partitions,\ it\ is\ a\ corner\ of\ both\ partition\ polygons}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(BL.x\ +\ x,\ BL.y));}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioningLine[currentPartition]\ =\ Position(BL.x\ +\ x,\ BL.y);}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentPartition\ \string^=\ 0x01;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(BL.x\ +\ x,\ BL.y));}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ -\/=\ stepX;}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ corner\ of\ block\ is\ a\ corner\ of\ the\ current\ partition}}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(BL);}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ process\ left\ boundary}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ height-\/1;\ y\ >\ 0;\ y-\/-\/\ )}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ boundaryOfMask.push\_back(*SADmask);}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*SADmask\ !=\ *(SADmask-\/maskStride))}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\ a\ change\ of\ partitions,\ it\ is\ a\ corner\ of\ both\ partition\ polygons}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TL.x,\ TL.y\ +\ y));}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioningLine[currentPartition]\ =\ Position(TL.x,\ TL.y\ +\ y);}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentPartition\ \string^=\ 0x01;}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(Position(TL.x,\ TL.y\ +\ y));}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ SADmask\ -\/=\ maskStride;}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ corner\ of\ block\ is\ a\ corner\ of\ the\ current\ partition}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[currentPartition].push\_back(TL);}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ remove\ duplicate\ points}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ geoPartIdx\ =\ 0;\ geoPartIdx\ <\ 2;\ geoPartIdx++)}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ will\ only\ remove\ consecutive\ duplicates}}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ last\ =\ std::unique(oneGeoPartitioning[geoPartIdx].begin(),\ oneGeoPartitioning[geoPartIdx].end());}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[geoPartIdx].erase(last,\ oneGeoPartitioning[geoPartIdx].end());}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ also\ check\ if\ first\ and\ last\ are\ the\ same}}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(oneGeoPartitioning[geoPartIdx].front()\ ==\ oneGeoPartitioning[geoPartIdx].back())}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ oneGeoPartitioning[geoPartIdx].pop\_back();}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(!(oneGeoPartitioning[geoPartIdx].size()\ >\ 2\ \&\&\ oneGeoPartitioning[geoPartIdx].size()\ <\ 6),\ \textcolor{stringliteral}{"{}Invalid\ geo\ partition\ shape.\ Polygon\ should\ have\ between\ 3\ and\ 5\ corners."{}});}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ allGeoPartitionings[hIdx][wIdx][splitDir][0]\ =\ oneGeoPartitioning[0];}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ allGeoPartitionings[hIdx][wIdx][splitDir][1]\ =\ oneGeoPartitioning[1];}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ allGeoPartitioningLines[hIdx][wIdx][splitDir][0]\ =\ oneGeoPartitioningLine[0];}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ allGeoPartitioningLines[hIdx][wIdx][splitDir][1]\ =\ oneGeoPartitioningLine[1];}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ \ \ \ \ \}}
+\DoxyCodeLine{00449\ \ \ \ \ isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00450\ \ \ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \textcolor{keyword}{const}\ uint8\_t\ splitDir\ =\ cu.firstPU-\/>geoSplitDir;}
+\DoxyCodeLine{00453\ \ \ int16\_t\ wIdx\ =\ floorLog2(cu.lwidth())\ -\/\ GEO\_MIN\_CU\_LOG2;}
+\DoxyCodeLine{00454\ \ \ int16\_t\ hIdx\ =\ floorLog2(cu.lheight())\ -\/\ GEO\_MIN\_CU\_LOG2;}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ Position\ TL\ =\ cu.Y().topLeft();}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ geoPartitions[0]\ =\ allGeoPartitionings[hIdx][wIdx][splitDir][0];}
+\DoxyCodeLine{00459\ \ \ geoPartitions[1]\ =\ allGeoPartitionings[hIdx][wIdx][splitDir][1];}
+\DoxyCodeLine{00460\ \ \ linePositions[0]\ =\ allGeoPartitioningLines[hIdx][wIdx][splitDir][0];}
+\DoxyCodeLine{00461\ \ \ linePositions[1]\ =\ allGeoPartitioningLines[hIdx][wIdx][splitDir][1];}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \textcolor{comment}{//\ offset\ the\ partitioning\ to\ the\ current\ cu}}
+\DoxyCodeLine{00464\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ geoPartIdx\ =\ 0;\ geoPartIdx\ <\ 2;\ geoPartIdx++)}
+\DoxyCodeLine{00465\ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordflow}{for}(\ Position\ \&polygonCorner\ :\ geoPartitions[geoPartIdx])}
+\DoxyCodeLine{00467\ \ \ \ \ \{}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ polygonCorner.repositionTo(polygonCorner.offset(TL));}
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ \ \ \}}
+\DoxyCodeLine{00471\ \}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ std::queue<MergeCtx>\ geoMergeCtxtsOfCurrentCtu;}
+\DoxyCodeLine{00474\ \textcolor{keywordtype}{void}\ storeGeoMergeCtx(MergeCtx\ geoMergeCtx)}
+\DoxyCodeLine{00475\ \{}
+\DoxyCodeLine{00476\ \ \ geoMergeCtxtsOfCurrentCtu.push(geoMergeCtx);}
+\DoxyCodeLine{00477\ \}}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \textcolor{keywordtype}{void}\ writeBlockStatisticsHeader(\textcolor{keyword}{const}\ SPS\ *sps)}
+\DoxyCodeLine{00480\ \{}
+\DoxyCodeLine{00481\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ has\_header\_been\_written\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordflow}{if}\ (has\_header\_been\_written)}
+\DoxyCodeLine{00483\ \ \ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00485\ \ \ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \textcolor{comment}{//\ only\ write\ header\ when\ block\ statistics\ are\ used}}
+\DoxyCodeLine{00488\ \ \ \textcolor{keywordtype}{bool}\ write\_blockstatistics\ =\ \ \ g\_trace\_ctx-\/>isChannelActive(\ D\_BLOCK\_STATISTICS\_ALL)\ ||\ g\_trace\_ctx-\/>isChannelActive(\ D\_BLOCK\_STATISTICS\_CODED);}
+\DoxyCodeLine{00489\ \ \ \textcolor{keywordflow}{if}(!write\_blockstatistics)}
+\DoxyCodeLine{00490\ \ \ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00492\ \ \ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ DTRACE\_HEADER(\ g\_trace\_ctx,\ \textcolor{stringliteral}{"{}\#\ VTMBMS\ Block\ Statistics\(\backslash\)n"{}});}
+\DoxyCodeLine{00495\ \ \ \textcolor{comment}{//\ sequence\ info}}
+\DoxyCodeLine{00496\ \ \ DTRACE\_HEADER(\ g\_trace\_ctx,\ \textcolor{stringliteral}{"{}\#\ Sequence\ size:\ [\%dx\ \%d]\(\backslash\)n"{}},\ sps-\/>getMaxPicWidthInLumaSamples(),\ sps-\/>getMaxPicHeightInLumaSamples()\ );}
+\DoxyCodeLine{00497\ \ \ \textcolor{comment}{//\ list\ statistics}}
+\DoxyCodeLine{00498\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ i\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(BlockStatistic::PredMode);\ i\ <\ static\_cast<int>(BlockStatistic::NumBlockStatistics);\ i++)}
+\DoxyCodeLine{00499\ \ \ \{}
+\DoxyCodeLine{00500\ \ \ \ \ BlockStatistic\ statistic\ =\ BlockStatistic(i);}
+\DoxyCodeLine{00501\ \ \ \ \ std::string\ statitic\_name\ =\ GetBlockStatisticName(statistic);}
+\DoxyCodeLine{00502\ \ \ \ \ std::string\ statitic\_type\ =\ GetBlockStatisticTypeString(statistic);}
+\DoxyCodeLine{00503\ \ \ \ \ std::string\ statitic\_type\_specific\_info\ =\ GetBlockStatisticTypeSpecificInfo(statistic);}
+\DoxyCodeLine{00504\ \ \ \ \ DTRACE\_HEADER(\ g\_trace\_ctx,\ \textcolor{stringliteral}{"{}\#\ Block\ Statistic\ Type:\ \%s;\ \%s;\ \%s\(\backslash\)n"{}},\ statitic\_name.c\_str(),\ statitic\_type.c\_str(),\ statitic\_type\_specific\_info.c\_str());}
+\DoxyCodeLine{00505\ \ \ \}}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ has\_header\_been\_written\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00508\ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \textcolor{keywordtype}{void}\ getAndStoreBlockStatistics(\textcolor{keyword}{const}\ CodingStructure\&\ cs,\ \textcolor{keyword}{const}\ UnitArea\&\ ctuArea)}
+\DoxyCodeLine{00511\ \{}
+\DoxyCodeLine{00512\ \ \ \textcolor{comment}{//\ two\ differemt\ behaviors,\ depending\ on\ which\ information\ is\ needed}}
+\DoxyCodeLine{00513\ \ \ \textcolor{keywordtype}{bool}\ writeAll\ =\ \ \ g\_trace\_ctx-\/>isChannelActive(\ D\_BLOCK\_STATISTICS\_ALL);}
+\DoxyCodeLine{00514\ \ \ \textcolor{keywordtype}{bool}\ writeCoded\ =\ \ \ g\_trace\_ctx-\/>isChannelActive(\ D\_BLOCK\_STATISTICS\_CODED);}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ CHECK(writeAll\ \&\&\ writeCoded,\ \textcolor{stringliteral}{"{}Either\ used\ D\_BLOCK\_STATISTICS\_ALL\ or\ D\_BLOCK\_STATISTICS\_CODED.\ Not\ both\ at\ once!"{}})}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ if\ (writeCoded)}
+\DoxyCodeLine{00519\ \ \ \ \ writeAllCodedData(cs,\ ctuArea);\ \ \ \ \textcolor{comment}{//\ this\ will\ write\ out\ important\ cu-\/based\ data,\ only\ if\ it\ is\ actually\ decoded\ and\ used}}
+\DoxyCodeLine{00520\ \ \ else\ if\ (writeAll)}
+\DoxyCodeLine{00521\ \ \ \ \ writeAllData(cs,\ ctuArea);\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ will\ write\ out\ all\ inter-\/\ or\ intra-\/prediction\ related\ data}}
+\DoxyCodeLine{00522\ \}}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \textcolor{keywordtype}{void}\ writeAllData(const\ CodingStructure\&\ cs,\ const\ UnitArea\&\ ctuArea)}
+\DoxyCodeLine{00525\ \{}
+\DoxyCodeLine{00526\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxNumChannelType\ =\ cs.pcv-\/>chrFormat\ !=\ CHROMA\_400\ \&\&\ CS::isDualITree(\ cs\ )\ ?\ 2\ :\ 1;}
+\DoxyCodeLine{00527\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nShift\ =\ MV\_FRACTIONAL\_BITS\_DIFF;}
+\DoxyCodeLine{00528\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nOffset\ =\ 1\ <<\ (nShift\ -\/\ 1);}
+\DoxyCodeLine{00529\ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ ch\ =\ 0;\ ch\ <\ maxNumChannelType;\ ch++\ )}
+\DoxyCodeLine{00530\ \ \ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType\ =\ ChannelType(\ ch\ );}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{const}\ CodingUnit\ \&cu\ :\ cs.traverseCUs(\ CS::getArea(\ cs,\ ctuArea,\ chType\ ),\ chType\ )\ )}
+\DoxyCodeLine{00534\ \ \ \ \ \{}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ chType\ ==\ CHANNEL\_TYPE\_LUMA\ )}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::PredMode),\ cu.predMode);}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::Depth),\ cu.depth);}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::QT\_Depth),\ cu.qtDepth);}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BT\_Depth),\ cu.btDepth);}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::MT\_Depth),\ cu.mtDepth);}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::ChromaQPAdj),\ cu.chromaQpAdj);}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::QP),\ cu.qp);}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SplitSeries),\ (\textcolor{keywordtype}{int})cu.splitSeries);}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ skip\ flag}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!cs.slice-\/>isIntra())}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SkipFlag),\ cu.skip);}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BDPCM),\ cu.bdpcmMode);}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BDPCMChroma),\ cu.bdpcmModeChroma);}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::TileIdx),\ cu.tileIdx);}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::IndependentSliceIdx),\ cu.slice-\/>getIndependentSliceIdx());}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::LFNSTIdx),\ cu.lfnstIdx);}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::MMVDSkipFlag),\ cu.mmvdSkip);}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ chType\ ==\ CHANNEL\_TYPE\_CHROMA\ )}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::Depth\_Chroma),\ cu.depth);}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::QT\_Depth\_Chroma),\ cu.qtDepth);}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BT\_Depth\_Chroma),\ cu.btDepth);}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::MT\_Depth\_Chroma),\ cu.mtDepth);}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::ChromaQPAdj\_Chroma),\ cu.chromaQpAdj);}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::QP\_Chroma),\ cu.qp);}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SplitSeries\_Chroma),\ (\textcolor{keywordtype}{int})cu.splitSeries);}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BDPCMChroma),\ cu.bdpcmModeChroma);}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(\ cu.predMode\ )}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MODE\_INTER:}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ :\ CU::traversePUs(\ cu\ )\ )}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pu.cu-\/>skip)}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeFlag),\ pu.mergeFlag);}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::RegularMergeFlag),\ pu.regularMergeFlag);}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pu.mergeFlag\ )}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeIdx),\ \ pu.mergeIdx);}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeType),\ pu.mergeType);}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MMVDMergeFlag),\ \ pu.mmvdMergeFlag);}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.mmvdSkip\ ||\ pu.mmvdMergeFlag)}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MMVDMergeIdx),\ \ pu.mmvdMergeIdx);}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::CiipFlag),\ \ pu.ciipFlag);}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.ciipFlag)}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::Luma\_IntraMode),\ \ pu.intraDir[COMPONENT\_Y]);}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineFlag),\ pu.cu-\/>affine);}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineType),\ pu.cu-\/>affineType);}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::InterDir),\ pu.interDir);}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVPIdxL0),\ pu.mvpIdx[REF\_PIC\_LIST\_0]);}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::RefIdxL0),\ pu.refIdx[REF\_PIC\_LIST\_0]);}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVPIdxL1),\ pu.mvpIdx[REF\_PIC\_LIST\_1]);}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::RefIdxL1),\ pu.refIdx[REF\_PIC\_LIST\_1]);}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pu.cu-\/>affine\ \&\&\ !pu.cu-\/>geoFlag)}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv\ =\ pu.mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mvd\ =\ pu.mvd[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor\ =\ mv.hor\ >=\ 0\ ?\ (mv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver\ =\ mv.ver\ >=\ 0\ ?\ (mv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.hor\ =\ mvd.hor\ >=\ 0\ ?\ (mvd.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.ver\ =\ mvd.ver\ >=\ 0\ ?\ (mvd.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVDL0),\ mvd.hor,\ mvd.ver);}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVL0),\ mv.hor,\ mv.ver);}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv\ =\ pu.mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mvd\ =\ pu.mvd[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor\ =\ mv.hor\ >=\ 0\ ?\ (mv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver\ =\ mv.ver\ >=\ 0\ ?\ (mv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.hor\ =\ mvd.hor\ >=\ 0\ ?\ (mvd.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.ver\ =\ mvd.ver\ >=\ 0\ ?\ (mvd.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVDL1),\ mvd.hor,\ mvd.ver);}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MVL1),\ mv.hor,\ mv.ver);}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (pu.cu-\/>affine)}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv[3];}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CMotionBuf\ \&mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0]\ =\ mb.at(0,\ 0).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1]\ =\ mb.at(mb.width\ -\/\ 1,\ 0).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2]\ =\ mb.at(0,\ mb.height\ -\/\ 1).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ motion\ vectors\ should\ use\ low\ precision\ or\ they\ will\ appear\ to\ large}}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].hor\ =\ mv[0].hor\ >=\ 0\ ?\ (mv[0].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].ver\ =\ mv[0].ver\ >=\ 0\ ?\ (mv[0].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].hor\ =\ mv[1].hor\ >=\ 0\ ?\ (mv[1].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].ver\ =\ mv[1].ver\ >=\ 0\ ?\ (mv[1].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].hor\ =\ mv[2].hor\ >=\ 0\ ?\ (mv[2].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].ver\ =\ mv[2].ver\ >=\ 0\ ?\ (mv[2].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_AFFINETF(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineMVL0),\ mv[0].hor,\ mv[0].ver,\ mv[1].hor,\ mv[1].ver,\ mv[2].hor,\ mv[2].ver);}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv[3];}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CMotionBuf\ \&mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0]\ =\ mb.at(0,\ 0).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1]\ =\ mb.at(mb.width\ -\/\ 1,\ 0).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2]\ =\ mb.at(0,\ mb.height\ -\/\ 1).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ motion\ vectors\ should\ use\ low\ precision\ or\ they\ will\ appear\ to\ large}}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].hor\ =\ mv[0].hor\ >=\ 0\ ?\ (mv[0].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].ver\ =\ mv[0].ver\ >=\ 0\ ?\ (mv[0].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].hor\ =\ mv[1].hor\ >=\ 0\ ?\ (mv[1].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].ver\ =\ mv[1].ver\ >=\ 0\ ?\ (mv[1].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].hor\ =\ mv[2].hor\ >=\ 0\ ?\ (mv[2].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].ver\ =\ mv[2].ver\ >=\ 0\ ?\ (mv[2].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_AFFINETF(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineMVL1),\ mv[0].hor,\ mv[0].ver,\ mv[1].hor,\ mv[1].ver,\ mv[2].hor,\ mv[2].ver);}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ tracing\ Motion\ buffers}}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ CMotionBuf\ mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ todo:\ assuming\ granulatiry\ ==\ 4.\ can\ it\ be\ derived?}}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ y\ =\ 0;\ y\ <\ mb.height;\ y++\ )}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ x\ =\ 0;\ x\ <\ mb.width;\ x++\ )}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ MotionInfo\ \&pixMi\ =\ mb.at(\ x,\ y\ );}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pixMi.interDir\ ==\ 1)}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\ mv\ =\ pixMi.mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00686\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(\ }
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,\ }
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL0).c\_str(),}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00698\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL0).c\_str(),}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00710\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ pixMi.interDir\ ==\ 2)}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\ mv\ =\ pixMi.mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00715\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(\ }
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,\ }
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL1).c\_str(),}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00727\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL1).c\_str(),}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00739\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ pixMi.interDir\ ==\ 3)}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\ mv\ =\ pixMi.mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{00745\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(\ }
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,\ }
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL0).c\_str(),}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00757\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL0).c\_str(),}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00769\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Mv\ mv\ =\ pixMi.mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{00773\ \textcolor{preprocessor}{\#if\ BLOCK\_STATS\_AS\_CSV}}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(\ }
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,\ }
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat;\%d;\%4d;\%4d;\%2d;\%2d;\%s;\%4d;\%4d\(\backslash\)n"{}},}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL1).c\_str(),}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00785\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ g\_trace\_ctx-\/>dtrace<\textcolor{keyword}{false}>(}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}BlockStat:\ POC\ \%d\ @(\%4d,\%4d)\ [\%2dx\%2d]\ \%s=\{\%4d,\%4d\}\(\backslash\)n"{}},}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cs.picture-\/>poc,}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.lx()\ +\ 4*x,}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pu.ly()\ +\ 4*y,}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 4,}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(BlockStatistic::MotionBufL1).c\_str(),}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor,}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver);}
+\DoxyCodeLine{00797\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.geoFlag)}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ candIdx0\ =\ cu.firstPU-\/>geoMergeIdx0;}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ candIdx1\ =\ cu.firstPU-\/>geoMergeIdx1;}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ std::vector<Position>\ geoPartitions[2];}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \ \ \ \ Position\ linePositions[2];}
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \ \ \ \ retrieveGeoPolygons(cu,\ geoPartitions,\ linePositions);}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_LINE(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::GeoPartitioning),\ linePositions[0].x,\ linePositions[0].y,\ linePositions[1].x,\ linePositions[1].y);}
+\DoxyCodeLine{00812\ }
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(geoMergeCtxtsOfCurrentCtu.size()\ >\ 0)}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Geo\ partition\ MVs\ can\ only\ be\ stored\ when\ using\ the\ statistics\ with\ the\ decoder.\ Encoder\ is\ not\ supported}}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MergeCtx\ geoMrgCtx\ =\ geoMergeCtxtsOfCurrentCtu.front();}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ geoMergeCtxtsOfCurrentCtu.pop();}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ first\ partition}}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PredictionUnit\ tmpPu\ =\ *cu.firstPU;}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ geoMrgCtx.setMergeInfo(\ tmpPu,\ candIdx0\ );}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ geoPartIdx\ =\ 0;}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ refIdx\ =\ 0;\ refIdx\ <\ 2;\ refIdx++)}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tmpPu.refIdx[refIdx]\ !=\ -\/1)}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ tmpMv\ =\ tmpPu.mv[refIdx];}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.hor\ =\ tmpMv.hor\ >=\ 0\ ?\ (tmpMv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/tmpMv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.ver\ =\ tmpMv.ver\ >=\ 0\ ?\ (tmpMv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/tmpMv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_POLYGON\_VECTOR(g\_trace\_ctx,}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu.slice-\/>getPOC(),}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ geoPartitions[geoPartIdx],}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(refIdx==0?BlockStatistic::GeoMVL0:BlockStatistic::GeoMVL1),}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.hor,}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.ver}
+\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00842\ }
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ second\ partition}}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PredictionUnit\ tmpPu\ =\ *cu.firstPU;}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ geoMrgCtx.setMergeInfo(\ tmpPu,\ candIdx1\ );}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ geoPartIdx\ =\ 1;}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ refIdx\ =\ 0;\ refIdx\ <\ 2;\ refIdx++)}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tmpPu.refIdx[refIdx]\ !=\ -\/1)}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ tmpMv\ =\ tmpPu.mv[refIdx];}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.hor\ =\ tmpMv.hor\ >=\ 0\ ?\ (tmpMv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/tmpMv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.ver\ =\ tmpMv.ver\ >=\ 0\ ?\ (tmpMv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/tmpMv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_POLYGON\_VECTOR(g\_trace\_ctx,}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ D\_BLOCK\_STATISTICS\_ALL,}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cu.slice-\/>getPOC(),}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ geoPartitions[geoPartIdx],}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ GetBlockStatisticName(refIdx==0?BlockStatistic::GeoMVL0:BlockStatistic::GeoMVL1),}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.hor,}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpMv.ver}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00870\ }
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SMVDFlag),\ cu.smvdMode);}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::IMVMode),\ cu.imv);}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::RootCbf),\ cu.rootCbf);}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BCWIndex),\ cu.BcwIdx);}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SbtIdx),\ cu.getSbtIdx());}
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::SbtPos),\ cu.getSbtPos());}
+\DoxyCodeLine{00877\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MODE\_INTRA:}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(chType\ ==\ CHANNEL\_TYPE\_LUMA)}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::MIPFlag),\ cu.mipFlag);}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::ISPMode),\ cu.ispMode);}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00886\ }
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ numChType\ =\ ::getNumberValidChannels(\ cu.chromaFormat\ );}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ chType\ =\ CHANNEL\_TYPE\_LUMA;\ chType\ <\ numChType;\ chType++\ )}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ cu.blocks[chType].valid()\ )}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ :\ CU::traversePUs(\ cu\ )\ )}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ isLuma(\ ChannelType(\ chType\ )\ )\ )}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ uiChFinalMode\ \ =\ PU::getFinalIntraMode(\ pu,\ ChannelType(\ chType\ )\ );}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::Luma\_IntraMode),\ uiChFinalMode);}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::MultiRefIdx),\ pu.multiRefIdx);}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ uiChFinalMode\ \ =\ PU::getFinalIntraMode(\ pu,\ ChannelType(\ chType\ )\ );}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ pu,\ GetBlockStatisticName(BlockStatistic::Chroma\_IntraMode),\ uiChFinalMode);}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(0);}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Invalid\ prediction\ mode"{}}\ );}
+\DoxyCodeLine{00914\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00916\ }
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ TransformUnit\ \&tu\ :\ CU::traverseTUs(cu))}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tu.Y().valid())}
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Y),\ tu.cbf[COMPONENT\_Y]);}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Y),\ tu.mtsIdx[COMPONENT\_Y]);}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ tu.Cb().valid()\ )}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::JointCbCr),\ tu.jointCbCr);}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !(cu.chromaFormat\ ==\ CHROMA\_400\ ||\ (cu.isSepTree()\ \&\&\ cu.chType\ ==\ CHANNEL\_TYPE\_LUMA))\ )}
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Cb),\ tu.cbf[COMPONENT\_Cb]);}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Cr),\ tu.cbf[COMPONENT\_Cr]);}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Cb),\ tu.mtsIdx[COMPONENT\_Cb]);}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Cr),\ tu.mtsIdx[COMPONENT\_Cr]);}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00937\ \ \ \ \ \}}
+\DoxyCodeLine{00938\ \ \ \}}
+\DoxyCodeLine{00939\ }
+\DoxyCodeLine{00940\ \ \ CHECK(geoMergeCtxtsOfCurrentCtu.size()\ !=\ 0,\ \textcolor{stringliteral}{"{}Did\ not\ use\ all\ pushed\ back\ geo\ merge\ contexts.\ Should\ not\ be\ possible!"{}});}
+\DoxyCodeLine{00941\ \}}
+\DoxyCodeLine{00942\ }
+\DoxyCodeLine{00943\ \textcolor{keywordtype}{void}\ writeAllCodedData(\textcolor{keyword}{const}\ CodingStructure\ \&\ cs,\ \textcolor{keyword}{const}\ UnitArea\ \&\ ctuArea)}
+\DoxyCodeLine{00944\ \{}
+\DoxyCodeLine{00945\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nShift\ =\ MV\_FRACTIONAL\_BITS\_DIFF;}
+\DoxyCodeLine{00946\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ nOffset\ =\ 1\ <<\ (nShift\ -\/\ 1);}
+\DoxyCodeLine{00947\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxNumChannelType\ =\ cs.pcv-\/>chrFormat\ !=\ CHROMA\_400\ \&\&\ CS::isDualITree(cs)\ ?\ 2\ :\ 1;}
+\DoxyCodeLine{00948\ }
+\DoxyCodeLine{00949\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ ch\ =\ 0;\ ch\ <\ maxNumChannelType;\ ch++)}
+\DoxyCodeLine{00950\ \ \ \{}
+\DoxyCodeLine{00951\ \ \ \ \ \textcolor{keyword}{const}\ ChannelType\ chType\ =\ ChannelType(ch);}
+\DoxyCodeLine{00952\ }
+\DoxyCodeLine{00953\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ CodingUnit\ \&cu\ :\ cs.traverseCUs(CS::getArea(cs,\ ctuArea,\ chType),\ chType))}
+\DoxyCodeLine{00954\ \ \ \ \ \{}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ chType\ ==\ CHANNEL\_TYPE\_LUMA\ )}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::Depth),\ cu.depth);}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::QT\_Depth),\ cu.qtDepth);}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::BT\_Depth),\ cu.btDepth);}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::MT\_Depth),\ cu.mtDepth);}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::ChromaQPAdj),\ cu.chromaQpAdj);}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::QP),\ cu.qp);}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::SplitSeries),\ (\textcolor{keywordtype}{int})cu.splitSeries);}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ skip\ flag}}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!cs.slice-\/>isIntra()\ \&\&\ cu.Y().valid())}
+\DoxyCodeLine{00966\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00967\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::SkipFlag),\ cu.skip);}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.skip)}
+\DoxyCodeLine{00969\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00970\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::MMVDSkipFlag),\ cu.mmvdSkip);}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00973\ }
+\DoxyCodeLine{00974\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ prediction\ mode\ and\ partitioning\ data}}
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::PredMode),\ cu.predMode);}
+\DoxyCodeLine{00976\ }
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (chType\ ==\ CHANNEL\_TYPE\_CHROMA\ )}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::Depth\_Chroma),\ cu.depth);}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::QT\_Depth\_Chroma),\ cu.qtDepth);}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::BT\_Depth\_Chroma),\ cu.btDepth);}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::MT\_Depth\_Chroma),\ cu.mtDepth);}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::ChromaQPAdj\_Chroma),\ cu.chromaQpAdj);}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::QP\_Chroma),\ cu.qp);}
+\DoxyCodeLine{00986\ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::SplitSeries\_Chroma),\ (\textcolor{keywordtype}{int})cu.splitSeries);}
+\DoxyCodeLine{00987\ }
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00989\ }
+\DoxyCodeLine{00990\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ PredictionUnit\ \&pu\ :\ CU::traversePUs(cu))}
+\DoxyCodeLine{00991\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00992\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (pu.cu-\/>predMode)}
+\DoxyCodeLine{00993\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00994\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MODE\_INTRA:}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.Y().valid())}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00998\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::Luma\_IntraMode),\ PU::getFinalIntraMode(pu,\ ChannelType(chType)));}
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(pu.chromaFormat\ ==\ CHROMA\_400\ ||\ (pu.cu-\/>isSepTree()\ \&\&\ pu.chType\ ==\ CHANNEL\_TYPE\_LUMA)))}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::Chroma\_IntraMode),\ PU::getFinalIntraMode(pu,\ CHANNEL\_TYPE\_CHROMA));}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.Y().valid()\ \&\&\ isLuma(cu.chType))}
+\DoxyCodeLine{01005\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MultiRefIdx),\ pu.multiRefIdx);}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ MODE\_INTER:}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pu.cu-\/>skip)}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeFlag),\ pu.mergeFlag);}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.mergeFlag)}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01018\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeIdx),\ \ pu.mergeIdx);}
+\DoxyCodeLine{01019\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MergeType),\ pu.mergeType);}
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MMVDMergeFlag),\ pu.mmvdMergeFlag);}
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.mmvdMergeFlag)}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MMVDMergeIdx),\ pu.mmvdMergeIdx);}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!cu.cs-\/>slice-\/>isIntra()\ \&\&\ cu.cs-\/>sps-\/>getUseAffine()\ \&\&\ cu.lumaSize().width\ >=\ 8\ \&\&\ cu.lumaSize().height\ >=\ 8}
+\DoxyCodeLine{01026\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ !pu.mmvdMergeFlag\ \&\&\ !cu.mmvdSkip}
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineFlag),\ pu.cu-\/>affine);}
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.cs-\/>sps-\/>getUseCiip()\ \&\&\ !pu.cu-\/>skip\ \&\&\ !pu.cu-\/>affine\ \&\&\ !(pu.cu-\/>lwidth()\ *\ pu.cu-\/>lheight()\ <\ 64\ ||\ pu.cu-\/>lwidth()\ >=\ MAX\_CU\_SIZE\ ||\ pu.cu-\/>lheight()\ >=\ MAX\_CU\_SIZE)}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ !pu.mmvdMergeFlag}
+\DoxyCodeLine{01033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::CiipFlag),\ pu.ciipFlag);}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.ciipFlag)}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.Y().valid())}
+\DoxyCodeLine{01039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::Luma\_IntraMode),\ pu.intraDir[0]);}
+\DoxyCodeLine{01041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::Chroma\_IntraMode),\ pu.intraDir[1]);}
+\DoxyCodeLine{01042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01045\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pu.cs-\/>slice-\/>isInterP())}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::InterDir),\ pu.interDir);}
+\DoxyCodeLine{01051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!cu.cs-\/>slice-\/>isIntra()\ \&\&\ cu.cs-\/>sps-\/>getUseAffine()\ \&\&\ cu.lumaSize().width\ >\ 8\ \&\&\ cu.lumaSize().height\ >\ 8)}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineFlag),\ pu.cu-\/>affine);}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.affine\ \&\&\ !cu.firstPU-\/>mergeFlag\ \&\&\ cu.cs-\/>sps-\/>getUseAffineType())}
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineType),\ pu.cu-\/>affineType);}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVPIdxL0),\ pu.mvpIdx[REF\_PIC\_LIST\_0]);}
+\DoxyCodeLine{01064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::RefIdxL0),\ pu.refIdx[REF\_PIC\_LIST\_0]);}
+\DoxyCodeLine{01065\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVPIdxL1),\ pu.mvpIdx[REF\_PIC\_LIST\_1]);}
+\DoxyCodeLine{01069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::RefIdxL1),\ pu.refIdx[REF\_PIC\_LIST\_1]);}
+\DoxyCodeLine{01070\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pu.cu-\/>affine\ \&\&\ !pu.cu-\/>geoFlag)}
+\DoxyCodeLine{01072\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv\ =\ pu.mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{01076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mvd\ =\ pu.mvd[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{01077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor\ =\ mv.hor\ >=\ 0\ ?\ (mv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver\ =\ mv.ver\ >=\ 0\ ?\ (mv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.hor\ =\ mvd.hor\ >=\ 0\ ?\ (mvd.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.ver\ =\ mvd.ver\ >=\ 0\ ?\ (mvd.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVDL0),\ mvd.hor,\ mvd.ver);}
+\DoxyCodeLine{01082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVL0),\ mv.hor,\ mv.ver);}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv\ =\ pu.mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mvd\ =\ pu.mvd[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.hor\ =\ mv.hor\ >=\ 0\ ?\ (mv.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv.ver\ =\ mv.ver\ >=\ 0\ ?\ (mv.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.hor\ =\ mvd.hor\ >=\ 0\ ?\ (mvd.hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mvd.ver\ =\ mvd.ver\ >=\ 0\ ?\ (mvd.ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mvd.ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVDL1),\ mvd.hor,\ mvd.ver);}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_VECTOR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::MVL1),\ mv.hor,\ mv.ver);}
+\DoxyCodeLine{01094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 2\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01100\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv[3];}
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CMotionBuf\ \&mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0]\ =\ mb.at(0,\ 0).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1]\ =\ mb.at(mb.width\ -\/\ 1,\ 0).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2]\ =\ mb.at(0,\ mb.height\ -\/\ 1).mv[REF\_PIC\_LIST\_0];}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ motion\ vectors\ should\ use\ low\ precision\ or\ they\ will\ appear\ to\ large}}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].hor\ =\ mv[0].hor\ >=\ 0\ ?\ (mv[0].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].ver\ =\ mv[0].ver\ >=\ 0\ ?\ (mv[0].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].hor\ =\ mv[1].hor\ >=\ 0\ ?\ (mv[1].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].ver\ =\ mv[1].ver\ >=\ 0\ ?\ (mv[1].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].hor\ =\ mv[2].hor\ >=\ 0\ ?\ (mv[2].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].ver\ =\ mv[2].ver\ >=\ 0\ ?\ (mv[2].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_AFFINETF(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineMVL0),\ mv[0].hor,\ mv[0].ver,\ mv[1].hor,\ mv[1].ver,\ mv[2].hor,\ mv[2].ver);}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pu.interDir\ !=\ 1\ \textcolor{comment}{/*\ PRED\_L1\ */})}
+\DoxyCodeLine{01115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Mv\ mv[3];}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CMotionBuf\ \&mb\ =\ pu.getMotionBuf();}
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0]\ =\ mb.at(0,\ 0).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{01119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1]\ =\ mb.at(mb.width\ -\/\ 1,\ 0).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2]\ =\ mb.at(0,\ mb.height\ -\/\ 1).mv[REF\_PIC\_LIST\_1];}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ motion\ vectors\ should\ use\ low\ precision\ or\ they\ will\ appear\ to\ large}}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].hor\ =\ mv[0].hor\ >=\ 0\ ?\ (mv[0].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[0].ver\ =\ mv[0].ver\ >=\ 0\ ?\ (mv[0].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[0].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].hor\ =\ mv[1].hor\ >=\ 0\ ?\ (mv[1].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[1].ver\ =\ mv[1].ver\ >=\ 0\ ?\ (mv[1].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[1].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].hor\ =\ mv[2].hor\ >=\ 0\ ?\ (mv[2].hor\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].hor\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mv[2].ver\ =\ mv[2].ver\ >=\ 0\ ?\ (mv[2].ver\ +\ nOffset)\ >>\ nShift\ :\ -\/((-\/mv[2].ver\ +\ nOffset)\ >>\ nShift);}
+\DoxyCodeLine{01128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_AFFINETF(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ pu,\ GetBlockStatisticName(BlockStatistic::AffineMVL1),\ mv[0].hor,\ mv[0].ver,\ mv[1].hor,\ mv[1].ver,\ mv[2].hor,\ mv[2].ver);}
+\DoxyCodeLine{01129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01131\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.cs-\/>sps-\/>getAMVREnabledFlag()\ \&\&\ CU::hasSubCUNonZeroMVd(cu))}
+\DoxyCodeLine{01132\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::IMVMode),\ cu.imv);}
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (CU::isBcwIdxCoded(cu))}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_ALL,\ cu,\ GetBlockStatisticName(BlockStatistic::BCWIndex),\ cu.BcwIdx);}
+\DoxyCodeLine{01138\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(1,\ \textcolor{stringliteral}{"{}Invalid\ prediction\ mode"{}});}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01146\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ pu}}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (CU::isInter(cu))}
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01150\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PredictionUnit\ \&pu\ =\ *cu.firstPU;}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !pu.mergeFlag\ )}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01153\ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ cu,\ GetBlockStatisticName(BlockStatistic::RootCbf),\ cu.rootCbf);}
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01155\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01156\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (cu.rootCbf\ ||\ CU::isIntra(cu))}
+\DoxyCodeLine{01157\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ TransformUnit\ \&tu\ :\ CU::traverseTUs(cu))}
+\DoxyCodeLine{01159\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01160\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tu.Y().valid())}
+\DoxyCodeLine{01161\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Y),\ tu.cbf[COMPONENT\_Y]);}
+\DoxyCodeLine{01163\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Y),\ tu.mtsIdx[COMPONENT\_Y]);}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01165\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!(cu.chromaFormat\ ==\ CHROMA\_400\ ||\ (cu.isSepTree()\ \&\&\ cu.chType\ ==\ CHANNEL\_TYPE\_LUMA)))}
+\DoxyCodeLine{01166\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01167\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Cb),\ tu.cbf[COMPONENT\_Cb]);}
+\DoxyCodeLine{01168\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::Cbf\_Cr),\ tu.cbf[COMPONENT\_Cr]);}
+\DoxyCodeLine{01169\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Cb),\ tu.mtsIdx[COMPONENT\_Cb]);}
+\DoxyCodeLine{01170\ \ \ \ \ \ \ \ \ \ \ \ \ DTRACE\_BLOCK\_SCALAR\_CHROMA(g\_trace\_ctx,\ D\_BLOCK\_STATISTICS\_CODED,\ tu,\ GetBlockStatisticName(BlockStatistic::MTSIdx\_Cr),\ tu.mtsIdx[COMPONENT\_Cr]);}
+\DoxyCodeLine{01171\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01172\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01173\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01174\ \ \ \ \ \}}
+\DoxyCodeLine{01175\ \ \ \}}
+\DoxyCodeLine{01176\ \}}
+\DoxyCodeLine{01177\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

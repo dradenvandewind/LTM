@@ -1,0 +1,269 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_annexb_8c_source" xml:lang="en-US">
+<title>annexb.c</title>
+<indexterm><primary>deps/base_avc/src/annexb.c</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="_annexb_8c_source_1l00001"/>00001 <emphasis role="comment">//&#32;LCEVC&#32;replacement&#32;implementation&#32;to&#32;feed&#32;bitstresm&#32;directly&#32;into&#32;base&#32;layer&#32;via&#32;an&#32;in-memory&#32;buffer</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00002"/>00002 <emphasis role="comment">//</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00003"/>00003 
+<anchor xml:id="_annexb_8c_source_1l00017"/>00017 <emphasis role="preprocessor">#include&#32;&quot;global.h&quot;</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00018"/>00018 <emphasis role="preprocessor">#include&#32;&quot;annexb.h&quot;</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00019"/>00019 <emphasis role="preprocessor">#include&#32;&quot;memalloc.h&quot;</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00020"/>00020 <emphasis role="preprocessor">#include&#32;&quot;fast_memory.h&quot;</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00021"/>00021 
+<anchor xml:id="_annexb_8c_source_1l00022"/>00022 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keywordtype">byte</emphasis>&#32;*injected_annex_b_data&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00023"/>00023 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keywordtype">unsigned</emphasis>&#32;injected_annex_b_size&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00024"/>00024 
+<anchor xml:id="_annexb_8c_source_1l00025"/>00025 <emphasis role="comment">//&#32;External&#32;hook&#32;from&#32;LCEVC</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00026"/><link linkend="_inject__annexb_8h_1ad78c37e6d9fa7a3fee5180616b716826">00026</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1ad78c37e6d9fa7a3fee5180616b716826">inject_annex_b_bitstream</link>(<emphasis role="keywordtype">byte</emphasis>&#32;*data,&#32;<emphasis role="keywordtype">unsigned</emphasis>&#32;size)
+<anchor xml:id="_annexb_8c_source_1l00027"/>00027 {
+<anchor xml:id="_annexb_8c_source_1l00028"/>00028 &#32;&#32;&#32;&#32;injected_annex_b_data&#32;=&#32;data;
+<anchor xml:id="_annexb_8c_source_1l00029"/>00029 &#32;&#32;&#32;&#32;injected_annex_b_size&#32;=&#32;size;
+<anchor xml:id="_annexb_8c_source_1l00030"/>00030 }
+<anchor xml:id="_annexb_8c_source_1l00031"/>00031 
+<anchor xml:id="_annexb_8c_source_1l00032"/><link linkend="_annexb_8c_1a62ce58e0c4ba56d0ed3fe64a007427b8">00032</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1a62ce58e0c4ba56d0ed3fe64a007427b8">malloc_annex_b</link>(VideoParameters&#32;*p_Vid,&#32;ANNEXB_t&#32;**p_annex_b)
+<anchor xml:id="_annexb_8c_source_1l00033"/>00033 {
+<anchor xml:id="_annexb_8c_source_1l00034"/>00034 &#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(&#32;((*p_annex_b)&#32;=&#32;(ANNEXB_t&#32;*)&#32;calloc(1,&#32;<emphasis role="keyword">sizeof</emphasis>(ANNEXB_t)))&#32;==&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>)
+<anchor xml:id="_annexb_8c_source_1l00035"/>00035 &#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00036"/>00036 &#32;&#32;&#32;&#32;snprintf(errortext,&#32;ET_SIZE,&#32;<emphasis role="stringliteral">&quot;Memory&#32;allocation&#32;for&#32;Annex_B&#32;file&#32;failed&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00037"/>00037 &#32;&#32;&#32;&#32;error(errortext,100);
+<anchor xml:id="_annexb_8c_source_1l00038"/>00038 &#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00039"/>00039 &#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(((*p_annex_b)-&gt;Buf&#32;=&#32;(<emphasis role="keywordtype">byte</emphasis>*)&#32;malloc(p_Vid-&gt;nalu-&gt;max_size))&#32;==&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>)
+<anchor xml:id="_annexb_8c_source_1l00040"/>00040 &#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00041"/>00041 &#32;&#32;&#32;&#32;error(<emphasis role="stringliteral">&quot;malloc_annex_b:&#32;Buf&quot;</emphasis>,&#32;101);
+<anchor xml:id="_annexb_8c_source_1l00042"/>00042 &#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00043"/>00043 }
+<anchor xml:id="_annexb_8c_source_1l00044"/>00044 
+<anchor xml:id="_annexb_8c_source_1l00045"/>00045 
+<anchor xml:id="_annexb_8c_source_1l00046"/><link linkend="_annexb_8c_1a3c0878cc40bf0ebd3afa244e9ad0ad50">00046</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1a3c0878cc40bf0ebd3afa244e9ad0ad50">init_annex_b</link>(ANNEXB_t&#32;*annex_b)
+<anchor xml:id="_annexb_8c_source_1l00047"/>00047 {
+<anchor xml:id="_annexb_8c_source_1l00048"/>00048 &#32;&#32;annex_b-&gt;iobuffer&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_annexb_8c_source_1l00049"/>00049 &#32;&#32;annex_b-&gt;iobufferread&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_annexb_8c_source_1l00050"/>00050 &#32;&#32;annex_b-&gt;bytesinbuffer&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00051"/>00051 &#32;&#32;annex_b-&gt;is_eof&#32;=&#32;FALSE;
+<anchor xml:id="_annexb_8c_source_1l00052"/>00052 &#32;&#32;annex_b-&gt;IsFirstByteStreamNALU&#32;=&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00053"/>00053 &#32;&#32;annex_b-&gt;nextstartcodebytes&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00054"/>00054 }
+<anchor xml:id="_annexb_8c_source_1l00055"/>00055 
+<anchor xml:id="_annexb_8c_source_1l00056"/><link linkend="_annexb_8c_1a055f53ecaaa31acb33e03addf26edd9b">00056</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1a055f53ecaaa31acb33e03addf26edd9b">free_annex_b</link>(ANNEXB_t&#32;**p_annex_b)
+<anchor xml:id="_annexb_8c_source_1l00057"/>00057 {
+<anchor xml:id="_annexb_8c_source_1l00058"/>00058 &#32;&#32;free((*p_annex_b)-&gt;Buf);
+<anchor xml:id="_annexb_8c_source_1l00059"/>00059 &#32;&#32;(*p_annex_b)-&gt;Buf&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_annexb_8c_source_1l00060"/>00060 &#32;&#32;free(*p_annex_b);
+<anchor xml:id="_annexb_8c_source_1l00061"/>00061 &#32;&#32;*p_annex_b&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_annexb_8c_source_1l00062"/>00062 }
+<anchor xml:id="_annexb_8c_source_1l00063"/>00063 
+<anchor xml:id="_annexb_8c_source_1l00064"/>00064 
+<anchor xml:id="_annexb_8c_source_1l00071"/>00071 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keyword">inline</emphasis>&#32;<emphasis role="keywordtype">byte</emphasis>&#32;getfbyte(ANNEXB_t&#32;*annex_b)&#32;{
+<anchor xml:id="_annexb_8c_source_1l00072"/>00072 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(annex_b-&gt;bytesinbuffer&#32;==&#32;0)&#32;{
+<anchor xml:id="_annexb_8c_source_1l00073"/>00073 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;annex_b-&gt;is_eof&#32;=&#32;TRUE;
+<anchor xml:id="_annexb_8c_source_1l00074"/>00074 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00075"/>00075 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00076"/>00076 
+<anchor xml:id="_annexb_8c_source_1l00077"/>00077 &#32;&#32;&#32;&#32;annex_b-&gt;bytesinbuffer--;
+<anchor xml:id="_annexb_8c_source_1l00078"/>00078 
+<anchor xml:id="_annexb_8c_source_1l00079"/>00079 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;(*annex_b-&gt;iobufferread++);
+<anchor xml:id="_annexb_8c_source_1l00080"/>00080 }
+<anchor xml:id="_annexb_8c_source_1l00081"/>00081 
+<anchor xml:id="_annexb_8c_source_1l00098"/>00098 <emphasis role="keyword">static</emphasis>&#32;<emphasis role="keyword">inline</emphasis>&#32;<emphasis role="keywordtype">int</emphasis>&#32;FindStartCode&#32;(<emphasis role="keywordtype">unsigned</emphasis>&#32;<emphasis role="keywordtype">char</emphasis>&#32;*Buf,&#32;<emphasis role="keywordtype">int</emphasis>&#32;zeros_in_startcode)
+<anchor xml:id="_annexb_8c_source_1l00099"/>00099 {
+<anchor xml:id="_annexb_8c_source_1l00100"/>00100 &#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;i;
+<anchor xml:id="_annexb_8c_source_1l00101"/>00101 
+<anchor xml:id="_annexb_8c_source_1l00102"/>00102 &#32;&#32;<emphasis role="keywordflow">for</emphasis>&#32;(i&#32;=&#32;0;&#32;i&#32;&lt;&#32;zeros_in_startcode;&#32;i++)
+<anchor xml:id="_annexb_8c_source_1l00103"/>00103 &#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00104"/>00104 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(*(Buf++)&#32;!=&#32;0)
+<anchor xml:id="_annexb_8c_source_1l00105"/>00105 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00106"/>00106 &#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00107"/>00107 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00108"/>00108 &#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00109"/>00109 
+<anchor xml:id="_annexb_8c_source_1l00110"/>00110 &#32;&#32;<emphasis role="keywordflow">if</emphasis>(*Buf&#32;!=&#32;1)
+<anchor xml:id="_annexb_8c_source_1l00111"/>00111 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00112"/>00112 
+<anchor xml:id="_annexb_8c_source_1l00113"/>00113 &#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00114"/>00114 }
+<anchor xml:id="_annexb_8c_source_1l00115"/>00115 
+<anchor xml:id="_annexb_8c_source_1l00116"/>00116 
+<anchor xml:id="_annexb_8c_source_1l00136"/><link linkend="_annexb_8c_1a56cc1acb3afd2d19c6363e299df4d4c1">00136</link> <emphasis role="keywordtype">int</emphasis>&#32;<link linkend="_annexb_8c_1a56cc1acb3afd2d19c6363e299df4d4c1">get_annex_b_NALU</link>&#32;(VideoParameters&#32;*p_Vid,&#32;NALU_t&#32;*nalu,&#32;ANNEXB_t&#32;*annex_b)
+<anchor xml:id="_annexb_8c_source_1l00137"/>00137 {
+<anchor xml:id="_annexb_8c_source_1l00138"/>00138 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;i;
+<anchor xml:id="_annexb_8c_source_1l00139"/>00139 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;info2&#32;=&#32;0,&#32;info3&#32;=&#32;0,&#32;pos&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00140"/>00140 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;StartCodeFound&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00141"/>00141 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">int</emphasis>&#32;LeadingZero8BitsCount&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00142"/>00142 &#32;&#32;&#32;&#32;<emphasis role="keywordtype">byte</emphasis>&#32;*pBuf&#32;=&#32;annex_b-&gt;Buf;
+<anchor xml:id="_annexb_8c_source_1l00143"/>00143 
+<anchor xml:id="_annexb_8c_source_1l00144"/>00144 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(annex_b-&gt;nextstartcodebytes&#32;!=&#32;0)
+<anchor xml:id="_annexb_8c_source_1l00145"/>00145 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00146"/>00146 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">for</emphasis>&#32;(i=0;&#32;i&lt;annex_b-&gt;nextstartcodebytes-1;&#32;i++)
+<anchor xml:id="_annexb_8c_source_1l00147"/>00147 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00148"/>00148 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(*pBuf++)&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00149"/>00149 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos++;
+<anchor xml:id="_annexb_8c_source_1l00150"/>00150 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00151"/>00151 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;(*pBuf++)&#32;=&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00152"/>00152 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos++;
+<anchor xml:id="_annexb_8c_source_1l00153"/>00153 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00154"/>00154 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00155"/>00155 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00156"/>00156 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>(!annex_b-&gt;is_eof)
+<anchor xml:id="_annexb_8c_source_1l00157"/>00157 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00158"/>00158 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos++;
+<anchor xml:id="_annexb_8c_source_1l00159"/>00159 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;((*(pBuf++)=&#32;getfbyte(annex_b))!=&#32;0)
+<anchor xml:id="_annexb_8c_source_1l00160"/>00160 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">break</emphasis>;
+<anchor xml:id="_annexb_8c_source_1l00161"/>00161 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00162"/>00162 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00163"/>00163 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(annex_b-&gt;is_eof&#32;==&#32;TRUE)
+<anchor xml:id="_annexb_8c_source_1l00164"/>00164 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00165"/>00165 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(pos==0)
+<anchor xml:id="_annexb_8c_source_1l00166"/>00166 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00167"/>00167 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00168"/>00168 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00169"/>00169 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00170"/>00170 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00171"/>00171 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;printf(&#32;<emphasis role="stringliteral">&quot;get_annex_b_NALU&#32;can&apos;t&#32;read&#32;start&#32;code\n&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00172"/>00172 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;-1;
+<anchor xml:id="_annexb_8c_source_1l00173"/>00173 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00174"/>00174 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00175"/>00175 
+<anchor xml:id="_annexb_8c_source_1l00176"/>00176 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(*(pBuf&#32;-&#32;1)&#32;!=&#32;1&#32;||&#32;pos&#32;&lt;&#32;3)
+<anchor xml:id="_annexb_8c_source_1l00177"/>00177 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00178"/>00178 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;printf&#32;(<emphasis role="stringliteral">&quot;get_annex_b_NALU:&#32;no&#32;Start&#32;Code&#32;at&#32;the&#32;beginning&#32;of&#32;the&#32;NALU,&#32;return&#32;-1\n&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00179"/>00179 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;-1;
+<anchor xml:id="_annexb_8c_source_1l00180"/>00180 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00181"/>00181 
+<anchor xml:id="_annexb_8c_source_1l00182"/>00182 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(pos&#32;==&#32;3)
+<anchor xml:id="_annexb_8c_source_1l00183"/>00183 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00184"/>00184 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;startcodeprefix_len&#32;=&#32;3;
+<anchor xml:id="_annexb_8c_source_1l00185"/>00185 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00186"/>00186 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00187"/>00187 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00188"/>00188 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;LeadingZero8BitsCount&#32;=&#32;pos&#32;-&#32;4;
+<anchor xml:id="_annexb_8c_source_1l00189"/>00189 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;startcodeprefix_len&#32;=&#32;4;
+<anchor xml:id="_annexb_8c_source_1l00190"/>00190 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00191"/>00191 
+<anchor xml:id="_annexb_8c_source_1l00192"/>00192 &#32;&#32;&#32;&#32;<emphasis role="comment">//the&#32;1st&#32;byte&#32;stream&#32;NAL&#32;unit&#32;can&#32;has&#32;leading_zero_8bits,&#32;but&#32;subsequent&#32;ones&#32;are&#32;not</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00193"/>00193 &#32;&#32;&#32;&#32;<emphasis role="comment">//allowed&#32;to&#32;contain&#32;it&#32;since&#32;these&#32;zeros(if&#32;any)&#32;are&#32;considered&#32;trailing_zero_8bits</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00194"/>00194 &#32;&#32;&#32;&#32;<emphasis role="comment">//of&#32;the&#32;previous&#32;byte&#32;stream&#32;NAL&#32;unit.</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00195"/>00195 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(!annex_b-&gt;IsFirstByteStreamNALU&#32;&amp;&amp;&#32;LeadingZero8BitsCount&#32;&gt;&#32;0)
+<anchor xml:id="_annexb_8c_source_1l00196"/>00196 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00197"/>00197 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;printf&#32;(<emphasis role="stringliteral">&quot;get_annex_b_NALU:&#32;The&#32;leading_zero_8bits&#32;syntax&#32;can&#32;only&#32;be&#32;present&#32;in&#32;the&#32;first&#32;byte&#32;stream&#32;NAL&#32;unit,&#32;return&#32;-1\n&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00198"/>00198 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;-1;
+<anchor xml:id="_annexb_8c_source_1l00199"/>00199 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00200"/>00200 
+<anchor xml:id="_annexb_8c_source_1l00201"/>00201 &#32;&#32;&#32;&#32;LeadingZero8BitsCount&#32;=&#32;pos;
+<anchor xml:id="_annexb_8c_source_1l00202"/>00202 &#32;&#32;&#32;&#32;annex_b-&gt;IsFirstByteStreamNALU&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00203"/>00203 
+<anchor xml:id="_annexb_8c_source_1l00204"/>00204 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(!StartCodeFound)
+<anchor xml:id="_annexb_8c_source_1l00205"/>00205 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00206"/>00206 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(annex_b-&gt;is_eof&#32;==&#32;TRUE)
+<anchor xml:id="_annexb_8c_source_1l00207"/>00207 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00208"/>00208 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pBuf&#32;-=&#32;2;
+<anchor xml:id="_annexb_8c_source_1l00209"/>00209 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>(*(pBuf--)==0)
+<anchor xml:id="_annexb_8c_source_1l00210"/>00210 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos--;
+<anchor xml:id="_annexb_8c_source_1l00211"/>00211 
+<anchor xml:id="_annexb_8c_source_1l00212"/>00212 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;len&#32;=&#32;(pos&#32;-&#32;1)&#32;-&#32;LeadingZero8BitsCount;
+<anchor xml:id="_annexb_8c_source_1l00213"/>00213 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;memcpy&#32;(nalu-&gt;buf,&#32;annex_b-&gt;Buf&#32;+&#32;LeadingZero8BitsCount,&#32;nalu-&gt;len);
+<anchor xml:id="_annexb_8c_source_1l00214"/>00214 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;forbidden_bit&#32;&#32;&#32;&#32;&#32;=&#32;(*(nalu-&gt;buf)&#32;&gt;&gt;&#32;7)&#32;&amp;&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00215"/>00215 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;nal_reference_idc&#32;=&#32;(NalRefIdc)&#32;((*(nalu-&gt;buf)&#32;&gt;&gt;&#32;5)&#32;&amp;&#32;3);
+<anchor xml:id="_annexb_8c_source_1l00216"/>00216 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;nal_unit_type&#32;&#32;&#32;&#32;&#32;=&#32;(NaluType)&#32;((*(nalu-&gt;buf))&#32;&amp;&#32;0x1f);
+<anchor xml:id="_annexb_8c_source_1l00217"/>00217 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;annex_b-&gt;nextstartcodebytes&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00218"/>00218 
+<anchor xml:id="_annexb_8c_source_1l00219"/>00219 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;printf&#32;(&quot;get_annex_b_NALU,&#32;eof&#32;case:&#32;pos&#32;%d&#32;nalu-&gt;len&#32;%d,&#32;nalu-&gt;reference_idc&#32;%d,&#32;nal_unit_type&#32;%d&#32;\n&quot;,&#32;pos,&#32;nalu-&gt;len,&#32;nalu-&gt;nal_reference_idc,&#32;nalu-&gt;nal_unit_type);</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00220"/>00220 
+<anchor xml:id="_annexb_8c_source_1l00221"/>00221 <emphasis role="preprocessor">#if&#32;TRACE</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00222"/>00222 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;fprintf&#32;(<link linkend="_BaseVideoDecoderJM_8cpp_1a631eb222a287a3b6f1c512cc6a41f326">p_Dec</link>-&gt;p_trace,&#32;<emphasis role="stringliteral">&quot;\n\nLast&#32;NALU&#32;in&#32;File\n\n&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00223"/>00223 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;fprintf&#32;(<link linkend="_BaseVideoDecoderJM_8cpp_1a631eb222a287a3b6f1c512cc6a41f326">p_Dec</link>-&gt;p_trace,&#32;<emphasis role="stringliteral">&quot;Annex&#32;B&#32;NALU&#32;w/&#32;%s&#32;startcode,&#32;len&#32;%d,&#32;forbidden_bit&#32;%d,&#32;nal_reference_idc&#32;%d,&#32;nal_unit_type&#32;%d\n\n&quot;</emphasis>,
+<anchor xml:id="_annexb_8c_source_1l00224"/>00224 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;startcodeprefix_len&#32;==&#32;4?<emphasis role="stringliteral">&quot;long&quot;</emphasis>:<emphasis role="stringliteral">&quot;short&quot;</emphasis>,&#32;nalu-&gt;len,&#32;nalu-&gt;forbidden_bit,&#32;nalu-&gt;nal_reference_idc,&#32;nalu-&gt;nal_unit_type);
+<anchor xml:id="_annexb_8c_source_1l00225"/>00225 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;fflush&#32;(<link linkend="_BaseVideoDecoderJM_8cpp_1a631eb222a287a3b6f1c512cc6a41f326">p_Dec</link>-&gt;p_trace);
+<anchor xml:id="_annexb_8c_source_1l00226"/>00226 <emphasis role="preprocessor">#endif</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00227"/>00227 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;(pos&#32;-&#32;1);
+<anchor xml:id="_annexb_8c_source_1l00228"/>00228 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00229"/>00229 
+<anchor xml:id="_annexb_8c_source_1l00230"/>00230 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos++;
+<anchor xml:id="_annexb_8c_source_1l00231"/>00231 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;*(pBuf&#32;++)&#32;&#32;=&#32;getfbyte(annex_b);&#32;&#32;&#32;&#32;
+<anchor xml:id="_annexb_8c_source_1l00232"/>00232 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;info3&#32;=&#32;FindStartCode(pBuf&#32;-&#32;4,&#32;3);
+<anchor xml:id="_annexb_8c_source_1l00233"/>00233 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(info3&#32;!=&#32;1)
+<anchor xml:id="_annexb_8c_source_1l00234"/>00234 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00235"/>00235 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;info2&#32;=&#32;FindStartCode(pBuf&#32;-&#32;3,&#32;2);
+<anchor xml:id="_annexb_8c_source_1l00236"/>00236 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;StartCodeFound&#32;=&#32;info2&#32;&amp;&#32;0x01;
+<anchor xml:id="_annexb_8c_source_1l00237"/>00237 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00238"/>00238 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00239"/>00239 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;StartCodeFound&#32;=&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00240"/>00240 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00241"/>00241 
+<anchor xml:id="_annexb_8c_source_1l00242"/>00242 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Here,&#32;we&#32;have&#32;found&#32;another&#32;start&#32;code&#32;(and&#32;read&#32;length&#32;of&#32;startcode&#32;bytes&#32;more&#32;than&#32;we&#32;should</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00243"/>00243 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;have.&#32;&#32;Hence,&#32;go&#32;back&#32;in&#32;the&#32;file</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00244"/>00244 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>(info3&#32;==&#32;1)&#32;&#32;<emphasis role="comment">//if&#32;the&#32;detected&#32;start&#32;code&#32;is&#32;00&#32;00&#32;01,&#32;trailing_zero_8bits&#32;is&#32;sure&#32;not&#32;to&#32;be&#32;present</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00245"/>00245 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00246"/>00246 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pBuf&#32;-=&#32;5;
+<anchor xml:id="_annexb_8c_source_1l00247"/>00247 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>(*(pBuf--)&#32;==&#32;0)
+<anchor xml:id="_annexb_8c_source_1l00248"/>00248 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;pos--;
+<anchor xml:id="_annexb_8c_source_1l00249"/>00249 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;annex_b-&gt;nextstartcodebytes&#32;=&#32;4;
+<anchor xml:id="_annexb_8c_source_1l00250"/>00250 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00251"/>00251 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>&#32;<emphasis role="keywordflow">if</emphasis>&#32;(info2&#32;==&#32;1)
+<anchor xml:id="_annexb_8c_source_1l00252"/>00252 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;annex_b-&gt;nextstartcodebytes&#32;=&#32;3;
+<anchor xml:id="_annexb_8c_source_1l00253"/>00253 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">else</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00254"/>00254 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00255"/>00255 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;printf(<emphasis role="stringliteral">&quot;&#32;Panic:&#32;Error&#32;in&#32;next&#32;start&#32;code&#32;search&#32;\n&quot;</emphasis>);
+<anchor xml:id="_annexb_8c_source_1l00256"/>00256 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;-1;
+<anchor xml:id="_annexb_8c_source_1l00257"/>00257 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00258"/>00258 
+<anchor xml:id="_annexb_8c_source_1l00259"/>00259 &#32;&#32;&#32;&#32;pos&#32;-=&#32;annex_b-&gt;nextstartcodebytes;
+<anchor xml:id="_annexb_8c_source_1l00260"/>00260 
+<anchor xml:id="_annexb_8c_source_1l00261"/>00261 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Here&#32;the&#32;leading&#32;zeros(if&#32;any),&#32;Start&#32;code,&#32;the&#32;complete&#32;NALU,&#32;trailing&#32;zeros(if&#32;any)</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00262"/>00262 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;and&#32;the&#32;next&#32;start&#32;code&#32;is&#32;in&#32;the&#32;Buf.</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00263"/>00263 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;The&#32;size&#32;of&#32;Buf&#32;is&#32;pos&#32;-&#32;rewind,&#32;pos&#32;are&#32;the&#32;number&#32;of&#32;bytes&#32;excluding&#32;the&#32;next</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00264"/>00264 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;start&#32;code,&#32;and&#32;(pos)&#32;-&#32;LeadingZero8BitsCount</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00265"/>00265 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;is&#32;the&#32;size&#32;of&#32;the&#32;NALU.</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00266"/>00266 
+<anchor xml:id="_annexb_8c_source_1l00267"/>00267 &#32;&#32;&#32;&#32;nalu-&gt;len&#32;=&#32;pos&#32;-&#32;LeadingZero8BitsCount;
+<anchor xml:id="_annexb_8c_source_1l00268"/>00268 &#32;&#32;&#32;&#32;fast_memcpy&#32;(nalu-&gt;buf,&#32;annex_b-&gt;Buf&#32;+&#32;LeadingZero8BitsCount,&#32;nalu-&gt;len);
+<anchor xml:id="_annexb_8c_source_1l00269"/>00269 &#32;&#32;&#32;&#32;nalu-&gt;forbidden_bit&#32;&#32;&#32;&#32;&#32;=&#32;(*(nalu-&gt;buf)&#32;&gt;&gt;&#32;7)&#32;&amp;&#32;1;
+<anchor xml:id="_annexb_8c_source_1l00270"/>00270 &#32;&#32;&#32;&#32;nalu-&gt;nal_reference_idc&#32;=&#32;(NalRefIdc)&#32;((*(nalu-&gt;buf)&#32;&gt;&gt;&#32;5)&#32;&amp;&#32;3);
+<anchor xml:id="_annexb_8c_source_1l00271"/>00271 &#32;&#32;&#32;&#32;nalu-&gt;nal_unit_type&#32;&#32;&#32;&#32;&#32;=&#32;(NaluType)&#32;((*(nalu-&gt;buf))&#32;&amp;&#32;0x1f);
+<anchor xml:id="_annexb_8c_source_1l00272"/>00272 &#32;&#32;&#32;&#32;nalu-&gt;lost_packets&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00273"/>00273 
+<anchor xml:id="_annexb_8c_source_1l00274"/>00274 &#32;&#32;&#32;&#32;<emphasis role="comment">//printf&#32;(&quot;get_annex_b_NALU,&#32;regular&#32;case:&#32;pos&#32;%d&#32;nalu-&gt;len&#32;%d,&#32;nalu-&gt;reference_idc&#32;%d,&#32;nal_unit_type&#32;%d&#32;\n&quot;,&#32;pos,&#32;nalu-&gt;len,&#32;nalu-&gt;nal_reference_idc,&#32;nalu-&gt;nal_unit_type);</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00275"/>00275 <emphasis role="preprocessor">#if&#32;TRACE</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00276"/>00276 &#32;&#32;&#32;&#32;fprintf&#32;(<link linkend="_BaseVideoDecoderJM_8cpp_1a631eb222a287a3b6f1c512cc6a41f326">p_Dec</link>-&gt;p_trace,&#32;<emphasis role="stringliteral">&quot;\n\nAnnex&#32;B&#32;NALU&#32;w/&#32;%s&#32;startcode,&#32;len&#32;%d,&#32;forbidden_bit&#32;%d,&#32;nal_reference_idc&#32;%d,&#32;nal_unit_type&#32;%d\n\n&quot;</emphasis>,
+<anchor xml:id="_annexb_8c_source_1l00277"/>00277 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;nalu-&gt;startcodeprefix_len&#32;==&#32;4?<emphasis role="stringliteral">&quot;long&quot;</emphasis>:<emphasis role="stringliteral">&quot;short&quot;</emphasis>,&#32;nalu-&gt;len,&#32;nalu-&gt;forbidden_bit,&#32;nalu-&gt;nal_reference_idc,&#32;nalu-&gt;nal_unit_type);
+<anchor xml:id="_annexb_8c_source_1l00278"/>00278 &#32;&#32;&#32;&#32;fflush&#32;(<link linkend="_BaseVideoDecoderJM_8cpp_1a631eb222a287a3b6f1c512cc6a41f326">p_Dec</link>-&gt;p_trace);
+<anchor xml:id="_annexb_8c_source_1l00279"/>00279 <emphasis role="preprocessor">#endif</emphasis>
+<anchor xml:id="_annexb_8c_source_1l00280"/>00280 
+<anchor xml:id="_annexb_8c_source_1l00281"/>00281 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;(pos);
+<anchor xml:id="_annexb_8c_source_1l00282"/>00282 
+<anchor xml:id="_annexb_8c_source_1l00283"/>00283 }
+<anchor xml:id="_annexb_8c_source_1l00284"/>00284 
+<anchor xml:id="_annexb_8c_source_1l00285"/>00285 
+<anchor xml:id="_annexb_8c_source_1l00286"/>00286 
+<anchor xml:id="_annexb_8c_source_1l00295"/><link linkend="_annexb_8c_1a8248a9f1f4e93090c6c39e4f4a6db789">00295</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1a8248a9f1f4e93090c6c39e4f4a6db789">open_annex_b</link>&#32;(<emphasis role="keywordtype">char</emphasis>&#32;*fn,&#32;ANNEXB_t&#32;*annex_b)
+<anchor xml:id="_annexb_8c_source_1l00296"/>00296 {
+<anchor xml:id="_annexb_8c_source_1l00297"/>00297 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>&#32;!=&#32;annex_b-&gt;iobuffer)
+<anchor xml:id="_annexb_8c_source_1l00298"/>00298 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00299"/>00299 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;error&#32;(<emphasis role="stringliteral">&quot;open_annex_b:&#32;tried&#32;to&#32;open&#32;Annex&#32;B&#32;file&#32;twice&quot;</emphasis>,500);
+<anchor xml:id="_annexb_8c_source_1l00300"/>00300 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00301"/>00301 
+<anchor xml:id="_annexb_8c_source_1l00302"/>00302 &#32;&#32;&#32;&#32;annex_b-&gt;iobuffer&#32;=&#32;injected_annex_b_data;
+<anchor xml:id="_annexb_8c_source_1l00303"/>00303 
+<anchor xml:id="_annexb_8c_source_1l00304"/>00304 &#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>&#32;==&#32;annex_b-&gt;iobuffer)
+<anchor xml:id="_annexb_8c_source_1l00305"/>00305 &#32;&#32;&#32;&#32;{
+<anchor xml:id="_annexb_8c_source_1l00306"/>00306 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;error&#32;(<emphasis role="stringliteral">&quot;open_annex_b:&#32;no&#32;injected&#32;data&quot;</emphasis>,500);
+<anchor xml:id="_annexb_8c_source_1l00307"/>00307 &#32;&#32;&#32;&#32;}
+<anchor xml:id="_annexb_8c_source_1l00308"/>00308 &#32;&#32;&#32;&#32;annex_b-&gt;is_eof&#32;=&#32;FALSE;
+<anchor xml:id="_annexb_8c_source_1l00309"/>00309 
+<anchor xml:id="_annexb_8c_source_1l00310"/>00310 &#32;&#32;&#32;&#32;annex_b-&gt;bytesinbuffer&#32;=&#32;injected_annex_b_size;
+<anchor xml:id="_annexb_8c_source_1l00311"/>00311 &#32;&#32;&#32;&#32;annex_b-&gt;iobufferread&#32;=&#32;annex_b-&gt;iobuffer;
+<anchor xml:id="_annexb_8c_source_1l00312"/>00312 }
+<anchor xml:id="_annexb_8c_source_1l00313"/>00313 
+<anchor xml:id="_annexb_8c_source_1l00314"/>00314 
+<anchor xml:id="_annexb_8c_source_1l00321"/><link linkend="_annexb_8c_1accb7a7752b37dbc328c88ae22d3a1b93">00321</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1accb7a7752b37dbc328c88ae22d3a1b93">close_annex_b</link>(ANNEXB_t&#32;*annex_b)
+<anchor xml:id="_annexb_8c_source_1l00322"/>00322 {
+<anchor xml:id="_annexb_8c_source_1l00323"/>00323 &#32;&#32;&#32;&#32;annex_b-&gt;iobuffer&#32;=&#32;<link linkend="_CommonDef_8h_1a070d2ce7b6bb7e5c05602aa8c308d0c4">NULL</link>;
+<anchor xml:id="_annexb_8c_source_1l00324"/>00324 }
+<anchor xml:id="_annexb_8c_source_1l00325"/>00325 
+<anchor xml:id="_annexb_8c_source_1l00326"/>00326 
+<anchor xml:id="_annexb_8c_source_1l00327"/><link linkend="_annexb_8c_1a683b26181d8dc4453344635fd738f951">00327</link> <emphasis role="keywordtype">void</emphasis>&#32;<link linkend="_annexb_8c_1a683b26181d8dc4453344635fd738f951">reset_annex_b</link>(ANNEXB_t&#32;*annex_b)
+<anchor xml:id="_annexb_8c_source_1l00328"/>00328 {
+<anchor xml:id="_annexb_8c_source_1l00329"/>00329 &#32;&#32;&#32;&#32;annex_b-&gt;is_eof&#32;=&#32;FALSE;
+<anchor xml:id="_annexb_8c_source_1l00330"/>00330 &#32;&#32;&#32;&#32;annex_b-&gt;bytesinbuffer&#32;=&#32;0;
+<anchor xml:id="_annexb_8c_source_1l00331"/>00331 &#32;&#32;&#32;&#32;annex_b-&gt;iobufferread&#32;=&#32;annex_b-&gt;iobuffer;
+<anchor xml:id="_annexb_8c_source_1l00332"/>00332 }
+</programlisting></section>

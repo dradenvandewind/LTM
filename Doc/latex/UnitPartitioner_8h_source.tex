@@ -1,0 +1,230 @@
+\doxysection{Unit\+Partitioner.\+h}
+\label{UnitPartitioner_8h_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/UnitPartitioner.h@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/UnitPartitioner.h}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{*\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{*\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{*}}
+\DoxyCodeLine{00006\ \textcolor{comment}{*\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{*\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{*\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{*}}
+\DoxyCodeLine{00012\ \textcolor{comment}{*\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{*\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{*\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{*\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#ifndef\ \_\_UNITPARTITIONER\_\_}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ \_\_UNITPARTITIONER\_\_}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Unit.h"{}}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}CommonDef.h"{}}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }vtm\ \{}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{static\_assert}(MAX\_CU\_TILING\_PARTITIONS\ >=\ 4,\ \textcolor{stringliteral}{"{}Minimum\ required\ number\ of\ partitions\ for\ the\ Partitioning\ type\ is\ 4!"{}});}
+\DoxyCodeLine{00048\ \textcolor{keyword}{typedef}\ std::vector\ <UnitArea>\ Partitioning;}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ PartManager\ class\ -\/\ manages\ the\ partitioning\ tree}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ contains\ the\ currently\ processed\ partitioning\ area\ (currArea)}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ as\ well\ as\ the\ all\ partitioning\ decisions\ that\ led\ to\ this\ area}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ being\ processed\ (in\ m\_partStack).}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{enum}\ PartSplit}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ CTU\_LEVEL\ \ \ \ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00061\ \ \ CU\_QUAD\_SPLIT,}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ CU\_HORZ\_SPLIT,}
+\DoxyCodeLine{00064\ \ \ CU\_VERT\_SPLIT,}
+\DoxyCodeLine{00065\ \ \ CU\_TRIH\_SPLIT,}
+\DoxyCodeLine{00066\ \ \ CU\_TRIV\_SPLIT,}
+\DoxyCodeLine{00067\ \ \ TU\_MAX\_TR\_SPLIT,}
+\DoxyCodeLine{00068\ \ \ TU\_NO\_ISP,}
+\DoxyCodeLine{00069\ \ \ TU\_1D\_HORZ\_SPLIT,}
+\DoxyCodeLine{00070\ \ \ TU\_1D\_VERT\_SPLIT,}
+\DoxyCodeLine{00071\ \ \ SBT\_VER\_HALF\_POS0\_SPLIT,}
+\DoxyCodeLine{00072\ \ \ SBT\_VER\_HALF\_POS1\_SPLIT,}
+\DoxyCodeLine{00073\ \ \ SBT\_HOR\_HALF\_POS0\_SPLIT,}
+\DoxyCodeLine{00074\ \ \ SBT\_HOR\_HALF\_POS1\_SPLIT,}
+\DoxyCodeLine{00075\ \ \ SBT\_VER\_QUAD\_POS0\_SPLIT,}
+\DoxyCodeLine{00076\ \ \ SBT\_VER\_QUAD\_POS1\_SPLIT,}
+\DoxyCodeLine{00077\ \ \ SBT\_HOR\_QUAD\_POS0\_SPLIT,}
+\DoxyCodeLine{00078\ \ \ SBT\_HOR\_QUAD\_POS1\_SPLIT,}
+\DoxyCodeLine{00079\ \ \ NUM\_PART\_SPLIT,}
+\DoxyCodeLine{00080\ \ \ CU\_MT\_SPLIT\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 1000,\ }
+\DoxyCodeLine{00081\ \ \ CU\_BT\_SPLIT\ \ \ \ \ \ \ \ \ \ \ \ \ =\ 1001,\ }
+\DoxyCodeLine{00082\ \ \ CU\_DONT\_SPLIT\ \ \ \ \ \ \ \ \ \ \ =\ 2000\ \ }
+\DoxyCodeLine{00083\ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{struct\ }PartLevel}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \ \ PartSplit\ \ \ \ split;}
+\DoxyCodeLine{00090\ \ \ Partitioning\ parts;}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{unsigned}\ \ \ \ \ idx;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ checkdIfImplicit;}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ isImplicit;}
+\DoxyCodeLine{00094\ \ \ PartSplit\ \ \ \ implicitSplit;}
+\DoxyCodeLine{00095\ \ \ PartSplit\ \ \ \ firstSubPartSplit;}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ canQtSplit;}
+\DoxyCodeLine{00097\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ qgEnable;}
+\DoxyCodeLine{00098\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ qgChromaEnable;}
+\DoxyCodeLine{00099\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ modeType;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ PartLevel();}
+\DoxyCodeLine{00102\ \ \ PartLevel(\ \textcolor{keyword}{const}\ PartSplit\ \_split,\ \textcolor{keyword}{const}\ Partitioning\&\ \ \_parts\ );}
+\DoxyCodeLine{00103\ \ \ PartLevel(\ \textcolor{keyword}{const}\ PartSplit\ \_split,\ \ \ \ \ \ \ Partitioning\&\&\ \_parts\ );}
+\DoxyCodeLine{00104\ \};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ set\ depending\ on\ max\ QT\ /\ BT\ possibilities}}
+\DoxyCodeLine{00107\ \textcolor{keyword}{typedef}\ static\_vector<PartLevel,\ 2\ *\ MAX\_CU\_DEPTH\ +\ 1>\ PartitioningStack;}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keyword}{class\ }Partitioner}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00112\ \ \ PartitioningStack\ m\_partStack;}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00114\ \ \ UnitArea\ \ \ \ \ \ \ \ \ \ m\_currArea;}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00118\ \ \ \textcolor{keywordtype}{unsigned}\ currDepth;}
+\DoxyCodeLine{00119\ \ \ \textcolor{keywordtype}{unsigned}\ currQtDepth;}
+\DoxyCodeLine{00120\ \ \ \textcolor{keywordtype}{unsigned}\ currTrDepth;}
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordtype}{unsigned}\ currBtDepth;}
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordtype}{unsigned}\ currMtDepth;}
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordtype}{unsigned}\ currSubdiv;}
+\DoxyCodeLine{00124\ \ \ Position\ currQgPos;}
+\DoxyCodeLine{00125\ \ \ Position\ currQgChromaPos;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \textcolor{keywordtype}{unsigned}\ currImplicitBtDepth;}
+\DoxyCodeLine{00128\ \ \ ChannelType\ chType;}
+\DoxyCodeLine{00129\ \ \ TreeType\ treeType;}
+\DoxyCodeLine{00130\ \ \ ModeType\ modeType;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \textcolor{keyword}{virtual}\ \string~Partitioner\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \{\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{const}\ PartLevel\&\ currPartLevel\ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_partStack.back();\ \}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{const}\ UnitArea\&\ \ currArea\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ currPartLevel().parts[currPartIdx()];\ \}}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \ \ currPartIdx\ \ \ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ currPartLevel().idx;\ \}}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{const}\ PartitioningStack\&\ getPartStack\ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_partStack;\ \}}
+\DoxyCodeLine{00138\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ currQgEnable\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ currPartLevel().qgEnable;\ \}}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ currQgChromaEnable\ \ \ \ \ \ \ \ \ \ \ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ currPartLevel().qgChromaEnable;\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ SplitSeries\ getSplitSeries\ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00142\ \ \ ModeTypeSeries\ getModeTypeSeries\ \ \ \ \ \ \ \ ()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ initCtu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ UnitArea\&\ ctuArea,\ \textcolor{keyword}{const}\ ChannelType\ \_chType,\ \textcolor{keyword}{const}\ Slice\&\ slice\ )\ \ \ \ =\ 0;}
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ splitCurrArea\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00146\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ exitCurrSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00147\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ nextPart\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\ autoPop\ =\ \textcolor{keyword}{false}\ )\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00148\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ hasNextPart\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ setCUData\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ CodingUnit\&\ cu\ );}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ copyState\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ Partitioner\&\ other\ );}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00155\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\&\ canNo,\ \textcolor{keywordtype}{bool}\&\ canQt,\ \textcolor{keywordtype}{bool}\&\ canBh,\ \textcolor{keywordtype}{bool}\&\ canBv,\ \textcolor{keywordtype}{bool}\&\ canTh,\ \textcolor{keywordtype}{bool}\&\ canTv\ )\ =\ 0;}
+\DoxyCodeLine{00156\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )\ =\ 0;}
+\DoxyCodeLine{00157\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ isSplitImplicit\ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )\ =\ 0;}
+\DoxyCodeLine{00158\ \ \ \textcolor{keyword}{virtual}\ PartSplit\ getImplicitSplit\ \ \ \ \ \ (\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ )\ =\ 0;}
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordtype}{bool}\ isSepTree\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00160\ \ \ \textcolor{keywordtype}{bool}\ isLocalSepTree\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00161\ \ \ \textcolor{keywordtype}{bool}\ isConsInter\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \{\ \textcolor{keywordflow}{return}\ modeType\ ==\ MODE\_TYPE\_INTER;\ \}}
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordtype}{bool}\ isConsIntra\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ()\ \{\ \textcolor{keywordflow}{return}\ modeType\ ==\ MODE\_TYPE\_INTRA;\ \}}
+\DoxyCodeLine{00163\ \};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{keyword}{class\ }AdaptiveDepthPartitioner\ :\ \textcolor{keyword}{public}\ Partitioner}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00168\ \ \ \textcolor{keywordtype}{void}\ setMaxMinDepth(\ \textcolor{keywordtype}{unsigned}\&\ minDepth,\ \textcolor{keywordtype}{unsigned}\&\ maxDepth,\ \textcolor{keyword}{const}\ CodingStructure\&\ cs\ )\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00169\ \};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{keyword}{class\ }QTBTPartitioner\ :\ \textcolor{keyword}{public}\ AdaptiveDepthPartitioner}
+\DoxyCodeLine{00172\ \{}
+\DoxyCodeLine{00173\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordtype}{void}\ initCtu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ UnitArea\&\ ctuArea,\ \textcolor{keyword}{const}\ ChannelType\ \_chType,\ \textcolor{keyword}{const}\ Slice\&\ slice\ );}
+\DoxyCodeLine{00175\ \ \ \textcolor{keywordtype}{void}\ splitCurrArea\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00176\ \ \ \textcolor{keywordtype}{void}\ exitCurrSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ ();}
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordtype}{bool}\ nextPart\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\ autoPop\ =\ \textcolor{keyword}{false}\ );}
+\DoxyCodeLine{00178\ \ \ \textcolor{keywordtype}{bool}\ hasNextPart\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ();}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \textcolor{keywordtype}{void}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\&\ canNo,\ \textcolor{keywordtype}{bool}\&\ canQt,\ \textcolor{keywordtype}{bool}\&\ canBh,\ \textcolor{keywordtype}{bool}\&\ canBv,\ \textcolor{keywordtype}{bool}\&\ canTh,\ \textcolor{keywordtype}{bool}\&\ canTv\ );}
+\DoxyCodeLine{00181\ \ \ \textcolor{keywordtype}{bool}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00182\ \ \ \textcolor{keywordtype}{bool}\ isSplitImplicit\ \ \ \ \ \ \ \ \ \ \ \ (\ \textcolor{keyword}{const}\ PartSplit\ split,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00183\ \ \ PartSplit\ getImplicitSplit\ \ \ \ \ \ (\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00184\ \};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keyword}{class\ }TUIntraSubPartitioner\ :\ \textcolor{keyword}{public}\ Partitioner}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00189\ \ \ TUIntraSubPartitioner(Partitioner\&\ \_initialState)}
+\DoxyCodeLine{00190\ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//we\ copy\ the\ input\ partitioner\ data}}
+\DoxyCodeLine{00192\ \ \ \ \ m\_partStack.push\_back(PartLevel(TU\_NO\_ISP,\ \{\ \_initialState.currArea()\ \}));}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ currDepth\ \ \ \ =\ \_initialState.currDepth;}
+\DoxyCodeLine{00195\ \ \ \ \ currQtDepth\ \ =\ \_initialState.currQtDepth;}
+\DoxyCodeLine{00196\ \ \ \ \ currTrDepth\ \ =\ \_initialState.currTrDepth;}
+\DoxyCodeLine{00197\ \ \ \ \ currBtDepth\ \ =\ \_initialState.currBtDepth;}
+\DoxyCodeLine{00198\ \ \ \ \ currMtDepth\ \ =\ \_initialState.currMtDepth;}
+\DoxyCodeLine{00199\ \ \ \ \ chType\ \ \ \ \ \ \ =\ \_initialState.chType;}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#if\ \_DEBUG}}
+\DoxyCodeLine{00201\ \ \ \ \ m\_currArea\ \ \ =\ \_initialState.currArea();}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00203\ \ \ \ \ treeType\ \ \ \ \ =\ \_initialState.treeType;}
+\DoxyCodeLine{00204\ \ \ \ \ modeType\ \ \ \ \ =\ \_initialState.modeType;}
+\DoxyCodeLine{00205\ \ \ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \textcolor{keywordtype}{void}\ initCtu\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ UnitArea\&\ ctuArea,\ \textcolor{keyword}{const}\ ChannelType\ chType,\ \textcolor{keyword}{const}\ Slice\&\ slice)\ \{\};\ \textcolor{comment}{//\ not\ needed}}
+\DoxyCodeLine{00208\ \ \ \textcolor{keywordtype}{void}\ splitCurrArea\ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs);}
+\DoxyCodeLine{00209\ \ \ \textcolor{keywordtype}{void}\ exitCurrSplit\ \ \ \ \ \ \ \ \ ();}
+\DoxyCodeLine{00210\ \ \ \textcolor{keywordtype}{bool}\ nextPart\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\ autoPop\ =\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00211\ \ \ \textcolor{keywordtype}{bool}\ hasNextPart\ \ \ \ \ \ \ \ \ \ \ ();}
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordtype}{void}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keywordtype}{bool}\&\ canNo,\ \textcolor{keywordtype}{bool}\&\ canQt,\ \textcolor{keywordtype}{bool}\&\ canBh,\ \textcolor{keywordtype}{bool}\&\ canBv,\ \textcolor{keywordtype}{bool}\&\ canTh,\ \textcolor{keywordtype}{bool}\&\ canTv)\ \{\};}
+\DoxyCodeLine{00213\ \ \ \textcolor{keywordtype}{bool}\ canSplit\ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs);}
+\DoxyCodeLine{00214\ \ \ \textcolor{keywordtype}{bool}\ isSplitImplicit\ \ \ \ \ \ \ (\textcolor{keyword}{const}\ PartSplit\ split,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \};\ \textcolor{comment}{//not\ needed}}
+\DoxyCodeLine{00215\ \ \ PartSplit\ getImplicitSplit\ (\textcolor{keyword}{const}\ CodingStructure\ \&cs)\ \{\ \textcolor{keywordflow}{return}\ CU\_DONT\_SPLIT;\ \};\ \textcolor{comment}{//not\ needed}}
+\DoxyCodeLine{00216\ \};}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00219\ \textcolor{comment}{//\ Partitioner\ namespace\ -\/\ contains\ methods\ calculating\ the\ actual\ splits}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{keyword}{namespace\ }PartitionerImpl}
+\DoxyCodeLine{00223\ \{}
+\DoxyCodeLine{00224\ \ \ Partitioning\ getCUSubPartitions(\ \textcolor{keyword}{const}\ UnitArea\ \ \ \&cuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ splitType\ =\ CU\_QUAD\_SPLIT\ );}
+\DoxyCodeLine{00225\ \ \ Partitioning\ getMaxTuTiling\ \ \ \ (\ \textcolor{keyword}{const}\ UnitArea\&\ curArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs\ );}
+\DoxyCodeLine{00226\ \ \ \textcolor{keywordtype}{void}\ \ \ \ getTUIntraSubPartitions(\ Partitioning\ \&sub,\ \textcolor{keyword}{const}\ UnitArea\ \&tuArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ splitType\ );}
+\DoxyCodeLine{00227\ \ \ Partitioning\ getSbtTuTiling\ \ \ \ (\ \textcolor{keyword}{const}\ UnitArea\&\ curArea,\ \textcolor{keyword}{const}\ CodingStructure\ \&cs,\ \textcolor{keyword}{const}\ PartSplit\ splitType\ );}
+\DoxyCodeLine{00228\ \};}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

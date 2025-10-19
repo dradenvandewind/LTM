@@ -1,0 +1,547 @@
+\doxysection{u\+Base\+Decoder\+EVC.\+cpp}
+\label{uBaseDecoderEVC_8cpp_source}\index{src/uBaseDecoderEVC.cpp@{src/uBaseDecoderEVC.cpp}}
+\textbf{ Go to the documentation of this file.}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <assert.h>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <climits>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <memory.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}uBaseDecoderEVC.h"{}}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ push}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ push}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/variable"{}}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ ignored\ "{}-\/Wunused-\/but-\/set-\/variable"{}}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#define\ SLICE\_B\ 0}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#define\ SLICE\_P\ 1}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ SLICE\_I\ 2}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{namespace\ }vnova\ \{}
+\DoxyCodeLine{00060\ \textcolor{keyword}{namespace\ }utility\ \{}
+\DoxyCodeLine{00061\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ BaseDecNalUnitType::Enum\ uFromEVC(uint8\_t\ type)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{switch}\ (type)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::NONIDR\_NUT:}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::IDR\_NUT:}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Slice;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::SPS\_NUT:}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SPS;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::PPS\_NUT:}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::PPS;}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#if\ defined(EVC\_FDIS)}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::FD\_NUT:}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Filler;}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{case}\ EVCNalType::SEI\_NUT:}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::SEI;}
+\DoxyCodeLine{00078\ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecNalUnitType::Unknown;}
+\DoxyCodeLine{00081\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ uint32\_t\ uOffsetForNalUnitHeader(\textcolor{keyword}{const}\ uint8\_t\ *nal)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00090\ \textcolor{comment}{//\ EVC}}
+\DoxyCodeLine{00091\ \textcolor{comment}{//\ \string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~\string~}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ BaseDecoderEVC::SPS::SPS()\ \{\ memset(\textcolor{keyword}{this},\ 0,\ \textcolor{keyword}{sizeof}(SPS));\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ BaseDecoderEVC::PPS::PPS()\ \{\ memset(\textcolor{keyword}{this},\ 0,\ \textcolor{keyword}{sizeof}(PPS));\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ BaseDecoderEVC::SliceHeader::SliceHeader()\ \{\ memset(\textcolor{keyword}{this},\ 0,\ \textcolor{keyword}{sizeof}(SliceHeader));\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ BaseDecoderEVC::BaseDecoderEVC()\ :\ m\_nal\_type(0),\ m\_sps(nullptr),\ m\_pps(nullptr)\ \{\}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::ParseNalUnit(\textcolor{keyword}{const}\ uint8\_t\ *nal,\ uint32\_t\ nalLength)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{bool}\ bSuccess\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ uint32\_t\ offset\ =\ 0;}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ [forbidden-\/zero:1,\ nal\_type:6,\ layer\_id\_top:1]}}
+\DoxyCodeLine{00107\ \ \ \ \ m\_nal\_type\ =\ ((nal[offset]\ >>\ 1)\ \&\ 0x3F)\ -\/\ 1;}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{comment}{//\ [layer\_id:5,\ temporal\_id\_plus1:3]}}
+\DoxyCodeLine{00109\ \ \ \ \ m\_temporal\_id\ =\ nal[offset\ +\ 1]\ >>\ 5;}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ offset\ +=\ 2;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ BaseDecNalUnitType::Enum\ nalType\ =\ uFromEVC(m\_nal\_type);}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ nal\ +=\ offset;}
+\DoxyCodeLine{00116\ \ \ \ \ nalLength\ -\/=\ offset;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ m\_currentNalPayload.clear();}
+\DoxyCodeLine{00119\ \ \ \ \ m\_currentNalPayload.insert(m\_currentNalPayload.end(),\ nal,\ nal\ +\ nalLength);}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ m\_currentBits\ =\ *m\_currentNalPayload.data();}
+\DoxyCodeLine{00122\ \ \ \ \ m\_remainingBits\ =\ 8;}
+\DoxyCodeLine{00123\ \ \ \ \ m\_byteOffset\ =\ 0;}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{switch}\ (nalType)\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::VPS:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseVPS();}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::PPS:}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParsePPS();}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::SPS:}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ bSuccess\ =\ ParseSPS();}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::Slice:}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((bSuccess\ =\ ParseSliceHeader(m\_nal\_type)))\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ HandlePictureOrderCount(m\_nal\_type,\ m\_temporal\_id);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{case}\ BaseDecNalUnitType::EOS:}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{return}\ bSuccess;}
+\DoxyCodeLine{00147\ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ BaseDecPictType::Enum\ BaseDecoderEVC::GetBasePictureType()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordflow}{switch}\ (m\_slice\_header.slice\_type)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{case}\ SLICE\_P:}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::P;}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{case}\ SLICE\_B:}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::B;}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordflow}{case}\ SLICE\_I:}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::I;}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00159\ \ \ \ \ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{return}\ BaseDecPictType::Unknown;}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ BaseDecNalUnitType::Enum\ BaseDecoderEVC::GetBaseNalUnitType()\textcolor{keyword}{\ const\ }\{\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordflow}{return}\ uFromEVC(m\_nal\_type);}
+\DoxyCodeLine{00166\ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ int32\_t\ BaseDecoderEVC::GetQP()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ XXX}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{return}\ 30;}
+\DoxyCodeLine{00171\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ uint32\_t\ BaseDecoderEVC::GetNalType()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_nal\_type;\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ uint32\_t\ BaseDecoderEVC::GetPictureWidth()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sps-\/>pic\_width\_in\_luma\_samples;}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ uint32\_t\ BaseDecoderEVC::GetPictureHeight()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sps-\/>pic\_height\_in\_luma\_samples;}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ uint32\_t\ BaseDecoderEVC::GetBitDepthLuma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sps-\/>bit\_depth\_luma;}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ uint32\_t\ BaseDecoderEVC::GetBitDepthChroma()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sps-\/>bit\_depth\_chroma;}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ uint32\_t\ BaseDecoderEVC::GetChromaFormatIDC()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps)}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_sps-\/>chroma\_format\_idc;}
+\DoxyCodeLine{00209\ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ int64\_t\ BaseDecoderEVC::GetPictureOrderCount()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_poc\_val;\ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::GetDPBCanRefresh()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00214\ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ uint8\_t\ BaseDecoderEVC::GetMaxNumberOfReorderFrames()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00219\ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ uint32\_t\ BaseDecoderEVC::GetFrameRate()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00224\ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00226\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ uint32\_t\ BaseDecoderEVC::GetTemporalId()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_temporal\_id;}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keywordtype}{void}\ BaseDecoderEVC::HandlePictureOrderCount(uint32\_t\ nal\_unit\_type,\ uint32\_t\ nuh\_temporal\_id)\ \{}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps-\/>tool\_pocs)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ CHECK(0);\ \textcolor{comment}{//\ XXX\ Not\ handled}}
+\DoxyCodeLine{00236\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nal\_unit\_type\ ==\ EVCNalType::IDR\_NUT)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ m\_slice\_header.poc\_lsb\ =\ 0;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ m\_poc\_val\ =\ 0;}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ poc\_msb,\ poc\_lsb,\ max\_poc\_lsb,\ prev\_poc\_lsb,\ prev\_poc\_msb;}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ poc\_lsb\ =\ m\_slice\_header.poc\_lsb;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ max\_poc\_lsb\ =\ 1\ <<\ (m\_sps-\/>log2\_max\_pic\_order\_cnt\_lsb);}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ prev\_poc\_lsb\ =\ m\_prev\_poc\_val\ \&\ (max\_poc\_lsb\ -\/\ 1);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ prev\_poc\_msb\ =\ m\_prev\_poc\_val\ -\/\ prev\_poc\_lsb;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((poc\_lsb\ <\ prev\_poc\_lsb)\ \&\&\ ((prev\_poc\_lsb\ -\/\ poc\_lsb)\ >=\ (max\_poc\_lsb\ /\ 2)))}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc\_msb\ =\ prev\_poc\_msb\ +\ max\_poc\_lsb;}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((poc\_lsb\ >\ prev\_poc\_lsb)\ \&\&\ ((poc\_lsb\ -\/\ prev\_poc\_lsb)\ >\ (max\_poc\_lsb\ /\ 2)))}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc\_msb\ =\ prev\_poc\_msb\ -\/\ max\_poc\_lsb;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc\_msb\ =\ prev\_poc\_msb;}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ m\_poc\_val\ =\ poc\_msb\ +\ poc\_lsb;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nuh\_temporal\_id\ ==\ 0)}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_prev\_poc\_val\ =\ m\_poc\_val;}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00259\ \ \ \ \ \}}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::ParseSPS()\ \{}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ uint32\_t\ seq\_parameter\_set\_id\ =\ ReadUE();}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{if}\ (seq\_parameter\_set\_id\ >=\ EVCMaxSPSCount)\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}spsID\ out\ of\ range\ \%d"{}},\ seq\_parameter\_set\_id);}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00268\ \ \ \ \ \}}
+\DoxyCodeLine{00269\ \ \ \ \ m\_sps\ =\ \&m\_sps\_set[seq\_parameter\_set\_id];}
+\DoxyCodeLine{00270\ \ \ \ \ m\_sps-\/>seq\_parameter\_set\_id\ =\ seq\_parameter\_set\_id;}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \ \ m\_sps-\/>profile\_idc\ =\ ReadBits(8);}
+\DoxyCodeLine{00273\ \ \ \ \ m\_sps-\/>level\_idc\ =\ ReadBits(8);}
+\DoxyCodeLine{00274\ \ \ \ \ m\_sps-\/>toolset\_idc\_h\ =\ ReadBits(32);}
+\DoxyCodeLine{00275\ \ \ \ \ m\_sps-\/>toolset\_idc\_l\ =\ ReadBits(32);}
+\DoxyCodeLine{00276\ \ \ \ \ m\_sps-\/>chroma\_format\_idc\ =\ ReadUE();}
+\DoxyCodeLine{00277\ \ \ \ \ m\_sps-\/>pic\_width\_in\_luma\_samples\ =\ ReadUE();}
+\DoxyCodeLine{00278\ \ \ \ \ m\_sps-\/>pic\_height\_in\_luma\_samples\ =\ ReadUE();}
+\DoxyCodeLine{00279\ \ \ \ \ m\_sps-\/>bit\_depth\_luma\ =\ ReadUE()\ +\ 8;}
+\DoxyCodeLine{00280\ \ \ \ \ m\_sps-\/>bit\_depth\_chroma\ =\ ReadUE()\ +\ 8;}
+\DoxyCodeLine{00281\ \ \ \ \ m\_sps-\/>sps\_btt\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>sps\_btt\_flag)\ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_ctu\_size\ =\ ReadUE()\ +\ 5;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_min\_cb\_size\ =\ ReadUE()\ +\ 2;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_diff\_ctu\_max\_14\_cb\_size\ =\ ReadUE();}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_diff\_ctu\_max\_tt\_cb\_size\ =\ ReadUE();}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_diff\_min\_cb\_min\_tt\_cb\_size\ =\ ReadUE()\ +\ 2;}
+\DoxyCodeLine{00288\ \ \ \ \ \}}
+\DoxyCodeLine{00289\ \ \ \ \ m\_sps-\/>sps\_suco\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>sps\_suco\_flag)\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_diff\_ctu\_size\_max\_suco\_cb\_size\ =\ ReadUE();}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_diff\_max\_suco\_min\_suco\_cb\_size\ =\ ReadUE();}
+\DoxyCodeLine{00293\ \ \ \ \ \}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ m\_sps-\/>tool\_admvp\ =\ ReadFlag();}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_admvp)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_affine\ =\ ReadFlag();}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_amvr\ =\ ReadFlag();}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_dmvr\ =\ ReadFlag();}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_mmvd\ =\ ReadFlag();}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_hmvp\ =\ ReadFlag();}
+\DoxyCodeLine{00302\ \ \ \ \ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ m\_sps-\/>tool\_eipd\ =\ ReadFlag();}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_eipd)\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ m\_sps-\/>ibc\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>ibc\_flag)\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ m\_sps-\/>ibc\_log\_max\_size\ =\ ReadUE()\ +\ 2;}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00310\ \ \ \ \ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ m\_sps-\/>tool\_cm\_init\ =\ ReadFlag();}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_cm\_init)\ \{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_adcc\ =\ ReadFlag();}
+\DoxyCodeLine{00315\ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ m\_sps-\/>tool\_iqt\ =\ ReadFlag();}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_iqt)\ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ m\_sps-\/>tool\_ats\ =\ ReadFlag();}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \ \ m\_sps-\/>tool\_addb\ =\ ReadFlag();}
+\DoxyCodeLine{00321\ \ \ \ \ m\_sps-\/>tool\_alf\ =\ ReadFlag();}
+\DoxyCodeLine{00322\ \ \ \ \ m\_sps-\/>tool\_htdf\ =\ ReadFlag();}
+\DoxyCodeLine{00323\ \ \ \ \ m\_sps-\/>tool\_rpl\ =\ ReadFlag();}
+\DoxyCodeLine{00324\ \ \ \ \ m\_sps-\/>tool\_pocs\ =\ ReadFlag();}
+\DoxyCodeLine{00325\ \ \ \ \ m\_sps-\/>dquant\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00326\ \ \ \ \ m\_sps-\/>tool\_dra\ =\ ReadFlag();}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_pocs)\ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_max\_pic\_order\_cnt\_lsb\ =\ ReadUE()\ +\ 4;}
+\DoxyCodeLine{00330\ \ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps-\/>tool\_rpl\ ||\ !m\_sps-\/>tool\_pocs)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_sub\_gop\_length\ =\ ReadUE();}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>log2\_sub\_gop\_length\ ==\ 0)\ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ m\_sps-\/>log2\_ref\_pic\_gap\_length\ =\ ReadUE();}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_sps-\/>tool\_rpl)\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ m\_sps-\/>max\_num\_ref\_pics\ =\ ReadUE();}
+\DoxyCodeLine{00340\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ m\_sps-\/>sps\_max\_dec\_pic\_buffering\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ m\_sps-\/>long\_term\_ref\_pics\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ m\_sps-\/>rpl1\_same\_as\_rpl0\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ m\_sps-\/>num\_ref\_pic\_lists\_in\_sps0\ =\ ReadUE();}
+\DoxyCodeLine{00345\ \ \ \ \ \}}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ Ignore\ rest}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00351\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::ParsePPS()\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ uint32\_t\ pps\_pic\_parameter\_set\_id\ =\ ReadUE();}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordflow}{if}\ (pps\_pic\_parameter\_set\_id\ >=\ EVCMaxPPSCount)\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}ppsID\ out\ of\ range\ \%d"{}},\ pps\_pic\_parameter\_set\_id);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00359\ \ \ \ \ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ m\_pps\ =\ \&m\_pps\_set[pps\_pic\_parameter\_set\_id];}
+\DoxyCodeLine{00362\ \ \ \ \ m\_pps-\/>pic\_parameter\_set\_id\ =\ pps\_pic\_parameter\_set\_id;}
+\DoxyCodeLine{00363\ \ \ \ \ m\_pps-\/>seq\_parameter\_set\_id\ =\ ReadUE();}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ m\_pps-\/>num\_ref\_idx\_default\_active[0]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00366\ \ \ \ \ m\_pps-\/>num\_ref\_idx\_default\_active[1]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00367\ \ \ \ \ m\_pps-\/>additional\_lt\_poc\_lsb\_len\ =\ ReadUE();}
+\DoxyCodeLine{00368\ \ \ \ \ m\_pps-\/>rpl1\_idx\_present\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00369\ \ \ \ \ m\_pps-\/>single\_tile\_in\_pic\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_pps-\/>single\_tile\_in\_pic\_flag)\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ m\_pps-\/>num\_tile\_columns\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ m\_pps-\/>num\_tile\_rows\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ m\_pps-\/>uniform\_tile\_spacing\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_pps-\/>uniform\_tile\_spacing\_flag)\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ m\_pps-\/>num\_tile\_columns\ -\/\ 1;\ ++i)}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_pps-\/>tile\_column\_width[i]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ m\_pps-\/>num\_tile\_rows\ -\/\ 1;\ ++i)}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_pps-\/>tile\_row\_height[i]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ m\_pps-\/>loop\_filter\_across\_tiles\_enabled\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ m\_pps-\/>tile\_offset\_lens\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00382\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ m\_pps-\/>num\_tile\_columns\ =\ 1;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ m\_pps-\/>num\_tile\_rows\ =\ 1;}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ m\_pps-\/>tile\_offset\_lens\ =\ 1;}
+\DoxyCodeLine{00386\ \ \ \ \ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \ \ \ \ m\_pps-\/>tile\_id\_len\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00389\ \ \ \ \ m\_pps-\/>explicit\_tile\_id\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pps-\/>explicit\_tile\_id\_flag)\ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <=\ m\_pps-\/>num\_tile\_rows\ -\/\ 1;\ ++i)}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ j\ =\ 0;\ j\ <=\ m\_pps-\/>num\_tile\_columns\ -\/\ 1;\ ++j)}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_pps-\/>tile\_id\_val[i][j]\ =\ ReadBits(m\_pps-\/>tile\_id\_len);}
+\DoxyCodeLine{00394\ \ \ \ \ \}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \ \ m\_pps-\/>pic\_dra\_enabled\_present\_flag\ =\ 0;}
+\DoxyCodeLine{00397\ \ \ \ \ m\_pps-\/>pic\_dra\_enabled\_flag\ =\ 0;}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_sps-\/>tool\_dra)\ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ m\_pps-\/>pic\_dra\_enabled\_present\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pps-\/>pic\_dra\_enabled\_present\_flag)\ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ m\_pps-\/>pic\_dra\_enabled\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pps-\/>pic\_dra\_enabled\_flag)\ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_pps-\/>pic\_dra\_aps\_id\ =\ ReadBits(3);}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00406\ \ \ \ \ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ m\_pps-\/>arbitrary\_slice\_present\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00409\ \ \ \ \ m\_pps-\/>constrained\_intra\_pred\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00410\ \ \ \ \ m\_pps-\/>cu\_qp\_delta\_enabled\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pps-\/>cu\_qp\_delta\_enabled\_flag)}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ m\_pps-\/>cu\_qp\_delta\_area\ =\ ReadUE()\ +\ 6;}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00415\ \}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::ParseSliceHeader(uint32\_t\ nal\_unit\_type)\ \{}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ m\_slice\_header.pic\_parameter\_set\_id\ =\ ReadUE();}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ m\_slice\_header.pps\ =\ \&m\_pps\_set[m\_slice\_header.pic\_parameter\_set\_id];}
+\DoxyCodeLine{00422\ \ \ \ \ m\_slice\_header.sps\ =\ \&m\_sps\_set[m\_slice\_header.pps-\/>seq\_parameter\_set\_id];}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ PPS\ *pps\ =\ m\_slice\_header.pps;}
+\DoxyCodeLine{00425\ \ \ \ \ SPS\ *sps\ =\ m\_slice\_header.sps;}
+\DoxyCodeLine{00426\ \ \ \ \ SliceHeader\ *sh\ =\ \&m\_slice\_header;}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ uint32\_t\ num\_tiles\_in\_slice\ =\ 0;}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pps-\/>single\_tile\_in\_pic\_flag)\ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ sh-\/>single\_tile\_in\_slice\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ sh-\/>first\_tile\_id\ =\ ReadBits(pps-\/>tile\_id\_len);}
+\DoxyCodeLine{00433\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ sh-\/>single\_tile\_in\_slice\_flag\ =\ 1;}
+\DoxyCodeLine{00435\ \ \ \ \ \}}
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordflow}{if}\ (!sh-\/>single\_tile\_in\_slice\_flag)\ \{}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pps-\/>arbitrary\_slice\_present\_flag)\ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>arbitrary\_slice\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!sh-\/>arbitrary\_slice\_flag)\ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>last\_tile\_id\ =\ ReadBits(pps-\/>tile\_id\_len);}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>num\_remaining\_tiles\_in\_slice\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ num\_tiles\_in\_slice\ =\ sh-\/>num\_remaining\_tiles\_in\_slice\ +\ 1;}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ num\_tiles\_in\_slice\ -\/\ 1;\ ++i)\ \{}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>delta\_tile\_id[i]\ =\ ReadUE()\ +\ 1;}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00450\ \ \ \ \ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ sh-\/>slice\_type\ =\ ReadUE();}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordflow}{if}\ (!sh-\/>arbitrary\_slice\_flag)\ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ first\_row\_slice,\ w\_tile\_slice,\ first\_col\_slice,\ h\_tile\_slice,\ w\_tile;}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ w\_tile\ =\ pps-\/>num\_tile\_columns;}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ first\_row\_slice\ =\ sh-\/>first\_tile\_id\ /\ w\_tile;}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ first\_col\_slice\ =\ sh-\/>first\_tile\_id\ \%\ w\_tile;}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ w\_tile\_slice\ =\ (sh-\/>last\_tile\_id\ \%\ w\_tile)\ -\/\ first\_col\_slice;}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ h\_tile\_slice\ =\ (sh-\/>last\_tile\_id\ /\ w\_tile)\ -\/\ first\_row\_slice;}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ num\_tiles\_in\_slice\ =\ (w\_tile\_slice\ +\ 1)\ *\ (h\_tile\_slice\ +\ 1);}
+\DoxyCodeLine{00462\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ num\_tiles\_in\_slice\ =\ sh-\/>num\_remaining\_tiles\_in\_slice\ +\ 1;}
+\DoxyCodeLine{00464\ \ \ \ \ \}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordflow}{if}\ (nal\_unit\_type\ ==\ EVCNalType::IDR\_NUT)\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ sh-\/>no\_output\_of\_prior\_pics\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00468\ \ \ \ \ \}}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keywordflow}{if}\ (sps-\/>tool\_mmvd\ \&\&\ ((sh-\/>slice\_type\ ==\ SLICE\_B)\ ||\ (sh-\/>slice\_type\ ==\ SLICE\_P)))\ \{}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ sh-\/>mmvd\_group\_enable\_flag\ =\ ReadFlag();}
+\DoxyCodeLine{00472\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ sh-\/>mmvd\_group\_enable\_flag\ =\ 0;}
+\DoxyCodeLine{00474\ \ \ \ \ \}}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keywordflow}{if}\ (sps-\/>tool\_alf)\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ sh-\/>alfChromaIdc\ =\ 0;}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[0]\ =\ 0;}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[1]\ =\ 0;}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[2]\ =\ 0;}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ sh-\/>alf\_on\ =\ ReadFlag();}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[0]\ =\ sh-\/>alf\_on;}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sh-\/>alf\_on)\ \{}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>aps\_id\_y\ =\ ReadBits(5);}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isCtbAlfOn\ =\ ReadFlag();}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>alfChromaIdc\ =\ ReadBits(2);}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[1]\ =\ sh-\/>alfChromaIdc\ \&\ 1;}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>alf\_sh\_param\_enabledFlag[2]\ =\ (sh-\/>alfChromaIdc\ >>\ 1)\ \&\ 1;}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sh-\/>alfChromaIdc\ ==\ 1)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabledFlag\ =\ 1;}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabled2Flag\ =\ 0;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sh-\/>alfChromaIdc\ ==\ 2)\ \{}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabledFlag\ =\ 0;}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabled2Flag\ =\ 1;}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sh-\/>alfChromaIdc\ ==\ 3)\ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabledFlag\ =\ 1;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabled2Flag\ =\ 1;}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabledFlag\ =\ 0;}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>ChromaAlfEnabled2Flag\ =\ 0;}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sh-\/>alfChromaIdc\ \&\&\ (sps-\/>chroma\_format\_idc\ ==\ 1\ ||\ sps-\/>chroma\_format\_idc\ ==\ 2))\ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>aps\_id\_ch\ =\ ReadBits(5);}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sps-\/>chroma\_format\_idc\ ==\ 3\ \&\&\ sh-\/>ChromaAlfEnabledFlag)\ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>aps\_id\_ch\ =\ ReadBits(5);}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>alfChromaMapSignalled\ =\ ReadFlag();}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sps-\/>chroma\_format\_idc\ ==\ 3\ \&\&\ sh-\/>ChromaAlfEnabled2Flag)\ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>aps\_id\_ch2\ =\ ReadBits(5);}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>alfChroma2MapSignalled\ =\ ReadFlag();}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00517\ \ \ \ \ \}}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keywordflow}{if}\ (nal\_unit\_type\ !=\ EVCNalType::IDR\_NUT)\ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sps-\/>tool\_pocs)\ \{}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ sh-\/>poc\_lsb\ =\ ReadBits(sps-\/>log2\_max\_pic\_order\_cnt\_lsb);}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00523\ \ \ \ \ \}}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00526\ \}}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \textcolor{keywordtype}{bool}\ BaseDecoderEVC::ParseVPS()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ std::unique\_ptr<BaseDecoder>\ CreateBaseDecoderEVC()\ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<BaseDecoder>\{\textcolor{keyword}{new}\ BaseDecoderEVC\{\}\};\ \}}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \}\ \textcolor{comment}{//\ namespace\ utility}}
+\DoxyCodeLine{00533\ \}\ \textcolor{comment}{//\ namespace\ vnova}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{\#if\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{\#pragma\ clang\ diagnostic\ pop}}
+\DoxyCodeLine{00538\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ pop}}
+\DoxyCodeLine{00540\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00541\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}
