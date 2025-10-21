@@ -12,7 +12,7 @@ It's a fork of the original project that didn't compile in my environment.
 git clone https://github.com/dradenvandewind/LTM.git && \
 cd LTM && \ 
 rm -rf deps/base_avc/JM && \
-rm -rf deps/base_avc/HM && \
+rm -rf deps/base_hevc/HM && \
 rm -rf deps/base_vvc/VTM && \
 rm -rf deps/base_avc/ETM && \
 git submodule update --init --recursive &&
