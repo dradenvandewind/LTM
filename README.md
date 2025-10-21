@@ -32,11 +32,13 @@ The default build mechanism is CMake, version 3.10 or later, examples of buildin
 * Linux:
 
 ```
-cd LTM
-mkdir _build_linux
-cd _build_linux
-cmake ..
-cmake --build .
+
+cd LTM && \
+mkdir -p _build_linux && cd _build_linux && cmake .. && cmake --build .
+
+
+
+
 ```
 
 * Windows 64 bit with Visual Studio 2017:
