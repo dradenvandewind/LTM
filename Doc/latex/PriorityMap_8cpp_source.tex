@@ -1,713 +1,713 @@
 \doxysection{Priority\+Map.\+cpp}
-\label{PriorityMap_8cpp_source}\index{encoder/src/PriorityMap.cpp@{encoder/src/PriorityMap.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{PriorityMap_8cpp_source}{}\label{PriorityMap_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/encoder/src/PriorityMap.cpp@{/media/erwan/T7/formation/Video/LTM/encoder/src/PriorityMap.cpp}}
+\mbox{\hyperlink{PriorityMap_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Martin\ Vymazal(martin.vymazal@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Lorenzo\ Ciccarelli(lorenzo.ciccarelli@v-\/nova.com)}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//\ PriorityMap.cpp}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//}}
-\DoxyCodeLine{00039\ \textcolor{comment}{//\ Generate\ a\ map\ indicating\ which\ residuals\ should\ be\ kept/killed}}
-\DoxyCodeLine{00040\ \textcolor{comment}{//}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}PriorityMap.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Types.hpp"{}}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}SignaledConfiguration.hpp"{}}}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <cmath>}}
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <fstream>}}
-\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <iomanip>}}
-\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00053\ }
-\DoxyCodeLine{00054\ PriorityMap::TileGrid::TileGrid(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_x,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_y)}
-\DoxyCodeLine{00055\ \ \ \ \ :\ tile\_size\_x\_\{tile\_size\_x\},\ tile\_size\_y\_\{tile\_size\_y\}\ \{}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \ \ \ \ n\_tiles\_x\_\ =\ surface.width()\ /\ tile\_size\_x;}
-\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_tiles\_x\_\ *\ tile\_size\_x\ <\ surface.width())\ \{}
-\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ n\_tiles\_x\_++;}
-\DoxyCodeLine{00060\ \ \ \ \ \}}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \ \ \ \ n\_tiles\_y\_\ =\ surface.height()\ /\ tile\_size\_y;}
-\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_tiles\_y\_\ *\ tile\_size\_y\ <\ surface.height())\ \{}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ n\_tiles\_y\_++;}
-\DoxyCodeLine{00065\ \ \ \ \ \}}
-\DoxyCodeLine{00066\ \}}
-\DoxyCodeLine{00067\ }
-\DoxyCodeLine{00068\ PriorityMap::TileGrid::TileGrid(\textcolor{keywordtype}{unsigned}\ tile\_size\_x,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_y,\ \textcolor{keywordtype}{unsigned}\ n\_tiles\_x,\ \textcolor{keywordtype}{unsigned}\ n\_tiles\_y)}
-\DoxyCodeLine{00069\ \ \ \ \ :\ tile\_size\_x\_\{tile\_size\_x\},\ tile\_size\_y\_\{tile\_size\_y\},\ n\_tiles\_x\_\{n\_tiles\_x\},\ n\_tiles\_y\_\{n\_tiles\_y\}\ \{\}}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ std::array<PriorityMap::pmap\_function,\ 3>\ PriorityMap::priority\_functions\_\ =\ \{\&kill\_all\_residuals,\ \&keep\_all\_residuals,}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&threshold\_cutoff\};}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00074\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ kill\ coefficients\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
-\DoxyCodeLine{00075\ Surface\ PriorityMap::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ \textcolor{keywordtype}{unsigned}\ priority\_tile\_x,\ \textcolor{keywordtype}{unsigned}\ priority\_tile\_y,}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ KillingFunction\ killing\_function)\ \{}
-\DoxyCodeLine{00077\ \ \ \ \ assert(0\ <=\ killing\_function);}
-\DoxyCodeLine{00078\ \ \ \ \ assert(killing\_function\ <\ priority\_functions\_.size());}
-\DoxyCodeLine{00079\ }
-\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ grid\{src\_plane,\ priority\_tile\_x,\ priority\_tile\_y\};}
-\DoxyCodeLine{00081\ }
-\DoxyCodeLine{00082\ \ \ \ \ \textcolor{comment}{//\ Store\ priority\ values\ in\ raster\ order}}
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ This\ implementation\ uses\ a\ hardcoded\ 'dummy'\ value\ -\/\ should}}
-\DoxyCodeLine{00084\ \ \ \ \ \textcolor{comment}{//\ be\ replaced\ by\ a\ more\ sophisticated\ algorithm}}
-\DoxyCodeLine{00085\ \ \ \ \ std::vector<double>\ pvalues(grid.n\_tiles\_x\_\ *\ grid.n\_tiles\_y\_);}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tile\_y\ =\ 0;\ tile\_y\ <\ grid.n\_tiles\_y\_;\ ++tile\_y)\ \{}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tile\_x\ =\ 0;\ tile\_x\ <\ grid.n\_tiles\_x\_;\ ++tile\_x)\ \{}
-\DoxyCodeLine{00089\ }
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ pvalues[tile\_y\ *\ grid.n\_tiles\_x\_\ +\ tile\_x]\ =\ 0.7;}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00092\ \ \ \ \ \}}
-\DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ priority\_functions\_[killing\_function](src\_plane,\ pvalues,\ grid);}
-\DoxyCodeLine{00095\ \}}
-\DoxyCodeLine{00096\ }
-\DoxyCodeLine{00097\ Surface\ PriorityMap::kill\_all\_residuals(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<value\_type>()}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ .generate(src\_surface.width(),\ src\_surface.height(),}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{\ return\ ResidualLabel::RESIDUAL\_KILL;\ \})}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00103\ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ Surface\ PriorityMap::keep\_all\_residuals(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
-\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<value\_type>()}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ .generate(src\_surface.width(),\ src\_surface.height(),}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{\ return\ ResidualLabel::RESIDUAL\_LIVE;\ \})}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00111\ \}}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ Surface\ PriorityMap::threshold\_cutoff(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
-\DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ T\ =\ 0.5;}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ threshold\_kill\_function\ =\ [T](\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ priority)\ -\/>\ value\_type\ \{}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (priority\ >\ T)\ ?\ ResidualLabel::RESIDUAL\_LIVE\ :\ ResidualLabel::RESIDUAL\_KILL;}
-\DoxyCodeLine{00119\ \ \ \ \ \};}
-\DoxyCodeLine{00120\ }
-\DoxyCodeLine{00121\ \ \ \ \ Surface\ pixel\_priority\_map\ =}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ Surface::build\_from<value\_type>()}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_surface.width(),\ src\_surface.height(),}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [priority\_values,\ tgrid,\ threshold\_kill\_function](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ tile\_x\ =\ x\ /\ tgrid.tile\_size\_x\_;}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ tile\_y\ =\ y\ /\ tgrid.tile\_size\_y\_;}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ priority\_value\ =\ priority\_values[tile\_y\ *\ tgrid.n\_tiles\_x\_\ +\ tile\_x];}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ priority\_label\ =\ threshold\_kill\_function(priority\_value);}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ priority\_label;}
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{return}\ pixel\_priority\_map;}
-\DoxyCodeLine{00133\ \}}
-\DoxyCodeLine{00134\ }
-\DoxyCodeLine{00135\ Surface\ PriorityMapVis::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane)\ \{}
-\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Read-\/only\ access\ to\ source\ surface}}
-\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ scale\_factor\ =\ std::numeric\_limits<int16\_t>::max()\ /\ std::numeric\_limits<uint8\_t>::max();}
-\DoxyCodeLine{00138\ }
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_plane\_view\ =\ src\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00140\ \ \ \ \ Surface\ rescaled\_priority\_map\ =}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_plane.width(),\ src\_plane.height(),}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [scale\_factor,\ \&src\_plane\_view](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ rescaled\_value\ =\ static\_cast<int16\_t>(std::round(src\_plane\_view.read(x,\ y)\ *\ scale\_factor));}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ rescaled\_value;}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordflow}{return}\ rescaled\_priority\_map;}
-\DoxyCodeLine{00149\ \}}
-\DoxyCodeLine{00150\ }
-\DoxyCodeLine{00151\ Surface\ PriorityMap::ComputeMeanValue(\textcolor{keyword}{const}\ Surface\ \&src\_surface)\ \{}
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.view\_as<int16\_t>();}
-\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{auto}\ mean\ =\ Surface::build\_from<uint8\_t>();}
-\DoxyCodeLine{00154\ \ \ \ \ mean.reserve((src\_surface.width()\ +\ BLOCK\_SIZE\ -\/\ 1)\ /\ BLOCK\_SIZE,\ (src\_surface.height()\ +\ BLOCK\_SIZE\ -\/\ 1)\ /\ BLOCK\_SIZE);}
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.height();\ y\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.width();\ x\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ acc\ =\ 0;}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.height()\ -\/\ y);}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.width()\ -\/\ x);}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ both\ 8\ bpp\ and\ 10\ bpp,\ work\ with\ averages\ of\ 8\ bpp\ values}}
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ acc\ +=\ (src\_view.read(x\ +\ h,\ y\ +\ k)\ >>\ 7);}
-\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ acc\ =\ acc\ /\ (BLOCK\_SIZE\ *\ BLOCK\_SIZE);}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ mean.write(x\ /\ BLOCK\_SIZE,\ y\ /\ BLOCK\_SIZE,\ clamp(acc,\ 0,\ 255));}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00169\ \ \ \ \ \}}
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{return}\ mean.finish();}
-\DoxyCodeLine{00171\ \}}
-\DoxyCodeLine{00172\ }
-\DoxyCodeLine{00173\ Surface\ PriorityMap::ComputeContrastTexture(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ Surface\ \&mean\_surface)\ \{}
-\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.view\_as<int16\_t>();}
-\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ mean\_view\ =\ mean\_surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{auto}\ type\ =\ Surface::build\_from<uint8\_t>();}
-\DoxyCodeLine{00177\ \ \ \ \ type.reserve((src\_surface.width()\ +\ BLOCK\_SIZE\ -\/\ 1)\ /\ BLOCK\_SIZE,\ (src\_surface.height()\ +\ BLOCK\_SIZE\ -\/\ 1)\ /\ BLOCK\_SIZE);}
-\DoxyCodeLine{00178\ }
-\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ textureThreshold\ =\ 0.15f;\ \ \textcolor{comment}{//\ 0.15f}}
-\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ contrastThreshold\ =\ 0.10f;\ \textcolor{comment}{//\ 0.10f}}
-\DoxyCodeLine{00181\ }
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.height();\ y\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.width();\ x\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ crossings\ =\ 0;}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ mean\ =\ mean\_view.read(x\ /\ BLOCK\_SIZE,\ y\ /\ BLOCK\_SIZE);}
-\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accLo\ =\ 0,\ numLo\ =\ 0;}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accHi\ =\ 0,\ numHi\ =\ 0;}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.height()\ -\/\ y);}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.width()\ -\/\ x);}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ X\ =\ current;\ L\ =\ left\ (x-\/1);\ U\ =\ up\ (y-\/1);}}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelX\ =\ src\_view.read(x\ +\ h,\ y\ +\ k)\ >>\ 7;}
-\DoxyCodeLine{00194\ }
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CONTRAST\ =\ difference\ in\ high/low\ mean\ values}}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pixelX\ <=\ mean)\ \{}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ accLo\ +=\ pixelX;}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ numLo++;}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ accHi\ +=\ pixelX;}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ numHi++;}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (y\ >\ 0)\ \{}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelU\ =\ src\_view.read(x\ +\ h,\ y\ +\ k\ -\/\ 1)\ >>\ 7;}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TEXTURE\ =\ number\ of\ crossings}}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ horizontal\ egde\ -\/-\/\ UP\ delta}}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pixelX\ >\ mean\ \&\&\ pixelU\ <=\ mean)\ ||\ (pixelX\ <=\ mean\ \&\&\ pixelU\ >\ mean))}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ crossings\ +=\ (abs(pixelX\ -\/\ pixelU)\ >\ 4);}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ >\ 0)\ \{}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelL\ =\ src\_view.read(x\ +\ h\ -\/\ 1,\ y\ +\ k)\ >>\ 7;}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TEXTURE\ =\ number\ of\ crossings}}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ vertical\ edge\ -\/-\/\ LEFT\ delta}}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pixelX\ >\ mean\ \&\&\ pixelL\ <=\ mean)\ ||\ (pixelX\ <=\ mean\ \&\&\ pixelL\ >\ mean))}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ crossings\ +=\ (abs(pixelX\ -\/\ pixelL)\ >\ 4);}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ meanLo\ =\ 0.0f;}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ meanHi\ =\ 0.0f;}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numLo\ >\ 0\ \&\&\ numHi\ >\ 0)\ \{}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ meanLo\ =\ (float)accLo\ /\ numLo;}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ meanHi\ =\ (float)accHi\ /\ numHi;}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ contrast\ =\ (meanHi\ -\/\ meanLo)\ /\ 255.0f;}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ texture\ =\ (float)(crossings)\ /\ (2\ *\ BLOCK\_SIZE\ *\ (BLOCK\_SIZE\ -\/\ 1));}
-\DoxyCodeLine{00228\ }
-\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ EnumBlockType\ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (texture\ <=\ textureThreshold)\ \{}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ TEXTURE\ is\ "{}small"{}\ classify\ for\ CONTRAST}}
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (contrast\ <=\ contrastThreshold)}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Edge;}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ TEXTURE\ is\ "{}large"{}\ classify\ for\ TEXTURE}}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (contrast\ <=\ contrastThreshold)}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::SmoothTexture;}
-\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::CoarseTexture;}
-\DoxyCodeLine{00242\ }
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((blockType\ ==\ EnumBlockType::SmoothTexture)\ \&\&\ (contrast\ <=\ 0.02f))\ \{}
-\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ type.write(x\ /\ BLOCK\_SIZE,\ y\ /\ BLOCK\_SIZE,\ (uint8\_t)blockType);}
-\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00249\ \ \ \ \ \}}
-\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{return}\ type.finish();}
-\DoxyCodeLine{00251\ \}}
-\DoxyCodeLine{00252\ }
-\DoxyCodeLine{00253\ \textcolor{comment}{//\ NEED\ REVISITATION\ FOR\ SL-\/2\ TO\ INCLUDE\ ADDITIONAL\ PM\ TYPE\ AND\ MODE}}
-\DoxyCodeLine{00254\ Surface\ PriorityMap::ApplyPriorityResiduals(Surface\ \&src\_surface,\ Surface\ \&type\_surface,\ \textcolor{keywordtype}{unsigned}\ step\_width)\ \{}
-\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.view\_as<int16\_t>();}
-\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00258\ \ \ \ \ dest.reserve(src\_surface.width(),\ src\_surface.height());}
-\DoxyCodeLine{00259\ \ \ \ \ EnumBlockType\ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00260\ }
-\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.height();\ y\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.width();\ x\ +=\ BLOCK\_SIZE)\ \{}
-\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (EnumBlockType)type\_view.read(x\ /\ BLOCK\_SIZE,\ y\ /\ BLOCK\_SIZE);}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.height()\ -\/\ y);}
-\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ LCEVC\_MIN(BLOCK\_SIZE,\ src\_surface.width()\ -\/\ x);}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (blockType\ ==\ EnumBlockType::Plain\ ||\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300))\ \{}
-\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
-\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x\ +\ h,\ y\ +\ k,\ 0);}
-\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
-\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
-\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x\ +\ h,\ y\ +\ k,\ src\_view.read(x\ +\ h,\ y\ +\ k));}
-\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00280\ \ \ \ \ \}}
-\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
-\DoxyCodeLine{00282\ \}}
-\DoxyCodeLine{00283\ }
-\DoxyCodeLine{00284\ \textcolor{keywordtype}{void}\ PriorityMap::ApplyPriorityCoefficients(\textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ tu\_size,\ \textcolor{keywordtype}{int}\ sublayer,\ Surface\ src\_surface[],}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ dst\_surface[],\ \textcolor{keyword}{const}\ Surface\ \&type\_surface,\ \textcolor{keyword}{const}\ Surface\ \&pixel\_sad,}
-\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ step\_width,\ PriorityMBType\ priority\_mb\_type,\ EncodingMode\ mode)\ \{}
-\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ sad\ =\ !pixel\_sad.empty();}
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordflow}{if}\ (tu\_size\ ==\ 4)\ \{}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ case\ 4x4}}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ src\_surface[0].view\_as<int16\_t>();}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ src\_surface[1].view\_as<int16\_t>();}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ src\_surface[2].view\_as<int16\_t>();}
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ src\_surface[3].view\_as<int16\_t>();}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src04\_view\ =\ src\_surface[4].view\_as<int16\_t>();}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src05\_view\ =\ src\_surface[5].view\_as<int16\_t>();}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src06\_view\ =\ src\_surface[6].view\_as<int16\_t>();}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src07\_view\ =\ src\_surface[7].view\_as<int16\_t>();}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src08\_view\ =\ src\_surface[8].view\_as<int16\_t>();}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src09\_view\ =\ src\_surface[9].view\_as<int16\_t>();}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src10\_view\ =\ src\_surface[10].view\_as<int16\_t>();}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src11\_view\ =\ src\_surface[11].view\_as<int16\_t>();}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src12\_view\ =\ src\_surface[12].view\_as<int16\_t>();}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src13\_view\ =\ src\_surface[13].view\_as<int16\_t>();}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src14\_view\ =\ src\_surface[14].view\_as<int16\_t>();}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src15\_view\ =\ src\_surface[15].view\_as<int16\_t>();}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\_view\ =\ (sad\ ?\ pixel\_sad.view\_as<int16\_t>()\ :\ src\_surface[0].view\_as<int16\_t>());}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest00\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ dest00.reserve(width,\ height);}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest01\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ dest01.reserve(width,\ height);}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest02\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ dest02.reserve(width,\ height);}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest03\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ dest03.reserve(width,\ height);}
-\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest04\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ dest04.reserve(width,\ height);}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest05\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ dest05.reserve(width,\ height);}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest06\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ dest06.reserve(width,\ height);}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest07\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ dest07.reserve(width,\ height);}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest08\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ dest08.reserve(width,\ height);}
-\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest09\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ dest09.reserve(width,\ height);}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest10\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ dest10.reserve(width,\ height);}
-\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest11\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ dest11.reserve(width,\ height);}
-\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest12\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ dest12.reserve(width,\ height);}
-\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest13\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ dest13.reserve(width,\ height);}
-\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest14\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ dest14.reserve(width,\ height);}
-\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest15\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ dest15.reserve(width,\ height);}
-\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ EnumBlockType\ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sublayer\ ==\ LOQ\_LEVEL\_1)\ \{}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
-\DoxyCodeLine{00344\ }
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mode\ !=\ EncodingMode::ENCODE\_ALL)}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (EnumBlockType)type\_view.read((x\ *\ 4)\ /\ (BLOCK\_SIZE),\ (y\ *\ 4)\ /\ (BLOCK\_SIZE));}
-\DoxyCodeLine{00348\ }
-\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keepAverage\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00350\ }
-\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Decision\ type}}
-\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Keep\ smooth\ and\ plain}}
-\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::SmoothTexture);}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
-\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::CoarseTexture);}
-\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00361\ }
-\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Keep\ smooth\ only}}
-\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture);}
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Keep\ plain\ only}}
-\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain);}
-\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Keep\ coarse\ only}}
-\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture);}
-\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00373\ }
-\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Keep\ Edges\ only}}
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Edge);}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00380\ }
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer1\ -\/-\/\ keep\ average}}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (keepAverage)}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (mode)}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::Ax:\ \textcolor{comment}{//\ Keep\ all\ average}}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
-\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
-\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
-\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::AA:\ \textcolor{comment}{//\ Keep\ only\ AA}}
-\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
-\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
-\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
-\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::NA:\ \textcolor{comment}{//\ Keep\ AV,\ AH\ and\ AD}}
-\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
-\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
-\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
-\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
-\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
-\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
-\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
-\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ 0);}
-\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ 0);}
-\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ 0);}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ 0);}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ 0);}
-\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ 0);}
-\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ 0);}
-\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ 0);}
-\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ 0);}
-\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ 0);}
-\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ 0);}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ 0);}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
-\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
-\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
-\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ src04\_view.read(x,\ y));}
-\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ src05\_view.read(x,\ y));}
-\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ src06\_view.read(x,\ y));}
-\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ src07\_view.read(x,\ y));}
-\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ src08\_view.read(x,\ y));}
-\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ src09\_view.read(x,\ y));}
-\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ src10\_view.read(x,\ y));}
-\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ src11\_view.read(x,\ y));}
-\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ src12\_view.read(x,\ y));}
-\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ src13\_view.read(x,\ y));}
-\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ src14\_view.read(x,\ y));}
-\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ src15\_view.read(x,\ y));}
-\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
-\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ y}}
-\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \}\ }
-\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sublayer\ ==\ LOQ\_LEVEL\_2)}
-\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
-\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
-\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (EnumBlockType)type\_view.read((x\ *\ 4)\ /\ (BLOCK\_SIZE),\ (y\ *\ 4)\ /\ (BLOCK\_SIZE));}
-\DoxyCodeLine{00461\ }
-\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ removeCoeff\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00463\ }
-\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ apply\ priority\ map\ if\ block\ is\ non-\/static}}
-\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sad\ \&\&\ pixel\_sad\_view.read(x,\ y)\ >\ 1000)\ \{}
-\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decision\ type}}
-\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)\ \{}
-\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Remove\ smooth\ and\ plain}}
-\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
-\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300));}
-\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00472\ }
-\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
-\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
-\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300));}
-\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00477\ }
-\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Remove\ smooth\ only}}
-\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300);}
-\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00481\ }
-\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Remove\ plain\ only}}
-\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain);}
-\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00485\ }
-\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Remove\ coarse\ only}}
-\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300);}
-\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00489\ }
-\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Remove\ Edges\ only}}
-\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Edge);}
-\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00493\ }
-\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00498\ }
-\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (removeCoeff)\ \{}
-\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ plain\ or\ coarse\_texture}}
-\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
-\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
-\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
-\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
-\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ 0);}
-\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ 0);}
-\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ 0);}
-\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ 0);}
-\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ 0);}
-\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ 0);}
-\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ 0);}
-\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ 0);}
-\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ 0);}
-\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ 0);}
-\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ 0);}
-\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ 0);}
-\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ edge\ or\ smooth\_texture}}
-\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
-\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
-\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
-\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ src04\_view.read(x,\ y));}
-\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ src05\_view.read(x,\ y));}
-\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ src06\_view.read(x,\ y));}
-\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ src07\_view.read(x,\ y));}
-\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ src08\_view.read(x,\ y));}
-\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ src09\_view.read(x,\ y));}
-\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ src10\_view.read(x,\ y));}
-\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ src11\_view.read(x,\ y));}
-\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ src12\_view.read(x,\ y));}
-\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ src13\_view.read(x,\ y));}
-\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ src14\_view.read(x,\ y));}
-\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ src15\_view.read(x,\ y));}
-\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
-\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
-\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ dst\_surface[0]\ =\ dest00.finish();}
-\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ dst\_surface[1]\ =\ dest01.finish();}
-\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ dst\_surface[2]\ =\ dest02.finish();}
-\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ dst\_surface[3]\ =\ dest03.finish();}
-\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ dst\_surface[4]\ =\ dest04.finish();}
-\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ dst\_surface[5]\ =\ dest05.finish();}
-\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ dst\_surface[6]\ =\ dest06.finish();}
-\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ dst\_surface[7]\ =\ dest07.finish();}
-\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ dst\_surface[8]\ =\ dest08.finish();}
-\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ dst\_surface[9]\ =\ dest09.finish();}
-\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ dst\_surface[10]\ =\ dest10.finish();}
-\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ dst\_surface[11]\ =\ dest11.finish();}
-\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ dst\_surface[12]\ =\ dest12.finish();}
-\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ dst\_surface[13]\ =\ dest13.finish();}
-\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ dst\_surface[14]\ =\ dest14.finish();}
-\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ dst\_surface[15]\ =\ dest15.finish();}
-\DoxyCodeLine{00555\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (tu\_size\ ==\ 2)\ \{}
-\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ case\ 2x2}}
-\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ src\_surface[0].view\_as<int16\_t>();}
-\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ src\_surface[1].view\_as<int16\_t>();}
-\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ src\_surface[2].view\_as<int16\_t>();}
-\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ src\_surface[3].view\_as<int16\_t>();}
-\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\_view\ =\ (sad\ ?\ pixel\_sad.view\_as<int16\_t>()\ :\ src\_surface[0].view\_as<int16\_t>());}
-\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest00\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ dest00.reserve(width,\ height);}
-\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest01\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ dest01.reserve(width,\ height);}
-\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest02\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ dest02.reserve(width,\ height);}
-\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest03\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ dest03.reserve(width,\ height);}
-\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ EnumBlockType\ blockType\ =\ EnumBlockType::Plain;}
-\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sublayer\ ==\ LOQ\_LEVEL\_1)\ \{}
-\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
-\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
-\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (EnumBlockType)type\_view.read((x\ *\ 2)\ /\ (BLOCK\_SIZE),\ (y\ *\ 2)\ /\ (BLOCK\_SIZE));}
-\DoxyCodeLine{00576\ }
-\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keepAverage\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)}
-\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Keep\ smooth\ and\ plain}}
-\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::SmoothTexture);}
-\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
-\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::CoarseTexture);}
-\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Keep\ smooth\ only}}
-\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture);}
-\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Keep\ plain\ only}}
-\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain);}
-\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Keep\ coarse\ only}}
-\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture);}
-\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Keep\ Edges\ only}}
-\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Edge);}
-\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
-\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer1\ -\/-\/\ keep\ average}}
-\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (keepAverage)\ \{}
-\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
-\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
-\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
-\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
-\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
-\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
-\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sublayer\ ==\ LOQ\_LEVEL\_2)\ \{}
-\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
-\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
-\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (EnumBlockType)type\_view.read((x\ *\ 2)\ /\ (BLOCK\_SIZE),\ (y\ *\ 2)\ /\ (BLOCK\_SIZE));}
-\DoxyCodeLine{00623\ }
-\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ removeCoeff\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00625\ }
-\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ apply\ priority\ map\ if\ block\ is\ non-\/static}}
-\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (step\_width\ >\ 300\ \&\&\ sad\ \&\&\ pixel\_sad\_view.read(x,\ y)\ >\ 500)\ \{}
-\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decision\ type}}
-\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)\ \{}
-\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Remove\ smooth\ and\ plain}}
-\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
-\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300));}
-\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00634\ }
-\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
-\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
-\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300));}
-\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00639\ }
-\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Remove\ smooth\ only}}
-\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300);}
-\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00643\ }
-\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Remove\ plain\ only}}
-\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain);}
-\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00647\ }
-\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Remove\ coarse\ only}}
-\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300);}
-\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00651\ }
-\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Remove\ Edges\ only}}
-\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Edge);}
-\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00655\ }
-\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00660\ }
-\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (removeCoeff)\ \{}
-\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ plain\ or\ coarse\_texture}}
-\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
-\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
-\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
-\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
-\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ edge\ or\ smooth\_texture}}
-\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
-\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
-\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
-\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
-\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
-\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
-\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ dst\_surface[0]\ =\ dest00.finish();}
-\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ dst\_surface[1]\ =\ dest01.finish();}
-\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ dst\_surface[2]\ =\ dest02.finish();}
-\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ dst\_surface[3]\ =\ dest03.finish();}
-\DoxyCodeLine{00681\ \ \ \ \ \}\ \textcolor{comment}{//\ tu\_size\ =\ 4\ or\ 2}}
-\DoxyCodeLine{00682\ \ \ \ \ }
-\DoxyCodeLine{00683\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00684\ \}}
-\DoxyCodeLine{00685\ }
-\DoxyCodeLine{00686\ \textcolor{keywordtype}{void}\ StaticResiduals::process(Surface\ src\_coeffs[],\ Surface\ dst\_coeffs[],\ \textcolor{keyword}{const}\ Surface\ \&pixel\_sad\_plane,\ \textcolor{keywordtype}{unsigned}\ num\_layers,}
-\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ step\_width,\ \textcolor{keywordtype}{unsigned}\ sad\_threshold,\ \textcolor{keywordtype}{unsigned}\ sad\_coeff\_threshold)\ \{}
-\DoxyCodeLine{00688\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\ =\ pixel\_sad\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00689\ }
-\DoxyCodeLine{00690\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_layers;\ ++layer)\ \{}
-\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_coeffs[layer].view\_as<int16\_t>();}
-\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ dst\_coeffs[layer]\ =\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_view.width(),\ src\_view.height(),}
-\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ ((unsigned)pixel\_sad.read(x,\ y)\ >=\ sad\_threshold)\ \{}
-\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ (unsigned)std::abs(src\_view.read(x,\ y))\ >\ sad\_coeff\_threshold\ *\ step\_width}
-\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ src\_view.read(x,\ y)}
-\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ 0;}
-\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_view.read(x,\ y);}
-\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00704\ \ \ \ \ \}}
-\DoxyCodeLine{00705\ \}}
-\DoxyCodeLine{00706\ }
-\DoxyCodeLine{00707\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Martin\ Vymazal(martin.vymazal@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00034}00034\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Stefano\ Battista\ (bautz66@gmail.com)}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00035}00035\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Lorenzo\ Ciccarelli(lorenzo.ciccarelli@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00037}00037\ \textcolor{comment}{//\ PriorityMap.cpp}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00038}00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00039}00039\ \textcolor{comment}{//\ Generate\ a\ map\ indicating\ which\ residuals\ should\ be\ kept/killed}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00040}00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{PriorityMap_8hpp}{PriorityMap.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Types_8hpp}{Types.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{SignaledConfiguration_8hpp}{SignaledConfiguration.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00047}00047\ \textcolor{preprocessor}{\#include\ <cmath>}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00048}00048\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00049}00049\ \textcolor{preprocessor}{\#include\ <iomanip>}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00050}00050\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00052}00052\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00054}00054\ PriorityMap::TileGrid::TileGrid(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_x,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_y)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00055}00055\ \ \ \ \ :\ tile\_size\_x\_\{tile\_size\_x\},\ tile\_size\_y\_\{tile\_size\_y\}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00056}00056\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00057}00057\ \ \ \ \ n\_tiles\_x\_\ =\ surface.width()\ /\ tile\_size\_x;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00058}00058\ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_tiles\_x\_\ *\ tile\_size\_x\ <\ surface.width())\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00059}00059\ \ \ \ \ \ \ \ \ n\_tiles\_x\_++;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00060}00060\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00062}00062\ \ \ \ \ n\_tiles\_y\_\ =\ surface.height()\ /\ tile\_size\_y;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00063}00063\ \ \ \ \ \textcolor{keywordflow}{if}\ (n\_tiles\_y\_\ *\ tile\_size\_y\ <\ surface.height())\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ n\_tiles\_y\_++;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00065}00065\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00066}00066\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00068}00068\ PriorityMap::TileGrid::TileGrid(\textcolor{keywordtype}{unsigned}\ tile\_size\_x,\ \textcolor{keywordtype}{unsigned}\ tile\_size\_y,\ \textcolor{keywordtype}{unsigned}\ n\_tiles\_x,\ \textcolor{keywordtype}{unsigned}\ n\_tiles\_y)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00069}00069\ \ \ \ \ :\ tile\_size\_x\_\{tile\_size\_x\},\ tile\_size\_y\_\{tile\_size\_y\},\ n\_tiles\_x\_\{n\_tiles\_x\},\ n\_tiles\_y\_\{n\_tiles\_y\}\ \{\}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00071}00071\ std::array<PriorityMap::pmap\_function,\ 3>\ PriorityMap::priority\_functions\_\ =\ \{\&kill\_all\_residuals,\ \&keep\_all\_residuals,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&threshold\_cutoff\};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00074}00074\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ kill\ coefficients\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00075}\mbox{\hyperlink{classlctm_1_1PriorityMap_a1ab45330ded107d42551a5b4a7e2f724}{00075}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMap::process(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane,\ \textcolor{keywordtype}{unsigned}\ priority\_tile\_x,\ \textcolor{keywordtype}{unsigned}\ priority\_tile\_y,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_ae82a65eed4de2fff99b5f28e4a4f9603}{KillingFunction}}\ killing\_function)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00077}00077\ \ \ \ \ assert(0\ <=\ killing\_function);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00078}00078\ \ \ \ \ assert(killing\_function\ <\ priority\_functions\_.size());}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00080}00080\ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ grid\{src\_plane,\ priority\_tile\_x,\ priority\_tile\_y\};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00082}00082\ \ \ \ \ \textcolor{comment}{//\ Store\ priority\ values\ in\ raster\ order}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00083}00083\ \ \ \ \ \textcolor{comment}{//\ This\ implementation\ uses\ a\ hardcoded\ 'dummy'\ value\ -\/\ should}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00084}00084\ \ \ \ \ \textcolor{comment}{//\ be\ replaced\ by\ a\ more\ sophisticated\ algorithm}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00085}00085\ \ \ \ \ std::vector<double>\ pvalues(grid.n\_tiles\_x\_\ *\ grid.n\_tiles\_y\_);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00087}00087\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tile\_y\ =\ 0;\ tile\_y\ <\ grid.n\_tiles\_y\_;\ ++tile\_y)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tile\_x\ =\ 0;\ tile\_x\ <\ grid.n\_tiles\_x\_;\ ++tile\_x)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ pvalues[tile\_y\ *\ grid.n\_tiles\_x\_\ +\ tile\_x]\ =\ 0.7;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00092}00092\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00094}00094\ \ \ \ \ \textcolor{keywordflow}{return}\ priority\_functions\_[killing\_function](src\_plane,\ pvalues,\ grid);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00095}00095\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00097}00097\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMap::kill\_all\_residuals(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00099}00099\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<value\_type>()}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ .generate(src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}(),}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{\ return\ ResidualLabel::RESIDUAL\_KILL;\ \})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00103}00103\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00105}00105\ Surface\ PriorityMap::keep\_all\_residuals(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<value\_type>()}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ .generate(src\_surface.width(),\ src\_surface.height(),}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{\ return\ ResidualLabel::RESIDUAL\_LIVE;\ \})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00111}00111\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00113}00113\ Surface\ PriorityMap::threshold\_cutoff(\textcolor{keyword}{const}\ Surface\ \&src\_surface,\ \textcolor{keyword}{const}\ std::vector<double>\ \&priority\_values,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ TileGrid\ \&tgrid)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00116}00116\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ T\ =\ 0.5;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00117}00117\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ threshold\_kill\_function\ =\ [T](\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ priority)\ -\/>\ value\_type\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (priority\ >\ T)\ ?\ ResidualLabel::RESIDUAL\_LIVE\ :\ ResidualLabel::RESIDUAL\_KILL;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00119}00119\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00120}00120\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00121}00121\ \ \ \ \ Surface\ pixel\_priority\_map\ =}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ Surface::build\_from<value\_type>()}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_surface.width(),\ src\_surface.height(),}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [priority\_values,\ tgrid,\ threshold\_kill\_function](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ value\_type\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ tile\_x\ =\ x\ /\ tgrid.tile\_size\_x\_;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ tile\_y\ =\ y\ /\ tgrid.tile\_size\_y\_;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ priority\_value\ =\ priority\_values[tile\_y\ *\ tgrid.n\_tiles\_x\_\ +\ tile\_x];}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ priority\_label\ =\ threshold\_kill\_function(priority\_value);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ priority\_label;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00132}00132\ \ \ \ \ \textcolor{keywordflow}{return}\ pixel\_priority\_map;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00133}00133\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00134}00134\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00135}\mbox{\hyperlink{classlctm_1_1PriorityMapVis_af5405e154164934f67ecd9d0c585592d}{00135}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMapVis::process(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00136}00136\ \ \ \ \ \textcolor{comment}{//\ Read-\/only\ access\ to\ source\ surface}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00137}00137\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ scale\_factor\ =\ std::numeric\_limits<int16\_t>::max()\ /\ std::numeric\_limits<uint8\_t>::max();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00138}00138\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00139}00139\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_plane\_view\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00140}00140\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ rescaled\_priority\_map\ =}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}(),}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [scale\_factor,\ \&src\_plane\_view](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ auto\ rescaled\_value\ =\ static\_cast<int16\_t>(std::round(src\_plane\_view.read(x,\ y)\ *\ scale\_factor));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ rescaled\_value;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00148}00148\ \ \ \ \ \textcolor{keywordflow}{return}\ rescaled\_priority\_map;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00149}00149\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00150}00150\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00151}\mbox{\hyperlink{classlctm_1_1PriorityMap_a9daaea6d259b9b8ada287e6dd72ec0f1}{00151}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMap::ComputeMeanValue(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_surface)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00152}00152\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00153}00153\ \ \ \ \ \textcolor{keyword}{auto}\ mean\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00154}00154\ \ \ \ \ mean.reserve((src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ +\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ -\/\ 1)\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ (src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ +\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ -\/\ 1)\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}});}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00155}00155\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}();\ y\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}();\ x\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ acc\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ -\/\ y);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ -\/\ x);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ both\ 8\ bpp\ and\ 10\ bpp,\ work\ with\ averages\ of\ 8\ bpp\ values}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ acc\ +=\ (src\_view.read(x\ +\ h,\ y\ +\ k)\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \ \ \ \ acc\ =\ acc\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ *\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}});}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ mean.write(x\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ y\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ \mbox{\hyperlink{namespacelctm_a64a9a3f7794a4c79658d12716ebf5778}{clamp}}(acc,\ 0,\ 255));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00169}00169\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00170}00170\ \ \ \ \ \textcolor{keywordflow}{return}\ mean.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00171}00171\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00172}00172\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00173}\mbox{\hyperlink{classlctm_1_1PriorityMap_a6a213f52e2d9e21034d8c3f3c0f99770}{00173}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMap::ComputeContrastTexture(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_surface,\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&mean\_surface)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00174}00174\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00175}00175\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ mean\_view\ =\ mean\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00176}00176\ \ \ \ \ \textcolor{keyword}{auto}\ type\ =\ Surface::build\_from<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00177}00177\ \ \ \ \ type.reserve((src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ +\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ -\/\ 1)\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ (src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ +\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ -\/\ 1)\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}});}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00178}00178\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00179}00179\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ textureThreshold\ =\ 0.15f;\ \ \textcolor{comment}{//\ 0.15f}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00180}00180\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ contrastThreshold\ =\ 0.10f;\ \textcolor{comment}{//\ 0.10f}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00181}00181\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00182}00182\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}();\ y\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}();\ x\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ crossings\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ mean\ =\ mean\_view.read(x\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ y\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}});}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accLo\ =\ 0,\ numLo\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ accHi\ =\ 0,\ numHi\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ -\/\ y);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ -\/\ x);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ X\ =\ current;\ L\ =\ left\ (x-\/1);\ U\ =\ up\ (y-\/1);}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelX\ =\ src\_view.read(x\ +\ h,\ y\ +\ k)\ >>\ 7;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00194}00194\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ CONTRAST\ =\ difference\ in\ high/low\ mean\ values}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pixelX\ <=\ mean)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ accLo\ +=\ pixelX;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ numLo++;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ accHi\ +=\ pixelX;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ numHi++;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (y\ >\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelU\ =\ src\_view.read(x\ +\ h,\ y\ +\ k\ -\/\ 1)\ >>\ 7;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TEXTURE\ =\ number\ of\ crossings}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ horizontal\ egde\ -\/-\/\ UP\ delta}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pixelX\ >\ mean\ \&\&\ pixelU\ <=\ mean)\ ||\ (pixelX\ <=\ mean\ \&\&\ pixelU\ >\ mean))}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ crossings\ +=\ (abs(pixelX\ -\/\ pixelU)\ >\ 4);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ >\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pixelL\ =\ src\_view.read(x\ +\ h\ -\/\ 1,\ y\ +\ k)\ >>\ 7;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TEXTURE\ =\ number\ of\ crossings}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ vertical\ edge\ -\/-\/\ LEFT\ delta}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((pixelX\ >\ mean\ \&\&\ pixelL\ <=\ mean)\ ||\ (pixelX\ <=\ mean\ \&\&\ pixelL\ >\ mean))}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ crossings\ +=\ (abs(pixelX\ -\/\ pixelL)\ >\ 4);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ meanLo\ =\ 0.0f;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ meanHi\ =\ 0.0f;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (numLo\ >\ 0\ \&\&\ numHi\ >\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ meanLo\ =\ (float)accLo\ /\ numLo;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ meanHi\ =\ (float)accHi\ /\ numHi;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ contrast\ =\ (meanHi\ -\/\ meanLo)\ /\ 255.0f;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ texture\ =\ (float)(crossings)\ /\ (2\ *\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ *\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00228}00228\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}}\ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (texture\ <=\ textureThreshold)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ TEXTURE\ is\ "{}small"{}\ classify\ for\ CONTRAST}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (contrast\ <=\ contrastThreshold)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Edge;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ TEXTURE\ is\ "{}large"{}\ classify\ for\ TEXTURE}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (contrast\ <=\ contrastThreshold)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::SmoothTexture;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::CoarseTexture;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00242}00242\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((blockType\ ==\ EnumBlockType::SmoothTexture)\ \&\&\ (contrast\ <=\ 0.02f))\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \ \ \ \ type.write(x\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ y\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ (uint8\_t)blockType);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00249}00249\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00250}00250\ \ \ \ \ \textcolor{keywordflow}{return}\ type.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00251}00251\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00252}00252\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00253}00253\ \textcolor{comment}{//\ NEED\ REVISITATION\ FOR\ SL-\/2\ TO\ INCLUDE\ ADDITIONAL\ PM\ TYPE\ AND\ MODE}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00254}\mbox{\hyperlink{classlctm_1_1PriorityMap_ae159fa541d76eef2db067c18533d33f1}{00254}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ PriorityMap::ApplyPriorityResiduals(\mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_surface,\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&type\_surface,\ \textcolor{keywordtype}{unsigned}\ step\_width)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00255}00255\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00256}00256\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00257}00257\ \ \ \ \ \textcolor{keyword}{auto}\ dest\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00258}00258\ \ \ \ \ dest.reserve(src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00259}00259\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}}\ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00260}00260\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00261}00261\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}();\ y\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}();\ x\ +=\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00263}00263\ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (\mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}})type\_view.read(x\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ y\ /\ \mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}});}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00264}00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxk\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ -\/\ y);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00265}00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ maxh\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}},\ src\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ -\/\ x);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00266}00266\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (blockType\ ==\ EnumBlockType::Plain\ ||\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300))\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00267}00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00268}00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00269}00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x\ +\ h,\ y\ +\ k,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00270}00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00271}00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00272}00272\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00273}00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ k\ =\ 0;\ k\ <\ maxk;\ k++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00274}00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ maxh;\ h++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00275}00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest.write(x\ +\ h,\ y\ +\ k,\ src\_view.read(x\ +\ h,\ y\ +\ k));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00276}00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00277}00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00279}00279\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00280}00280\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00281}00281\ \ \ \ \ \textcolor{keywordflow}{return}\ dest.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00282}00282\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00283}00283\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00284}\mbox{\hyperlink{classlctm_1_1PriorityMap_a8136fe0f13728aae75221ebc0ecbdef2}{00284}}\ \textcolor{keywordtype}{void}\ PriorityMap::ApplyPriorityCoefficients(\textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ tu\_size,\ \textcolor{keywordtype}{int}\ sublayer,\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ src\_surface[],}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ dst\_surface[],\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&type\_surface,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&pixel\_sad,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ step\_width,\ \mbox{\hyperlink{namespacelctm_ae38d1693d83ebe588c9c3d465736ce6d}{PriorityMBType}}\ priority\_mb\_type,\ \mbox{\hyperlink{namespacelctm_a33ac89c4b7a64224c85005144465d7c6}{EncodingMode}}\ mode)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00287}00287\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ sad\ =\ !pixel\_sad.\mbox{\hyperlink{classlctm_1_1Surface_a9afc80fa192192573268d937cc564c3f}{empty}}();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00288}00288\ \ \ \ \ \textcolor{keywordflow}{if}\ (tu\_size\ ==\ 4)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ case\ 4x4}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00290}00290\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ src\_surface[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ src\_surface[1].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ src\_surface[2].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ src\_surface[3].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src04\_view\ =\ src\_surface[4].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src05\_view\ =\ src\_surface[5].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00296}00296\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src06\_view\ =\ src\_surface[6].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00297}00297\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src07\_view\ =\ src\_surface[7].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00298}00298\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src08\_view\ =\ src\_surface[8].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src09\_view\ =\ src\_surface[9].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src10\_view\ =\ src\_surface[10].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src11\_view\ =\ src\_surface[11].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src12\_view\ =\ src\_surface[12].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src13\_view\ =\ src\_surface[13].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00304}00304\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src14\_view\ =\ src\_surface[14].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00305}00305\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src15\_view\ =\ src\_surface[15].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00306}00306\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\_view\ =\ (sad\ ?\ pixel\_sad.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>()\ :\ src\_surface[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>());}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest00\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00308}00308\ \ \ \ \ \ \ \ \ dest00.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest01\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ dest01.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest02\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00312}00312\ \ \ \ \ \ \ \ \ dest02.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest03\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00314}00314\ \ \ \ \ \ \ \ \ dest03.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest04\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00316}00316\ \ \ \ \ \ \ \ \ dest04.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest05\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00318}00318\ \ \ \ \ \ \ \ \ dest05.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest06\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00320}00320\ \ \ \ \ \ \ \ \ dest06.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest07\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00322}00322\ \ \ \ \ \ \ \ \ dest07.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest08\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00324}00324\ \ \ \ \ \ \ \ \ dest08.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00325}00325\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest09\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00326}00326\ \ \ \ \ \ \ \ \ dest09.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest10\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00328}00328\ \ \ \ \ \ \ \ \ dest10.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest11\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00330}00330\ \ \ \ \ \ \ \ \ dest11.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00331}00331\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest12\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00332}00332\ \ \ \ \ \ \ \ \ dest12.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00333}00333\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest13\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00334}00334\ \ \ \ \ \ \ \ \ dest13.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00335}00335\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest14\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00336}00336\ \ \ \ \ \ \ \ \ dest14.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00337}00337\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest15\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00338}00338\ \ \ \ \ \ \ \ \ dest15.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00339}00339\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00340}00340\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}}\ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00341}00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sublayer\ ==\ \mbox{\hyperlink{namespacelctm_aa3b81ad954f832d04b5e217ac17ac387ab57e9aa499c6b2727e18876c8fee462c}{LOQ\_LEVEL\_1}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00342}00342\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00343}00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00344}00344\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00345}00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mode\ !=\ EncodingMode::ENCODE\_ALL)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00346}00346\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00347}00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (\mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}})type\_view.read((x\ *\ 4)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}),\ (y\ *\ 4)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00348}00348\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00349}00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keepAverage\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00350}00350\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00351}00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Decision\ type}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00352}00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00354}00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Keep\ smooth\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00355}00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::SmoothTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00356}00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00358}00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::CoarseTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00361}00361\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00362}00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Keep\ smooth\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00363}00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00364}00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00365}00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00366}00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Keep\ plain\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00367}00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00368}00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00369}00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00370}00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Keep\ coarse\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00371}00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00372}00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00373}00373\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Keep\ Edges\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Edge);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00380}00380\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer1\ -\/-\/\ keep\ average}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (keepAverage)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00383}00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00384}00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (mode)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00385}00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00386}00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::Ax:\ \textcolor{comment}{//\ Keep\ all\ average}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00387}00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00388}00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00389}00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00390}00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00391}00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00392}00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00393}00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00394}00394\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::AA:\ \textcolor{comment}{//\ Keep\ only\ AA}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00395}00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00396}00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00397}00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00398}00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00399}00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00400}00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00401}00401\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00402}00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EncodingMode::NA:\ \textcolor{comment}{//\ Keep\ AV,\ AH\ and\ AD}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00403}00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00404}00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00405}00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00406}00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00407}00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00408}00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00409}00409\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00410}00410\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00411}00411\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00412}00412\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00413}00413\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00414}00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00415}00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00416}00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00417}00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00418}00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00419}00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00420}00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00421}00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00422}00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00423}00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00424}00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00425}00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00426}00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00427}00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00428}00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00429}00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00430}00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00431}00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00432}00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00433}00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00434}00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00435}00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00436}00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00437}00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00438}00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00439}00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ src04\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00440}00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ src05\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00441}00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ src06\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00442}00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ src07\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00443}00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ src08\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00444}00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ src09\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00445}00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ src10\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00446}00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ src11\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00447}00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ src12\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00448}00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ src13\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00449}00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ src14\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00450}00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ src15\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00451}00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00452}00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00453}00453\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00454}00454\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ y}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00455}00455\ \ \ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00456}00456\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sublayer\ ==\ \mbox{\hyperlink{namespacelctm_aa3b81ad954f832d04b5e217ac17ac387a4294397ea4e50c3a7fe663a3a6b911dd}{LOQ\_LEVEL\_2}})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00457}00457\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00458}00458\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00459}00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00460}00460\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (\mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}})type\_view.read((x\ *\ 4)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}),\ (y\ *\ 4)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00461}00461\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00462}00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ removeCoeff\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00463}00463\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00464}00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ apply\ priority\ map\ if\ block\ is\ non-\/static}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00465}00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sad\ \&\&\ pixel\_sad\_view.read(x,\ y)\ >\ 1000)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00466}00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decision\ type}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00467}00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00468}00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Remove\ smooth\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00469}00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00470}00470\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00471}00471\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00472}00472\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00473}00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00474}00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00475}00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00476}00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00477}00477\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00478}00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Remove\ smooth\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00479}00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00480}00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00481}00481\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00482}00482\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Remove\ plain\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00483}00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00484}00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00485}00485\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00486}00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Remove\ coarse\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00487}00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00488}00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00489}00489\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00490}00490\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Remove\ Edges\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00491}00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Edge);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00492}00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00493}00493\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00494}00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00495}00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00496}00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00497}00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00498}00498\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00499}00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (removeCoeff)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00500}00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ plain\ or\ coarse\_texture}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00501}00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00502}00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00503}00503\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00504}00504\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00505}00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00506}00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00507}00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00508}00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00509}00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00510}00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00511}00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00512}00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00513}00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00514}00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00515}00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00516}00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00517}00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00518}00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ edge\ or\ smooth\_texture}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00519}00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00520}00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00521}00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00522}00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00523}00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest04.write(x,\ y,\ src04\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00524}00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest05.write(x,\ y,\ src05\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00525}00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest06.write(x,\ y,\ src06\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00526}00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest07.write(x,\ y,\ src07\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00527}00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest08.write(x,\ y,\ src08\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00528}00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest09.write(x,\ y,\ src09\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00529}00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest10.write(x,\ y,\ src10\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00530}00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest11.write(x,\ y,\ src11\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00531}00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest12.write(x,\ y,\ src12\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00532}00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest13.write(x,\ y,\ src13\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00533}00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest14.write(x,\ y,\ src14\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00534}00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest15.write(x,\ y,\ src15\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00535}00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00536}00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00537}00537\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00538}00538\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00539}00539\ \ \ \ \ \ \ \ \ dst\_surface[0]\ =\ dest00.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00540}00540\ \ \ \ \ \ \ \ \ dst\_surface[1]\ =\ dest01.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00541}00541\ \ \ \ \ \ \ \ \ dst\_surface[2]\ =\ dest02.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00542}00542\ \ \ \ \ \ \ \ \ dst\_surface[3]\ =\ dest03.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00543}00543\ \ \ \ \ \ \ \ \ dst\_surface[4]\ =\ dest04.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00544}00544\ \ \ \ \ \ \ \ \ dst\_surface[5]\ =\ dest05.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00545}00545\ \ \ \ \ \ \ \ \ dst\_surface[6]\ =\ dest06.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00546}00546\ \ \ \ \ \ \ \ \ dst\_surface[7]\ =\ dest07.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00547}00547\ \ \ \ \ \ \ \ \ dst\_surface[8]\ =\ dest08.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00548}00548\ \ \ \ \ \ \ \ \ dst\_surface[9]\ =\ dest09.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00549}00549\ \ \ \ \ \ \ \ \ dst\_surface[10]\ =\ dest10.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00550}00550\ \ \ \ \ \ \ \ \ dst\_surface[11]\ =\ dest11.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00551}00551\ \ \ \ \ \ \ \ \ dst\_surface[12]\ =\ dest12.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00552}00552\ \ \ \ \ \ \ \ \ dst\_surface[13]\ =\ dest13.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00553}00553\ \ \ \ \ \ \ \ \ dst\_surface[14]\ =\ dest14.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00554}00554\ \ \ \ \ \ \ \ \ dst\_surface[15]\ =\ dest15.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00555}00555\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (tu\_size\ ==\ 2)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00556}00556\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ case\ 2x2}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00557}00557\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src00\_view\ =\ src\_surface[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00558}00558\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src01\_view\ =\ src\_surface[1].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00559}00559\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src02\_view\ =\ src\_surface[2].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00560}00560\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src03\_view\ =\ src\_surface[3].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00561}00561\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\_view\ =\ (sad\ ?\ pixel\_sad.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>()\ :\ src\_surface[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>());}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00562}00562\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest00\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00563}00563\ \ \ \ \ \ \ \ \ dest00.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00564}00564\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest01\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00565}00565\ \ \ \ \ \ \ \ \ dest01.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00566}00566\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest02\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00567}00567\ \ \ \ \ \ \ \ \ dest02.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00568}00568\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dest03\ =\ Surface::build\_from<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00569}00569\ \ \ \ \ \ \ \ \ dest03.reserve(width,\ height);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00570}00570\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ type\_view\ =\ type\_surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00571}00571\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}}\ blockType\ =\ EnumBlockType::Plain;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00572}00572\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sublayer\ ==\ \mbox{\hyperlink{namespacelctm_aa3b81ad954f832d04b5e217ac17ac387ab57e9aa499c6b2727e18876c8fee462c}{LOQ\_LEVEL\_1}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00573}00573\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00574}00574\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00575}00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (\mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}})type\_view.read((x\ *\ 2)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}),\ (y\ *\ 2)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00576}00576\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00577}00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keepAverage\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00578}00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00579}00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00580}00580\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00581}00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Keep\ smooth\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00582}00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::SmoothTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00583}00583\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00584}00584\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00585}00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00586}00586\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||\ blockType\ ==\ EnumBlockType::CoarseTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00587}00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00588}00588\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00589}00589\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Keep\ smooth\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00590}00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00591}00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00592}00592\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00593}00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Keep\ plain\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00594}00594\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Plain);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00595}00595\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00596}00596\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00597}00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Keep\ coarse\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00598}00598\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00599}00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00600}00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00601}00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Keep\ Edges\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00602}00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ keepAverage\ =\ (blockType\ ==\ EnumBlockType::Edge);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00603}00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00604}00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00605}00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00606}00606\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00607}00607\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00608}00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer1\ -\/-\/\ keep\ average}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00609}00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (keepAverage)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00610}00610\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00611}00611\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00612}00612\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00613}00613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00614}00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00615}00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00616}00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00617}00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00618}00618\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00619}00619\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sublayer\ ==\ \mbox{\hyperlink{namespacelctm_aa3b81ad954f832d04b5e217ac17ac387a4294397ea4e50c3a7fe663a3a6b911dd}{LOQ\_LEVEL\_2}})\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00620}00620\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ (unsigned)height;\ y++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00621}00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ (unsigned)width;\ x++)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00622}00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockType\ =\ (\mbox{\hyperlink{classlctm_1_1PriorityMap_a28deeda5679a44b81c272105aec16d25}{EnumBlockType}})type\_view.read((x\ *\ 2)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}),\ (y\ *\ 2)\ /\ (\mbox{\hyperlink{PriorityMap_8hpp_ad51ded0bbd705f02f73fc60c0b721ced}{BLOCK\_SIZE}}));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00623}00623\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00624}00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ removeCoeff\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00625}00625\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00626}00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ apply\ priority\ map\ if\ block\ is\ non-\/static}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00627}00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (step\_width\ >\ 300\ \&\&\ sad\ \&\&\ pixel\_sad\_view.read(x,\ y)\ >\ 500)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00628}00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decision\ type}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00629}00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (priority\_mb\_type)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00630}00630\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::SmoothAndPlain:\ \textcolor{comment}{//\ Remove\ smooth\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00631}00631\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00632}00632\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00633}00633\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00634}00634\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00635}00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::CoarseAndPlain:\ \textcolor{comment}{//\ Remove\ coarse\ and\ plain}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00636}00636\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain\ ||}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00637}00637\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00638}00638\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00639}00639\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00640}00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Smooth:\ \textcolor{comment}{//\ Remove\ smooth\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00641}00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::SmoothTexture\ \&\&\ step\_width\ >\ 300);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00642}00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00643}00643\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00644}00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Plain:\ \textcolor{comment}{//\ Remove\ plain\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00645}00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Plain);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00646}00646\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00647}00647\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00648}00648\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Coarse:\ \textcolor{comment}{//\ Remove\ coarse\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00649}00649\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::CoarseTexture\ \&\&\ step\_width\ >\ 300);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00650}00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00651}00651\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00652}00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ PriorityMBType::Edge:\ \textcolor{comment}{//\ Remove\ Edges\ only}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00653}00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ removeCoeff\ =\ (blockType\ ==\ EnumBlockType::Edge);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00654}00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00655}00655\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00656}00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00657}00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00658}00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00659}00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00660}00660\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00661}00661\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (removeCoeff)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00662}00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ plain\ or\ coarse\_texture}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00663}00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00664}00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00665}00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00666}00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ 0);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00667}00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00668}00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ layer2\ -\/-\/\ edge\ or\ smooth\_texture}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00669}00669\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest00.write(x,\ y,\ src00\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00670}00670\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest01.write(x,\ y,\ src01\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00671}00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest02.write(x,\ y,\ src02\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00672}00672\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dest03.write(x,\ y,\ src03\_view.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00673}00673\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00674}00674\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ for\ x}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00675}00675\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \ \ \ \ \textcolor{comment}{//\ for\ y}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00676}00676\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00677}00677\ \ \ \ \ \ \ \ \ dst\_surface[0]\ =\ dest00.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00678}00678\ \ \ \ \ \ \ \ \ dst\_surface[1]\ =\ dest01.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00679}00679\ \ \ \ \ \ \ \ \ dst\_surface[2]\ =\ dest02.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00680}00680\ \ \ \ \ \ \ \ \ dst\_surface[3]\ =\ dest03.finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00681}00681\ \ \ \ \ \}\ \textcolor{comment}{//\ tu\_size\ =\ 4\ or\ 2}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00682}00682\ \ \ \ \ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00683}00683\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00684}00684\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00685}00685\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00686}\mbox{\hyperlink{classlctm_1_1StaticResiduals_a131b1528c5d61f049c08e45109e2f087}{00686}}\ \textcolor{keywordtype}{void}\ StaticResiduals::process(\mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ src\_coeffs[],\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ dst\_coeffs[],\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&pixel\_sad\_plane,\ \textcolor{keywordtype}{unsigned}\ num\_layers,}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00687}00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ step\_width,\ \textcolor{keywordtype}{unsigned}\ sad\_threshold,\ \textcolor{keywordtype}{unsigned}\ sad\_coeff\_threshold)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00688}00688\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ pixel\_sad\ =\ pixel\_sad\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00689}00689\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00690}00690\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ layer\ =\ 0;\ layer\ <\ num\_layers;\ ++layer)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00691}00691\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_view\ =\ src\_coeffs[layer].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00692}00692\ \ \ \ \ \ \ \ \ dst\_coeffs[layer]\ =\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00693}00693\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_view.width(),\ src\_view.height(),}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00694}00694\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00695}00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ ((unsigned)pixel\_sad.read(x,\ y)\ >=\ sad\_threshold)\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00696}00696\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ (unsigned)std::abs(src\_view.read(x,\ y))\ >\ sad\_coeff\_threshold\ *\ step\_width}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00697}00697\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ src\_view.read(x,\ y)}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00698}00698\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ 0;}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00699}00699\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00700}00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_view.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00701}00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00702}00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00703}00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00704}00704\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00705}00705\ \}}
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00706}00706\ }
+\DoxyCodeLine{\Hypertarget{PriorityMap_8cpp_source_l00707}00707\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

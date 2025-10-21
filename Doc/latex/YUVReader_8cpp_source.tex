@@ -1,247 +1,247 @@
 \doxysection{YUVReader.\+cpp}
-\label{YUVReader_8cpp_source}\index{util/src/YUVReader.cpp@{util/src/YUVReader.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{YUVReader_8cpp_source}{}\label{YUVReader_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/util/src/YUVReader.cpp@{/media/erwan/T7/formation/Video/LTM/util/src/YUVReader.cpp}}
+\mbox{\hyperlink{YUVReader_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//\ YUVReader.cpp}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//\ Read\ raw\ YUV\ video\ files}}
-\DoxyCodeLine{00039\ \textcolor{comment}{//}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}YUVReader.hpp"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cstdio>}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <memory>}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <mutex>}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <regex>}}
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <string>}}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
-\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ "{}Platform.hpp"{}}}
-\DoxyCodeLine{00052\ }
-\DoxyCodeLine{00053\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00054\ }
-\DoxyCodeLine{00055\ \textcolor{keyword}{using\ namespace\ }std;}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ YUVReader::YUVReader(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keywordtype}{float}\ rate,\ FILE\ *file,\ uintmax\_t\ fileSize)}
-\DoxyCodeLine{00058\ \ \ \ \ :\ name\_(name),\ length\_(0),\ rate\_(rate),\ file\_(file),\ fileSize\_(fileSize)\ \{\}}
-\DoxyCodeLine{00059\ }
-\DoxyCodeLine{00060\ YUVReader::YUVReader(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ length,\ \textcolor{keywordtype}{float}\ rate,\ FILE\ *file,}
-\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uintmax\_t\ fileSize)}
-\DoxyCodeLine{00062\ \ \ \ \ :\ name\_(name),\ image\_description\_(image\_description),\ length\_(length),\ rate\_(rate),\ file\_(file),\ fileSize\_(fileSize)\ \{\}}
-\DoxyCodeLine{00063\ }
-\DoxyCodeLine{00064\ \textcolor{keywordtype}{void}\ YUVReader::update\_data(\textcolor{keyword}{const}\ ImageDescription\ \&image\_description)\ \{}
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\_\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
-\DoxyCodeLine{00067\ }
-\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\ Figure\ length}}
-\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ length\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(fileSize\_\ /\ image\_description.byte\_size());}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordflow}{if}\ (length\ ==\ 0)}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}YUV\ file\ is\ too\ small"{}});}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00074\ \ \ \ \ image\_description\_\ =\ image\_description;}
-\DoxyCodeLine{00075\ \ \ \ \ length\_\ =\ length;}
-\DoxyCodeLine{00076\ }
-\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00078\ \}}
-\DoxyCodeLine{00079\ }
-\DoxyCodeLine{00080\ \textcolor{keywordtype}{void}\ YUVReader::set\_position(\textcolor{keywordtype}{unsigned}\ position)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00081\ \ \ \ \ CHECK(position\ <\ length\_);}
-\DoxyCodeLine{00082\ \ \ \ \ position\_\ =\ position;}
-\DoxyCodeLine{00083\ \ \ \ \ CHECK(fseeko(file\_.get(),\ (uint64\_t)position\_\ *\ (uint64\_t)image\_description\_.byte\_size(),\ SEEK\_SET)\ ==\ 0);}
-\DoxyCodeLine{00084\ \}}
-\DoxyCodeLine{00085\ }
-\DoxyCodeLine{00086\ \textcolor{comment}{//\ Get\ image\ from\ frame\ position}}
-\DoxyCodeLine{00087\ Image\ YUVReader::read(\textcolor{keywordtype}{unsigned}\ position,\ uint64\_t\ timestamp)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00088\ \ \ \ \ set\_position(position);}
-\DoxyCodeLine{00089\ }
-\DoxyCodeLine{00090\ \ \ \ \ std::vector<Surface>\ surfaces;}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ image\_description\_.num\_planes();\ ++p)\ \{}
-\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ b\ =\ Surface::build\_from<int8\_t>();}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ b.reserve\_bpp(image\_description\_.width(p),\ image\_description\_.height(p),\ image\_description\_.byte\_depth(),}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ image\_description\_.row\_stride(p));}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (image\_description\_.rows\_are\_contiguous(p))\ \{}
-\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fread(b.data(),\ image\_description\_.plane\_size(p),\ 1,\ file\_.get())\ !=\ 1)}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ read\ YUV\ file"{}});}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ image\_description\_.height(p);\ ++y)\ \{}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fread(b.data(0,\ y),\ image\_description\_.row\_size(p),\ 1,\ file\_.get())\ !=\ 1)}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ read\ YUV\ file"{}});}
-\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ surfaces.push\_back(b.finish());}
-\DoxyCodeLine{00106\ \ \ \ \ \}}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{return}\ Image(format(\textcolor{stringliteral}{"{}\%s:\%d"{}},\ name\_.c\_str(),\ position\_),\ image\_description\_,\ timestamp,\ surfaces);}
-\DoxyCodeLine{00109\ \}}
-\DoxyCodeLine{00110\ }
-\DoxyCodeLine{00111\ \textcolor{comment}{//\ Parse\ the\ picture\ details\ from\ the\ filename}}
-\DoxyCodeLine{00112\ \textcolor{comment}{//}}
-\DoxyCodeLine{00113\ \textcolor{comment}{//\ Uses\ roughly\ the\ same\ conventions\ as\ Vooya\ and\ YUVDeluxe}}
-\DoxyCodeLine{00114\ \textcolor{comment}{//}}
-\DoxyCodeLine{00115\ \textcolor{comment}{//\ Returns\ a\ description\ -\/\ if\ format\ ==\ PF\_NONE,\ then\ no\ format\ was\ recognised}}
-\DoxyCodeLine{00116\ \textcolor{comment}{//\ If\ a\ rate\ is\ recognized,\ and\ pRate\ !=\ NULL,\ then\ the\ frame\ rate\ will\ be\ stored\ through\ that\ pointer}}
-\DoxyCodeLine{00117\ \textcolor{comment}{//}}
-\DoxyCodeLine{00118\ }
-\DoxyCodeLine{00119\ \textcolor{comment}{//\ Map\ of\ format\ names\ to\ internal\ version}}
-\DoxyCodeLine{00120\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }\{}
-\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name;}
-\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordtype}{int}\ bits;}
-\DoxyCodeLine{00123\ \ \ \ \ ImageFormat\ format;}
-\DoxyCodeLine{00124\ \}\ KnownFormats[]\ =\ \{}
-\DoxyCodeLine{00125\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ -\/1,\ IMAGE\_FORMAT\_YUV420P8\},\ \ \{\textcolor{stringliteral}{"{}420p"{}},\ -\/1,\ IMAGE\_FORMAT\_YUV420P8\},\ \ \{\textcolor{stringliteral}{"{}p420"{}},\ -\/1,\ IMAGE\_FORMAT\_YUV420P8\},}
-\DoxyCodeLine{00126\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ -\/1,\ IMAGE\_FORMAT\_YUV420P8\},}
-\DoxyCodeLine{00127\ }
-\DoxyCodeLine{00128\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ 8,\ IMAGE\_FORMAT\_YUV420P8\},\ \ \ \{\textcolor{stringliteral}{"{}420p"{}},\ 8,\ IMAGE\_FORMAT\_YUV420P8\},\ \ \ \{\textcolor{stringliteral}{"{}p420"{}},\ 8,\ IMAGE\_FORMAT\_YUV420P8\},}
-\DoxyCodeLine{00129\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ 8,\ IMAGE\_FORMAT\_YUV420P8\},}
-\DoxyCodeLine{00130\ }
-\DoxyCodeLine{00131\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ 10,\ IMAGE\_FORMAT\_YUV420P10\},\ \{\textcolor{stringliteral}{"{}420p"{}},\ 10,\ IMAGE\_FORMAT\_YUV420P10\},\ \{\textcolor{stringliteral}{"{}p420"{}},\ 10,\ IMAGE\_FORMAT\_YUV420P10\},}
-\DoxyCodeLine{00132\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ 10,\ IMAGE\_FORMAT\_YUV420P10\},}
-\DoxyCodeLine{00133\ }
-\DoxyCodeLine{00134\ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 8,\ IMAGE\_FORMAT\_Y8\},\ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 10,\ IMAGE\_FORMAT\_Y10\},\ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 16,\ IMAGE\_FORMAT\_Y16\},}
-\DoxyCodeLine{00135\ }
-\DoxyCodeLine{00136\ \};}
-\DoxyCodeLine{00137\ }
-\DoxyCodeLine{00138\ \textcolor{keyword}{static}\ ImageDescription\ ParseYUVFilename(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ \textcolor{keywordtype}{float}\ *pRate)\ \{}
-\DoxyCodeLine{00139\ }
-\DoxyCodeLine{00140\ \ \ \ \ ImageFormat\ image\_format\ =\ IMAGE\_FORMAT\_NONE;}
-\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width\ =\ 0;}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ height\ =\ 0;}
-\DoxyCodeLine{00143\ }
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ Parse\ filename\ for\ picture\ description}}
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00146\ \ \ \ \ vector<string>\ parts;}
-\DoxyCodeLine{00147\ \ \ \ \ split(parts,\ name,\ (\textcolor{stringliteral}{"{}-\/\_."{}}));}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ dimensions\_re(\textcolor{stringliteral}{"{}([0-\/9]+)x([0-\/9]+)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Size}}
-\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ fps\_re(\textcolor{stringliteral}{"{}([0-\/9]+)(fps|hz)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Hz}}
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ bits\_re(\textcolor{stringliteral}{"{}([0-\/9]+)(bits?|bpp)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bit\ depth}}
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ format\_re(\textcolor{stringliteral}{"{}(420|420p|p420|422|p422|422p|yuv|yuyv|y|)"{}});\ \textcolor{comment}{//\ Format}}
-\DoxyCodeLine{00153\ }
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordtype}{string}\ format;}
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keywordtype}{int}\ bits\ =\ -\/1;}
-\DoxyCodeLine{00156\ }
-\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ p\ :\ parts)\ \{}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ cmatch\ m;}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ lp\ =\ lowercase(p);}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(lp.c\_str(),\ m,\ dimensions\_re))\ \{}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ width\ =\ stoi(m[1]);}
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ height\ =\ stoi(m[2]);}
-\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ fps\_re))\ \{}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pRate)}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pRate\ =\ stof(m[1].str());}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ bits\_re))\ \{}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ bits\ =\ stoi(m[1].str());}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00174\ }
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ format\_re))\ \{}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format.empty())}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ format\ =\ lowercase(m[1].str());}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00179\ \ \ \ \ \}}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ ARRAY\_SIZE(KnownFormats);\ ++i)}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format\ ==\ KnownFormats[i].name\ \&\&\ bits\ ==\ KnownFormats[i].bits)}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ image\_format\ =\ KnownFormats[i].format;}
-\DoxyCodeLine{00184\ }
-\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(image\_format,\ width,\ height);}
-\DoxyCodeLine{00186\ \}}
-\DoxyCodeLine{00187\ }
-\DoxyCodeLine{00188\ \textcolor{comment}{//\ Open\ file\ for\ reading,\ given\ explicit\ format}}
-\DoxyCodeLine{00189\ \textcolor{comment}{//}}
-\DoxyCodeLine{00190\ std::unique\_ptr<YUVReader>\ CreateYUVReader(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&description,\ \textcolor{keywordtype}{unsigned}\ rate)\ \{}
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Is\ file\ there?}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{const}\ uintmax\_t\ fileSize\ =\ file\_size(name);}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00195\ }
-\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ Figure\ length}}
-\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ length\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(fileSize\ /\ description.byte\_size());}
-\DoxyCodeLine{00198\ }
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordflow}{if}\ (length\ ==\ 0)}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}YUV\ file\ is\ too\ small"{}});}
-\DoxyCodeLine{00201\ }
-\DoxyCodeLine{00202\ \ \ \ \ UniquePtrFile\ yuvFile(std::fopen(name.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}}));}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuvFile)}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<YUVReader>(\textcolor{keyword}{new}\ YUVReader(name,\ description,\ length,\ (\textcolor{keywordtype}{float})rate,\ yuvFile.release(),\ fileSize));}
-\DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
-\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00209\ \}}
-\DoxyCodeLine{00210\ }
-\DoxyCodeLine{00211\ \textcolor{comment}{//\ Open\ file\ for\ reading,\ format\ is\ inferred\ from\ filename}}
-\DoxyCodeLine{00212\ \textcolor{comment}{//}}
-\DoxyCodeLine{00213\ unique\_ptr<YUVReader>\ CreateYUVReader(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name)\ \{}
-\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ Does\ it\ have\ a\ sensible\ name?}}
-\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordtype}{float}\ rate\ =\ 25.0f;}
-\DoxyCodeLine{00216\ \ \ \ \ ImageDescription\ description\ =\ ParseYUVFilename(name,\ \&rate);}
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (description.format()\ ==\ IMAGE\_FORMAT\_NONE)}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ parse\ YUV\ filename"{}});}
-\DoxyCodeLine{00219\ }
-\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{return}\ CreateYUVReader(name,\ description,\ (\textcolor{keywordtype}{unsigned})rate);}
-\DoxyCodeLine{00221\ \}}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \textcolor{comment}{//\ Create\ Dummy\ Reader,\ will\ be\ filled\ later}}
-\DoxyCodeLine{00224\ \textcolor{comment}{//}}
-\DoxyCodeLine{00225\ unique\_ptr<YUVReader>\ CreateYUVReader(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ \textcolor{keywordtype}{unsigned}\ rate)\ \{}
-\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ Is\ file\ there?}}
-\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{const}\ uintmax\_t\ fileSize\ =\ file\_size(name);}
-\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
-\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00230\ }
-\DoxyCodeLine{00231\ \ \ \ \ UniquePtrFile\ yuvFile(std::fopen(name.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}}));}
-\DoxyCodeLine{00232\ }
-\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuvFile)\ \{}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<YUVReader>(\textcolor{keyword}{new}\ YUVReader(name,\ (\textcolor{keywordtype}{float})rate,\ yuvFile.release(),\ fileSize));}
-\DoxyCodeLine{00235\ \ \ \ \ \}}
-\DoxyCodeLine{00236\ }
-\DoxyCodeLine{00237\ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
-\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00239\ \};}
-\DoxyCodeLine{00240\ }
-\DoxyCodeLine{00241\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00033}00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00034}00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00035}00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00036}00036\ \textcolor{comment}{//\ YUVReader.cpp}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00037}00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00038}00038\ \textcolor{comment}{//\ Read\ raw\ YUV\ video\ files}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00039}00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{YUVReader_8hpp}{YUVReader.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ <regex>}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00046}00046\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00048}00048\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00049}00049\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Image_8hpp}{Image.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00050}00050\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00051}00051\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Platform_8hpp}{Platform.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00052}00052\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00053}00053\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00055}00055\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacestd}{std}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00056}00056\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00057}00057\ YUVReader::YUVReader(\textcolor{keyword}{const}\ std::string\ \&\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \textcolor{keywordtype}{float}\ rate,\ FILE\ *file,\ uintmax\_t\ fileSize)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00058}00058\ \ \ \ \ :\ name\_(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}),\ length\_(0),\ rate\_(rate),\ file\_(file),\ fileSize\_(fileSize)\ \{\}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00060}00060\ YUVReader::YUVReader(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&image\_description,\ \textcolor{keywordtype}{unsigned}\ length,\ \textcolor{keywordtype}{float}\ rate,\ FILE\ *file,}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uintmax\_t\ fileSize)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00062}00062\ \ \ \ \ :\ name\_(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}),\ image\_description\_(image\_description),\ length\_(length),\ rate\_(rate),\ file\_(file),\ fileSize\_(fileSize)\ \{\}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00064}\mbox{\hyperlink{classlctm_1_1YUVReader_a32e90577b9c351a94c132c94ac95aedd}{00064}}\ \textcolor{keywordtype}{void}\ YUVReader::update\_data(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&image\_description)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00065}00065\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\_\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00068}00068\ \ \ \ \ \textcolor{comment}{//\ Figure\ length}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00069}00069\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ length\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(fileSize\_\ /\ image\_description.\mbox{\hyperlink{classlctm_1_1ImageDescription_aa0922c783a935f7d5bbc06e7fdd456fe}{byte\_size}}());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00071}00071\ \ \ \ \ \textcolor{keywordflow}{if}\ (length\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}YUV\ file\ is\ too\ small"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00074}00074\ \ \ \ \ image\_description\_\ =\ image\_description;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00075}00075\ \ \ \ \ length\_\ =\ length;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00077}00077\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00078}00078\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00080}00080\ \textcolor{keywordtype}{void}\ YUVReader::set\_position(\textcolor{keywordtype}{unsigned}\ position)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00081}00081\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(position\ <\ length\_);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00082}00082\ \ \ \ \ position\_\ =\ position;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00083}00083\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fseeko(file\_.get(),\ (uint64\_t)position\_\ *\ (uint64\_t)image\_description\_.byte\_size(),\ SEEK\_SET)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00084}00084\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00086}00086\ \textcolor{comment}{//\ Get\ image\ from\ frame\ position}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00087}\mbox{\hyperlink{classlctm_1_1YUVReader_ad9ab05b06028d373976d81a06f8916cb}{00087}}\ \mbox{\hyperlink{classlctm_1_1Image}{Image}}\ YUVReader::read(\textcolor{keywordtype}{unsigned}\ position,\ uint64\_t\ timestamp)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00088}00088\ \ \ \ \ set\_position(position);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00090}00090\ \ \ \ \ std::vector<Surface>\ surfaces;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ image\_description\_.num\_planes();\ ++p)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ b\ =\ Surface::build\_from<int8\_t>();}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ b.reserve\_bpp(image\_description\_.width(p),\ image\_description\_.height(p),\ image\_description\_.byte\_depth(),}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ image\_description\_.row\_stride(p));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (image\_description\_.rows\_are\_contiguous(p))\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fread(b.data(),\ image\_description\_.plane\_size(p),\ 1,\ file\_.get())\ !=\ 1)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ read\ YUV\ file"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ image\_description\_.height(p);\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fread(b.data(0,\ y),\ image\_description\_.row\_size(p),\ 1,\ file\_.get())\ !=\ 1)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ read\ YUV\ file"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00105}00105\ \ \ \ \ \ \ \ \ surfaces.push\_back(b.finish());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00106}00106\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00108}00108\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Image}{Image}}(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}\%s:\%d"{}},\ name\_.c\_str(),\ position\_),\ image\_description\_,\ timestamp,\ surfaces);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00109}00109\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00111}00111\ \textcolor{comment}{//\ Parse\ the\ picture\ details\ from\ the\ filename}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00112}00112\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00113}00113\ \textcolor{comment}{//\ Uses\ roughly\ the\ same\ conventions\ as\ Vooya\ and\ YUVDeluxe}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00114}00114\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00115}00115\ \textcolor{comment}{//\ Returns\ a\ description\ -\/\ if\ format\ ==\ PF\_NONE,\ then\ no\ format\ was\ recognised}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00116}00116\ \textcolor{comment}{//\ If\ a\ rate\ is\ recognized,\ and\ pRate\ !=\ NULL,\ then\ the\ frame\ rate\ will\ be\ stored\ through\ that\ pointer}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00117}00117\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00119}00119\ \textcolor{comment}{//\ Map\ of\ format\ names\ to\ internal\ version}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00120}00120\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00121}\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{00121}}\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00122}\mbox{\hyperlink{namespacelctm_a592a2666b0602c0ea0fa6dba4c5e4887}{00122}}\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacelctm_a592a2666b0602c0ea0fa6dba4c5e4887}{bits}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00123}\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{00123}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00124}00124\ \}\ KnownFormats[]\ =\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00125}00125\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ -\/1,\ IMAGE\_FORMAT\_YUV420P8\},\ \ \{\textcolor{stringliteral}{"{}420p"{}},\ -\/1,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},\ \ \{\textcolor{stringliteral}{"{}p420"{}},\ -\/1,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00126}00126\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ -\/1,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00127}00127\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00128}00128\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ 8,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},\ \ \ \{\textcolor{stringliteral}{"{}420p"{}},\ 8,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},\ \ \ \{\textcolor{stringliteral}{"{}p420"{}},\ 8,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00129}00129\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ 8,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00130}00130\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00131}00131\ \ \ \ \ \{\textcolor{stringliteral}{"{}420"{}},\ 10,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\},\ \{\textcolor{stringliteral}{"{}420p"{}},\ 10,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\},\ \{\textcolor{stringliteral}{"{}p420"{}},\ 10,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00132}00132\ \ \ \ \ \{\textcolor{stringliteral}{"{}yuv"{}},\ 10,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00133}00133\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00134}00134\ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 8,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda45fe72ad614bb739aa9ba7fabced6871}{IMAGE\_FORMAT\_Y8}}\},\ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 10,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda7ae3777d0e6b92c96759744b22f133e1}{IMAGE\_FORMAT\_Y10}}\},\ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}y"{}},\ 16,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdafb953d68287d881ec39d8d44e0a07d0b}{IMAGE\_FORMAT\_Y16}}\},}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00135}00135\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00136}00136\ \};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00137}00137\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00138}00138\ \textcolor{keyword}{static}\ ImageDescription\ ParseYUVFilename(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ \textcolor{keywordtype}{float}\ *pRate)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00139}00139\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00140}00140\ \ \ \ \ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ image\_format\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdabc193bec1a79a460de3ee305e14fb226}{IMAGE\_FORMAT\_NONE}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00141}00141\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00142}00142\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ height\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00143}00143\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00144}00144\ \ \ \ \ \textcolor{comment}{//\ Parse\ filename\ for\ picture\ description}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00145}00145\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00146}00146\ \ \ \ \ vector<string>\ parts;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00147}00147\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a50df1400b66c6e8f7a3b3751b06061d2}{split}}(parts,\ name,\ (\textcolor{stringliteral}{"{}-\/\_."{}}));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00149}00149\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ dimensions\_re(\textcolor{stringliteral}{"{}([0-\/9]+)x([0-\/9]+)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Size}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00150}00150\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ fps\_re(\textcolor{stringliteral}{"{}([0-\/9]+)(fps|hz)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Hz}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00151}00151\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ bits\_re(\textcolor{stringliteral}{"{}([0-\/9]+)(bits?|bpp)"{}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Bit\ depth}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00152}00152\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ regex\ format\_re(\textcolor{stringliteral}{"{}(420|420p|p420|422|p422|422p|yuv|yuyv|y|)"{}});\ \textcolor{comment}{//\ Format}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00153}00153\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00154}00154\ \ \ \ \ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00155}00155\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacelctm_a592a2666b0602c0ea0fa6dba4c5e4887}{bits}}\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00156}00156\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00157}00157\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ p\ :\ parts)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00158}00158\ \ \ \ \ \ \ \ \ cmatch\ m;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ lp\ =\ \mbox{\hyperlink{namespacelctm_a6b13a57be95e448a443785886f38611a}{lowercase}}(p);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(lp.c\_str(),\ m,\ dimensions\_re))\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \ \ \ \ width\ =\ stoi(m[1]);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \ \ \ \ height\ =\ stoi(m[2]);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00165}00165\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ fps\_re))\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pRate)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *pRate\ =\ stof(m[1].str());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00170}00170\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ bits\_re))\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a592a2666b0602c0ea0fa6dba4c5e4887}{bits}}\ =\ stoi(m[1].str());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00174}00174\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (regex\_match(p.c\_str(),\ m,\ format\_re))\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}.empty())}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}\ =\ \mbox{\hyperlink{namespacelctm_a6b13a57be95e448a443785886f38611a}{lowercase}}(m[1].str());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00179}00179\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00181}00181\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(KnownFormats);\ ++i)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (format\ ==\ KnownFormats[i].name\ \&\&\ bits\ ==\ KnownFormats[i].bits)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \ \ \ \ image\_format\ =\ KnownFormats[i].format;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00184}00184\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00185}00185\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(image\_format,\ width,\ height);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00186}00186\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00187}00187\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00188}00188\ \textcolor{comment}{//\ Open\ file\ for\ reading,\ given\ explicit\ format}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00189}00189\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00190}\mbox{\hyperlink{classlctm_1_1YUVReader_a593554180a4f1fc36283591f45f0fb55}{00190}}\ std::unique\_ptr<YUVReader>\ \mbox{\hyperlink{namespacelctm_a59ccfa4ea59a7d908a8fe6dd4eeaad0d}{CreateYUVReader}}(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&description,\ \textcolor{keywordtype}{unsigned}\ rate)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00191}00191\ \ \ \ \ \textcolor{comment}{//\ Is\ file\ there?}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00192}00192\ \ \ \ \ \textcolor{keyword}{const}\ uintmax\_t\ fileSize\ =\ \mbox{\hyperlink{namespacelctm_a7de48ffc5d2ff3d5636185d1162c1401}{file\_size}}(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00193}00193\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00195}00195\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00196}00196\ \ \ \ \ \textcolor{comment}{//\ Figure\ length}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00197}00197\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ length\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\textcolor{keyword}{>}(fileSize\ /\ description.\mbox{\hyperlink{classlctm_1_1ImageDescription_aa0922c783a935f7d5bbc06e7fdd456fe}{byte\_size}}());}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00198}00198\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00199}00199\ \ \ \ \ \textcolor{keywordflow}{if}\ (length\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}YUV\ file\ is\ too\ small"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00201}00201\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00202}00202\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a188c214756b3906bf6dcefbe93fda4da}{UniquePtrFile}}\ yuvFile(std::fopen(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}}));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00204}00204\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuvFile)}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<YUVReader>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1YUVReader}{YUVReader}}(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ description,\ length,\ (\textcolor{keywordtype}{float})rate,\ yuvFile.release(),\ fileSize));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00206}00206\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00207}00207\ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00208}00208\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00209}00209\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00210}00210\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00211}00211\ \textcolor{comment}{//\ Open\ file\ for\ reading,\ format\ is\ inferred\ from\ filename}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00212}00212\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00213}\mbox{\hyperlink{namespacelctm_a797967cf9147aa9ebab037d1be8db048}{00213}}\ unique\_ptr<YUVReader>\ \mbox{\hyperlink{namespacelctm_a59ccfa4ea59a7d908a8fe6dd4eeaad0d}{CreateYUVReader}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00214}00214\ \ \ \ \ \textcolor{comment}{//\ Does\ it\ have\ a\ sensible\ name?}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00215}00215\ \ \ \ \ \textcolor{keywordtype}{float}\ rate\ =\ 25.0f;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00216}00216\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ description\ =\ ParseYUVFilename(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \&rate);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00217}00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (description.\mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{format}}()\ ==\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdabc193bec1a79a460de3ee305e14fb226}{IMAGE\_FORMAT\_NONE}})}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ parse\ YUV\ filename"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00219}00219\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00220}00220\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a59ccfa4ea59a7d908a8fe6dd4eeaad0d}{CreateYUVReader}}(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ description,\ (\textcolor{keywordtype}{unsigned})rate);}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00221}00221\ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00223}00223\ \textcolor{comment}{//\ Create\ Dummy\ Reader,\ will\ be\ filled\ later}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00224}00224\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00225}\mbox{\hyperlink{namespacelctm_a2bea40be1efe6cc84ddedc13ec6fbb1b}{00225}}\ unique\_ptr<YUVReader>\ \mbox{\hyperlink{namespacelctm_a59ccfa4ea59a7d908a8fe6dd4eeaad0d}{CreateYUVReader}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ \textcolor{keywordtype}{unsigned}\ rate)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00226}00226\ \ \ \ \ \textcolor{comment}{//\ Is\ file\ there?}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00227}00227\ \ \ \ \ \textcolor{keyword}{const}\ uintmax\_t\ fileSize\ =\ \mbox{\hyperlink{namespacelctm_a7de48ffc5d2ff3d5636185d1162c1401}{file\_size}}(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00228}00228\ \ \ \ \ \textcolor{keywordflow}{if}\ (fileSize\ ==\ \textcolor{keyword}{static\_cast<}uintmax\_t\textcolor{keyword}{>}(-\/1))}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00230}00230\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00231}00231\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a188c214756b3906bf6dcefbe93fda4da}{UniquePtrFile}}\ yuvFile(std::fopen(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}}));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00232}00232\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00233}00233\ \ \ \ \ \textcolor{keywordflow}{if}\ (yuvFile)\ \{}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<YUVReader>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1YUVReader}{YUVReader}}(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ (\textcolor{keywordtype}{float})rate,\ yuvFile.release(),\ fileSize));}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00235}00235\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00236}00236\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00237}00237\ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ open\ YUV\ file"{}});}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00238}00238\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00239}00239\ \};}
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00240}00240\ }
+\DoxyCodeLine{\Hypertarget{YUVReader_8cpp_source_l00241}00241\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

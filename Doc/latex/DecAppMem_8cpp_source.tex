@@ -1,879 +1,879 @@
 \doxysection{Dec\+App\+Mem.\+cpp}
-\label{DecAppMem_8cpp_source}\index{deps/base\_vvc/src/DecAppMem.cpp@{deps/base\_vvc/src/DecAppMem.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{DecAppMem_8cpp_source}{}\label{DecAppMem_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/src/DecAppMem.cpp@{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/src/DecAppMem.cpp}}
+\mbox{\hyperlink{DecAppMem_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{00033\ }
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <list>}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <fcntl.h>}}
-\DoxyCodeLine{00042\ }
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}DecAppMem.h"{}}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/AnnexBread.h"{}}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/NALread.h"{}}}
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
-\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ "{}CommonLib/CodingStatistics.h"{}}}
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ "{}CommonLib/dtrace\_codingstruct.h"{}}}
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00054\ }
-\DoxyCodeLine{00055\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00056\ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ initialization\ /\ destroy}}
-\DoxyCodeLine{00057\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00058\ }
-\DoxyCodeLine{00059\ DecAppMem::DecAppMem(VideoIOYuvMem::Writer\ *writer)}
-\DoxyCodeLine{00060\ \ \ \ \ :\ m\_iPOCLastDisplay(-\/MAX\_INT),\ m\_writer(writer)}
-\DoxyCodeLine{00061\ \{}
-\DoxyCodeLine{00062\ \ \ m\_reconFileName=\textcolor{stringliteral}{"{}memory"{}};}
-\DoxyCodeLine{00063\ }
-\DoxyCodeLine{00064\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_NUM\_LAYER\_IDS;\ i++)}
-\DoxyCodeLine{00065\ \ \ \{}
-\DoxyCodeLine{00066\ \ \ \ \ m\_newCLVS[i]\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00067\ \ \ \}}
-\DoxyCodeLine{00068\ \}}
-\DoxyCodeLine{00069\ }
-\DoxyCodeLine{00070\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00071\ \textcolor{comment}{//\ Public\ member\ functions}}
-\DoxyCodeLine{00072\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00082\ uint32\_t\ DecAppMem::decode(std::istream\&\ bitstreamFile)}
-\DoxyCodeLine{00083\ \{}
-\DoxyCodeLine{00084\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc;}
-\DoxyCodeLine{00085\ \ \ PicList*\ pcListPic\ =\ NULL;}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ }
-\DoxyCodeLine{00088\ \ \ InputByteStream\ bytestream(bitstreamFile);}
-\DoxyCodeLine{00089\ }
-\DoxyCodeLine{00090\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty()\ \&\&\ m\_outputDecodedSEIMessagesFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
-\DoxyCodeLine{00091\ \ \ \{}
-\DoxyCodeLine{00092\ \ \ \ \ m\_seiMessageFileStream.open(m\_outputDecodedSEIMessagesFilename.c\_str(),\ std::ios::out);}
-\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_seiMessageFileStream.is\_open()\ ||\ !m\_seiMessageFileStream.good())}
-\DoxyCodeLine{00094\ \ \ \ \ \{}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_outputDecodedSEIMessagesFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ decoded\ SEI\ messages"{}});}
-\DoxyCodeLine{00096\ \ \ \ \ \}}
-\DoxyCodeLine{00097\ \ \ \}}
-\DoxyCodeLine{00098\ }
-\DoxyCodeLine{00099\ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFilename.empty()\ \&\&\ m\_oplFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
-\DoxyCodeLine{00100\ \ \ \{}
-\DoxyCodeLine{00101\ \ \ \ \ m\_oplFileStream.open(m\_oplFilename.c\_str(),\ std::ios::out);}
-\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFileStream.is\_open()\ ||\ !m\_oplFileStream.good())}
-\DoxyCodeLine{00103\ \ \ \ \ \{}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_oplFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ to\ write\ an\ opl-\/file\ for\ conformance\ testing\ (see\ JVET-\/P2008\ for\ details)"{}});}
-\DoxyCodeLine{00105\ \ \ \ \ \}}
-\DoxyCodeLine{00106\ \ \ \}}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \textcolor{comment}{//\ create\ \&\ initialize\ internal\ classes}}
-\DoxyCodeLine{00109\ \ \ xCreateDecLib();}
-\DoxyCodeLine{00110\ }
-\DoxyCodeLine{00111\ \ \ m\_iPOCLastDisplay\ +=\ m\_iSkipFrame;\ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ last\ displayed\ POC\ correctly\ for\ skip\ forward.}}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \textcolor{comment}{//\ clear\ contents\ of\ colour-\/remap-\/information-\/SEI\ output\ file}}
-\DoxyCodeLine{00114\ \ \ \textcolor{keywordflow}{if}\ (!m\_colourRemapSEIFileName.empty())}
-\DoxyCodeLine{00115\ \ \ \{}
-\DoxyCodeLine{00116\ \ \ \ \ std::ofstream\ ofile(m\_colourRemapSEIFileName.c\_str());}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (!ofile.good()\ ||\ !ofile.is\_open())}
-\DoxyCodeLine{00118\ \ \ \ \ \{}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ EXIT(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}\ <<\ m\_colourRemapSEIFileName.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ colour-\/remap-\/information-\/SEI\ video"{}});}
-\DoxyCodeLine{00120\ \ \ \ \ \}}
-\DoxyCodeLine{00121\ \ \ \}}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ main\ decoder\ loop}}
-\DoxyCodeLine{00124\ \ \ \textcolor{keywordtype}{bool}\ loopFiltered[MAX\_VPS\_LAYERS]\ =\ \{\ \textcolor{keyword}{false}\ \};}
-\DoxyCodeLine{00125\ }
-\DoxyCodeLine{00126\ \ \ \textcolor{keywordtype}{bool}\ bPicSkipped\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00127\ }
-\DoxyCodeLine{00128\ \ \ \textcolor{keywordtype}{bool}\ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00130\ \ \ \textcolor{keywordtype}{bool}\ firstSliceInAU\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00132\ }
-\DoxyCodeLine{00133\ \ \ \textcolor{keywordtype}{bool}\ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{auto}\ setOutputPicturePresentInStream\ =\ [\&]()}
-\DoxyCodeLine{00135\ \ \ \{}
-\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{if}(\ !outputPicturePresentInBitstream\ )}
-\DoxyCodeLine{00137\ \ \ \ \ \{}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ PicList::iterator\ iterPic\ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!outputPicturePresentInBitstream\ \&\&\ iterPic\ !=\ pcListPic-\/>end())}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ Picture\ *pcPic\ =\ *(iterPic++);}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00147\ \ \ \ \ \}}
-\DoxyCodeLine{00148\ \ \ \};}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
-\DoxyCodeLine{00151\ \ \ \ \ m\_cDecLib.setHTidExternalSetFlag(m\_mTidExternalSet);}
-\DoxyCodeLine{00152\ \ \ \ \ m\_cDecLib.setTOlsIdxExternalFlag(m\_tOlsIdxTidExternalSet);}
-\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00154\ }
-\DoxyCodeLine{00155\ \ \ \textcolor{keywordflow}{while}\ (!!bitstreamFile)}
-\DoxyCodeLine{00156\ \ \ \{}
-\DoxyCodeLine{00157\ \ \ \ \ InputNALUnit\ nalu;}
-\DoxyCodeLine{00158\ \ \ \ \ nalu.m\_nalUnitType\ =\ NAL\_UNIT\_INVALID;}
-\DoxyCodeLine{00159\ }
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{comment}{//\ determine\ if\ next\ NAL\ unit\ will\ be\ the\ first\ one\ from\ a\ new\ picture}}
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewPicture\ =\ m\_cDecLib.isNewPicture(\&bitstreamFile,\ \&bytestream);}
-\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewAccessUnit\ =\ bNewPicture\ \&\&\ m\_cDecLib.isNewAccessUnit(\ bNewPicture,\ \&bitstreamFile,\ \&bytestream\ );}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}(!bNewPicture)}
-\DoxyCodeLine{00164\ \ \ \ \ \{}
-\DoxyCodeLine{00165\ \ \ \ \ \ \ AnnexBStats\ stats\ =\ AnnexBStats();}
-\DoxyCodeLine{00166\ }
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{comment}{//\ find\ next\ NAL\ unit\ in\ stream}}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ byteStreamNALUnit(bytestream,\ nalu.getBitstream().getFifo(),\ stats);}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.getBitstream().getFifo().empty())}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ can\ happen\ if\ the\ following\ occur:}}
-\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ empty\ input\ file}}
-\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ two\ back-\/to-\/back\ start\_code\_prefixes}}
-\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ start\_code\_prefix\ immediately\ followed\ by\ EOF}}
-\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ msg(\ ERROR,\ \textcolor{stringliteral}{"{}Warning:\ Attempt\ to\ decode\ an\ empty\ NAL\ unit\(\backslash\)n"{}});}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ NAL\ unit\ header}}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ read(nalu);}
-\DoxyCodeLine{00182\ }
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flush\ output\ for\ first\ slice\ of\ an\ IDR\ picture}}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cDecLib.getFirstSliceInPicture()\ \&\&}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ ||}
-\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP))}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \ \textcolor{comment}{//\ An\ IDR\ picture\ starts\ a\ new\ CLVS}}
-\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#if\ !JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ nalu.m\_nuhLayerId);}
-\DoxyCodeLine{00191\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu)}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ immediately\ preceded\ by\ an\ EOS\ is\ a\ CLVSS}}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ !isEosPresentInPu)}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ not\ immediately\ precede\ by\ an\ EOS\ is\ not\ a\ CLVSS}}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parse\ NAL\ unit\ syntax\ if\ within\ target\ decoding\ layer}}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_iMaxTemporalLayer\ <\ 0\ ||\ nalu.m\_temporalId\ <=\ m\_iMaxTemporalLayer\ )\ \&\&\ xIsNaluWithinTargetDecLayerIdSet(\ \&nalu\ )\ )}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ CHECK(nalu.m\_temporalId\ >\ m\_iMaxTemporalLayer,\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ include\ any\ NAL\ unit\ with\ TemporalId\ greater\ than\ HighestTid"{}});}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size())}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(std::find(m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu.m\_nuhLayerId)\ ==\ m\_targetDecLayerIdSet.end(),\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ contain\ any\ other\ layers\ than\ included\ in\ the\ OLS\ with\ OlsIdx"{}});}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bPicSkipped)}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_TRAIL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_STSA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RASL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.isSliceNaluFirstInAU(\textcolor{keyword}{true},\ nalu))}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.decode(nalu,\ m\_iSkipFrame,\ m\_iPOCLastDisplay,\ m\_targetOlsIdx);}
-\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_OPI)}
-\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cDecLib.getHTidExternalSetFlag()\ \&\&\ m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag())}
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_iMaxTemporalLayer\ =\ m\_cDecLib.getOPI()-\/>getOpiHtidPlus1()-\/1;}
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.setHTidOpiSetFlag(m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag());}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_VPS)}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_cDecLib.getVPS()-\/>m\_targetOlsIdx\ );}
-\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_targetOlsIdx\ );}
-\DoxyCodeLine{00242\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetDecLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetLayerIdSet;}
-\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetOutputLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetOutputLayerIdSet;}
-\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \textcolor{comment}{//\ once\ an\ EOS\ NAL\ unit\ appears\ in\ the\ current\ PU,\ mark\ the\ variable\ isEosPresentInPu\ as\ true}}
-\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
-\DoxyCodeLine{00254\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \textcolor{comment}{//The\ presence\ of\ EOS\ means\ that\ the\ next\ picture\ is\ the\ beginning\ of\ new\ CLVS}}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00258\ \ \ \ \ \ \ \textcolor{comment}{//\ within\ the\ current\ PU,\ only\ EOS\ and\ EOB\ are\ allowed\ to\ be\ sent\ after\ an\ EOS\ nal\ unit}}
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isEosPresentInPu)}
-\DoxyCodeLine{00260\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ CHECK(nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOS\ \&\&\ nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOB,\ \textcolor{stringliteral}{"{}When\ an\ EOS\ NAL\ unit\ is\ present\ in\ a\ PU,\ it\ shall\ be\ the\ last\ NAL\ unit\ among\ all\ NAL\ units\ within\ the\ PU\ other\ than\ other\ EOS\ NAL\ units\ or\ an\ EOB\ NAL\ unit"{}});}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00263\ \ \ \ \ \}}
-\DoxyCodeLine{00264\ }
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{if}\ ((bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)\ \&\&\ !m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId)\ \&\&\ !bPicSkipped)}
-\DoxyCodeLine{00266\ \ \ \ \ \{}
-\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!loopFiltered[nalu.m\_nuhLayerId]\ ||\ bitstreamFile)}
-\DoxyCodeLine{00268\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ m\_cDecLib.executeLoopFilters();}
-\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ m\_cDecLib.finishPicture(poc,\ pcListPic,\ INFO,\ m\_newCLVS[nalu.m\_nuhLayerId]);}
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00272\ \ \ \ \ \ \ loopFiltered[nalu.m\_nuhLayerId]\ =\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS);}
-\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
-\DoxyCodeLine{00274\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInSequence(\textcolor{keyword}{true},\ nalu.m\_nuhLayerId);}
-\DoxyCodeLine{00276\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00277\ }
-\DoxyCodeLine{00278\ \ \ \ \ \ \ m\_cDecLib.updateAssociatedIRAP();}
-\DoxyCodeLine{00279\ \ \ \ \ \ \ m\_cDecLib.updatePrevGDRInSameLayer();}
-\DoxyCodeLine{00280\ \ \ \ \ \ \ m\_cDecLib.updatePrevIRAPAndGDRSubpic();}
-\DoxyCodeLine{00281\ \ \ \ \ \}}
-\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS\ )\ \&\&}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId))}
-\DoxyCodeLine{00284\ \ \ \ \ \{}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{true});}
-\DoxyCodeLine{00286\ \ \ \ \ \}}
-\DoxyCodeLine{00287\ }
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keywordflow}{if}(\ pcListPic\ )}
-\DoxyCodeLine{00289\ \ \ \ \ \{}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ \&\&\ !m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].isOpen()\ )}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ BitDepths\ \&bitDepths=pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepths();\ \textcolor{comment}{//\ use\ bit\ depths\ of\ first\ reconstructed\ picture.}}
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_outputBitDepth[channelType]\ ==\ 0\ )}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputBitDepth[channelType]\ =\ bitDepths.recon[channelType];}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00300\ }
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_packedYUVMode\ \&\&\ (m\_outputBitDepth[CH\_L]\ !=\ 10\ \&\&\ m\_outputBitDepth[CH\_L]\ !=\ 12))}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ EXIT\ (\textcolor{stringliteral}{"{}Invalid\ output\ bit-\/depth\ for\ packed\ YUV\ output,\ aborting\(\backslash\)n"{}});}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00305\ }
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ std::string\ reconFileName\ =\ m\_reconFileName;}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_reconFileName.compare(\ \textcolor{stringliteral}{"{}/dev/null"{}}\ )\ \&\&\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ >\ 1\ \&\&\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )}
-\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ pos\ =\ reconFileName.find\_last\_of(\textcolor{charliteral}{'.'});}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ std::string\ layerString\ =\ std::string(\textcolor{stringliteral}{"{}.layer"{}})\ +\ std::to\_string(nalu.m\_nuhLayerId);}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ !=\ string::npos)}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.insert(pos,\ layerString);}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.append(layerString);}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ (\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ ==\ 1\ ||\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )\ )\ ||\ m\_cDecLib.getVPS()\ ==\ \textcolor{keyword}{nullptr}\ )}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].open(\ m\_writer,\ \textcolor{keyword}{true},\ m\_outputBitDepth,\ m\_outputBitDepth,\ bitDepths.recon\ );\ \textcolor{comment}{//\ write\ mode}}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00324\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{comment}{//\ update\ file\ bitdepth\ shift\ if\ recon\ bitdepth\ changed\ between\ sequences}}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ reconBitdepth\ =\ pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepth((ChannelType)channelType);}
-\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ fileBitdepth\ \ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getFileBitdepth(channelType);}
-\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ bitdepthShift\ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getBitdepthShift(channelType);}
-\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ fileBitdepth\ +\ bitdepthShift\ !=\ reconBitdepth\ )}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].setBitdepthShift(channelType,\ reconBitdepth\ -\/\ fileBitdepth);}
-\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00335\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file}}
-\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
-\DoxyCodeLine{00338\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
-\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
-\DoxyCodeLine{00341\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{false});}
-\DoxyCodeLine{00347\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00348\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file\ -\/-\/\ for\ additional\ bumping\ as\ defined\ in\ C.5.2.3}}
-\DoxyCodeLine{00349\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
-\DoxyCodeLine{00350\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
-\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
-\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
-\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
-\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstSliceInAU)}
-\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size()\ >\ 0)}
-\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getAudIrapOrGdrAuFlag())}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL}
-\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP}
-\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu))}
-\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstPicInCVSAUThatIsNotAU0)}
-\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ NOT\_VALID,\ m\_cDecLib.getNoOutputPriorPicsFlag());}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ xWriteOutput(pcListPic,\ nalu.m\_temporalId);}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00387\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
-\DoxyCodeLine{00389\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00390\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00391\ \ \ \ \ \}}
-\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
-\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_OPI)}
-\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
-\DoxyCodeLine{00396\ \ \ \ \ \{}
-\DoxyCodeLine{00397\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00398\ \ \ \ \ \}}
-\DoxyCodeLine{00399\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_12)}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
-\DoxyCodeLine{00402\ \ \ \ \ \{}
-\DoxyCodeLine{00403\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00404\ \ \ \ \ \}}
-\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00406\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
-\DoxyCodeLine{00408\ \ \ \ \ \{}
-\DoxyCodeLine{00409\ \ \ \ \ \ \ m\_cDecLib.checkSeiInPictureUnit();}
-\DoxyCodeLine{00410\ \ \ \ \ \ \ m\_cDecLib.resetPictureSeiNalus();}
-\DoxyCodeLine{00411\ \ \ \ \ \ \ \textcolor{comment}{//\ reset\ the\ EOS\ present\ status\ for\ the\ next\ PU\ check}}
-\DoxyCodeLine{00412\ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00413\ \ \ \ \ \}}
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
-\DoxyCodeLine{00415\ \ \ \ \ \{}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ m\_cDecLib.checkAPSInPictureUnit();}
-\DoxyCodeLine{00417\ \ \ \ \ \ \ m\_cDecLib.resetPictureUnitNals();}
-\DoxyCodeLine{00418\ \ \ \ \ \}}
-\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewAccessUnit\ ||\ !bitstreamFile)}
-\DoxyCodeLine{00420\ \ \ \ \ \{}
-\DoxyCodeLine{00421\ \ \ \ \ \ \ m\_cDecLib.CheckNoOutputPriorPicFlagsInAccessUnit();}
-\DoxyCodeLine{00422\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNoOutputPriorPicFlags();}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ m\_cDecLib.checkLayerIdIncludedInCvss();}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitEos();}
-\DoxyCodeLine{00425\ \ \ \ \ \ \ m\_cDecLib.resetAudIrapOrGdrAuFlag();}
-\DoxyCodeLine{00426\ \ \ \ \ \}}
-\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordflow}{if}(bNewAccessUnit)}
-\DoxyCodeLine{00428\ \ \ \ \ \{}
-\DoxyCodeLine{00429\ \ \ \ \ \ \ m\_cDecLib.checkTidLayerIdInAccessUnit();}
-\DoxyCodeLine{00430\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiTids();}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ m\_cDecLib.checkSEIInAccessUnit();}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiPayLoadTypes();}
-\DoxyCodeLine{00433\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
-\DoxyCodeLine{00434\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
-\DoxyCodeLine{00436\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00437\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00438\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00439\ \ \ \ \ \}}
-\DoxyCodeLine{00440\ \ \ \}}
-\DoxyCodeLine{00441\ \ \ \textcolor{comment}{//\ May\ need\ to\ check\ again\ one\ more\ time\ as\ in\ case\ one\ the\ bitstream\ has\ only\ one\ picture,\ the\ first\ check\ may\ miss\ it}}
-\DoxyCodeLine{00442\ \ \ setOutputPicturePresentInStream();}
-\DoxyCodeLine{00443\ \ \ CHECK(!outputPicturePresentInBitstream,\ \textcolor{stringliteral}{"{}It\ is\ required\ that\ there\ shall\ be\ at\ least\ one\ picture\ with\ PictureOutputFlag\ equal\ to\ 1\ in\ the\ bitstream"{}})}
-\DoxyCodeLine{00444\ }
-\DoxyCodeLine{00445\ \ \ xFlushOutput(\ pcListPic\ );}
-\DoxyCodeLine{00446\ }
-\DoxyCodeLine{00447\ \ \ \textcolor{comment}{//\ get\ the\ number\ of\ checksum\ errors}}
-\DoxyCodeLine{00448\ \ \ uint32\_t\ nRet\ =\ m\_cDecLib.getNumberOfChecksumErrorsDetected();}
-\DoxyCodeLine{00449\ }
-\DoxyCodeLine{00450\ \ \ \textcolor{comment}{//\ delete\ buffers}}
-\DoxyCodeLine{00451\ \ \ m\_cDecLib.deletePicBuffer();}
-\DoxyCodeLine{00452\ \ \ \textcolor{comment}{//\ destroy\ internal\ classes}}
-\DoxyCodeLine{00453\ \ \ xDestroyDecLib();}
-\DoxyCodeLine{00454\ }
-\DoxyCodeLine{00455\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
-\DoxyCodeLine{00456\ \ \ CodingStatistics::DestroyInstance();}
-\DoxyCodeLine{00457\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00458\ }
-\DoxyCodeLine{00459\ \ \ destroyROM();}
-\DoxyCodeLine{00460\ }
-\DoxyCodeLine{00461\ \ \ \textcolor{keywordflow}{return}\ nRet;}
-\DoxyCodeLine{00462\ \}}
-\DoxyCodeLine{00463\ }
-\DoxyCodeLine{00464\ }
-\DoxyCodeLine{00465\ }
-\DoxyCodeLine{00466\ \textcolor{keywordtype}{void}\ DecAppMem::writeLineToOutputLog(Picture\ *\ pcPic)}
-\DoxyCodeLine{00467\ \{}
-\DoxyCodeLine{00468\ \ \ \textcolor{keywordflow}{if}\ (m\_oplFileStream.is\_open()\ \&\&\ m\_oplFileStream.good())}
-\DoxyCodeLine{00469\ \ \ \{}
-\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keyword}{const}\ SPS\ *\ \ \ sps\ \ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>cs-\/>sps;}
-\DoxyCodeLine{00471\ \ \ \ \ ChromaFormat\ \ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
-\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>getConformanceWindow();}
-\DoxyCodeLine{00473\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ leftOffset\ \ \ \ \ \ =\ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
-\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ rightOffset\ \ \ \ \ =\ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
-\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ topOffset\ \ \ \ \ \ \ =\ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
-\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ bottomOffset\ \ \ \ =\ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
-\DoxyCodeLine{00477\ \ \ \ \ PictureHash\ \ \ recon\_digest;}
-\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keyword}{auto}\ numChar\ =\ calcMD5WithCropping(((\textcolor{keyword}{const}\ Picture\ *)\ pcPic)-\/>getRecoBuf(),\ recon\_digest,\ sps-\/>getBitDepths(),}
-\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ leftOffset,\ rightOffset,\ topOffset,\ bottomOffset);}
-\DoxyCodeLine{00480\ }
-\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedWidth\ \ =\ pcPic-\/>Y().width\ -\/\ leftOffset\ -\/\ rightOffset;}
-\DoxyCodeLine{00482\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedHeight\ =\ pcPic-\/>Y().height\ -\/\ topOffset\ -\/\ bottomOffset;}
-\DoxyCodeLine{00483\ }
-\DoxyCodeLine{00484\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(3)\ <<\ pcPic-\/>layerId\ <<\ \textcolor{stringliteral}{"{},"{}};}
-\DoxyCodeLine{00485\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(8)\ <<\ pcPic-\/>getPOC()\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)\ <<\ croppedWidth\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)}
-\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ croppedHeight\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ hashToString(recon\_digest,\ numChar)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{00487\ \ \ \}}
-\DoxyCodeLine{00488\ \}}
-\DoxyCodeLine{00489\ }
-\DoxyCodeLine{00490\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00491\ \textcolor{comment}{//\ Protected\ member\ functions}}
-\DoxyCodeLine{00492\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00493\ }
-\DoxyCodeLine{00494\ \textcolor{keywordtype}{void}\ DecAppMem::xCreateDecLib()}
-\DoxyCodeLine{00495\ \{}
-\DoxyCodeLine{00496\ \ \ initROM();}
-\DoxyCodeLine{00497\ }
-\DoxyCodeLine{00498\ \ \ \textcolor{comment}{//\ create\ decoder\ class}}
-\DoxyCodeLine{00499\ \ \ m\_cDecLib.create();}
-\DoxyCodeLine{00500\ }
-\DoxyCodeLine{00501\ \ \ \textcolor{comment}{//\ initialize\ decoder\ class}}
-\DoxyCodeLine{00502\ \ \ m\_cDecLib.init(}
-\DoxyCodeLine{00503\ \#\textcolor{keywordflow}{if}\ JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}
-\DoxyCodeLine{00504\ \ \ \ \ m\_cacheCfgFile}
-\DoxyCodeLine{00505\ \#endif}
-\DoxyCodeLine{00506\ \ \ );}
-\DoxyCodeLine{00507\ \ \ m\_cDecLib.setDecodedPictureHashSEIEnabled(m\_decodedPictureHashSEIEnabled);}
-\DoxyCodeLine{00508\ }
-\DoxyCodeLine{00509\ }
-\DoxyCodeLine{00510\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty())}
-\DoxyCodeLine{00511\ \ \ \{}
-\DoxyCodeLine{00512\ \ \ \ \ std::ostream\ \&os=m\_seiMessageFileStream.is\_open()\ ?\ m\_seiMessageFileStream\ :\ std::cout;}
-\DoxyCodeLine{00513\ \ \ \ \ m\_cDecLib.setDecodedSEIMessageOutputStream(\&os);}
-\DoxyCodeLine{00514\ \ \ \}}
-\DoxyCodeLine{00515\ \textcolor{preprocessor}{\#if\ JVET\_S0257\_DUMP\_360SEI\_MESSAGE}}
-\DoxyCodeLine{00516\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecoded360SEIMessagesFilename.empty())}
-\DoxyCodeLine{00517\ \ \ \{}
-\DoxyCodeLine{00518\ \ \ \ \ m\_cDecLib.setDecoded360SEIMessageFileName(m\_outputDecoded360SEIMessagesFilename);}
-\DoxyCodeLine{00519\ \ \ \}}
-\DoxyCodeLine{00520\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00521\ \ \ m\_cDecLib.m\_targetSubPicIdx\ =\ this-\/>m\_targetSubPicIdx;}
-\DoxyCodeLine{00522\ \ \ m\_cDecLib.initScalingList();}
-\DoxyCodeLine{00523\ \}}
-\DoxyCodeLine{00524\ }
-\DoxyCodeLine{00525\ \textcolor{keywordtype}{void}\ DecAppMem::xDestroyDecLib()}
-\DoxyCodeLine{00526\ \{}
-\DoxyCodeLine{00527\ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ )}
-\DoxyCodeLine{00528\ \ \ \{}
-\DoxyCodeLine{00529\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&\ recFile\ :\ m\_cVideoIOYuvReconFile\ )}
-\DoxyCodeLine{00530\ \ \ \ \ \{}
-\DoxyCodeLine{00531\ \ \ \ \ \ \ recFile.second.close();}
-\DoxyCodeLine{00532\ \ \ \ \ \}}
-\DoxyCodeLine{00533\ \ \ \}}
-\DoxyCodeLine{00534\ }
-\DoxyCodeLine{00535\ \ \ \textcolor{comment}{//\ destroy\ decoder\ class}}
-\DoxyCodeLine{00536\ \ \ m\_cDecLib.destroy();}
-\DoxyCodeLine{00537\ \}}
-\DoxyCodeLine{00538\ }
-\DoxyCodeLine{00539\ }
-\DoxyCodeLine{00543\ \textcolor{keywordtype}{void}\ DecAppMem::xWriteOutput(\ PicList*\ pcListPic,\ uint32\_t\ tId\ )}
-\DoxyCodeLine{00544\ \{}
-\DoxyCodeLine{00545\ \ \ \textcolor{keywordflow}{if}\ (pcListPic-\/>empty())}
-\DoxyCodeLine{00546\ \ \ \{}
-\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00548\ \ \ \}}
-\DoxyCodeLine{00549\ }
-\DoxyCodeLine{00550\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00551\ \ \ \textcolor{keywordtype}{int}\ numPicsNotYetDisplayed\ =\ 0;}
-\DoxyCodeLine{00552\ \ \ \textcolor{keywordtype}{int}\ dpbFullness\ =\ 0;}
-\DoxyCodeLine{00553\ \ \ \textcolor{keyword}{const}\ SPS*\ activeSPS\ =\ (pcListPic-\/>front()-\/>cs-\/>sps);}
-\DoxyCodeLine{00554\ \ \ uint32\_t\ maxNumReorderPicsHighestTid;}
-\DoxyCodeLine{00555\ \ \ uint32\_t\ maxDecPicBufferingHighestTid;}
-\DoxyCodeLine{00556\ \ \ uint32\_t\ maxNrSublayers\ =\ activeSPS-\/>getMaxTLayers();}
-\DoxyCodeLine{00557\ }
-\DoxyCodeLine{00558\ \ \ \textcolor{keyword}{const}\ VPS*\ referredVPS\ =\ pcListPic-\/>front()-\/>cs-\/>vps;}
-\DoxyCodeLine{00559\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ temporalId\ =\ (\ m\_iMaxTemporalLayer\ ==\ -\/1\ ||\ m\_iMaxTemporalLayer\ >=\ maxNrSublayers\ )\ ?\ maxNrSublayers\ -\/\ 1\ :\ m\_iMaxTemporalLayer;}
-\DoxyCodeLine{00560\ }
-\DoxyCodeLine{00561\ \ \ \textcolor{keywordflow}{if}(\ referredVPS\ ==\ \textcolor{keyword}{nullptr}\ ||\ referredVPS-\/>m\_numLayersInOls[referredVPS-\/>m\_targetOlsIdx]\ ==\ 1\ )}
-\DoxyCodeLine{00562\ \ \ \{}
-\DoxyCodeLine{00563\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ activeSPS-\/>getMaxNumReorderPics(\ temporalId\ );}
-\DoxyCodeLine{00564\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ activeSPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
-\DoxyCodeLine{00565\ \ \ \}}
-\DoxyCodeLine{00566\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00567\ \ \ \{}
-\DoxyCodeLine{00568\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ referredVPS-\/>getMaxNumReorderPics(\ temporalId\ );}
-\DoxyCodeLine{00569\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ referredVPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
-\DoxyCodeLine{00570\ \ \ \}}
-\DoxyCodeLine{00571\ }
-\DoxyCodeLine{00572\ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
-\DoxyCodeLine{00573\ \ \ \{}
-\DoxyCodeLine{00574\ \ \ \ \ Picture*\ pcPic\ =\ *(iterPic);}
-\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay)}
-\DoxyCodeLine{00576\ \ \ \ \ \{}
-\DoxyCodeLine{00577\ \ \ \ \ \ \ \ numPicsNotYetDisplayed++;}
-\DoxyCodeLine{00578\ \ \ \ \ \ \ dpbFullness++;}
-\DoxyCodeLine{00579\ \ \ \ \ \}}
-\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(pcPic-\/>referenced)}
-\DoxyCodeLine{00581\ \ \ \ \ \{}
-\DoxyCodeLine{00582\ \ \ \ \ \ \ dpbFullness++;}
-\DoxyCodeLine{00583\ \ \ \ \ \}}
-\DoxyCodeLine{00584\ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00585\ \ \ \}}
-\DoxyCodeLine{00586\ }
-\DoxyCodeLine{00587\ \ \ iterPic\ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00588\ }
-\DoxyCodeLine{00589\ \ \ \textcolor{keywordflow}{if}\ (numPicsNotYetDisplayed>2)}
-\DoxyCodeLine{00590\ \ \ \{}
-\DoxyCodeLine{00591\ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00592\ \ \ \}}
-\DoxyCodeLine{00593\ }
-\DoxyCodeLine{00594\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
-\DoxyCodeLine{00595\ \ \ \textcolor{keywordflow}{if}(\ numPicsNotYetDisplayed>2\ \&\&\ pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
-\DoxyCodeLine{00596\ \ \ \{}
-\DoxyCodeLine{00597\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
-\DoxyCodeLine{00598\ \ \ \ \ endPic-\/-\/;}
-\DoxyCodeLine{00599\ \ \ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
-\DoxyCodeLine{00601\ \ \ \ \ \{}
-\DoxyCodeLine{00602\ \ \ \ \ \ \ Picture*\ pcPicTop\ =\ *(iterPic);}
-\DoxyCodeLine{00603\ \ \ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00604\ \ \ \ \ \ \ Picture*\ pcPicBottom\ =\ *(iterPic);}
-\DoxyCodeLine{00605\ }
-\DoxyCodeLine{00606\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&}
-\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid)\ \&\&}
-\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ (!(pcPicTop-\/>getPOC()\%2)\ \&\&\ pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ \&\&}
-\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ (pcPicTop-\/>getPOC()\ ==\ m\_iPOCLastDisplay+1\ ||\ m\_iPOCLastDisplay\ <\ 0))}
-\DoxyCodeLine{00610\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
-\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed\ =\ numPicsNotYetDisplayed-\/2;}
-\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
-\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
-\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isTff\ =\ pcPicTop-\/>topField;}
-\DoxyCodeLine{00617\ }
-\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ display\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00619\ }
-\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (display)}
-\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
-\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
-\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
-\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ isTff\ );}
-\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
-\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
-\DoxyCodeLine{00634\ }
-\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
-\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
-\DoxyCodeLine{00637\ }
-\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
-\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
-\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
-\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00649\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00650\ \ \ \ \ \}}
-\DoxyCodeLine{00651\ \ \ \}}
-\DoxyCodeLine{00652\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Frame\ Decoding}}
-\DoxyCodeLine{00653\ \ \ \{}
-\DoxyCodeLine{00654\ \ \ \ \ iterPic\ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00655\ }
-\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
-\DoxyCodeLine{00657\ \ \ \ \ \{}
-\DoxyCodeLine{00658\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
-\DoxyCodeLine{00659\ }
-\DoxyCodeLine{00660\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay\ \&\&}
-\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid))}
-\DoxyCodeLine{00662\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
-\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed-\/-\/;}
-\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced)}
-\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ dpbFullness-\/-\/;}
-\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00669\ }
-\DoxyCodeLine{00670\ }
-\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
-\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
-\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
-\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ ChromaFormat\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
-\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
-\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
-\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
-\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
-\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
-\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
-\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00692\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
-\DoxyCodeLine{00693\ }
-\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
-\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
-\DoxyCodeLine{00696\ }
-\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
-\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
-\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00703\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00704\ }
-\DoxyCodeLine{00705\ \ \ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00706\ \ \ \ \ \}}
-\DoxyCodeLine{00707\ \ \ \}}
-\DoxyCodeLine{00708\ \}}
-\DoxyCodeLine{00709\ }
-\DoxyCodeLine{00712\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00713\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList\ *pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId,\ \textcolor{keywordtype}{bool}\ noOutputOfPriorPicsFlag)}
-\DoxyCodeLine{00714\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00715\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList*\ pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId\ )}
-\DoxyCodeLine{00716\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00717\ \{}
-\DoxyCodeLine{00718\ \ \ \textcolor{keywordflow}{if}(!pcListPic\ ||\ pcListPic-\/>empty())}
-\DoxyCodeLine{00719\ \ \ \{}
-\DoxyCodeLine{00720\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00721\ \ \ \}}
-\DoxyCodeLine{00722\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00723\ }
-\DoxyCodeLine{00724\ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
-\DoxyCodeLine{00725\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
-\DoxyCodeLine{00726\ }
-\DoxyCodeLine{00727\ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
-\DoxyCodeLine{00728\ \ \ \{}
-\DoxyCodeLine{00729\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
-\DoxyCodeLine{00730\ \ \ \ \ endPic-\/-\/;}
-\DoxyCodeLine{00731\ \ \ \ \ Picture\ *pcPicTop,\ *pcPicBottom\ =\ NULL;}
-\DoxyCodeLine{00732\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
-\DoxyCodeLine{00733\ \ \ \ \ \{}
-\DoxyCodeLine{00734\ \ \ \ \ \ \ pcPicTop\ =\ *(iterPic);}
-\DoxyCodeLine{00735\ \ \ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00736\ \ \ \ \ \ \ pcPicBottom\ =\ *(iterPic);}
-\DoxyCodeLine{00737\ }
-\DoxyCodeLine{00738\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPicTop-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
-\DoxyCodeLine{00739\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{00741\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00742\ }
-\DoxyCodeLine{00743\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&\ !(pcPicTop-\/>getPOC()\%2)\ \&\&\ (pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ )}
-\DoxyCodeLine{00744\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00745\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
-\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00748\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
-\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
-\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
-\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ isTff\ \ \ =\ pcPicTop-\/>topField;}
-\DoxyCodeLine{00754\ }
-\DoxyCodeLine{00755\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
-\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
-\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
-\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
-\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ isTff\ );}
-\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
-\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
-\DoxyCodeLine{00766\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00768\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
-\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
-\DoxyCodeLine{00771\ }
-\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
-\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
-\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00775\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
-\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00783\ }
-\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPicTop)}
-\DoxyCodeLine{00785\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00786\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>destroy();}
-\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicTop;}
-\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ pcPicTop\ =\ NULL;}
-\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00790\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00791\ \ \ \ \ \}}
-\DoxyCodeLine{00792\ \ \ \ \ \textcolor{keywordflow}{if}(pcPicBottom)}
-\DoxyCodeLine{00793\ \ \ \ \ \{}
-\DoxyCodeLine{00794\ \ \ \ \ \ \ pcPicBottom-\/>destroy();}
-\DoxyCodeLine{00795\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicBottom;}
-\DoxyCodeLine{00796\ \ \ \ \ \ \ pcPicBottom\ =\ NULL;}
-\DoxyCodeLine{00797\ \ \ \ \ \}}
-\DoxyCodeLine{00798\ \ \ \}}
-\DoxyCodeLine{00799\ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//Frame\ decoding}}
-\DoxyCodeLine{00800\ \ \ \{}
-\DoxyCodeLine{00801\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
-\DoxyCodeLine{00802\ \ \ \ \ \{}
-\DoxyCodeLine{00803\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
-\DoxyCodeLine{00804\ }
-\DoxyCodeLine{00805\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPic-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
-\DoxyCodeLine{00806\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{00809\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00810\ }
-\DoxyCodeLine{00811\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
-\DoxyCodeLine{00812\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00813\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
-\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00816\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
-\DoxyCodeLine{00818\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
-\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
-\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
-\DoxyCodeLine{00822\ \ \ \ \ \ \ \ \ \ \ \ \ ChromaFormat\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
-\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
-\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
-\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
-\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
-\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
-\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
-\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NUM\_CHROMA\_FORMAT,\ m\_bClipOutputVideoToRec709Range\ );}
-\DoxyCodeLine{00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00838\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
-\DoxyCodeLine{00840\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
-\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00842\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
-\DoxyCodeLine{00844\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
-\DoxyCodeLine{00845\ }
-\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
-\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
-\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00851\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00852\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00853\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic\ !=\ NULL)}
-\DoxyCodeLine{00854\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ pcPic-\/>destroy();}
-\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPic;}
-\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ pcPic\ =\ NULL;}
-\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ *iterPic\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00859\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00860\ \ \ \ \ \ \ iterPic++;}
-\DoxyCodeLine{00861\ \ \ \ \ \}}
-\DoxyCodeLine{00862\ \ \ \}}
-\DoxyCodeLine{00863\ }
-\DoxyCodeLine{00864\ \ \ \textcolor{keywordflow}{if}(\ layerId\ !=\ NOT\_VALID\ )}
-\DoxyCodeLine{00865\ \ \ \{}
-\DoxyCodeLine{00866\ \ \ \ \ pcListPic-\/>remove\_if([](Picture*\ p)\ \{\ \textcolor{keywordflow}{return}\ p\ ==\ \textcolor{keyword}{nullptr};\ \});}
-\DoxyCodeLine{00867\ \ \ \}}
-\DoxyCodeLine{00868\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00869\ \ \ pcListPic-\/>clear();}
-\DoxyCodeLine{00870\ \ \ m\_iPOCLastDisplay\ =\ -\/MAX\_INT;}
-\DoxyCodeLine{00871\ \}}
-\DoxyCodeLine{00872\ }
-\DoxyCodeLine{00875\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetDecLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
-\DoxyCodeLine{00876\ \textcolor{keyword}{}\{}
-\DoxyCodeLine{00877\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetDecLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
-\DoxyCodeLine{00878\ \ \ \{}
-\DoxyCodeLine{00879\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00880\ \ \ \}}
-\DoxyCodeLine{00881\ }
-\DoxyCodeLine{00882\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetDecLayerIdSet.end();}
-\DoxyCodeLine{00883\ \}}
-\DoxyCodeLine{00884\ }
-\DoxyCodeLine{00887\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetOutputLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
-\DoxyCodeLine{00888\ \textcolor{keyword}{}\{}
-\DoxyCodeLine{00889\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetOutputLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
-\DoxyCodeLine{00890\ \ \ \{}
-\DoxyCodeLine{00891\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00892\ \ \ \}}
-\DoxyCodeLine{00893\ }
-\DoxyCodeLine{00894\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetOutputLayerIdSet.begin(),\ m\_targetOutputLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetOutputLayerIdSet.end();}
-\DoxyCodeLine{00895\ \}}
-\DoxyCodeLine{00896\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00001}00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00002}00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00003}00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00004}00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00005}00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00006}00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00007}00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00008}00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00009}00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00010}00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00011}00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00012}00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00013}00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00014}00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00015}00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00016}00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00017}00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00018}00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00019}00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00020}00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00021}00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00022}00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00023}00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00024}00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00025}00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00026}00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00027}00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00028}00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00029}00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00030}00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00031}00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00032}00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00039}00039\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ <fcntl.h>}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{DecAppMem_8h}{DecAppMem.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/AnnexBread.h"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ "{}DecoderLib/NALread.h"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00046}00046\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00047}00047\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CodingStatistics_8h}{CommonLib/CodingStatistics.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00048}00048\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00049}00049\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{dtrace__codingstruct_8h}{CommonLib/dtrace\_codingstruct.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00055}00055\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00056}00056\ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ initialization\ /\ destroy}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00057}00057\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00059}\mbox{\hyperlink{classDecAppMem_af87c316cd226bae6210e15be939cef09}{00059}}\ \mbox{\hyperlink{classDecAppMem_af87c316cd226bae6210e15be939cef09}{DecAppMem::DecAppMem}}(\mbox{\hyperlink{classVideoIOYuvMem_1_1Writer}{VideoIOYuvMem::Writer}}\ *writer)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00060}00060\ \ \ \ \ :\ m\_iPOCLastDisplay(-\/MAX\_INT),\ m\_writer(writer)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00061}00061\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00062}00062\ \ \ m\_reconFileName=\textcolor{stringliteral}{"{}memory"{}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00064}00064\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ MAX\_NUM\_LAYER\_IDS;\ i++)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00065}00065\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00066}00066\ \ \ \ \ m\_newCLVS[i]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00067}00067\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00068}00068\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00069}00069\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00070}00070\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00071}00071\ \textcolor{comment}{//\ Public\ member\ functions}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00072}00072\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00082}\mbox{\hyperlink{classDecAppMem_a668219e6876cac407ff8240c4af8d343}{00082}}\ uint32\_t\ \mbox{\hyperlink{classDecAppMem_a668219e6876cac407ff8240c4af8d343}{DecAppMem::decode}}(std::istream\&\ bitstreamFile)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00083}00083\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00084}00084\ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poc;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00085}00085\ \ \ PicList*\ pcListPic\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00087}00087\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00088}00088\ \ \ InputByteStream\ bytestream(bitstreamFile);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00090}00090\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty()\ \&\&\ m\_outputDecodedSEIMessagesFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00091}00091\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00092}00092\ \ \ \ \ m\_seiMessageFileStream.open(m\_outputDecodedSEIMessagesFilename.c\_str(),\ std::ios::out);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00093}00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_seiMessageFileStream.is\_open()\ ||\ !m\_seiMessageFileStream.good())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00094}00094\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00095}00095\ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_ac3830c7e5a25904083fbeb508a30cfe9}{EXIT}}(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_outputDecodedSEIMessagesFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ decoded\ SEI\ messages"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00096}00096\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00097}00097\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00099}00099\ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFilename.empty()\ \&\&\ m\_oplFilename!=\textcolor{stringliteral}{"{}-\/"{}})}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00100}00100\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00101}00101\ \ \ \ \ m\_oplFileStream.open(m\_oplFilename.c\_str(),\ std::ios::out);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00102}00102\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_oplFileStream.is\_open()\ ||\ !m\_oplFileStream.good())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00103}00103\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00104}00104\ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_ac3830c7e5a25904083fbeb508a30cfe9}{EXIT}}(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}<<\ m\_oplFilename.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ to\ write\ an\ opl-\/file\ for\ conformance\ testing\ (see\ JVET-\/P2008\ for\ details)"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00105}00105\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00106}00106\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00108}00108\ \ \ \textcolor{comment}{//\ create\ \&\ initialize\ internal\ classes}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00109}00109\ \ \ xCreateDecLib();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00111}00111\ \ \ m\_iPOCLastDisplay\ +=\ m\_iSkipFrame;\ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ last\ displayed\ POC\ correctly\ for\ skip\ forward.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00113}00113\ \ \ \textcolor{comment}{//\ clear\ contents\ of\ colour-\/remap-\/information-\/SEI\ output\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00114}00114\ \ \ \textcolor{keywordflow}{if}\ (!m\_colourRemapSEIFileName.empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00115}00115\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00116}00116\ \ \ \ \ std::ofstream\ ofile(m\_colourRemapSEIFileName.c\_str());}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00117}00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (!ofile.good()\ ||\ !ofile.is\_open())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00118}00118\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00119}00119\ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_ac3830c7e5a25904083fbeb508a30cfe9}{EXIT}}(\ \textcolor{stringliteral}{"{}Unable\ to\ open\ file\ "{}}\ <<\ m\_colourRemapSEIFileName.c\_str()\ <<\ \textcolor{stringliteral}{"{}\ for\ writing\ colour-\/remap-\/information-\/SEI\ video"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00120}00120\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00121}00121\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00122}00122\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00123}00123\ \ \ \textcolor{comment}{//\ main\ decoder\ loop}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00124}00124\ \ \ \textcolor{keywordtype}{bool}\ loopFiltered[MAX\_VPS\_LAYERS]\ =\ \{\ \textcolor{keyword}{false}\ \};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00125}00125\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00126}00126\ \ \ \textcolor{keywordtype}{bool}\ bPicSkipped\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00127}00127\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00128}00128\ \ \ \textcolor{keywordtype}{bool}\ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00129}00129\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00130}00130\ \ \ \textcolor{keywordtype}{bool}\ firstSliceInAU\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00131}00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00133}00133\ \ \ \textcolor{keywordtype}{bool}\ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00134}00134\ \ \ \textcolor{keyword}{auto}\ setOutputPicturePresentInStream\ =\ [\&]()}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00135}00135\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00136}00136\ \ \ \ \ \textcolor{keywordflow}{if}(\ !outputPicturePresentInBitstream\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00137}00137\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00138}00138\ \ \ \ \ \ \ PicList::iterator\ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00139}00139\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!outputPicturePresentInBitstream\ \&\&\ iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00140}00140\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ Picture\ *pcPic\ =\ *(iterPic++);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ outputPicturePresentInBitstream\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00146}00146\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00147}00147\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00148}00148\ \ \ \};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00150}00150\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00151}00151\ \ \ \ \ m\_cDecLib.setHTidExternalSetFlag(m\_mTidExternalSet);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00152}00152\ \ \ \ \ m\_cDecLib.setTOlsIdxExternalFlag(m\_tOlsIdxTidExternalSet);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00153}00153\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00154}00154\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00155}00155\ \ \ \textcolor{keywordflow}{while}\ (!!bitstreamFile)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00156}00156\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00157}00157\ \ \ \ \ InputNALUnit\ nalu;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00158}00158\ \ \ \ \ nalu.m\_nalUnitType\ =\ NAL\_UNIT\_INVALID;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00159}00159\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00160}00160\ \ \ \ \ \textcolor{comment}{//\ determine\ if\ next\ NAL\ unit\ will\ be\ the\ first\ one\ from\ a\ new\ picture}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00161}00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewPicture\ =\ m\_cDecLib.isNewPicture(\&bitstreamFile,\ \&bytestream);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00162}00162\ \ \ \ \ \textcolor{keywordtype}{bool}\ bNewAccessUnit\ =\ bNewPicture\ \&\&\ m\_cDecLib.isNewAccessUnit(\ bNewPicture,\ \&bitstreamFile,\ \&bytestream\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00163}00163\ \ \ \ \ \textcolor{keywordflow}{if}(!bNewPicture)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00164}00164\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00165}00165\ \ \ \ \ \ \ AnnexBStats\ stats\ =\ AnnexBStats();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00166}00166\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00167}00167\ \ \ \ \ \ \ \textcolor{comment}{//\ find\ next\ NAL\ unit\ in\ stream}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00168}00168\ \ \ \ \ \ \ byteStreamNALUnit(bytestream,\ nalu.getBitstream().getFifo(),\ stats);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00169}00169\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.getBitstream().getFifo().empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00170}00170\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ can\ happen\ if\ the\ following\ occur:}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00172}00172\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ empty\ input\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00173}00173\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ two\ back-\/to-\/back\ start\_code\_prefixes}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00174}00174\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ \ -\/\ start\_code\_prefix\ immediately\ followed\ by\ EOF}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00175}00175\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ msg(\ ERROR,\ \textcolor{stringliteral}{"{}Warning:\ Attempt\ to\ decode\ an\ empty\ NAL\ unit\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00177}00177\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00178}00178\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00179}00179\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ read\ NAL\ unit\ header}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ read(nalu);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00182}00182\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ flush\ output\ for\ first\ slice\ of\ an\ IDR\ picture}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cDecLib.getFirstSliceInPicture()\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ ||}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \ \textcolor{comment}{//\ An\ IDR\ picture\ starts\ a\ new\ CLVS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00189}00189\ \textcolor{preprocessor}{\#if\ !JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ nalu.m\_nuhLayerId);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00191}00191\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ immediately\ preceded\ by\ an\ EOS\ is\ a\ CLVSS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_cDecLib.getFirstSliceInPicture()\ \&\&\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ !isEosPresentInPu)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ CRA\ that\ is\ not\ immediately\ precede\ by\ an\ EOS\ is\ not\ a\ CLVSS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parse\ NAL\ unit\ syntax\ if\ within\ target\ decoding\ layer}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_iMaxTemporalLayer\ <\ 0\ ||\ nalu.m\_temporalId\ <=\ m\_iMaxTemporalLayer\ )\ \&\&\ xIsNaluWithinTargetDecLayerIdSet(\ \&nalu\ )\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(nalu.m\_temporalId\ >\ m\_iMaxTemporalLayer,\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ include\ any\ NAL\ unit\ with\ TemporalId\ greater\ than\ HighestTid"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(std::find(m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu.m\_nuhLayerId)\ ==\ m\_targetDecLayerIdSet.end(),\ \textcolor{stringliteral}{"{}bitstream\ shall\ not\ contain\ any\ other\ layers\ than\ included\ in\ the\ OLS\ with\ OlsIdx"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bPicSkipped)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_TRAIL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_STSA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RASL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA)\ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.isSliceNaluFirstInAU(\textcolor{keyword}{true},\ nalu))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.decode(nalu,\ m\_iSkipFrame,\ m\_iPOCLastDisplay,\ m\_targetOlsIdx);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00226}00226\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_OPI)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cDecLib.getHTidExternalSetFlag()\ \&\&\ m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_iMaxTemporalLayer\ =\ m\_cDecLib.getOPI()-\/>getOpiHtidPlus1()-\/1;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.setHTidOpiSetFlag(m\_cDecLib.getOPI()-\/>getHtidInfoPresentFlag());}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00235}00235\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_VPS)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00238}00238\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_cDecLib.getVPS()-\/>m\_targetOlsIdx\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00240}00240\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cDecLib.deriveTargetOutputLayerSet(\ m\_targetOlsIdx\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00242}00242\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetDecLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetLayerIdSet;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ m\_targetOutputLayerIdSet\ =\ m\_cDecLib.getVPS()-\/>m\_targetOutputLayerIdSet;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \ \ bPicSkipped\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00251}00251\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00252}00252\ \ \ \ \ \ \ \textcolor{comment}{//\ once\ an\ EOS\ NAL\ unit\ appears\ in\ the\ current\ PU,\ mark\ the\ variable\ isEosPresentInPu\ as\ true}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00253}00253\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00254}00254\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00255}00255\ \ \ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00256}00256\ \ \ \ \ \ \ \ \ m\_newCLVS[nalu.m\_nuhLayerId]\ =\ \textcolor{keyword}{true};\ \ \textcolor{comment}{//The\ presence\ of\ EOS\ means\ that\ the\ next\ picture\ is\ the\ beginning\ of\ new\ CLVS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00257}00257\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00258}00258\ \ \ \ \ \ \ \textcolor{comment}{//\ within\ the\ current\ PU,\ only\ EOS\ and\ EOB\ are\ allowed\ to\ be\ sent\ after\ an\ EOS\ nal\ unit}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00259}00259\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(isEosPresentInPu)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00260}00260\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOS\ \&\&\ nalu.m\_nalUnitType\ !=\ NAL\_UNIT\_EOB,\ \textcolor{stringliteral}{"{}When\ an\ EOS\ NAL\ unit\ is\ present\ in\ a\ PU,\ it\ shall\ be\ the\ last\ NAL\ unit\ among\ all\ NAL\ units\ within\ the\ PU\ other\ than\ other\ EOS\ NAL\ units\ or\ an\ EOB\ NAL\ unit"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00262}00262\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00263}00263\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00264}00264\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00265}00265\ \ \ \ \ \textcolor{keywordflow}{if}\ ((bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)\ \&\&\ !m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId)\ \&\&\ !bPicSkipped)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00266}00266\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00267}00267\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!loopFiltered[nalu.m\_nuhLayerId]\ ||\ bitstreamFile)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00268}00268\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00269}00269\ \ \ \ \ \ \ \ \ m\_cDecLib.executeLoopFilters();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00270}00270\ \ \ \ \ \ \ \ \ m\_cDecLib.finishPicture(poc,\ pcListPic,\ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}},\ m\_newCLVS[nalu.m\_nuhLayerId]);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00271}00271\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00272}00272\ \ \ \ \ \ \ loopFiltered[nalu.m\_nuhLayerId]\ =\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00273}00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00274}00274\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00275}00275\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInSequence(\textcolor{keyword}{true},\ nalu.m\_nuhLayerId);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00276}00276\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00277}00277\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00278}00278\ \ \ \ \ \ \ m\_cDecLib.updateAssociatedIRAP();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00279}00279\ \ \ \ \ \ \ m\_cDecLib.updatePrevGDRInSameLayer();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00280}00280\ \ \ \ \ \ \ m\_cDecLib.updatePrevIRAPAndGDRSubpic();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00281}00281\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00282}00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS\ )\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00283}00283\ \ \ \ \ \ \ m\_cDecLib.getFirstSliceInSequence(nalu.m\_nuhLayerId))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00284}00284\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00285}00285\ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{true});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00286}00286\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00287}00287\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00288}00288\ \ \ \ \ \textcolor{keywordflow}{if}(\ pcListPic\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00289}00289\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00290}00290\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ \&\&\ !m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].isOpen()\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00291}00291\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ BitDepths\ \&bitDepths=pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepths();\ \textcolor{comment}{//\ use\ bit\ depths\ of\ first\ reconstructed\ picture.}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_outputBitDepth[channelType]\ ==\ 0\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00296}00296\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00297}00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputBitDepth[channelType]\ =\ bitDepths.recon[channelType];}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00298}00298\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00300}00300\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_packedYUVMode\ \&\&\ (m\_outputBitDepth[\mbox{\hyperlink{TypeDef_8h_a31f5cf39964964cf2a64c5f34983dd27}{CH\_L}}]\ !=\ 10\ \&\&\ m\_outputBitDepth[\mbox{\hyperlink{TypeDef_8h_a31f5cf39964964cf2a64c5f34983dd27}{CH\_L}}]\ !=\ 12))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_ac3830c7e5a25904083fbeb508a30cfe9}{EXIT}}\ (\textcolor{stringliteral}{"{}Invalid\ output\ bit-\/depth\ for\ packed\ YUV\ output,\ aborting\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00304}00304\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00305}00305\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00306}00306\ \ \ \ \ \ \ \ \ std::string\ reconFileName\ =\ m\_reconFileName;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_reconFileName.compare(\ \textcolor{stringliteral}{"{}/dev/null"{}}\ )\ \&\&\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ >\ 1\ \&\&\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00308}00308\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ pos\ =\ reconFileName.find\_last\_of(\textcolor{charliteral}{'.'});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \ \ std::string\ layerString\ =\ std::string(\textcolor{stringliteral}{"{}.layer"{}})\ +\ std::to\_string(nalu.m\_nuhLayerId);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ !=\ string::npos)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00312}00312\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.insert(pos,\ layerString);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \ \ \ \ reconFileName.append(layerString);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00320}00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\ m\_cDecLib.getVPS()\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ (\ m\_cDecLib.getVPS()-\/>getMaxLayers()\ ==\ 1\ ||\ xIsNaluWithinTargetOutputLayerIdSet(\ \&nalu\ )\ )\ )\ ||\ m\_cDecLib.getVPS()\ ==\ \textcolor{keyword}{nullptr}\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00322}00322\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].open(\ m\_writer,\ \textcolor{keyword}{true},\ m\_outputBitDepth,\ m\_outputBitDepth,\ bitDepths.recon\ );\ \textcolor{comment}{//\ write\ mode}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00324}00324\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00325}00325\ \ \ \ \ \ \ \textcolor{comment}{//\ update\ file\ bitdepth\ shift\ if\ recon\ bitdepth\ changed\ between\ sequences}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00326}00326\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ uint32\_t\ channelType\ =\ 0;\ channelType\ <\ MAX\_NUM\_CHANNEL\_TYPE;\ channelType++\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00327}00327\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ reconBitdepth\ =\ pcListPic-\/>front()-\/>cs-\/>sps-\/>getBitDepth((ChannelType)channelType);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ fileBitdepth\ \ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getFileBitdepth(channelType);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00330}00330\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ bitdepthShift\ =\ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].getBitdepthShift(channelType);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00331}00331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ fileBitdepth\ +\ bitdepthShift\ !=\ reconBitdepth\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00332}00332\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00333}00333\ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[nalu.m\_nuhLayerId].setBitdepthShift(channelType,\ reconBitdepth\ -\/\ fileBitdepth);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00334}00334\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00335}00335\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00336}00336\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00337}00337\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00338}00338\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00339}00339\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00340}00340\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00341}00341\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00342}00342\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00343}00343\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00344}00344\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00345}00345\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00346}00346\ \ \ \ \ \ \ \ \ m\_cDecLib.setFirstSliceInPicture\ (\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00347}00347\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00348}00348\ \ \ \ \ \ \ \textcolor{comment}{//\ write\ reconstruction\ to\ file\ -\/-\/\ for\ additional\ bumping\ as\ defined\ in\ C.5.2.3}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00349}00349\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00350}00350\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00351}00351\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00352}00352\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00353}00353\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!bNewPicture\ \&\&\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_11)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00354}00354\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR)))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00355}00355\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00356}00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00358}00358\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstSliceInAU)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00361}00361\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00362}00362\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_targetDecLayerIdSet.size()\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00363}00363\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00364}00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cDecLib.getAudIrapOrGdrAuFlag())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00365}00365\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00366}00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00367}00367\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00368}00368\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00369}00369\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00370}00370\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00371}00371\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00372}00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_IDR\_N\_LP}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00373}00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_CODED\_SLICE\_CRA\ \&\&\ isEosPresentInPu))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ firstPicInCVSAUThatIsNotAU0\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstPicInCVSAUThatIsNotAU0)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00380}00380\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ xFlushOutput(pcListPic,\ NOT\_VALID,\ m\_cDecLib.getNoOutputPriorPicsFlag());}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00383}00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00384}00384\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00385}00385\ \ \ \ \ \ \ \ \ \ \ xWriteOutput(pcListPic,\ nalu.m\_temporalId);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00386}00386\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00387}00387\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00388}00388\ \ \ \ \ \ \ \ \ xWriteOutput(\ pcListPic,\ nalu.m\_temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00389}00389\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00390}00390\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00391}00391\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00392}00392\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00393}00393\ \textcolor{preprocessor}{\#if\ JVET\_S0163\_ON\_TARGETOLS\_SUBLAYERS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00394}00394\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_OPI)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00395}00395\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00396}00396\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00397}00397\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00398}00398\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00399}00399\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00400}00400\ \ \ \ \ \textcolor{keywordflow}{if}\ ((nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_TRAIL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_RESERVED\_IRAP\_VCL\_12)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00401}00401\ \ \ \ \ \ \ \ \ ||\ (nalu.m\_nalUnitType\ >=\ NAL\_UNIT\_CODED\_SLICE\_IDR\_W\_RADL\ \&\&\ nalu.m\_nalUnitType\ <=\ NAL\_UNIT\_CODED\_SLICE\_GDR))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00402}00402\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00403}00403\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00404}00404\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00405}00405\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00406}00406\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00407}00407\ \ \ \ \ \textcolor{keywordflow}{if}(\ bNewPicture\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00408}00408\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00409}00409\ \ \ \ \ \ \ m\_cDecLib.checkSeiInPictureUnit();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00410}00410\ \ \ \ \ \ \ m\_cDecLib.resetPictureSeiNalus();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00411}00411\ \ \ \ \ \ \ \textcolor{comment}{//\ reset\ the\ EOS\ present\ status\ for\ the\ next\ PU\ check}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00412}00412\ \ \ \ \ \ \ isEosPresentInPu\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00413}00413\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00414}00414\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewPicture\ ||\ !bitstreamFile\ ||\ nalu.m\_nalUnitType\ ==\ NAL\_UNIT\_EOS)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00415}00415\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00416}00416\ \ \ \ \ \ \ m\_cDecLib.checkAPSInPictureUnit();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00417}00417\ \ \ \ \ \ \ m\_cDecLib.resetPictureUnitNals();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00418}00418\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00419}00419\ \ \ \ \ \textcolor{keywordflow}{if}\ (bNewAccessUnit\ ||\ !bitstreamFile)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00420}00420\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00421}00421\ \ \ \ \ \ \ m\_cDecLib.CheckNoOutputPriorPicFlagsInAccessUnit();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00422}00422\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNoOutputPriorPicFlags();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00423}00423\ \ \ \ \ \ \ m\_cDecLib.checkLayerIdIncludedInCvss();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00424}00424\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitEos();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00425}00425\ \ \ \ \ \ \ m\_cDecLib.resetAudIrapOrGdrAuFlag();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00426}00426\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00427}00427\ \ \ \ \ \textcolor{keywordflow}{if}(bNewAccessUnit)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00428}00428\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00429}00429\ \ \ \ \ \ \ m\_cDecLib.checkTidLayerIdInAccessUnit();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00430}00430\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiTids();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00431}00431\ \ \ \ \ \ \ m\_cDecLib.checkSEIInAccessUnit();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00432}00432\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitSeiPayLoadTypes();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00433}00433\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitNals();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00434}00434\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitApsNals();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00435}00435\ \ \ \ \ \ \ m\_cDecLib.resetAccessUnitPicInfo();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00436}00436\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00437}00437\ \ \ \ \ \ \ firstSliceInAU\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00438}00438\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00439}00439\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00440}00440\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00441}00441\ \ \ \textcolor{comment}{//\ May\ need\ to\ check\ again\ one\ more\ time\ as\ in\ case\ one\ the\ bitstream\ has\ only\ one\ picture,\ the\ first\ check\ may\ miss\ it}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00442}00442\ \ \ setOutputPicturePresentInStream();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00443}00443\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(!outputPicturePresentInBitstream,\ \textcolor{stringliteral}{"{}It\ is\ required\ that\ there\ shall\ be\ at\ least\ one\ picture\ with\ PictureOutputFlag\ equal\ to\ 1\ in\ the\ bitstream"{}})}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00444}00444\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00445}00445\ \ \ xFlushOutput(\ pcListPic\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00446}00446\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00447}00447\ \ \ \textcolor{comment}{//\ get\ the\ number\ of\ checksum\ errors}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00448}00448\ \ \ uint32\_t\ nRet\ =\ m\_cDecLib.getNumberOfChecksumErrorsDetected();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00449}00449\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00450}00450\ \ \ \textcolor{comment}{//\ delete\ buffers}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00451}00451\ \ \ m\_cDecLib.deletePicBuffer();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00452}00452\ \ \ \textcolor{comment}{//\ destroy\ internal\ classes}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00453}00453\ \ \ xDestroyDecLib();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00454}00454\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00455}00455\ \textcolor{preprocessor}{\#if\ RExt\_\_DECODER\_DEBUG\_STATISTICS}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00456}00456\ \ \ \mbox{\hyperlink{classCodingStatistics_af51d96ea7eb7711d2170bf0efd2d12de}{CodingStatistics::DestroyInstance}}();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00457}00457\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00458}00458\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00459}00459\ \ \ destroyROM();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00460}00460\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00461}00461\ \ \ \textcolor{keywordflow}{return}\ nRet;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00462}00462\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00463}00463\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00464}00464\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00465}00465\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00466}00466\ \textcolor{keywordtype}{void}\ DecAppMem::writeLineToOutputLog(Picture\ *\ pcPic)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00467}00467\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00468}00468\ \ \ \textcolor{keywordflow}{if}\ (m\_oplFileStream.is\_open()\ \&\&\ m\_oplFileStream.good())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00469}00469\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00470}00470\ \ \ \ \ \textcolor{keyword}{const}\ SPS\ *\ \ \ sps\ \ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00471}00471\ \ \ \ \ ChromaFormat\ \ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00472}00472\ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ \ \ \ \ \ \ \ \ \ \ \ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00473}00473\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ leftOffset\ \ \ \ \ \ =\ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00474}00474\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ rightOffset\ \ \ \ \ =\ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(chromaFormatIDC);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00475}00475\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ topOffset\ \ \ \ \ \ \ =\ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00476}00476\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ bottomOffset\ \ \ \ =\ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(chromaFormatIDC);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00477}00477\ \ \ \ \ PictureHash\ \ \ recon\_digest;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00478}00478\ \ \ \ \ \textcolor{keyword}{auto}\ numChar\ =\ \mbox{\hyperlink{PicYuvMD5_8cpp_a35bed1a20cb776b55755cd74fef9f079}{calcMD5WithCropping}}(((\textcolor{keyword}{const}\ Picture\ *)\ pcPic)-\/>getRecoBuf(),\ recon\_digest,\ sps-\/>getBitDepths(),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00479}00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ leftOffset,\ rightOffset,\ topOffset,\ bottomOffset);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00480}00480\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00481}00481\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedWidth\ \ =\ pcPic-\/>Y().width\ -\/\ leftOffset\ -\/\ rightOffset;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00482}00482\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ croppedHeight\ =\ pcPic-\/>Y().height\ -\/\ topOffset\ -\/\ bottomOffset;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00483}00483\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00484}00484\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(3)\ <<\ pcPic-\/>layerId\ <<\ \textcolor{stringliteral}{"{},"{}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00485}00485\ \ \ \ \ m\_oplFileStream\ <<\ std::setw(8)\ <<\ pcPic-\/>getPOC()\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)\ <<\ croppedWidth\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ std::setw(5)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00486}00486\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ croppedHeight\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ \mbox{\hyperlink{PicYuvMD5_8cpp_abbbff9c067d0daf178a3eaddc21bde4e}{hashToString}}(recon\_digest,\ numChar)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00487}00487\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00488}00488\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00489}00489\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00490}00490\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00491}00491\ \textcolor{comment}{//\ Protected\ member\ functions}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00492}00492\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00493}00493\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00494}00494\ \textcolor{keywordtype}{void}\ DecAppMem::xCreateDecLib()}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00495}00495\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00496}00496\ \ \ \mbox{\hyperlink{namespacevtm_afe565c6f0fd41b88b5e91d5f0d5bb21a}{initROM}}();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00497}00497\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00498}00498\ \ \ \textcolor{comment}{//\ create\ decoder\ class}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00499}00499\ \ \ m\_cDecLib.create();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00500}00500\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00501}00501\ \ \ \textcolor{comment}{//\ initialize\ decoder\ class}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00502}00502\ \ \ m\_cDecLib.init(}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00503}00503\ \#\textcolor{keywordflow}{if}\ \mbox{\hyperlink{TypeDef_8h_a353d98f680037c628de4400036ee0bdb}{JVET\_J0090\_MEMORY\_BANDWITH\_MEASURE}}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00504}00504\ \ \ \ \ m\_cacheCfgFile}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00505}00505\ \#endif}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00506}00506\ \ \ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00507}00507\ \ \ m\_cDecLib.setDecodedPictureHashSEIEnabled(m\_decodedPictureHashSEIEnabled);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00508}00508\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00509}00509\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00510}00510\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecodedSEIMessagesFilename.empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00511}00511\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00512}00512\ \ \ \ \ std::ostream\ \&os=m\_seiMessageFileStream.is\_open()\ ?\ m\_seiMessageFileStream\ :\ std::cout;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00513}00513\ \ \ \ \ m\_cDecLib.setDecodedSEIMessageOutputStream(\&os);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00514}00514\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00515}00515\ \textcolor{preprocessor}{\#if\ JVET\_S0257\_DUMP\_360SEI\_MESSAGE}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00516}00516\ \ \ \textcolor{keywordflow}{if}\ (!m\_outputDecoded360SEIMessagesFilename.empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00517}00517\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00518}00518\ \ \ \ \ m\_cDecLib.setDecoded360SEIMessageFileName(m\_outputDecoded360SEIMessagesFilename);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00519}00519\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00520}00520\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00521}00521\ \ \ m\_cDecLib.m\_targetSubPicIdx\ =\ this-\/>m\_targetSubPicIdx;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00522}00522\ \ \ m\_cDecLib.initScalingList();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00523}00523\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00524}00524\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00525}00525\ \textcolor{keywordtype}{void}\ DecAppMem::xDestroyDecLib()}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00526}00526\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00527}00527\ \ \ \textcolor{keywordflow}{if}(\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00528}00528\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00529}00529\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keyword}{auto}\ \&\ recFile\ :\ m\_cVideoIOYuvReconFile\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00530}00530\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00531}00531\ \ \ \ \ \ \ recFile.second.close();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00532}00532\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00533}00533\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00534}00534\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00535}00535\ \ \ \textcolor{comment}{//\ destroy\ decoder\ class}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00536}00536\ \ \ m\_cDecLib.destroy();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00537}00537\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00538}00538\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00539}00539\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00543}00543\ \textcolor{keywordtype}{void}\ DecAppMem::xWriteOutput(\ PicList*\ pcListPic,\ uint32\_t\ tId\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00544}00544\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00545}00545\ \ \ \textcolor{keywordflow}{if}\ (pcListPic-\/>empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00546}00546\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00547}00547\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00548}00548\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00549}00549\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00550}00550\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00551}00551\ \ \ \textcolor{keywordtype}{int}\ numPicsNotYetDisplayed\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00552}00552\ \ \ \textcolor{keywordtype}{int}\ dpbFullness\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00553}00553\ \ \ \textcolor{keyword}{const}\ SPS*\ activeSPS\ =\ (pcListPic-\/>front()-\/>cs-\/>sps);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00554}00554\ \ \ uint32\_t\ maxNumReorderPicsHighestTid;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00555}00555\ \ \ uint32\_t\ maxDecPicBufferingHighestTid;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00556}00556\ \ \ uint32\_t\ maxNrSublayers\ =\ activeSPS-\/>getMaxTLayers();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00557}00557\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00558}00558\ \ \ \textcolor{keyword}{const}\ VPS*\ referredVPS\ =\ pcListPic-\/>front()-\/>cs-\/>vps;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00559}00559\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ temporalId\ =\ (\ m\_iMaxTemporalLayer\ ==\ -\/1\ ||\ m\_iMaxTemporalLayer\ >=\ maxNrSublayers\ )\ ?\ maxNrSublayers\ -\/\ 1\ :\ m\_iMaxTemporalLayer;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00560}00560\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00561}00561\ \ \ \textcolor{keywordflow}{if}(\ referredVPS\ ==\ \textcolor{keyword}{nullptr}\ ||\ referredVPS-\/>m\_numLayersInOls[referredVPS-\/>m\_targetOlsIdx]\ ==\ 1\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00562}00562\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00563}00563\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ activeSPS-\/>getMaxNumReorderPics(\ temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00564}00564\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ activeSPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00565}00565\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00566}00566\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00567}00567\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00568}00568\ \ \ \ \ maxNumReorderPicsHighestTid\ =\ referredVPS-\/>getMaxNumReorderPics(\ temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00569}00569\ \ \ \ \ maxDecPicBufferingHighestTid\ =\ referredVPS-\/>getMaxDecPicBuffering(\ temporalId\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00570}00570\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00571}00571\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00572}00572\ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00573}00573\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00574}00574\ \ \ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00575}00575\ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00576}00576\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00577}00577\ \ \ \ \ \ \ \ numPicsNotYetDisplayed++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00578}00578\ \ \ \ \ \ \ dpbFullness++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00579}00579\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00580}00580\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(pcPic-\/>referenced)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00581}00581\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00582}00582\ \ \ \ \ \ \ dpbFullness++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00583}00583\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00584}00584\ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00585}00585\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00586}00586\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00587}00587\ \ \ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00588}00588\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00589}00589\ \ \ \textcolor{keywordflow}{if}\ (numPicsNotYetDisplayed>2)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00590}00590\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00591}00591\ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00592}00592\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00593}00593\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00594}00594\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00595}00595\ \ \ \textcolor{keywordflow}{if}(\ numPicsNotYetDisplayed>2\ \&\&\ pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00596}00596\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00597}00597\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00598}00598\ \ \ \ \ endPic-\/-\/;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00599}00599\ \ \ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00600}00600\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00601}00601\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00602}00602\ \ \ \ \ \ \ Picture*\ pcPicTop\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00603}00603\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00604}00604\ \ \ \ \ \ \ Picture*\ pcPicBottom\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00605}00605\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00606}00606\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00607}00607\ \ \ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid)\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00608}00608\ \ \ \ \ \ \ \ \ \ \ (!(pcPicTop-\/>getPOC()\%2)\ \&\&\ pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00609}00609\ \ \ \ \ \ \ \ \ \ \ (pcPicTop-\/>getPOC()\ ==\ m\_iPOCLastDisplay+1\ ||\ m\_iPOCLastDisplay\ <\ 0))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00610}00610\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00611}00611\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00612}00612\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed\ =\ numPicsNotYetDisplayed-\/2;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00613}00613\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00614}00614\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00615}00615\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00616}00616\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isTff\ =\ pcPicTop-\/>topField;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00617}00617\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00618}00618\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ display\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00619}00619\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00620}00620\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (display)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00621}00621\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00622}00622\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00623}00623\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00624}00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00625}00625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00626}00626\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00627}00627\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00628}00628\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00629}00629\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ isTff\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00630}00630\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00631}00631\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00632}00632\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00633}00633\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00634}00634\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00635}00635\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00636}00636\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00637}00637\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00638}00638\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00639}00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00640}00640\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00641}00641\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00642}00642\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00643}00643\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00644}00644\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00645}00645\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00646}00646\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00647}00647\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00648}00648\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00649}00649\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00650}00650\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00651}00651\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00652}00652\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Frame\ Decoding}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00653}00653\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00654}00654\ \ \ \ \ iterPic\ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00655}00655\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00656}00656\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00657}00657\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00658}00658\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00659}00659\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00660}00660\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic-\/>neededForOutput\ \&\&\ pcPic-\/>getPOC()\ >\ m\_iPOCLastDisplay\ \&\&}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00661}00661\ \ \ \ \ \ \ \ \ (numPicsNotYetDisplayed\ >\ \ maxNumReorderPicsHighestTid\ ||\ dpbFullness\ >\ maxDecPicBufferingHighestTid))}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00662}00662\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00663}00663\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00664}00664\ \ \ \ \ \ \ \ \ numPicsNotYetDisplayed-\/-\/;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00665}00665\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00666}00666\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00667}00667\ \ \ \ \ \ \ \ \ \ \ dpbFullness-\/-\/;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00668}00668\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00669}00669\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00670}00670\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00671}00671\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00672}00672\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00673}00673\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00674}00674\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00675}00675\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6}{ChromaFormat}}\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00676}00676\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00677}00677\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00678}00678\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00679}00679\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00680}00680\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00681}00681\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00682}00682\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00683}00683\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00684}00684\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00685}00685\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00686}00686\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00687}00687\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00688}00688\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00689}00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00690}00690\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00691}00691\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00692}00692\ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00693}00693\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00694}00694\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00695}00695\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00696}00696\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00697}00697\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00698}00698\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00699}00699\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00700}00700\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00701}00701\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00702}00702\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00703}00703\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00704}00704\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00705}00705\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00706}00706\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00707}00707\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00708}00708\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00709}00709\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00712}00712\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00713}00713\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList\ *pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId,\ \textcolor{keywordtype}{bool}\ noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00714}00714\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00715}00715\ \textcolor{keywordtype}{void}\ DecAppMem::xFlushOutput(\ PicList*\ pcListPic,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ layerId\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00716}00716\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00717}00717\ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00718}00718\ \ \ \textcolor{keywordflow}{if}(!pcListPic\ ||\ pcListPic-\/>empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00719}00719\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00720}00720\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00721}00721\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00722}00722\ \ \ PicList::iterator\ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00723}00723\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00724}00724\ \ \ iterPic\ \ \ =\ pcListPic-\/>begin();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00725}00725\ \ \ Picture*\ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00726}00726\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00727}00727\ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>fieldPic\ )\ \textcolor{comment}{//Field\ Decoding}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00728}00728\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00729}00729\ \ \ \ \ PicList::iterator\ endPic\ \ \ =\ pcListPic-\/>end();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00730}00730\ \ \ \ \ endPic-\/-\/;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00731}00731\ \ \ \ \ Picture\ *pcPicTop,\ *pcPicBottom\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00732}00732\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ endPic)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00733}00733\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00734}00734\ \ \ \ \ \ \ pcPicTop\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00735}00735\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00736}00736\ \ \ \ \ \ \ pcPicBottom\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00737}00737\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00738}00738\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPicTop-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00739}00739\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00740}00740\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00741}00741\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00742}00742\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00743}00743\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pcPicTop-\/>neededForOutput\ \&\&\ pcPicBottom-\/>neededForOutput\ \&\&\ !(pcPicTop-\/>getPOC()\%2)\ \&\&\ (pcPicBottom-\/>getPOC()\ ==\ pcPicTop-\/>getPOC()+1)\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00744}00744\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00745}00745\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00746}00746\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00747}00747\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00748}00748\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00749}00749\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00750}00750\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !m\_reconFileName.empty()\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00751}00751\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00752}00752\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPicTop-\/>cs-\/>pps-\/>getConformanceWindow();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00753}00753\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ isTff\ \ \ =\ pcPicTop-\/>topField;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00754}00754\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00755}00755\ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPicTop-\/>layerId].write(\ pcPicTop-\/>getRecoBuf(),\ pcPicBottom-\/>getRecoBuf(),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00756}00756\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00757}00757\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{false},\ \textcolor{comment}{//\ TODO:\ m\_packedYUVMode,}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00758}00758\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00759}00759\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00760}00760\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00761}00761\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ pcPicTop-\/>cs-\/>sps-\/>getChromaFormatIdc()\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00762}00762\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ isTff\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00763}00763\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00764}00764\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicTop);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00765}00765\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPicBottom);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00766}00766\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00767}00767\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00768}00768\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00769}00769\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00770}00770\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPicBottom-\/>getPOC();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00771}00771\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00772}00772\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00773}00773\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicTop-\/>referenced\ \&\&\ pcPicTop-\/>reconstructed\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00774}00774\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00775}00775\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00776}00776\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00777}00777\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !\ pcPicBottom-\/>referenced\ \&\&\ pcPicBottom-\/>reconstructed\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00778}00778\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00779}00779\ \ \ \ \ \ \ \ \ \ \ pcPicBottom-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00780}00780\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00781}00781\ \ \ \ \ \ \ \ \ pcPicTop-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00782}00782\ \ \ \ \ \ \ \ \ pcPicBottom-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00783}00783\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00784}00784\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPicTop)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00785}00785\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00786}00786\ \ \ \ \ \ \ \ \ \ \ pcPicTop-\/>destroy();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00787}00787\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicTop;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00788}00788\ \ \ \ \ \ \ \ \ \ \ pcPicTop\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00789}00789\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00790}00790\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00791}00791\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00792}00792\ \ \ \ \ \textcolor{keywordflow}{if}(pcPicBottom)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00793}00793\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00794}00794\ \ \ \ \ \ \ pcPicBottom-\/>destroy();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00795}00795\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPicBottom;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00796}00796\ \ \ \ \ \ \ pcPicBottom\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00797}00797\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00798}00798\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00799}00799\ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//Frame\ decoding}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00800}00800\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00801}00801\ \ \ \ \ \textcolor{keywordflow}{while}\ (iterPic\ !=\ pcListPic-\/>end())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00802}00802\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00803}00803\ \ \ \ \ \ \ pcPic\ =\ *(iterPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00804}00804\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00805}00805\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ pcPic-\/>layerId\ !=\ layerId\ \&\&\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00806}00806\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00807}00807\ \ \ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00808}00808\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00809}00809\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00810}00810\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00811}00811\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pcPic-\/>neededForOutput)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00812}00812\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00813}00813\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00814}00814\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!noOutputOfPriorPicsFlag)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00815}00815\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00816}00816\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00817}00817\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ write\ to\ file}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00818}00818\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_reconFileName.empty())}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00819}00819\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00820}00820\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Window\ \&conf\ =\ pcPic-\/>getConformanceWindow();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00821}00821\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ SPS*\ sps\ =\ pcPic-\/>cs-\/>sps;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00822}00822\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6}{ChromaFormat}}\ chromaFormatIDC\ =\ sps-\/>getChromaFormatIdc();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00823}00823\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_upscaledOutput\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00824}00824\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00825}00825\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].writeUpscaledPicture(\ *sps,\ *pcPic-\/>cs-\/>pps,\ pcPic-\/>getRecoBuf(),\ m\_outputColourSpaceConvert,\ m\_packedYUVMode,\ m\_upscaledOutput,\ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00826}00826\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00827}00827\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00828}00828\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00829}00829\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_cVideoIOYuvReconFile[pcPic-\/>layerId].write(\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).width,\ pcPic-\/>getRecoBuf().get(\ COMPONENT\_Y\ ).height,\ pcPic-\/>getRecoBuf(),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00830}00830\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_outputColourSpaceConvert,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00831}00831\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_packedYUVMode,}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00832}00832\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowLeftOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00833}00833\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowRightOffset()\ *\ SPS::getWinUnitX(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00834}00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowTopOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00835}00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ conf.getWindowBottomOffset()\ *\ SPS::getWinUnitY(\ chromaFormatIDC\ ),}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00836}00836\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6abc07c6bdf940b919064ab7fdc53d9c0f}{NUM\_CHROMA\_FORMAT}},\ m\_bClipOutputVideoToRec709Range\ );}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00837}00837\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00838}00838\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00839}00839\ \ \ \ \ \ \ \ \ \ \ writeLineToOutputLog(pcPic);}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00840}00840\ \textcolor{preprocessor}{\#if\ JVET\_S0078\_NOOUTPUTPRIORPICFLAG}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00841}00841\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00842}00842\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00843}00843\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ POC\ of\ display\ order}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00844}00844\ \ \ \ \ \ \ \ \ m\_iPOCLastDisplay\ =\ pcPic-\/>getPOC();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00845}00845\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00846}00846\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ erase\ non-\/referenced\ picture\ in\ the\ reference\ picture\ list\ after\ display}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00847}00847\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!pcPic-\/>referenced\ \&\&\ pcPic-\/>reconstructed)}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00848}00848\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00849}00849\ \ \ \ \ \ \ \ \ \ \ pcPic-\/>reconstructed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00850}00850\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00851}00851\ \ \ \ \ \ \ \ \ pcPic-\/>neededForOutput\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00852}00852\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00853}00853\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pcPic\ !=\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00854}00854\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00855}00855\ \ \ \ \ \ \ \ \ pcPic-\/>destroy();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00856}00856\ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ pcPic;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00857}00857\ \ \ \ \ \ \ \ \ pcPic\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00858}00858\ \ \ \ \ \ \ \ \ *iterPic\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00859}00859\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00860}00860\ \ \ \ \ \ \ iterPic++;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00861}00861\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00862}00862\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00863}00863\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00864}00864\ \ \ \textcolor{keywordflow}{if}(\ layerId\ !=\ NOT\_VALID\ )}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00865}00865\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00866}00866\ \ \ \ \ pcListPic-\/>remove\_if([](Picture*\ p)\ \{\ \textcolor{keywordflow}{return}\ p\ ==\ \textcolor{keyword}{nullptr};\ \});}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00867}00867\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00868}00868\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00869}00869\ \ \ pcListPic-\/>clear();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00870}00870\ \ \ m\_iPOCLastDisplay\ =\ -\/MAX\_INT;}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00871}00871\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00872}00872\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00875}00875\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetDecLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00876}00876\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00877}00877\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetDecLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00878}00878\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00879}00879\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00880}00880\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00881}00881\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00882}00882\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetDecLayerIdSet.begin(),\ m\_targetDecLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetDecLayerIdSet.end();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00883}00883\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00884}00884\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00887}00887\ \textcolor{keywordtype}{bool}\ DecAppMem::xIsNaluWithinTargetOutputLayerIdSet(\ \textcolor{keyword}{const}\ InputNALUnit*\ nalu\ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00888}00888\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00889}00889\ \ \ \textcolor{keywordflow}{if}(\ !m\_targetOutputLayerIdSet.size()\ )\ \textcolor{comment}{//\ By\ default,\ the\ set\ is\ empty,\ meaning\ all\ LayerIds\ are\ allowed}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00890}00890\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00891}00891\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00892}00892\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00893}00893\ }
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00894}00894\ \ \ \textcolor{keywordflow}{return}\ std::find(\ m\_targetOutputLayerIdSet.begin(),\ m\_targetOutputLayerIdSet.end(),\ nalu-\/>m\_nuhLayerId\ )\ !=\ m\_targetOutputLayerIdSet.end();}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00895}00895\ \}}
+\DoxyCodeLine{\Hypertarget{DecAppMem_8cpp_source_l00896}00896\ }
 
 \end{DoxyCode}

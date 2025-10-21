@@ -1,622 +1,622 @@
 \doxysection{Base\+Video\+Decoder.\+cpp}
-\label{BaseVideoDecoder_8cpp_source}\index{decoder/src/BaseVideoDecoder.cpp@{decoder/src/BaseVideoDecoder.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{BaseVideoDecoder_8cpp_source}{}\label{BaseVideoDecoder_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/decoder/src/BaseVideoDecoder.cpp@{/media/erwan/T7/formation/Video/LTM/decoder/src/BaseVideoDecoder.cpp}}
+\mbox{\hyperlink{BaseVideoDecoder_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//\ BaseVideoDecoder.cpp}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//\ Base\ decoder\ implementation\ using\ external\ executable\ to\ decode\ base\ layer}}
-\DoxyCodeLine{00039\ \textcolor{comment}{//}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BaseVideoDecoder.hpp"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <cstdint>}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <cstdio>}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <cstring>}}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <atomic>}}
-\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <iostream>}}
-\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#include\ <list>}}
-\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <map>}}
-\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <mutex>}}
-\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <queue>}}
-\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
-\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ <thread>}}
-\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00057\ }
-\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ <cassert>}}
-\DoxyCodeLine{00059\ }
-\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
-\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ "{}Dimensions.hpp"{}}}
-\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00064\ }
-\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#include\ "{}Probe.hpp"{}}}
-\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ "{}ScanEnhancement.hpp"{}}}
-\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ "{}uESFile.h"{}}}
-\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#include\ "{}uYUVDesc.h"{}}}
-\DoxyCodeLine{00071\ }
-\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#include\ "{}BaseVideoDecoderCodecApi.hpp"{}}}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00074\ \textcolor{keyword}{using\ namespace\ }std;}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \textcolor{comment}{//\ bitstream\ statistics}}
-\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#include\ "{}BitstreamStatistic.hpp"{}}}
-\DoxyCodeLine{00078\ \textcolor{keyword}{extern}\ PsnrStatistic\ goPsnr;}
-\DoxyCodeLine{00079\ \textcolor{keyword}{extern}\ uint8\_t\ gaucMd5Digest[][16];}
-\DoxyCodeLine{00080\ \textcolor{keyword}{extern}\ ReportStructure\ goReportStructure;}
-\DoxyCodeLine{00081\ \textcolor{keyword}{extern}\ std::priority\_queue<ReportStructure,\ std::vector<ReportStructure,\ std::allocator<ReportStructure>>,\ ReportStructureComp>\ goReportQueue;}
-\DoxyCodeLine{00082\ }
-\DoxyCodeLine{00083\ \textcolor{keyword}{using\ namespace\ }vnova::utility;}
-\DoxyCodeLine{00084\ }
-\DoxyCodeLine{00085\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \textcolor{keyword}{namespace\ }\{}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#define\ QUEUE\_LIMIT\ 32}}
-\DoxyCodeLine{00090\ }
-\DoxyCodeLine{00091\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ compare\_packet\_timestamps(\textcolor{keyword}{const}\ lctm::Packet\ \&l,\ \textcolor{keyword}{const}\ lctm::Packet\ \&r)\ \{}
-\DoxyCodeLine{00092\ \ \ \ \ uint64\_t\ lt\ =\ l.timestamp();}
-\DoxyCodeLine{00093\ \ \ \ \ uint64\_t\ rt\ =\ r.timestamp();}
-\DoxyCodeLine{00094\ \ \ \ \ int64\_t\ d\ =\ (rt\ -\/\ lt);}
-\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{return}\ d\ <\ 0;}
-\DoxyCodeLine{00096\ \}}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ \textcolor{comment}{//\ PSS\ data\ that\ is\ queued\ whilst\ base\ frames\ are\ decoded}}
-\DoxyCodeLine{00099\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
-\DoxyCodeLine{00100\ \ \ \ \ Packet\ packet;}
-\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr;}
-\DoxyCodeLine{00102\ \}\ PssPacket;}
-\DoxyCodeLine{00103\ }
-\DoxyCodeLine{00104\ \textcolor{keyword}{struct\ }BufferCompare\ \{}
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ PssPacket\ \&l,\ \textcolor{keyword}{const}\ PssPacket\ \&r)\ \{\ \textcolor{keywordflow}{return}\ compare\_packet\_timestamps(l.packet,\ r.packet);\ \}}
-\DoxyCodeLine{00106\ \};}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \}\ \textcolor{comment}{//\ namespace}}
-\DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \textcolor{comment}{//\ Common\ code\ for\ external\ base\ decoders.}}
-\DoxyCodeLine{00111\ \textcolor{comment}{//}}
-\DoxyCodeLine{00112\ \textcolor{comment}{//\ Specialised\ for\ AVC/HEVC/VVC/EVC}}
-\DoxyCodeLine{00113\ \textcolor{comment}{//}}
-\DoxyCodeLine{00114\ \textcolor{keyword}{class\ }BaseVideoDecoderExternal\ :\ \textcolor{keyword}{public}\ BaseVideoDecoder\ \{}
-\DoxyCodeLine{00115\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00116\ \ \ \ \ BaseVideoDecoderExternal(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base);}
-\DoxyCodeLine{00118\ \ \ \ \ \string~BaseVideoDecoderExternal()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00119\ }
-\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{void}\ start()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordtype}{void}\ stop()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00124\ }
-\DoxyCodeLine{00125\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{virtual}\ BaseCoding\ base\_coding()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{00127\ }
-\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{00129\ }
-\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordtype}{void}\ push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr);}
-\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordtype}{void}\ flush();}
-\DoxyCodeLine{00132\ }
-\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ Consumer\ interface}}
-\DoxyCodeLine{00134\ \ \ \ \ Output\ \&output\_;}
-\DoxyCodeLine{00135\ }
-\DoxyCodeLine{00136\ \ \ \ \ \textcolor{comment}{//\ Type\ of\ enhancement\ payload\ encapsulation}}
-\DoxyCodeLine{00137\ \ \ \ \ Encapsulation\ encapsulation\_;}
-\DoxyCodeLine{00138\ }
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ If\ not-\/null\ -\/name\ of\ predecoded\ YUV\ base\ images}}
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ prepared\_yuv\_file\_name\_;}
-\DoxyCodeLine{00141\ }
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ Temp.\ files}}
-\DoxyCodeLine{00143\ \ \ \ \ vector<uint8\_t>\ buffer\_;}
-\DoxyCodeLine{00144\ }
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{string}\ es\_file\_name\_;}
-\DoxyCodeLine{00146\ \ \ \ \ FILE\ *es\_file\_\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00147\ }
-\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordtype}{string}\ yuv\_file\_name\_;}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \ \ \ \ \textcolor{comment}{//\ Keep\ base\ files}}
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base\_;}
-\DoxyCodeLine{00152\ }
-\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ Priority\ queues\ of\ buffers\ for\ base\ \&\ pss\ ordered\ by\ timestamp}}
-\DoxyCodeLine{00154\ \ \ \ \ priority\_queue<PssPacket,\ vector<PssPacket>,\ BufferCompare>\ enhancement\_queue\_;}
-\DoxyCodeLine{00155\ \ \ \ \ vector<PssPacket>\ enhancement\_vector\_;}
-\DoxyCodeLine{00156\ }
-\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\ \textcolor{keyword}{override};}
-\DoxyCodeLine{00158\ }
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ base\ video\ -\/\ initisalized\ on\ first\ decoded\ base\ frame}}
-\DoxyCodeLine{00160\ \ \ \ \ uint32\_t\ base\_buffer\_size\_\ =\ 0;}
-\DoxyCodeLine{00161\ \ \ \ \ uint32\_t\ base\_width\_\ =\ 0;}
-\DoxyCodeLine{00162\ \ \ \ \ uint32\_t\ base\_height\_\ =\ 0;}
-\DoxyCodeLine{00163\ \ \ \ \ uint32\_t\ base\_bit\_depth\_\ =\ 0;}
-\DoxyCodeLine{00164\ \};}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ BaseVideoDecoderExternal::BaseVideoDecoderExternal(Output\ \&output,\ Encapsulation\ encapsulation,}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00168\ \ \ \ \ :\ output\_(output),\ encapsulation\_(encapsulation),\ prepared\_yuv\_file\_name\_(prepared\_yuv\_file\_name),\ keep\_base\_(keep\_base)\ \{\}}
-\DoxyCodeLine{00169\ }
-\DoxyCodeLine{00170\ BaseVideoDecoderExternal::\string~BaseVideoDecoderExternal()\ \{\ stop();\ \}}
-\DoxyCodeLine{00171\ }
-\DoxyCodeLine{00172\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::start()\ \{}
-\DoxyCodeLine{00173\ }
-\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_coding()\ !=\ BaseCoding::BaseCoding\_YUV)\ \{}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ ES}}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ es\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.es"{}});}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ es\_file\_\ =\ CHECK(fopen(es\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ ES\ data:\ '\%s'"{}},\ es\_file\_name\_.c\_str());}
-\DoxyCodeLine{00179\ \ \ \ \ \}}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{if}\ (prepared\_yuv\_file\_name\_.empty())\ \{}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ YUV}}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ yuv\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_base.yuv"{}});}
-\DoxyCodeLine{00184\ }
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ YUV\ data:\ '\%s'"{}},\ yuv\_file\_name\_.c\_str());}
-\DoxyCodeLine{00186\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ prepared\ file\ for\ YUV\ data:\ '\%s'"{}},\ prepared\_yuv\_file\_name\_.c\_str());}
-\DoxyCodeLine{00188\ \ \ \ \ \}}
-\DoxyCodeLine{00189\ \}}
-\DoxyCodeLine{00190\ }
-\DoxyCodeLine{00191\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_nal\_marker(\textcolor{keyword}{const}\ uint8\_t\ *data)\ \{\ \textcolor{keywordflow}{return}\ data[0]\ ==\ 0\ \&\&\ data[1]\ ==\ 0\ \&\&\ data[2]\ ==\ 1;\ \}}
-\DoxyCodeLine{00192\ }
-\DoxyCodeLine{00193\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::push\_au(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \{}
-\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{if}\ (data)\ \{}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temp.\ copy\ of\ AU}}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ vector<uint8\_t>\ b(data,\ data\ +\ data\_size);}
-\DoxyCodeLine{00197\ }
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ out\ enhancement\ data\ -\/\ may\ be\ removed\ -\/\ new\ size\ is\ returned}}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_size\ =\ scan\_enhancement(b.data(),\ data\_size,\ encapsulation\_,\ base\_coding(),\ pts,\ is\_base\_idr,}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}](\textcolor{keyword}{const}\ Packet\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_lcevc\_idr)\ \{}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PacketView\ v(pkt);}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>enhancement\_queue\_.push(\{pkt,\ is\_lcevc\_idr\});}
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
-\DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ b.resize(new\_size);}
-\DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ goReportStructure.miTimeStamp\ =\ (int)(pts);}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ goReportStructure.miPictureType\ =\ iPictureType;}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ goReportStructure.miBaseSize\ =\ (int)(new\_size);}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ goReportStructure.miEnhancementSize\ =\ (int)(data\_size\ -\/\ new\_size);}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ goReportQueue.push(goReportStructure);}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flush\ any\ previous\ buffer}}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts,\ is\_base\_idr);}
-\DoxyCodeLine{00216\ }
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ buffer\_.swap(b);}
-\DoxyCodeLine{00218\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!buffer\_.empty())\ \{}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ push\_es(buffer\_.data(),\ buffer\_.size(),\ pts,\ is\_base\_idr);}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ flush();}
-\DoxyCodeLine{00224\ \ \ \ \ \}}
-\DoxyCodeLine{00225\ \}}
-\DoxyCodeLine{00226\ }
-\DoxyCodeLine{00227\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::push\_es(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr)\ \{}
-\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
-\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ CHECK(fwrite(\&zero,\ 1,\ 1,\ es\_file\_)\ ==\ 1);}
-\DoxyCodeLine{00232\ \ \ \ \ \}}
-\DoxyCodeLine{00233\ }
-\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ file}}
-\DoxyCodeLine{00235\ \ \ \ \ CHECK(fwrite(data,\ 1,\ data\_size,\ es\_file\_)\ ==\ data\_size);}
-\DoxyCodeLine{00236\ \}}
-\DoxyCodeLine{00237\ }
-\DoxyCodeLine{00238\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::flush()\ \{}
-\DoxyCodeLine{00239\ }
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordtype}{int}\ iPictureCount\ =\ 0;}
-\DoxyCodeLine{00241\ }
-\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_coding()\ !=\ BaseCoding::BaseCoding\_YUV)\ \{}
-\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Got\ end\ of\ input\ -\/\ finish\ up\ ES\ file}}
-\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ fflush(es\_file\_);}
-\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ fclose(es\_file\_);}
-\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ es\_file\_\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00247\ \ \ \ \ \}}
-\DoxyCodeLine{00248\ }
-\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{while}\ (!enhancement\_queue\_.empty())\ \{}
-\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ enhancement\_vector\_.push\_back(std::move(\textcolor{keyword}{const\_cast<}PssPacket\ \&\textcolor{keyword}{>}(enhancement\_queue\_.top())));}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ enhancement\_queue\_.pop();}
-\DoxyCodeLine{00252\ \ \ \ \ \}}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{if}\ (keep\_base\_)\ \{}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ es\_enhancement\_file\_name\_\ =\ make\_temporary\_filename(\textcolor{stringliteral}{"{}\_enhancement.es"{}});}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ FILE\ *es\_enhancement\_file\_\ =\ CHECK(fopen(es\_enhancement\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ enhancement\ data:\ '\%s'"{}},\ es\_enhancement\_file\_name\_.c\_str());}
-\DoxyCodeLine{00258\ }
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&element\ :\ enhancement\_vector\_)\ \{}
-\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nal\_type\ =\ 28\ +\ element.is\_lcevc\_idr;}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x41\ |\ (nal\_type\ <<\ 1)),\ 0xff\};}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fwrite(\&nalu\_header,\ 1,\ \textcolor{keyword}{sizeof}(nalu\_header),\ es\_enhancement\_file\_)\ ==\ \textcolor{keyword}{sizeof}(nalu\_header));}
-\DoxyCodeLine{00263\ }
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ Packet\ rbsp\ =\ rbsp\_encapsulate(element.packet);}
-\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PacketView\ v(rbsp);}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fwrite(v.data(),\ 1,\ v.size(),\ es\_enhancement\_file\_)\ ==\ v.size());}
-\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00268\ }
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ fflush(es\_enhancement\_file\_);}
-\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ fclose(es\_enhancement\_file\_);}
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ es\_enhancement\_file\_\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00272\ \ \ \ \ \}}
-\DoxyCodeLine{00273\ }
-\DoxyCodeLine{00274\ \ \ \ \ Surface\ symbols\_initial[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS];}
-\DoxyCodeLine{00275\ \ \ \ \ PssPacket\ pss\_initial;}
-\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordflow}{if}\ (!enhancement\_vector\_.empty())\ \{}
-\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ pss\_initial\ =\ enhancement\_vector\_.front();}
-\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ enhancement\_vector\_.erase(enhancement\_vector\_.begin());}
-\DoxyCodeLine{00280\ }
-\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ PacketView\ enhancement\_view(pss\_initial.packet);}
-\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ output\_.deserialize\_enhancement(enhancement\_view.data(),\ enhancement\_view.size(),\ symbols\_initial);}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ iPictureCount++;}
-\DoxyCodeLine{00284\ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ found\ in\ bitstream!"{}});}
-\DoxyCodeLine{00286\ }
-\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ Find\ base\ size}}
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width\ =\ 0,\ height\ =\ 0,\ bit\_depth\ =\ 0,\ chroma\_format\_idc\ =\ 0;}
-\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{if}\ (prepared\_yuv\_file\_name\_.empty())\ \{}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!probe\_es\_file(es\_file\_name\_,\ base\_coding(),\ width,\ height,\ bit\_depth,\ chroma\_format\_idc))\ \{}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ get\ base\ size,\ depth,\ and\ chroma\_format\_idc"{}});}
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Verify\ base\ dimensions\ with\ signalled\ LCEVC\ configuration}}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ Dimensions\ dimensions\ =\ output\_.get\_dimensions();}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(bit\_depth\ ==\ output\_.get\_base\_bitdepth());}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(width\ ==\ dimensions.base\_width());}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(height\ ==\ dimensions.base\_height());}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(chroma\_format\_idc\ ==\ output\_.get\_colourspace());}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00303\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ base\ dimensions\ from\ singalled\ LCEVC\ configuration}}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ ==\ 0)}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ and\ no\ base\ bitstream\ -\/>\ Cannot\ get\ width/height/format"{}});}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ Dimensions\ dimensions\ =\ output\_.get\_dimensions();}
-\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ width\ =\ dimensions.base\_width();}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ height\ =\ dimensions.base\_height();}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ bit\_depth\ =\ output\_.get\_base\_bitdepth();}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ chroma\_format\_idc\ =\ output\_.get\_colourspace();}
-\DoxyCodeLine{00312\ \ \ \ \ \}}
-\DoxyCodeLine{00313\ }
-\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ Figure\ ESFile\ format}}
-\DoxyCodeLine{00315\ \ \ \ \ YUVFormat::Enum\ format;}
-\DoxyCodeLine{00316\ }
-\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{switch}\ (bit\_depth)\ \{}
-\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(0\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00321\ }
-\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(4\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
-\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00325\ }
-\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(8\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00329\ }
-\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
-\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ format\ =\ \textcolor{keyword}{static\_cast<}YUVFormat::Enum\textcolor{keyword}{>}(12\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ CHECK(0);}
-\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00336\ \ \ \ \ \}}
-\DoxyCodeLine{00337\ }
-\DoxyCodeLine{00338\ \ \ \ \ YUVDesc\ yuv\_desc;}
-\DoxyCodeLine{00339\ \ \ \ \ yuv\_desc.Initialise(format,\ width,\ height);}
-\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ base\_size\ =\ yuv\_desc.GetMemorySize();}
-\DoxyCodeLine{00341\ }
-\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *fmt\ =\ \textcolor{stringliteral}{"{}"{}};}
-\DoxyCodeLine{00343\ \ \ \ \ YUVFormat::ToString(\&fmt,\ format);}
-\DoxyCodeLine{00344\ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Base\ is\ \%s\ \%dx\%d\ \%d\ bit\ (\%zu\ bytes)\(\backslash\)n"{}},\ fmt,\ width,\ height,\ bit\_depth,\ base\_size);}
-\DoxyCodeLine{00345\ }
-\DoxyCodeLine{00346\ \ \ \ \ base\_width\_\ =\ width;}
-\DoxyCodeLine{00347\ \ \ \ \ base\_height\_\ =\ height;}
-\DoxyCodeLine{00348\ \ \ \ \ base\_bit\_depth\_\ =\ bit\_depth;}
-\DoxyCodeLine{00349\ }
-\DoxyCodeLine{00350\ \ \ \ \ UniquePtrFile\ yuv\_file;}
-\DoxyCodeLine{00351\ }
-\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{if}\ (!prepared\_yuv\_file\_name\_.empty())\ \{}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ been\ given\ decoded\ YUV\ already}}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ yuv\_file.reset(CHECK(fopen(prepared\_yuv\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
-\DoxyCodeLine{00355\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Run\ the\ decoder\ esfile-\/>yuvfile}}
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ run\_decoder(es\_file\_name\_,\ yuv\_file\_name\_);}
-\DoxyCodeLine{00359\ }
-\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ temp.\ file}}
-\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ yuv\_file.reset(CHECK(fopen(yuv\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
-\DoxyCodeLine{00362\ \ \ \ \ \}}
-\DoxyCodeLine{00363\ }
-\DoxyCodeLine{00364\ \ \ \ \ \textcolor{comment}{//\ Buffer\ for\ the\ YUV\ frames}}
-\DoxyCodeLine{00365\ \ \ \ \ vector<uint8\_t>\ base(base\_size);}
-\DoxyCodeLine{00366\ }
-\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
-\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First\ frame:\ Copy\ data\ through,\ already\ deserialized\ previously}}
-\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ CHECK(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
-\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ output\_.push\_base\_enhancement(base.data(),\ base.size(),\ symbols\_initial,\ pss\_initial.packet.timestamp(),}
-\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss\_initial.is\_lcevc\_idr);}
-\DoxyCodeLine{00372\ }
-\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Consume\ queue\ in\ PTS\ order}}
-\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!enhancement\_vector\_.empty())\ \{}
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ base}}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
-\DoxyCodeLine{00377\ }
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
-\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ Surface\ symbols[MAX\_NUM\_PLANES][MAX\_NUM\_LOQS][MAX\_NUM\_LAYERS];}
-\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ PssPacket\ pss\ =\ enhancement\_vector\_.front();}
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ enhancement\_vector\_.erase(enhancement\_vector\_.begin());}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ PacketView\ enhancement\_view(pss.packet);}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ output\_.deserialize\_enhancement(enhancement\_view.data(),\ enhancement\_view.size(),\ symbols);}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ output\_.push\_base\_enhancement(base.data(),\ base.size(),\ symbols,\ pss.packet.timestamp(),\ pss.is\_lcevc\_idr);}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ iPictureCount++;}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00387\ }
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iFrames\ =\ iPictureCount;}
-\DoxyCodeLine{00389\ }
-\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fAccMse[3];}
-\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fPsnr[3];}
-\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ yuv\_desc.GetPlaneCount();\ plane++)\ \{}
-\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ fAccMse[plane]\ =\ goPsnr.mfAccMse[plane]\ /\ iFrames;}
-\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[plane]\ =\ (float)(10.0f\ *\ log10((32767.0f\ *\ 32767.0f)\ /\ fAccMse[plane]));}
-\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
-\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_desc.GetPlaneCount()\ >\ 1)}
-\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ YUV\ \%8.4f\ -\/-\/\ Y\ \%8.4f\ U\ \%8.4f\ V\ \%8.4f"{}},\ (6\ *\ fPsnr[0]\ +\ fPsnr[1]\ +\ fPsnr[2])\ /\ 8,\ fPsnr[0],\ fPsnr[1],}
-\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[2]);}
-\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ Y\ \%8.4f"{}},\ fPsnr[0]);}
-\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
-\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}BITS\ -\/-\/\ base\ \%8d\ bps\ -\/-\/\ enha\ \%8d\ bps\ "{}},\ (goPsnr.miBaseBytes\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames,}
-\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (goPsnr.miEnhancementBytes\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames);}
-\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ REPORT(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
-\DoxyCodeLine{00406\ \ \ \ \ \}}
-\DoxyCodeLine{00407\ \}}
-\DoxyCodeLine{00408\ }
-\DoxyCodeLine{00409\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::stop()\ \{}
-\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (!keep\_base\_)\ \{}
-\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!es\_file\_name\_.empty())}
-\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(es\_file\_name\_.c\_str());}
-\DoxyCodeLine{00413\ }
-\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!yuv\_file\_name\_.empty())}
-\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(yuv\_file\_name\_.c\_str());}
-\DoxyCodeLine{00416\ \ \ \ \ \}}
-\DoxyCodeLine{00417\ \}}
-\DoxyCodeLine{00418\ }
-\DoxyCodeLine{00419\ \textcolor{keywordtype}{void}\ BaseVideoDecoderExternal::StatisticsComputation()\ \{}
-\DoxyCodeLine{00420\ \}}
-\DoxyCodeLine{00421\ }
-\DoxyCodeLine{00422\ \textcolor{comment}{//\ RBSP\ encapsualtion\ (0b00000000\ 0b00000000\ 0b000000xx\ -\/>\ 0b00000000\ 0b00000000\ 0b00000011\ 0b000000xx)}}
-\DoxyCodeLine{00423\ \textcolor{comment}{//}}
-\DoxyCodeLine{00424\ Packet\ BaseVideoDecoder::rbsp\_encapsulate(\textcolor{keyword}{const}\ Packet\ \&src)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00425\ \ \ \ \ PacketView\ in(src);}
-\DoxyCodeLine{00426\ }
-\DoxyCodeLine{00427\ \ \ \ \ vector<uint8\_t>\ out;}
-\DoxyCodeLine{00428\ }
-\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
-\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ in.size();\ ++i)\ \{}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ uint8\_t\ b\ =\ in.data()[i];}
-\DoxyCodeLine{00432\ }
-\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ ==\ 2\ \&\&\ (b\ \&\ \string~3)\ ==\ 0)\ \{}
-\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ out.push\_back(0x03);}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00437\ }
-\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ ==\ 0)}
-\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ ++zeros;}
-\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00442\ }
-\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ out.push\_back(b);}
-\DoxyCodeLine{00444\ \ \ \ \ \}}
-\DoxyCodeLine{00445\ }
-\DoxyCodeLine{00446\ \ \ \ \ out.push\_back(0x80);}
-\DoxyCodeLine{00447\ }
-\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordflow}{return}\ Packet::build().contents(out).finish();}
-\DoxyCodeLine{00449\ \}}
-\DoxyCodeLine{00450\ }
-\DoxyCodeLine{00451\ \textcolor{comment}{//\ AVC\ Base\ Codec}}
-\DoxyCodeLine{00452\ \textcolor{comment}{//}}
-\DoxyCodeLine{00453\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalAVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
-\DoxyCodeLine{00454\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00455\ \ \ \ \ BaseVideoDecoderExternalAVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
-\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
-\DoxyCodeLine{00458\ }
-\DoxyCodeLine{00459\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_AVC;\ \};}
-\DoxyCodeLine{00460\ }
-\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/JM/ldecod"{}});}
-\DoxyCodeLine{00463\ }
-\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
-\DoxyCodeLine{00465\ }
-\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(}
-\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ format(\textcolor{stringliteral}{"{}\%s\ -\/p\ InputFile=\%s\ -\/p\ OutputFile=\%s\ -\/p\ WriteUV=0"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
-\DoxyCodeLine{00468\ }
-\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
-\DoxyCodeLine{00470\ \ \ \ \ \}}
-\DoxyCodeLine{00471\ }
-\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
-\DoxyCodeLine{00473\ \};}
-\DoxyCodeLine{00474\ }
-\DoxyCodeLine{00475\ \textcolor{comment}{//\ HEVC\ Base\ Codec}}
-\DoxyCodeLine{00476\ \textcolor{comment}{//}}
-\DoxyCodeLine{00477\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalHEVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
-\DoxyCodeLine{00478\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00479\ \ \ \ \ BaseVideoDecoderExternalHEVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
-\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
-\DoxyCodeLine{00482\ }
-\DoxyCodeLine{00483\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_HEVC;\ \};}
-\DoxyCodeLine{00484\ }
-\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppDecoder"{}});}
-\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\_bit\_depth\_\ >\ Bitdepth\_10)\ \{}
-\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
-\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ p.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
-\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00491\ }
-\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
-\DoxyCodeLine{00493\ }
-\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
-\DoxyCodeLine{00495\ }
-\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
-\DoxyCodeLine{00497\ \ \ \ \ \}}
-\DoxyCodeLine{00498\ }
-\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
-\DoxyCodeLine{00500\ \};}
-\DoxyCodeLine{00501\ }
-\DoxyCodeLine{00502\ \textcolor{comment}{//\ VVC\ Base\ Codec}}
-\DoxyCodeLine{00503\ \textcolor{comment}{//}}
-\DoxyCodeLine{00504\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalVVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
-\DoxyCodeLine{00505\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00506\ \ \ \ \ BaseVideoDecoderExternalVVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
-\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
-\DoxyCodeLine{00509\ }
-\DoxyCodeLine{00510\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_VVC;\ \};}
-\DoxyCodeLine{00511\ }
-\DoxyCodeLine{00512\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/VTM/DecoderApp"{}});}
-\DoxyCodeLine{00514\ }
-\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
-\DoxyCodeLine{00516\ }
-\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
-\DoxyCodeLine{00518\ }
-\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
-\DoxyCodeLine{00520\ \ \ \ \ \}}
-\DoxyCodeLine{00521\ }
-\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
-\DoxyCodeLine{00523\ \};}
-\DoxyCodeLine{00524\ }
-\DoxyCodeLine{00525\ \textcolor{comment}{//\ EVC\ Base\ Codec}}
-\DoxyCodeLine{00526\ \textcolor{comment}{//}}
-\DoxyCodeLine{00527\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalEVC\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
-\DoxyCodeLine{00528\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00529\ \ \ \ \ BaseVideoDecoderExternalEVC(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
-\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
-\DoxyCodeLine{00532\ }
-\DoxyCodeLine{00533\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_EVC;\ \};}
-\DoxyCodeLine{00534\ }
-\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
-\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ get\_program\_directory(\textcolor{stringliteral}{"{}external\_codecs/ETM/evca\_decoder"{}});}
-\DoxyCodeLine{00537\ }
-\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
-\DoxyCodeLine{00539\ }
-\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(format(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/-\/input\ \%s\ -\/-\/output\ \%s\ -\/-\/output\_bit\_depth\ \%d"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str(),\ base\_bit\_depth\_).c\_str());}
-\DoxyCodeLine{00541\ }
-\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
-\DoxyCodeLine{00543\ \ \ \ \ \}}
-\DoxyCodeLine{00544\ }
-\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
-\DoxyCodeLine{00546\ \};}
-\DoxyCodeLine{00547\ }
-\DoxyCodeLine{00548\ \textcolor{comment}{//\ No\ Base\ Codec\ (base\ YUV\ file\ as\ input)}}
-\DoxyCodeLine{00549\ \textcolor{comment}{//}}
-\DoxyCodeLine{00550\ \textcolor{keyword}{class\ }BaseVideoDecoderExternalYUV\ :\ \textcolor{keyword}{public}\ BaseVideoDecoderExternal\ \{}
-\DoxyCodeLine{00551\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00552\ \ \ \ \ BaseVideoDecoderExternalYUV(BaseVideoDecoder::Output\ \&output,\ Encapsulation\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
-\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
-\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ :\ BaseVideoDecoderExternal(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
-\DoxyCodeLine{00555\ }
-\DoxyCodeLine{00556\ \ \ \ \ BaseCoding\ base\_coding()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ BaseCoding\_YUV;\ \};}
-\DoxyCodeLine{00557\ }
-\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keywordtype}{bool}\ run\_decoder(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
-\DoxyCodeLine{00559\ }
-\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ StatisticsComputation()\textcolor{keyword}{\ override}\{\};}
-\DoxyCodeLine{00561\ \};}
-\DoxyCodeLine{00562\ }
-\DoxyCodeLine{00563\ \textcolor{comment}{//\ Factory\ function}}
-\DoxyCodeLine{00564\ \textcolor{comment}{//}}
-\DoxyCodeLine{00565\ unique\_ptr<BaseVideoDecoder>\ CreateBaseVideoDecoder(BaseVideoDecoder::Output\ \&output,\ BaseCoding\ base,\ Encapsulation\ encapsulation,}
-\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ external,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,\ \textcolor{keywordtype}{bool}\ keep\_base)\ \{}
-\DoxyCodeLine{00567\ }
-\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
-\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (external\ ||\ keep\_base\ ||\ !yuv\_file.empty())\ \{}
-\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_AVC)}
-\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalAVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_HEVC)}
-\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalHEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_VVC)}
-\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalVVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_EVC)}
-\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_YUV)}
-\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalYUV(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
-\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_AVC)\ \{}
-\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_AVC)}}
-\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}avc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00586\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalAVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00588\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_HEVC)\ \{}
-\DoxyCodeLine{00590\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_HEVC)}}
-\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,base,\ \textcolor{stringliteral}{"{}hevc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00592\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalHEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00594\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_VVC)\ \{}
-\DoxyCodeLine{00596\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_VVC)}}
-\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}vvc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00598\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalVVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00600\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ BaseCoding\_EVC)\ \{}
-\DoxyCodeLine{00602\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_EVC)}}
-\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ CreateBaseVideoDecoderCodecApi(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}evc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00604\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ BaseVideoDecoderExternalEVC(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
-\DoxyCodeLine{00606\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
-\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00611\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keywordtype}{string}\ e)\ \{}
-\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}CreateBaseVideoDecoder:\ Caught:\ \%s\(\backslash\)n"{}},\ e.c\_str());}
-\DoxyCodeLine{00613\ \ \ \ \ \}}
-\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00615\ \}}
-\DoxyCodeLine{00616\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00033}00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00034}00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00035}00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00036}00036\ \textcolor{comment}{//\ BaseVideoDecoder.cpp}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00037}00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00038}00038\ \textcolor{comment}{//\ Base\ decoder\ implementation\ using\ external\ executable\ to\ decode\ base\ layer}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00039}00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{BaseVideoDecoder_8hpp}{BaseVideoDecoder.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ <cinttypes>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00046}00046\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00048}00048\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00049}00049\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00050}00050\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00051}00051\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00052}00052\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00053}00053\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00054}00054\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00055}00055\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00056}00056\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00058}00058\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00060}00060\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Config_8hpp}{Config.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00061}00061\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00062}00062\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Dimensions_8hpp}{Dimensions.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00063}00063\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00065}00065\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Packet_8hpp}{Packet.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00067}00067\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Probe_8hpp}{Probe.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00068}00068\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ScanEnhancement_8hpp}{ScanEnhancement.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00069}00069\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{uESFile_8h}{uESFile.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00070}00070\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{uYUVDesc_8h}{uYUVDesc.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00072}00072\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{BaseVideoDecoderCodecApi_8hpp}{BaseVideoDecoderCodecApi.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00074}00074\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacestd}{std}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00076}00076\ \textcolor{comment}{//\ bitstream\ statistics}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00077}00077\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{BitstreamStatistic_8hpp}{BitstreamStatistic.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00078}00078\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{structPsnrStatistic}{PsnrStatistic}}\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_a60dbd57d64ada3de24c0f9f5f5c2918b}{goPsnr}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00079}00079\ \textcolor{keyword}{extern}\ uint8\_t\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_ad8ffec636fc7ccb5d05fcff716b4c599}{gaucMd5Digest}}[][16];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00080}00080\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{structReportStructure}{ReportStructure}}\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00081}00081\ \textcolor{keyword}{extern}\ std::priority\_queue<ReportStructure,\ std::vector<ReportStructure,\ std::allocator<ReportStructure>>,\ \mbox{\hyperlink{structReportStructureComp}{ReportStructureComp}}>\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_abce62d55e3c2e5273ab607ad0d7e1913}{goReportQueue}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00083}00083\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacevnova_1_1utility}{vnova::utility}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00084}00084\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00085}00085\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00087}00087\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00089}\mbox{\hyperlink{BaseVideoDecoder_8cpp_a9a8d681bee8d0d3c318aa6c59de38048}{00089}}\ \textcolor{preprocessor}{\#define\ QUEUE\_LIMIT\ 32}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00091}00091\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ compare\_packet\_timestamps(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Packet}{lctm::Packet}}\ \&l,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Packet}{lctm::Packet}}\ \&r)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00092}00092\ \ \ \ \ uint64\_t\ lt\ =\ l.\mbox{\hyperlink{classlctm_1_1Packet_a008d283971e61258f2722ba311c84648}{timestamp}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00093}00093\ \ \ \ \ uint64\_t\ rt\ =\ r.\mbox{\hyperlink{classlctm_1_1Packet_a008d283971e61258f2722ba311c84648}{timestamp}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00094}00094\ \ \ \ \ int64\_t\ d\ =\ (rt\ -\/\ lt);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00095}00095\ \ \ \ \ \textcolor{keywordflow}{return}\ d\ <\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00096}00096\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00098}00098\ \textcolor{comment}{//\ PSS\ data\ that\ is\ queued\ whilst\ base\ frames\ are\ decoded}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00099}00099\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00100}\mbox{\hyperlink{BaseVideoDecoder_8cpp_aa437fd3616c00ce4dde639ea92de910b}{00100}}\ \ \ \ \ Packet\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_aa437fd3616c00ce4dde639ea92de910b}{packet}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00101}\mbox{\hyperlink{BaseVideoDecoder_8cpp_abe2d7f1c867538a1590be70841636d5a}{00101}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_abe2d7f1c867538a1590be70841636d5a}{is\_lcevc\_idr}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00102}00102\ \}\ PssPacket;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00103}00103\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00104}00104\ \textcolor{keyword}{struct\ }BufferCompare\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00105}00105\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structlctm_1_1BufferCompare_a74696670d06125f31bd7535ad0941a19}{operator()}}(\textcolor{keyword}{const}\ PssPacket\ \&l,\ \textcolor{keyword}{const}\ PssPacket\ \&r)\ \{\ \textcolor{keywordflow}{return}\ compare\_packet\_timestamps(l.packet,\ r.packet);\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00106}00106\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00108}00108\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00110}00110\ \textcolor{comment}{//\ Common\ code\ for\ external\ base\ decoders.}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00111}00111\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00112}00112\ \textcolor{comment}{//\ Specialised\ for\ AVC/HEVC/VVC/EVC}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00113}00113\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00114}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{00114}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoder}{BaseVideoDecoder}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00115}00115\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00116}00116\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00118}00118\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99c97d6c0a29fcb61a70dad21bb37c19}{\string~BaseVideoDecoderExternal}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00119}00119\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00120}00120\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_ac1df06e169aea1f1df8b0df996fae7a3}{start}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00121}00121\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a173cdb6ebdc33625645fd13b6a8a772e}{stop}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00122}00122\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00123}00123\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a225db37300ce8db9e4a3fb7ab9d5f01c}{push\_au}}(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00125}00125\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00126}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{00126}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{base\_coding}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00127}00127\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00128}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aae4b49c0cbe3a5ec389ea1fca2242b19}{00128}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aae4b49c0cbe3a5ec389ea1fca2242b19}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&input,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&output)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00129}00129\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00130}00130\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99d4f10959f865213447fe8dd9798e54}{push\_es}}(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00131}00131\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a45fca08bec53a469bca8efff6ddac74c}{flush}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00133}00133\ \ \ \ \ \textcolor{comment}{//\ Consumer\ interface}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00134}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{00134}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{Output}}\ \&\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00135}00135\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00136}00136\ \ \ \ \ \textcolor{comment}{//\ Type\ of\ enhancement\ payload\ encapsulation}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00137}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_abe8a788d5012954149a181900025124a}{00137}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_abe8a788d5012954149a181900025124a}{encapsulation\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00138}00138\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00139}00139\ \ \ \ \ \textcolor{comment}{//\ If\ not-\/null\ -\/name\ of\ predecoded\ YUV\ base\ images}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00140}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{00140}}\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00141}00141\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00142}00142\ \ \ \ \ \textcolor{comment}{//\ Temp.\ files}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00143}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{00143}}\ \ \ \ \ vector<uint8\_t>\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00144}00144\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00145}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{00145}}\ \ \ \ \ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00146}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{00146}}\ \ \ \ \ FILE\ *\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00147}00147\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00148}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{00148}}\ \ \ \ \ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00150}00150\ \ \ \ \ \textcolor{comment}{//\ Keep\ base\ files}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00151}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a7d1bac9876b35bc51d5c174ff517c587}{00151}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a7d1bac9876b35bc51d5c174ff517c587}{keep\_base\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00152}00152\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00153}00153\ \ \ \ \ \textcolor{comment}{//\ Priority\ queues\ of\ buffers\ for\ base\ \&\ pss\ ordered\ by\ timestamp}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00154}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{00154}}\ \ \ \ \ priority\_queue<PssPacket,\ vector<PssPacket>,\ BufferCompare>\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{enhancement\_queue\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00155}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{00155}}\ \ \ \ \ vector<PssPacket>\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00156}00156\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00157}00157\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a0954581254406acde84acbc1b900df75}{StatisticsComputation}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00158}00158\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00159}00159\ \ \ \ \ \textcolor{comment}{//\ Size\ of\ base\ video\ -\/\ initisalized\ on\ first\ decoded\ base\ frame}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00160}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_ac8c96344b94cd9419d3492b67e2ca974}{00160}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_ac8c96344b94cd9419d3492b67e2ca974}{base\_buffer\_size\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00161}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a899c77770c1581c471d7ddf51bc3351c}{00161}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a899c77770c1581c471d7ddf51bc3351c}{base\_width\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00162}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a6499cdc757244f42284477148a2755f1}{00162}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a6499cdc757244f42284477148a2755f1}{base\_height\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00163}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a58478fcff2d418efd89f1f761ae49bf3}{00163}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a58478fcff2d418efd89f1f761ae49bf3}{base\_bit\_depth\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00164}00164\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00165}00165\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00166}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a6f73a7bd098794279b49fcac3ccccb46}{00166}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a6f73a7bd098794279b49fcac3ccccb46}{BaseVideoDecoderExternal::BaseVideoDecoderExternal}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&prepared\_yuv\_file\_name,\ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00168}00168\ \ \ \ \ :\ output\_(output),\ encapsulation\_(encapsulation),\ prepared\_yuv\_file\_name\_(prepared\_yuv\_file\_name),\ keep\_base\_(keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00169}00169\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00170}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99c97d6c0a29fcb61a70dad21bb37c19}{00170}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99c97d6c0a29fcb61a70dad21bb37c19}{BaseVideoDecoderExternal::\string~BaseVideoDecoderExternal}}()\ \{\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a173cdb6ebdc33625645fd13b6a8a772e}{stop}}();\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00171}00171\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00172}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_ac1df06e169aea1f1df8b0df996fae7a3}{00172}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_ac1df06e169aea1f1df8b0df996fae7a3}{BaseVideoDecoderExternal::start}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00173}00173\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00174}00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{base\_coding}}()\ !=\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7ac7379e03494a9ba3e65a061262a4f9d2}{BaseCoding::BaseCoding\_YUV}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ ES}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}}\ =\ \mbox{\hyperlink{namespacelctm_a7f6f6c3a610976a24b20979e2f1fd812}{make\_temporary\_filename}}(\textcolor{stringliteral}{"{}\_base.es"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}}\ =\ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fopen(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}}.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ ES\ data:\ '\%s'"{}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00179}00179\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00181}00181\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Create\ a\ temporary\ file\ for\ base\ YUV}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}}\ =\ \mbox{\hyperlink{namespacelctm_a7f6f6c3a610976a24b20979e2f1fd812}{make\_temporary\_filename}}(\textcolor{stringliteral}{"{}\_base.yuv"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00184}00184\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ YUV\ data:\ '\%s'"{}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00186}00186\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ prepared\ file\ for\ YUV\ data:\ '\%s'"{}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00188}00188\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00189}00189\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00190}00190\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00191}00191\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_nal\_marker(\textcolor{keyword}{const}\ uint8\_t\ *data)\ \{\ \textcolor{keywordflow}{return}\ data[0]\ ==\ 0\ \&\&\ data[1]\ ==\ 0\ \&\&\ data[2]\ ==\ 1;\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00192}00192\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00193}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a225db37300ce8db9e4a3fb7ab9d5f01c}{00193}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a225db37300ce8db9e4a3fb7ab9d5f01c}{BaseVideoDecoderExternal::push\_au}}(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr,\ \textcolor{keywordtype}{int}\ iPictureType)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00194}00194\ \ \ \ \ \textcolor{keywordflow}{if}\ (data)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Temp.\ copy\ of\ AU}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ vector<uint8\_t>\ b(data,\ data\ +\ data\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pick\ out\ enhancement\ data\ -\/\ may\ be\ removed\ -\/\ new\ size\ is\ returned}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ new\_size\ =\ \mbox{\hyperlink{namespacelctm_a9a69e22e3b225ff112f2ee8cc88dee0d}{scan\_enhancement}}(b.data(),\ data\_size,\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_abe8a788d5012954149a181900025124a}{encapsulation\_}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{base\_coding}}(),\ pts,\ is\_base\_idr,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\textcolor{keyword}{this}](\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Packet}{Packet}}\ \&pkt,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_abe2d7f1c867538a1590be70841636d5a}{is\_lcevc\_idr}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ v(pkt);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{enhancement\_queue\_}}.push(\{pkt,\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_abe2d7f1c867538a1590be70841636d5a}{is\_lcevc\_idr}}\});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ b.resize(new\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00206}00206\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}}.\mbox{\hyperlink{structReportStructure_a4d113ea8f10d224d44af1e14545c15ad}{miTimeStamp}}\ =\ (int)(pts);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}}.\mbox{\hyperlink{structReportStructure_aa26cd39cf6bc263c9887e86a72e42f78}{miPictureType}}\ =\ iPictureType;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}}.\mbox{\hyperlink{structReportStructure_a64c5cfc59f6cf52025ef3f24bcd33a0a}{miBaseSize}}\ =\ (int)(new\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}}.\mbox{\hyperlink{structReportStructure_a7956c91d3c2660fe28436ae6db772441}{miEnhancementSize}}\ =\ (int)(data\_size\ -\/\ new\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoder_8cpp_abce62d55e3c2e5273ab607ad0d7e1913}{goReportQueue}}.push(\mbox{\hyperlink{BaseVideoDecoder_8cpp_af8fdf6a99aedd24178b4e72141f3ce1a}{goReportStructure}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Flush\ any\ previous\ buffer}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.empty())}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99d4f10959f865213447fe8dd9798e54}{push\_es}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.data(),\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.size(),\ pts,\ is\_base\_idr);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00216}00216\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.swap(b);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00218}00218\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99d4f10959f865213447fe8dd9798e54}{push\_es}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.data(),\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a93910fb8f529e7287b6d17067f89a7dd}{buffer\_}}.size(),\ pts,\ is\_base\_idr);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a45fca08bec53a469bca8efff6ddac74c}{flush}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00224}00224\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00225}00225\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00226}00226\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00227}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99d4f10959f865213447fe8dd9798e54}{00227}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a99d4f10959f865213447fe8dd9798e54}{BaseVideoDecoderExternal::push\_es}}(\textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ data\_size,\ uint64\_t\ pts,\ \textcolor{keywordtype}{bool}\ is\_base\_idr)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00228}00228\ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00229}00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fwrite(\&zero,\ 1,\ 1,\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}})\ ==\ 1);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00232}00232\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00234}00234\ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ file}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00235}00235\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fwrite(data,\ 1,\ data\_size,\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}})\ ==\ data\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00236}00236\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00237}00237\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00238}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a45fca08bec53a469bca8efff6ddac74c}{00238}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a45fca08bec53a469bca8efff6ddac74c}{BaseVideoDecoderExternal::flush}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00240}00240\ \ \ \ \ \textcolor{keywordtype}{int}\ iPictureCount\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00242}00242\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{base\_coding}}()\ !=\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7ac7379e03494a9ba3e65a061262a4f9d2}{BaseCoding::BaseCoding\_YUV}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Got\ end\ of\ input\ -\/\ finish\ up\ ES\ file}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00244}00244\ \ \ \ \ \ \ \ \ fflush(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ fclose(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_af700e8e1266ce42b0e6b100a6c05a7ed}{es\_file\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00247}00247\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00248}00248\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00249}00249\ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{enhancement\_queue\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.push\_back(std::move(\textcolor{keyword}{const\_cast<}PssPacket\ \&\textcolor{keyword}{>}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{enhancement\_queue\_}}.top())));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a03d2df38a55ddbb34e13ce641be087ee}{enhancement\_queue\_}}.pop();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00252}00252\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00253}00253\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00254}00254\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a7d1bac9876b35bc51d5c174ff517c587}{keep\_base\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ es\_enhancement\_file\_name\_\ =\ \mbox{\hyperlink{namespacelctm_a7f6f6c3a610976a24b20979e2f1fd812}{make\_temporary\_filename}}(\textcolor{stringliteral}{"{}\_enhancement.es"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00256}00256\ \ \ \ \ \ \ \ \ FILE\ *es\_enhancement\_file\_\ =\ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fopen(es\_enhancement\_file\_name\_.c\_str(),\ \textcolor{stringliteral}{"{}wb"{}}));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ temporary\ file\ for\ enhancement\ data:\ '\%s'"{}},\ es\_enhancement\_file\_name\_.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00258}00258\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00259}00259\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&element\ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00260}00260\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nal\_type\ =\ 28\ +\ element.is\_lcevc\_idr;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t\ nalu\_header[5]\ =\ \{0x00,\ 0x00,\ 0x01,\ \textcolor{keyword}{static\_cast<}uint8\_t\textcolor{keyword}{>}(0x41\ |\ (nal\_type\ <<\ 1)),\ 0xff\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fwrite(\&nalu\_header,\ 1,\ \textcolor{keyword}{sizeof}(nalu\_header),\ es\_enhancement\_file\_)\ ==\ \textcolor{keyword}{sizeof}(nalu\_header));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00263}00263\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00264}00264\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Packet}{Packet}}\ rbsp\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_a29c625ef26f3dfba9489e1734f7bd00a}{rbsp\_encapsulate}}(element.packet);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00265}00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ v(rbsp);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00266}00266\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fwrite(v.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}(),\ 1,\ v.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}(),\ es\_enhancement\_file\_)\ ==\ v.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00267}00267\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00268}00268\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00269}00269\ \ \ \ \ \ \ \ \ fflush(es\_enhancement\_file\_);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00270}00270\ \ \ \ \ \ \ \ \ fclose(es\_enhancement\_file\_);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00271}00271\ \ \ \ \ \ \ \ \ es\_enhancement\_file\_\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00272}00272\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00273}00273\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00274}00274\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ symbols\_initial[\mbox{\hyperlink{namespacelctm_a1784e365acb7f2855de6c3bd14d82ee6ac2e39380ba927f29c71968b051314c43}{MAX\_NUM\_PLANES}}][\mbox{\hyperlink{namespacelctm_a2a81e4d251a7c0a81d47fb9f54fc50a0a1b38754d74fd9029d16bf93c58264712}{MAX\_NUM\_LOQS}}][\mbox{\hyperlink{namespacelctm_a3d789bf3c585cfea4d0870f21009cda0a9140e0191c079951aff1f5454538f273}{MAX\_NUM\_LAYERS}}];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00275}00275\ \ \ \ \ PssPacket\ pss\_initial;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00276}00276\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00277}00277\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ pss\_initial\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.front();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00279}00279\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.erase(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.begin());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00281}00281\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ enhancement\_view(pss\_initial.packet);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00282}00282\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_aa6b25c756e3c8ec62c6598cb7232fc2f}{deserialize\_enhancement}}(enhancement\_view.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}(),\ enhancement\_view.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}(),\ symbols\_initial);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00283}00283\ \ \ \ \ \ \ \ \ iPictureCount++;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00284}00284\ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ found\ in\ bitstream!"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00286}00286\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00287}00287\ \ \ \ \ \textcolor{comment}{//\ Find\ base\ size}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00288}00288\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00289}00289\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ width\ =\ 0,\ height\ =\ 0,\ bit\_depth\ =\ 0,\ chroma\_format\_idc\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00290}00290\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespacelctm_ac31fa5f7f85460ae88ba0d569aaad929}{probe\_es\_file}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a627d8a14cef485472d3f3d4b9a1aaff0}{base\_coding}}(),\ width,\ height,\ bit\_depth,\ chroma\_format\_idc))\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ get\ base\ size,\ depth,\ and\ chroma\_format\_idc"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00296}00296\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Verify\ base\ dimensions\ with\ signalled\ LCEVC\ configuration}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00297}00297\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Dimensions}{Dimensions}}\ dimensions\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a5dd327e3feba48c44a0c1b5223799dc2}{get\_dimensions}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00298}00298\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(bit\_depth\ ==\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a4d0229de76ccd748d9aab3ccfdac1427}{get\_base\_bitdepth}}());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(width\ ==\ dimensions.\mbox{\hyperlink{classlctm_1_1Dimensions_af646566ecdfa1ae26c1cba67a3025a7e}{base\_width}}());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(height\ ==\ dimensions.\mbox{\hyperlink{classlctm_1_1Dimensions_aa92a84de1d53d1598ec48aa136c69add}{base\_height}}());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(chroma\_format\_idc\ ==\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a285489f56c94ef7a7d9ff4bce8ff813c}{get\_colourspace}}());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00303}00303\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00304}00304\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ base\ dimensions\ from\ singalled\ LCEVC\ configuration}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00305}00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00306}00306\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}No\ LCEVC\ Data\ and\ no\ base\ bitstream\ -\/>\ Cannot\ get\ width/height/format"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Dimensions}{Dimensions}}\ dimensions\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a5dd327e3feba48c44a0c1b5223799dc2}{get\_dimensions}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00308}00308\ \ \ \ \ \ \ \ \ width\ =\ dimensions.\mbox{\hyperlink{classlctm_1_1Dimensions_af646566ecdfa1ae26c1cba67a3025a7e}{base\_width}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00309}00309\ \ \ \ \ \ \ \ \ height\ =\ dimensions.\mbox{\hyperlink{classlctm_1_1Dimensions_aa92a84de1d53d1598ec48aa136c69add}{base\_height}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ bit\_depth\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a4d0229de76ccd748d9aab3ccfdac1427}{get\_base\_bitdepth}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00311}00311\ \ \ \ \ \ \ \ \ chroma\_format\_idc\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_a285489f56c94ef7a7d9ff4bce8ff813c}{get\_colourspace}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00312}00312\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00313}00313\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00314}00314\ \ \ \ \ \textcolor{comment}{//\ Figure\ ESFile\ format}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00315}00315\ \ \ \ \ \mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a421ea8570332d29dd29080260dcefc8c}{YUVFormat::Enum}}\ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00316}00316\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00317}00317\ \ \ \ \ \textcolor{keywordflow}{switch}\ (bit\_depth)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00318}00318\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a421ea8570332d29dd29080260dcefc8c}{YUVFormat::Enum}}\textcolor{keyword}{>}(0\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00320}00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00321}00321\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00322}00322\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a421ea8570332d29dd29080260dcefc8c}{YUVFormat::Enum}}\textcolor{keyword}{>}(4\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00324}00324\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00325}00325\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00326}00326\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a421ea8570332d29dd29080260dcefc8c}{YUVFormat::Enum}}\textcolor{keyword}{>}(8\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00329}00329\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00330}00330\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00331}00331\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a421ea8570332d29dd29080260dcefc8c}{YUVFormat::Enum}}\textcolor{keyword}{>}(12\ +\ (chroma\_format\_idc\ ==\ 0\ ?\ 3\ :\ chroma\_format\_idc\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00332}00332\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00333}00333\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00334}00334\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(0);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00335}00335\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00336}00336\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00337}00337\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00338}00338\ \ \ \ \ \mbox{\hyperlink{classvnova_1_1utility_1_1YUVDesc}{YUVDesc}}\ yuv\_desc;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00339}00339\ \ \ \ \ yuv\_desc.\mbox{\hyperlink{classvnova_1_1utility_1_1YUVDesc_a2d4868432bfcaa1adaf1c3ff6cad9f98}{Initialise}}(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}},\ width,\ height);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00340}00340\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ base\_size\ =\ yuv\_desc.\mbox{\hyperlink{classvnova_1_1utility_1_1YUVDesc_a8f20713d504a575f0017348dc5a17509}{GetMemorySize}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00341}00341\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00342}00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *fmt\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00343}00343\ \ \ \ \ \mbox{\hyperlink{structvnova_1_1utility_1_1YUVFormat_a72500fcfa333556b4df32421b7f1c3fa}{YUVFormat::ToString}}(\&fmt,\ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00344}00344\ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Base\ is\ \%s\ \%dx\%d\ \%d\ bit\ (\%zu\ bytes)\(\backslash\)n"{}},\ fmt,\ width,\ height,\ bit\_depth,\ base\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00345}00345\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00346}00346\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a899c77770c1581c471d7ddf51bc3351c}{base\_width\_}}\ =\ width;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00347}00347\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a6499cdc757244f42284477148a2755f1}{base\_height\_}}\ =\ height;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00348}00348\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a58478fcff2d418efd89f1f761ae49bf3}{base\_bit\_depth\_}}\ =\ bit\_depth;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00349}00349\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00350}00350\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a188c214756b3906bf6dcefbe93fda4da}{UniquePtrFile}}\ yuv\_file;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00351}00351\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00352}00352\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ been\ given\ decoded\ YUV\ already}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00354}00354\ \ \ \ \ \ \ \ \ yuv\_file.reset(\mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fopen(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a358fb2b25def6671863106e47f1a2ed7}{prepared\_yuv\_file\_name\_}}.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00355}00355\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00356}00356\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Run\ the\ decoder\ esfile-\/>yuvfile}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00358}00358\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aae4b49c0cbe3a5ec389ea1fca2242b19}{run\_decoder}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}},\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00359}00359\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Open\ temp.\ file}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00361}00361\ \ \ \ \ \ \ \ \ yuv\_file.reset(\mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fopen(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}}.c\_str(),\ \textcolor{stringliteral}{"{}rb"{}})));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00362}00362\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00363}00363\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00364}00364\ \ \ \ \ \textcolor{comment}{//\ Buffer\ for\ the\ YUV\ frames}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00365}00365\ \ \ \ \ vector<uint8\_t>\ base(base\_size);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00366}00366\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00367}00367\ \ \ \ \ \textcolor{keywordflow}{if}\ (iPictureCount\ >\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00368}00368\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First\ frame:\ Copy\ data\ through,\ already\ deserialized\ previously}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00369}00369\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00370}00370\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_aec8ad8a26864ac4622782bdf96176e7d}{push\_base\_enhancement}}(base.data(),\ base.size(),\ symbols\_initial,\ pss\_initial.packet.timestamp(),}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00371}00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pss\_initial.is\_lcevc\_idr);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00372}00372\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00373}00373\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Consume\ queue\ in\ PTS\ order}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Read\ base}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(fread(base.data(),\ 1,\ base.size(),\ yuv\_file.get())\ ==\ base.size());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00377}00377\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ PSS\ from\ queue}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ symbols[\mbox{\hyperlink{namespacelctm_a1784e365acb7f2855de6c3bd14d82ee6ac2e39380ba927f29c71968b051314c43}{MAX\_NUM\_PLANES}}][\mbox{\hyperlink{namespacelctm_a2a81e4d251a7c0a81d47fb9f54fc50a0a1b38754d74fd9029d16bf93c58264712}{MAX\_NUM\_LOQS}}][\mbox{\hyperlink{namespacelctm_a3d789bf3c585cfea4d0870f21009cda0a9140e0191c079951aff1f5454538f273}{MAX\_NUM\_LAYERS}}];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00380}00380\ \ \ \ \ \ \ \ \ \ \ \ \ PssPacket\ pss\ =\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.front();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.erase(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a34a07e313a8fcd0f59a8bf0a79baaa9c}{enhancement\_vector\_}}.begin());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ enhancement\_view(pss.packet);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00383}00383\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_aa6b25c756e3c8ec62c6598cb7232fc2f}{deserialize\_enhancement}}(enhancement\_view.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}(),\ enhancement\_view.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}(),\ symbols);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00384}00384\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a008d173872d04c60d49eab177671aa0f}{output\_}}.\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output_aec8ad8a26864ac4622782bdf96176e7d}{push\_base\_enhancement}}(base.data(),\ base.size(),\ symbols,\ pss.packet.timestamp(),\ pss.is\_lcevc\_idr);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00385}00385\ \ \ \ \ \ \ \ \ \ \ \ \ iPictureCount++;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00386}00386\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00387}00387\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00388}00388\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ iFrames\ =\ iPictureCount;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00389}00389\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00390}00390\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fAccMse[3];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00391}00391\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fPsnr[3];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00392}00392\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ plane\ =\ 0;\ plane\ <\ yuv\_desc.\mbox{\hyperlink{classvnova_1_1utility_1_1YUVDesc_a6269b1878fb4844cd4b2fbab8464b22f}{GetPlaneCount}}();\ plane++)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00393}00393\ \ \ \ \ \ \ \ \ \ \ \ \ fAccMse[plane]\ =\ \mbox{\hyperlink{BaseVideoDecoder_8cpp_a60dbd57d64ada3de24c0f9f5f5c2918b}{goPsnr}}.\mbox{\hyperlink{structPsnrStatistic_a0eeeaed9f9b3ede8d274da638890a314}{mfAccMse}}[plane]\ /\ iFrames;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00394}00394\ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[plane]\ =\ (float)(10.0f\ *\ log10((32767.0f\ *\ 32767.0f)\ /\ fAccMse[plane]));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00395}00395\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00396}00396\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00397}00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yuv\_desc.\mbox{\hyperlink{classvnova_1_1utility_1_1YUVDesc_a6269b1878fb4844cd4b2fbab8464b22f}{GetPlaneCount}}()\ >\ 1)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00398}00398\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ YUV\ \%8.4f\ -\/-\/\ Y\ \%8.4f\ U\ \%8.4f\ V\ \%8.4f"{}},\ (6\ *\ fPsnr[0]\ +\ fPsnr[1]\ +\ fPsnr[2])\ /\ 8,\ fPsnr[0],\ fPsnr[1],}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00399}00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fPsnr[2]);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00400}00400\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00401}00401\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}PSNR\ -\/-\/\ Y\ \%8.4f"{}},\ fPsnr[0]);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00402}00402\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00403}00403\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}BITS\ -\/-\/\ base\ \%8d\ bps\ -\/-\/\ enha\ \%8d\ bps\ "{}},\ (\mbox{\hyperlink{BaseVideoDecoder_8cpp_a60dbd57d64ada3de24c0f9f5f5c2918b}{goPsnr}}.\mbox{\hyperlink{structPsnrStatistic_a95a69588d267a000fc8483cb454afcbf}{miBaseBytes}}\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00404}00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{BaseVideoDecoder_8cpp_a60dbd57d64ada3de24c0f9f5f5c2918b}{goPsnr}}.\mbox{\hyperlink{structPsnrStatistic_a54cc88be21169b69e4294428159712c6}{miEnhancementBytes}}\ *\ 8\ *\ \textcolor{comment}{/*\ this-\/>fps\_\ */}\ 60)\ /\ iFrames);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00405}00405\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_a40decacfeba2168b58ac03f8f47c570d}{REPORT}}(\textcolor{stringliteral}{"{}=========\ =========\ =========\ =========\ =========\ =========\ =========\ =========\ "{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00406}00406\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00407}00407\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00408}00408\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00409}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a173cdb6ebdc33625645fd13b6a8a772e}{00409}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a173cdb6ebdc33625645fd13b6a8a772e}{BaseVideoDecoderExternal::stop}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00410}00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a7d1bac9876b35bc51d5c174ff517c587}{keep\_base\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00411}00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}}.empty())}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00412}00412\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_aa83fb4dc19307663756dd05350f82931}{es\_file\_name\_}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00413}00413\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00414}00414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}}.empty())}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00415}00415\ \ \ \ \ \ \ \ \ \ \ \ \ ::remove(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a06dee04ceb962e78c5351bee3575b6ac}{yuv\_file\_name\_}}.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00416}00416\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00417}00417\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00418}00418\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00419}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a0954581254406acde84acbc1b900df75}{00419}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a0954581254406acde84acbc1b900df75}{BaseVideoDecoderExternal::StatisticsComputation}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00420}00420\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00421}00421\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00422}00422\ \textcolor{comment}{//\ RBSP\ encapsualtion\ (0b00000000\ 0b00000000\ 0b000000xx\ -\/>\ 0b00000000\ 0b00000000\ 0b00000011\ 0b000000xx)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00423}00423\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00424}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_a29c625ef26f3dfba9489e1734f7bd00a}{00424}}\ \mbox{\hyperlink{classlctm_1_1Packet}{Packet}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_a29c625ef26f3dfba9489e1734f7bd00a}{BaseVideoDecoder::rbsp\_encapsulate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Packet}{Packet}}\ \&src)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00425}00425\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ in(src);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00426}00426\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00427}00427\ \ \ \ \ vector<uint8\_t>\ out;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00428}00428\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00429}00429\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00430}00430\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ in.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}();\ ++i)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00431}00431\ \ \ \ \ \ \ \ \ uint8\_t\ b\ =\ in.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}()[i];}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00432}00432\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00433}00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ ==\ 2\ \&\&\ (b\ \&\ \string~3)\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00434}00434\ \ \ \ \ \ \ \ \ \ \ \ \ out.push\_back(0x03);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00435}00435\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00436}00436\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00437}00437\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00438}00438\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00439}00439\ \ \ \ \ \ \ \ \ \ \ \ \ ++zeros;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00440}00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00441}00441\ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00442}00442\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00443}00443\ \ \ \ \ \ \ \ \ out.push\_back(b);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00444}00444\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00445}00445\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00446}00446\ \ \ \ \ out.push\_back(0x80);}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00447}00447\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00448}00448\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Packet_a5553eb8254137f0cf95c5f456b49658d}{Packet::build}}().\mbox{\hyperlink{classlctm_1_1PacketBuilder_afbf9bd7ee61f05f3571a79dea8de08d7}{contents}}(out).\mbox{\hyperlink{classlctm_1_1PacketBuilder_a68d1b57142cb5d306b3887db63cd87a0}{finish}}();}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00449}00449\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00450}00450\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00451}00451\ \textcolor{comment}{//\ AVC\ Base\ Codec}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00452}00452\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00453}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC}{00453}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC}{BaseVideoDecoderExternalAVC}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00454}00454\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00455}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_ac23b97042c55167ada884d7511972e97}{00455}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_ac23b97042c55167ada884d7511972e97}{BaseVideoDecoderExternalAVC}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00456}00456\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00457}00457\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00458}00458\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00459}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_a0a23dc95467394d3186e53263e175da5}{00459}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_a0a23dc95467394d3186e53263e175da5}{base\_coding}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a63efcacbdecb7245d2ae850c2fc1f310}{BaseCoding\_AVC}};\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00460}00460\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00461}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_a7c6d0d5da3203c303a40b78ef4609cb5}{00461}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_a7c6d0d5da3203c303a40b78ef4609cb5}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00462}00462\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ \mbox{\hyperlink{namespacelctm_a8bbe880a9fc72f5a4c49f980bf073a21}{get\_program\_directory}}(\textcolor{stringliteral}{"{}external\_codecs/JM/ldecod"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00463}00463\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00464}00464\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00465}00465\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00466}00466\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00467}00467\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}\%s\ -\/p\ InputFile=\%s\ -\/p\ OutputFile=\%s\ -\/p\ WriteUV=0"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00468}00468\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00469}00469\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00470}00470\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00471}00471\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00472}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_ae158f8a5e6e29ca5f8f9fc5a149ced48}{00472}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC_ae158f8a5e6e29ca5f8f9fc5a149ced48}{StatisticsComputation}}()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00473}00473\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00474}00474\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00475}00475\ \textcolor{comment}{//\ HEVC\ Base\ Codec}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00476}00476\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00477}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC}{00477}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC}{BaseVideoDecoderExternalHEVC}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00478}00478\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00479}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a6dd1464e59e6cc8d6e2ceb9414832342}{00479}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a6dd1464e59e6cc8d6e2ceb9414832342}{BaseVideoDecoderExternalHEVC}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00480}00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00481}00481\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00482}00482\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00483}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a4597f176937fa05c8a8e9205989644c4}{00483}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a4597f176937fa05c8a8e9205989644c4}{base\_coding}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a4b52a4bc0d3c4f96e73414f40b1602f4}{BaseCoding\_HEVC}};\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00484}00484\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00485}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_adfdecee0b727965a60625cc00e77eb45}{00485}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_adfdecee0b727965a60625cc00e77eb45}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00486}00486\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ \mbox{\hyperlink{namespacelctm_a8bbe880a9fc72f5a4c49f980bf073a21}{get\_program\_directory}}(\textcolor{stringliteral}{"{}external\_codecs/HM/TAppDecoder"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00487}00487\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a58478fcff2d418efd89f1f761ae49bf3}{base\_bit\_depth\_}}\ >\ \mbox{\hyperlink{namespacelctm_ade5d030a30b2a413eb7f295ba1d1b8c7a9de86283100a747960ca2ad1106cdc41}{Bitdepth\_10}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00488}00488\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ac4cebd204831cf85d2c6e9d03b8d5bbb}{WARN}}(\textcolor{stringliteral}{"{}Using\ HM\ with\ HIGH\_BITDEPTH\_SUPPORT\ enabled."{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00489}00489\ \ \ \ \ \ \ \ \ \ \ \ \ p.append(\textcolor{stringliteral}{"{}\_HighBitdepth"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00490}00490\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00491}00491\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00492}00492\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00493}00493\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00494}00494\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00495}00495\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00496}00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00497}00497\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00498}00498\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00499}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a0397289f512e7d2aab577ea058a919d4}{00499}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC_a0397289f512e7d2aab577ea058a919d4}{StatisticsComputation}}()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00500}00500\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00501}00501\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00502}00502\ \textcolor{comment}{//\ VVC\ Base\ Codec}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00503}00503\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00504}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC}{00504}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC}{BaseVideoDecoderExternalVVC}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00505}00505\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00506}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_ae1977989e0a68fb8a683d96d0315365e}{00506}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_ae1977989e0a68fb8a683d96d0315365e}{BaseVideoDecoderExternalVVC}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00507}00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00508}00508\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00509}00509\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00510}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_a7851c7356f41b01d3a8953e54d5caa44}{00510}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_a7851c7356f41b01d3a8953e54d5caa44}{base\_coding}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7aeaee75ca5e49c441efe9057984bf222f}{BaseCoding\_VVC}};\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00511}00511\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00512}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_af6710aa1fd14f0bf188fce159aba8605}{00512}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_af6710aa1fd14f0bf188fce159aba8605}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00513}00513\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ \mbox{\hyperlink{namespacelctm_a8bbe880a9fc72f5a4c49f980bf073a21}{get\_program\_directory}}(\textcolor{stringliteral}{"{}external\_codecs/VTM/DecoderApp"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00514}00514\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00515}00515\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00516}00516\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00517}00517\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/b\ \%s\ -\/o\ \%s"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str()).c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00518}00518\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00519}00519\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00520}00520\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00521}00521\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00522}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_af13d993f4ec95b2bf0e5dba7cc04a6f6}{00522}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC_af13d993f4ec95b2bf0e5dba7cc04a6f6}{StatisticsComputation}}()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00523}00523\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00524}00524\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00525}00525\ \textcolor{comment}{//\ EVC\ Base\ Codec}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00526}00526\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00527}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC}{00527}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC}{BaseVideoDecoderExternalEVC}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00528}00528\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00529}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a37a1f12d18a61ce70b57f24e3ee59f79}{00529}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a37a1f12d18a61ce70b57f24e3ee59f79}{BaseVideoDecoderExternalEVC}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00530}00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00531}00531\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00532}00532\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00533}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a1e2b90dab00e06bf88a926d1a511b680}{00533}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a1e2b90dab00e06bf88a926d1a511b680}{base\_coding}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7af304af7846801af5254105b2d95da6dd}{BaseCoding\_EVC}};\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00534}00534\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00535}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a005cb63cb95f7d4f712662c5f83bb1f3}{00535}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a005cb63cb95f7d4f712662c5f83bb1f3}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00536}00536\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{string}\ p\ =\ \mbox{\hyperlink{namespacelctm_a8bbe880a9fc72f5a4c49f980bf073a21}{get\_program\_directory}}(\textcolor{stringliteral}{"{}external\_codecs/ETM/evca\_decoder"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00537}00537\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00538}00538\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Using\ base\ decoder\ \%s"{}},\ p.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00539}00539\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00540}00540\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ system(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}\(\backslash\)"{}\%s\(\backslash\)"{}\ -\/-\/input\ \%s\ -\/-\/output\ \%s\ -\/-\/output\_bit\_depth\ \%d"{}},\ p.c\_str(),\ es\_file.c\_str(),\ yuv\_file.c\_str(),\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal_a58478fcff2d418efd89f1f761ae49bf3}{base\_bit\_depth\_}}).c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00541}00541\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00542}00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r\ ==\ 0;}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00543}00543\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00544}00544\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00545}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a13b4e230162ba06e4916d0ab6f678083}{00545}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC_a13b4e230162ba06e4916d0ab6f678083}{StatisticsComputation}}()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00546}00546\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00547}00547\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00548}00548\ \textcolor{comment}{//\ No\ Base\ Codec\ (base\ YUV\ file\ as\ input)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00549}00549\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00550}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV}{00550}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV}{BaseVideoDecoderExternalYUV}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00551}00551\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00552}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_acfd77dbb16d5402cb34e2193d91e89b0}{00552}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_acfd77dbb16d5402cb34e2193d91e89b0}{BaseVideoDecoderExternalYUV}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00553}00553\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ keep\_base)}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00554}00554\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternal}{BaseVideoDecoderExternal}}(output,\ encapsulation,\ yuv\_file,\ keep\_base)\ \{\}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00555}00555\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00556}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_ae8f66fe39de60ef73b702d1ca3b1fd10}{00556}}\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_ae8f66fe39de60ef73b702d1ca3b1fd10}{base\_coding}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7ac7379e03494a9ba3e65a061262a4f9d2}{BaseCoding\_YUV}};\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00557}00557\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00558}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_a05992fc5c17e6d1a7abebfeb5cf750fd}{00558}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_a05992fc5c17e6d1a7abebfeb5cf750fd}{run\_decoder}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&es\_file,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&yuv\_file)\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00559}00559\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00560}\mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_ae0cde6d9ff3161fd8c9d935d6d6227c9}{00560}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV_ae0cde6d9ff3161fd8c9d935d6d6227c9}{StatisticsComputation}}()\textcolor{keyword}{\ override}\{\};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00561}00561\ \};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00562}00562\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00563}00563\ \textcolor{comment}{//\ Factory\ function}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00564}00564\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00565}\mbox{\hyperlink{namespacelctm_a1d3d5311ddc4e82697759c0e81e2ccea}{00565}}\ unique\_ptr<BaseVideoDecoder>\ \mbox{\hyperlink{namespacelctm_a1d3d5311ddc4e82697759c0e81e2ccea}{CreateBaseVideoDecoder}}(\mbox{\hyperlink{classlctm_1_1BaseVideoDecoder_1_1Output}{BaseVideoDecoder::Output}}\ \&output,\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7}{BaseCoding}}\ base,\ \mbox{\hyperlink{namespacelctm_aee2b9f97f134a06feb6435275d0f1116}{Encapsulation}}\ encapsulation,}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00566}00566\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ external,\ \textcolor{keyword}{const}\ std::string\ \&yuv\_file,\ \textcolor{keywordtype}{bool}\ keep\_base)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00567}00567\ }
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00568}00568\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00569}00569\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (external\ ||\ keep\_base\ ||\ !yuv\_file.empty())\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00570}00570\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a63efcacbdecb7245d2ae850c2fc1f310}{BaseCoding\_AVC}})}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00571}00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC}{BaseVideoDecoderExternalAVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00572}00572\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a4b52a4bc0d3c4f96e73414f40b1602f4}{BaseCoding\_HEVC}})}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00573}00573\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC}{BaseVideoDecoderExternalHEVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00574}00574\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7aeaee75ca5e49c441efe9057984bf222f}{BaseCoding\_VVC}})}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00575}00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC}{BaseVideoDecoderExternalVVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00576}00576\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7af304af7846801af5254105b2d95da6dd}{BaseCoding\_EVC}})}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00577}00577\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC}{BaseVideoDecoderExternalEVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00578}00578\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7ac7379e03494a9ba3e65a061262a4f9d2}{BaseCoding\_YUV}})}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00579}00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalYUV}{BaseVideoDecoderExternalYUV}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00580}00580\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00581}00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00582}00582\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00583}00583\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a63efcacbdecb7245d2ae850c2fc1f310}{BaseCoding\_AVC}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00584}00584\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_AVC)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00585}00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a42d6e49b3413e7d3cbb6485fca7310ca}{CreateBaseVideoDecoderCodecApi}}(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}avc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00586}00586\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00587}00587\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalAVC}{BaseVideoDecoderExternalAVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00588}00588\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00589}00589\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7a4b52a4bc0d3c4f96e73414f40b1602f4}{BaseCoding\_HEVC}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00590}00590\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_HEVC)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00591}00591\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a42d6e49b3413e7d3cbb6485fca7310ca}{CreateBaseVideoDecoderCodecApi}}(output,\ encapsulation,base,\ \textcolor{stringliteral}{"{}hevc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00592}00592\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00593}00593\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalHEVC}{BaseVideoDecoderExternalHEVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00594}00594\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00595}00595\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7aeaee75ca5e49c441efe9057984bf222f}{BaseCoding\_VVC}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00596}00596\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_VVC)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00597}00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a42d6e49b3413e7d3cbb6485fca7310ca}{CreateBaseVideoDecoderCodecApi}}(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}vvc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00598}00598\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00599}00599\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalVVC}{BaseVideoDecoderExternalVVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00600}00600\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00601}00601\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (base\ ==\ \mbox{\hyperlink{namespacelctm_a58ee7dd78913d9084737c43d99743bf7af304af7846801af5254105b2d95da6dd}{BaseCoding\_EVC}})\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00602}00602\ \textcolor{preprocessor}{\#if\ defined(LTM\_ENABLE\_CODECAPI\_EVC)}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00603}00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a42d6e49b3413e7d3cbb6485fca7310ca}{CreateBaseVideoDecoderCodecApi}}(output,\ encapsulation,\ base,\ \textcolor{stringliteral}{"{}evc"{}},\textcolor{stringliteral}{"{}"{}},\textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00604}00604\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00605}00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ unique\_ptr<BaseVideoDecoder>(\textcolor{keyword}{new}\ \mbox{\hyperlink{classlctm_1_1BaseVideoDecoderExternalEVC}{BaseVideoDecoderExternalEVC}}(output,\ encapsulation,\ yuv\_file,\ keep\_base));}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00606}00606\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00607}00607\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00608}00608\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Unknown\ base"{}});}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00609}00609\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00610}00610\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00611}00611\ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keywordtype}{string}\ e)\ \{}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00612}00612\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}CreateBaseVideoDecoder:\ Caught:\ \%s\(\backslash\)n"{}},\ e.c\_str());}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00613}00613\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00614}00614\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00615}00615\ \}}
+\DoxyCodeLine{\Hypertarget{BaseVideoDecoder_8cpp_source_l00616}00616\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

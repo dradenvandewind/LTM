@@ -1,210 +1,210 @@
 \doxysection{Bitstream\+Unpacker.\+cpp}
-\label{BitstreamUnpacker_8cpp_source}\index{util/src/BitstreamUnpacker.cpp@{util/src/BitstreamUnpacker.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{BitstreamUnpacker_8cpp_source}{}\label{BitstreamUnpacker_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/util/src/BitstreamUnpacker.cpp@{/media/erwan/T7/formation/Video/LTM/util/src/BitstreamUnpacker.cpp}}
+\mbox{\hyperlink{BitstreamUnpacker_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ BitstreamUnpacker.cpp}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//\ Deserialize\ variable\ bit\ width\ fields\ from\ a\ packet}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//}}
-\DoxyCodeLine{00039\ \textcolor{comment}{//\ Use\ macro:\ BITSTREAM\_DEBUG\ -\/\ define\ to\ !0\ to\ get\ debug\ spew\ of\ bitfield\ operations}}
-\DoxyCodeLine{00040\ \textcolor{comment}{//}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}BitstreamUnpacker.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Config.hpp"{}}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <cassert>}}
-\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <memory>}}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \textcolor{comment}{//\ global\ precompiler\ defines}}
-\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
-\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#pragma\ message("{}BistreamUnpacker\ BITSTREAM\ TRACE\ ON"{})}}
-\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#pragma\ message("{}BistreamUnpacker\ BITSTREAM\ TRACE\ off"{})}}
-\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \textcolor{keyword}{namespace\ }\{}
-\DoxyCodeLine{00058\ \textcolor{comment}{//\ Bit\ shifts\ that\ are\ defined\ for\ shift\ >=\ bit-\/width}}
-\DoxyCodeLine{00059\ \textcolor{comment}{//}}
-\DoxyCodeLine{00060\ \textcolor{keyword}{inline}\ uint32\_t\ shl32(uint32\_t\ v,\ \textcolor{keywordtype}{unsigned}\ c)\ \{\ \textcolor{keywordflow}{return}\ (c\ <\ 32)\ ?\ (v\ <<\ c)\ :\ 0;\ \}}
-\DoxyCodeLine{00061\ \textcolor{keyword}{inline}\ uint32\_t\ shr32(uint32\_t\ v,\ \textcolor{keywordtype}{unsigned}\ c)\ \{\ \textcolor{keywordflow}{return}\ (c\ <\ 32)\ ?\ (v\ >>\ c)\ :\ 0;\ \}}
-\DoxyCodeLine{00062\ }
-\DoxyCodeLine{00063\ \textcolor{comment}{//\ 'width'\ bitmask}}
-\DoxyCodeLine{00064\ \textcolor{keyword}{inline}\ uint32\_t\ mask32(\textcolor{keywordtype}{unsigned}\ width)\ \{\ \textcolor{keywordflow}{return}\ (1\ <<\ width)\ -\/\ 1;\ \}}
-\DoxyCodeLine{00065\ }
-\DoxyCodeLine{00066\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_PER\_BYTE\ =\ 8;}
-\DoxyCodeLine{00067\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_COUNT\_MASK\ =\ 7;}
-\DoxyCodeLine{00068\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_COUNT\_SHIFT\ =\ 3;}
-\DoxyCodeLine{00069\ \}\ \textcolor{comment}{//\ namespace}}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00072\ }
-\DoxyCodeLine{00073\ BitstreamUnpacker::BitstreamUnpacker(\textcolor{keyword}{const}\ PacketView\ \&view)\ :\ view\_(view)\ \{}
-\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
-\DoxyCodeLine{00075\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ \(\backslash\)n"{}});}
-\DoxyCodeLine{00076\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}BitstreamUnpacker::emit\ \ \ \ (\%8d)\(\backslash\)n"{}},\ view.size());}
-\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordflow}{if}\ (view.size()\ >\ 0)}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}\%s"{}},\ hex\_dump(view.data(),\ view.size(),\ 0).c\_str());}
-\DoxyCodeLine{00079\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ \(\backslash\)n"{}});}
-\DoxyCodeLine{00080\ \ \ \ \ fflush(goBits);}
-\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00082\ \}}
-\DoxyCodeLine{00083\ }
-\DoxyCodeLine{00084\ BitstreamUnpacker::\string~BitstreamUnpacker()\ \{\}}
-\DoxyCodeLine{00085\ }
-\DoxyCodeLine{00086\ \textcolor{comment}{//\ Read\ 0..32\ bits\ into\ unsigned\ integer}}
-\DoxyCodeLine{00087\ \textcolor{comment}{//}}
-\DoxyCodeLine{00088\ uint32\_t\ BitstreamUnpacker::u(\textcolor{keywordtype}{unsigned}\ num\_bits)\ \{}
-\DoxyCodeLine{00089\ \ \ \ \ assert(num\_bits\ <=\ 32);}
-\DoxyCodeLine{00090\ \ \ \ \ assert((bit\_offset\_\ +\ num\_bits)\ <=\ bit\_size());}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ uint32\_t\ r\ =\ 0;}
-\DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{while}\ (num\_bits)\ \{}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Index\ and\ bit}}
-\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
-\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_used\ =\ bit\_offset\_\ \&\ BITS\_COUNT\_MASK;}
-\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_used\ =\ bit\_offset\_\ \%\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
-\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00106\ }
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ data\ =\ view\_.data()[idx];}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_left\ =\ BITS\_PER\_BYTE\ -\/\ bit\_used;}
-\DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ How\ many\ bits\ can\ be\ read\ from\ this\ byte?}}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ const\ unsigned\ n\ =\ std::min(BITS\_PER\_BYTE\ -\/\ bit,\ num\_bits);}}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ n\ =\ LCEVC\_MIN(bit\_left,\ num\_bits);}
-\DoxyCodeLine{00113\ }
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extract\ bits\ and\ merge\ into\ result}}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ r\ =\ shl32(r,\ n)\ |\ (shr32(data,\ (BITS\_PER\_BYTE\ -\/\ bit)\ -\/\ n)\ \&\ mask32(n));}}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ r\ =\ (r\ <<\ n)\ |\ ((data\ >>\ (bit\_left\ -\/\ n))\ \&\ ((1\ <<\ n)\ -\/\ 1));}
-\DoxyCodeLine{00117\ }
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ bit\_offset\_\ +=\ n;}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ num\_bits\ -\/=\ n;}
-\DoxyCodeLine{00120\ \ \ \ \ \}}
-\DoxyCodeLine{00121\ }
-\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
-\DoxyCodeLine{00123\ \}}
-\DoxyCodeLine{00124\ }
-\DoxyCodeLine{00125\ \textcolor{comment}{//\ Read\ a\ single\ of\ byte\ from\ stream\ -\/\ expects\ offset\ byte\ aligned}}
-\DoxyCodeLine{00126\ \textcolor{comment}{//}}
-\DoxyCodeLine{00127\ uint8\_t\ BitstreamUnpacker::byte()\ \{}
-\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
-\DoxyCodeLine{00129\ \ \ \ \ assert((bit\_offset\_\ \&\ BITS\_COUNT\_MASK)\ ==\ 0);}
-\DoxyCodeLine{00130\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00131\ \ \ \ \ assert((bit\_offset\_\ \%\ BITS\_PER\_BYTE)\ ==\ 0);}
-\DoxyCodeLine{00132\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00133\ \ \ \ \ assert(BITS\_PER\_BYTE\ <=\ (bit\_size()\ -\/\ bit\_offset\_));}
-\DoxyCodeLine{00134\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
-\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
-\DoxyCodeLine{00136\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00139\ \ \ \ \ bit\_offset\_\ +=\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00140\ }
-\DoxyCodeLine{00141\ \textcolor{comment}{//\ \ CHECK(idx\ <\ view\_.size());}}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{if}(idx\ <\ view\_.size())\ \{}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ view\_.data()[idx];}
-\DoxyCodeLine{00144\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ WARN(\textcolor{stringliteral}{"{}Read\ beyond\ end\ of\ packet."{}});}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00147\ \ \ \ \ \}}
-\DoxyCodeLine{00148\ \}}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \textcolor{comment}{//\ Read\ a\ sequence\ of\ bytes\ from\ stream\ -\/\ expects\ offset\ byte\ aligned}}
-\DoxyCodeLine{00151\ \textcolor{comment}{//}}
-\DoxyCodeLine{00152\ Packet\ BitstreamUnpacker::bytes(\textcolor{keywordtype}{unsigned}\ num\_bytes)\ \{}
-\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
-\DoxyCodeLine{00154\ \ \ \ \ assert((bit\_offset\_\ \&\ BITS\_COUNT\_MASK)\ ==\ 0);}
-\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00156\ \ \ \ \ assert((bit\_offset\_\ \%\ BITS\_PER\_BYTE)\ ==\ 0);}
-\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00158\ \ \ \ \ assert(num\_bytes\ *\ BITS\_PER\_BYTE\ <=\ (bit\_size()\ -\/\ bit\_offset\_));}
-\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
-\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00164\ }
-\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{auto}\ b\ =\ Packet::build().reserve(num\_bytes);}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ num\_bytes;\ ++i)}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ b.data()[i]\ =\ view\_.data()[idx\ +\ i];}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ bit\_offset\_\ +=\ num\_bytes\ *\ BITS\_PER\_BYTE;}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{return}\ b.finish();}
-\DoxyCodeLine{00172\ \}}
-\DoxyCodeLine{00173\ }
-\DoxyCodeLine{00175\ \textcolor{comment}{//}}
-\DoxyCodeLine{00176\ }
-\DoxyCodeLine{00177\ \textcolor{comment}{//\ Read\ 0..32\ bits\ into\ unsigned\ integer\ -\/\ includes\ a\ field\ label\ for\ tracing}}
-\DoxyCodeLine{00178\ \textcolor{comment}{//}}
-\DoxyCodeLine{00179\ uint32\_t\ BitstreamUnpacker::u(\textcolor{keywordtype}{unsigned}\ num\_bits,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *label)\ \{}
-\DoxyCodeLine{00180\ \ \ \ \ uint32\_t\ r\ =\ u(num\_bits);}
-\DoxyCodeLine{00181\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ o\ =\ bit\_offset\_;}
-\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{char}\ acString[128];}
-\DoxyCodeLine{00184\ \ \ \ \ sprintf(acString,\ \textcolor{stringliteral}{"{}u(\%2u,\ \(\backslash\)"{}\%s\%s\(\backslash\)"{})"{}},\ num\_bits,\ join(context\_,\ \textcolor{stringliteral}{"{}."{}},\ \textcolor{keyword}{true}).c\_str(),\ label);}
-\DoxyCodeLine{00185\ \ \ \ \ fprintf(goBits,\ \textcolor{stringliteral}{"{}\%-\/64s\ =>\ \%4u\ (0x\%02x)\ \ [\%8d]\(\backslash\)n"{}},\ acString,\ r,\ r,\ o);}
-\DoxyCodeLine{00186\ \ \ \ \ fflush(goBits);}
-\DoxyCodeLine{00187\ \ \ \ \ goStat.Update(acString,\ num\_bits);}
-\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
-\DoxyCodeLine{00190\ \}}
-\DoxyCodeLine{00191\ }
-\DoxyCodeLine{00192\ \textcolor{keywordtype}{void}\ BitstreamUnpacker::push\_context\_label(\textcolor{keyword}{const}\ std::string\ \&s)\ \{}
-\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
-\DoxyCodeLine{00194\ \ \ \ \ context\_.push\_back(s);}
-\DoxyCodeLine{00195\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00196\ \}}
-\DoxyCodeLine{00197\ }
-\DoxyCodeLine{00198\ \textcolor{keywordtype}{void}\ BitstreamUnpacker::pop\_context\_label()\ \{}
-\DoxyCodeLine{00199\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
-\DoxyCodeLine{00200\ \ \ \ \ assert(!context\_.empty());}
-\DoxyCodeLine{00201\ \ \ \ \ context\_.pop\_back();}
-\DoxyCodeLine{00202\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00203\ \}}
-\DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00035}00035\ \textcolor{comment}{//\ BitstreamUnpacker.cpp}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00037}00037\ \textcolor{comment}{//\ Deserialize\ variable\ bit\ width\ fields\ from\ a\ packet}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00038}00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00039}00039\ \textcolor{comment}{//\ Use\ macro:\ BITSTREAM\_DEBUG\ -\/\ define\ to\ !0\ to\ get\ debug\ spew\ of\ bitfield\ operations}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00040}00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{BitstreamUnpacker_8hpp}{BitstreamUnpacker.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Config_8hpp}{Config.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00046}00046\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00047}00047\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00048}00048\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00050}00050\ \textcolor{comment}{//\ global\ precompiler\ defines}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00051}00051\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00052}00052\ \textcolor{preprocessor}{\#pragma\ message("{}BistreamUnpacker\ BITSTREAM\ TRACE\ ON"{})}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00053}00053\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00054}00054\ \textcolor{preprocessor}{\#pragma\ message("{}BistreamUnpacker\ BITSTREAM\ TRACE\ off"{})}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00055}00055\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00056}00056\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00057}00057\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00058}00058\ \textcolor{comment}{//\ Bit\ shifts\ that\ are\ defined\ for\ shift\ >=\ bit-\/width}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00059}00059\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00060}00060\ \textcolor{keyword}{inline}\ uint32\_t\ shl32(uint32\_t\ v,\ \textcolor{keywordtype}{unsigned}\ c)\ \{\ \textcolor{keywordflow}{return}\ (c\ <\ 32)\ ?\ (v\ <<\ c)\ :\ 0;\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00061}00061\ \textcolor{keyword}{inline}\ uint32\_t\ shr32(uint32\_t\ v,\ \textcolor{keywordtype}{unsigned}\ c)\ \{\ \textcolor{keywordflow}{return}\ (c\ <\ 32)\ ?\ (v\ >>\ c)\ :\ 0;\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00063}00063\ \textcolor{comment}{//\ 'width'\ bitmask}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00064}00064\ \textcolor{keyword}{inline}\ uint32\_t\ mask32(\textcolor{keywordtype}{unsigned}\ width)\ \{\ \textcolor{keywordflow}{return}\ (1\ <<\ width)\ -\/\ 1;\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00066}00066\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_PER\_BYTE\ =\ 8;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00067}00067\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_COUNT\_MASK\ =\ 7;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00068}00068\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ BITS\_COUNT\_SHIFT\ =\ 3;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00069}00069\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00071}00071\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00073}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a0ee50c7e7c70634fd15b3933f9374555}{00073}}\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a0ee50c7e7c70634fd15b3933f9374555}{BitstreamUnpacker::BitstreamUnpacker}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1PacketView}{PacketView}}\ \&view)\ :\ view\_(view)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00074}00074\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00075}00075\ \ \ \ \ fprintf(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}},\ \textcolor{stringliteral}{"{}========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ \(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00076}00076\ \ \ \ \ fprintf(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}},\ \textcolor{stringliteral}{"{}BitstreamUnpacker::emit\ \ \ \ (\%8d)\(\backslash\)n"{}},\ view.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}());}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00077}00077\ \ \ \ \ \textcolor{keywordflow}{if}\ (view.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}()\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00078}00078\ \ \ \ \ \ \ \ \ fprintf(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}},\ \textcolor{stringliteral}{"{}\%s"{}},\ \mbox{\hyperlink{namespacelctm_a8b9ee012cc8aaf674256b89c365a7596}{hex\_dump}}(view.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}(),\ view.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}(),\ 0).c\_str());}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00079}00079\ \ \ \ \ fprintf(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}},\ \textcolor{stringliteral}{"{}========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ ========\ \ \(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00080}00080\ \ \ \ \ fflush(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}});}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00081}00081\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00082}00082\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00083}00083\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00084}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a39dacdc3c04748ea99478290c2ceb043}{00084}}\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a39dacdc3c04748ea99478290c2ceb043}{BitstreamUnpacker::\string~BitstreamUnpacker}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00086}00086\ \textcolor{comment}{//\ Read\ 0..32\ bits\ into\ unsigned\ integer}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00087}00087\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00088}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a56252b4aa2c26736e3e1fdc58d6679c2}{00088}}\ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a56252b4aa2c26736e3e1fdc58d6679c2}{BitstreamUnpacker::u}}(\textcolor{keywordtype}{unsigned}\ num\_bits)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00089}00089\ \ \ \ \ assert(num\_bits\ <=\ 32);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00090}00090\ \ \ \ \ assert((bit\_offset\_\ +\ num\_bits)\ <=\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a916e43928bc75cdaea229ea1a5e80488}{bit\_size}}());}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00092}00092\ \ \ \ \ uint32\_t\ r\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00094}00094\ \ \ \ \ \textcolor{keywordflow}{while}\ (num\_bits)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Index\ and\ bit}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00096}00096\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_used\ =\ bit\_offset\_\ \&\ BITS\_COUNT\_MASK;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00098}00098\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_used\ =\ bit\_offset\_\ \%\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00100}00100\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00101}00101\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00103}00103\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00105}00105\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00106}00106\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ data\ =\ view\_.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}()[idx];}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ bit\_left\ =\ BITS\_PER\_BYTE\ -\/\ bit\_used;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ How\ many\ bits\ can\ be\ read\ from\ this\ byte?}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ const\ unsigned\ n\ =\ std::min(BITS\_PER\_BYTE\ -\/\ bit,\ num\_bits);}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ n\ =\ \mbox{\hyperlink{Misc_8hpp_a38b6fafb219b241ec5787b765e01b567}{LCEVC\_MIN}}(bit\_left,\ num\_bits);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00113}00113\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extract\ bits\ and\ merge\ into\ result}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ r\ =\ shl32(r,\ n)\ |\ (shr32(data,\ (BITS\_PER\_BYTE\ -\/\ bit)\ -\/\ n)\ \&\ mask32(n));}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00116}00116\ \ \ \ \ \ \ \ \ r\ =\ (r\ <<\ n)\ |\ ((data\ >>\ (bit\_left\ -\/\ n))\ \&\ ((1\ <<\ n)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ bit\_offset\_\ +=\ n;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ num\_bits\ -\/=\ n;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00120}00120\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00122}00122\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00123}00123\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00125}00125\ \textcolor{comment}{//\ Read\ a\ single\ of\ byte\ from\ stream\ -\/\ expects\ offset\ byte\ aligned}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00126}00126\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00127}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a23f4a369f3670f056615aff06386efb9}{00127}}\ uint8\_t\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a23f4a369f3670f056615aff06386efb9}{BitstreamUnpacker::byte}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00128}00128\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00129}00129\ \ \ \ \ assert((bit\_offset\_\ \&\ BITS\_COUNT\_MASK)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00130}00130\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00131}00131\ \ \ \ \ assert((bit\_offset\_\ \%\ BITS\_PER\_BYTE)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00132}00132\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00133}00133\ \ \ \ \ assert(BITS\_PER\_BYTE\ <=\ (\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a916e43928bc75cdaea229ea1a5e80488}{bit\_size}}()\ -\/\ bit\_offset\_));}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00134}00134\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00135}00135\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00136}00136\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00137}00137\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00138}00138\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00139}00139\ \ \ \ \ bit\_offset\_\ +=\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00140}00140\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00141}00141\ \textcolor{comment}{//\ \ CHECK(idx\ <\ view\_.size());}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00142}00142\ \ \ \ \ \textcolor{keywordflow}{if}(idx\ <\ view\_.\mbox{\hyperlink{classlctm_1_1PacketView_a117a3ac111c1cd00e9d584d0146fea85}{size}}())\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ view\_.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}()[idx];}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00144}00144\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ac4cebd204831cf85d2c6e9d03b8d5bbb}{WARN}}(\textcolor{stringliteral}{"{}Read\ beyond\ end\ of\ packet."{}});}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00147}00147\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00148}00148\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00150}00150\ \textcolor{comment}{//\ Read\ a\ sequence\ of\ bytes\ from\ stream\ -\/\ expects\ offset\ byte\ aligned}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00151}00151\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00152}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a1fec704b146efe7c293495e705862571}{00152}}\ \mbox{\hyperlink{classlctm_1_1Packet}{Packet}}\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a1fec704b146efe7c293495e705862571}{BitstreamUnpacker::bytes}}(\textcolor{keywordtype}{unsigned}\ num\_bytes)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00153}00153\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_MODULO\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00154}00154\ \ \ \ \ assert((bit\_offset\_\ \&\ BITS\_COUNT\_MASK)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00155}00155\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00156}00156\ \ \ \ \ assert((bit\_offset\_\ \%\ BITS\_PER\_BYTE)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00157}00157\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00158}00158\ \ \ \ \ assert(num\_bytes\ *\ BITS\_PER\_BYTE\ <=\ (\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a916e43928bc75cdaea229ea1a5e80488}{bit\_size}}()\ -\/\ bit\_offset\_));}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00159}00159\ \textcolor{preprocessor}{\#if\ defined\ \_\_OPT\_DIVISION\_\_}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00160}00160\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ >>\ BITS\_COUNT\_SHIFT;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00161}00161\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00162}00162\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ idx\ =\ bit\_offset\_\ /\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00163}00163\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00164}00164\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00165}00165\ \ \ \ \ \textcolor{keyword}{auto}\ b\ =\ \mbox{\hyperlink{classlctm_1_1Packet_a5553eb8254137f0cf95c5f456b49658d}{Packet::build}}().\mbox{\hyperlink{classlctm_1_1PacketBuilder_aed51899aff1076608040070b464f626b}{reserve}}(num\_bytes);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00166}00166\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ num\_bytes;\ ++i)}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ b.\mbox{\hyperlink{classlctm_1_1PacketBuilder_ac20d7b073757b06645b380ddd5b53830}{data}}()[i]\ =\ view\_.\mbox{\hyperlink{classlctm_1_1PacketView_a5fb70bc85ad71c13f696fbd38202f521}{data}}()[idx\ +\ i];}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00169}00169\ \ \ \ \ bit\_offset\_\ +=\ num\_bytes\ *\ BITS\_PER\_BYTE;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00170}00170\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00171}00171\ \ \ \ \ \textcolor{keywordflow}{return}\ b.finish();}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00172}00172\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00173}00173\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00175}00175\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00176}00176\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00177}00177\ \textcolor{comment}{//\ Read\ 0..32\ bits\ into\ unsigned\ integer\ -\/\ includes\ a\ field\ label\ for\ tracing}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00178}00178\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00179}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a31b0a80497f9aefef0ef2618d82424e3}{00179}}\ uint32\_t\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a56252b4aa2c26736e3e1fdc58d6679c2}{BitstreamUnpacker::u}}(\textcolor{keywordtype}{unsigned}\ num\_bits,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *label)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00180}00180\ \ \ \ \ uint32\_t\ r\ =\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_a56252b4aa2c26736e3e1fdc58d6679c2}{u}}(num\_bits);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00181}00181\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00182}00182\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ o\ =\ bit\_offset\_;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00183}00183\ \ \ \ \ \textcolor{keywordtype}{char}\ acString[128];}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00184}00184\ \ \ \ \ sprintf(acString,\ \textcolor{stringliteral}{"{}u(\%2u,\ \(\backslash\)"{}\%s\%s\(\backslash\)"{})"{}},\ num\_bits,\ \mbox{\hyperlink{namespacelctm_a8fb56432ee4b7d5b2bff482be144e446}{join}}(context\_,\ \textcolor{stringliteral}{"{}."{}},\ \textcolor{keyword}{true}).c\_str(),\ label);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00185}00185\ \ \ \ \ fprintf(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}},\ \textcolor{stringliteral}{"{}\%-\/64s\ =>\ \%4u\ (0x\%02x)\ \ [\%8d]\(\backslash\)n"{}},\ acString,\ r,\ r,\ o);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00186}00186\ \ \ \ \ fflush(\mbox{\hyperlink{ModelDecoderApp_8cpp_a76f6fcf311b01328770002df87012e09}{goBits}});}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00187}00187\ \ \ \ \ \mbox{\hyperlink{ModelDecoderApp_8cpp_a246367bc97f90617432084d20e88c32f}{goStat}}.\mbox{\hyperlink{classBitstreamStatistic_a989a69ef1518d9f988229437d68f1bbb}{Update}}(acString,\ num\_bits);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00188}00188\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00189}00189\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00190}00190\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00191}00191\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00192}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_ad7d9516a2e04885e0d38bae6128cc902}{00192}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_ad7d9516a2e04885e0d38bae6128cc902}{BitstreamUnpacker::push\_context\_label}}(\textcolor{keyword}{const}\ std::string\ \&s)\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00193}00193\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00194}00194\ \ \ \ \ context\_.push\_back(s);}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00195}00195\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00196}00196\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00198}\mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_aae9fcc9af8616fdd9f073d5ca35852e9}{00198}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1BitstreamUnpacker_aae9fcc9af8616fdd9f073d5ca35852e9}{BitstreamUnpacker::pop\_context\_label}}()\ \{}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00199}00199\ \textcolor{preprocessor}{\#if\ BITSTREAM\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00200}00200\ \ \ \ \ assert(!context\_.empty());}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00201}00201\ \ \ \ \ context\_.pop\_back();}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00202}00202\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00203}00203\ \}}
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{BitstreamUnpacker_8cpp_source_l00205}00205\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

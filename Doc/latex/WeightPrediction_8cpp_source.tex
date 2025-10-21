@@ -1,442 +1,442 @@
 \doxysection{Weight\+Prediction.\+cpp}
-\label{WeightPrediction_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/WeightPrediction.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/WeightPrediction.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{WeightPrediction_8cpp_source}{}\label{WeightPrediction_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/WeightPrediction.cpp@{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/WeightPrediction.cpp}}
+\mbox{\hyperlink{WeightPrediction_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{00033\ }
-\DoxyCodeLine{00038\ \textcolor{comment}{//\ Include\ files}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}CommonDef.h"{}}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Unit.h"{}}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}InterpolationFilter.h"{}}}
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}WeightPrediction.h"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}CodingStructure.h"{}}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }vtm\ \{}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Pel\ weightBidir(\ \textcolor{keywordtype}{int}\ w0,\ Pel\ P0,\ \textcolor{keywordtype}{int}\ w1,\ Pel\ P1,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
-\DoxyCodeLine{00048\ \{}
-\DoxyCodeLine{00049\ \ \ \textcolor{keywordflow}{return}\ ClipPel(\ (\ (w0*(P0\ +\ IF\_INTERNAL\_OFFS)\ +\ w1*(P1\ +\ IF\_INTERNAL\_OFFS)\ +\ round\ +\ (offset\ <<\ (shift-\/1)))\ >>\ shift\ ),\ clpRng\ );}
-\DoxyCodeLine{00050\ \}}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Pel\ weightUnidir(\ \textcolor{keywordtype}{int}\ w0,\ Pel\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
-\DoxyCodeLine{00053\ \{}
-\DoxyCodeLine{00054\ \ \ \textcolor{keywordflow}{return}\ ClipPel(\ (\ (w0*(P0\ +\ IF\_INTERNAL\_OFFS)\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng\ );}
-\DoxyCodeLine{00055\ \}}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Pel\ noWeightUnidir(\ Pel\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
-\DoxyCodeLine{00058\ \{}
-\DoxyCodeLine{00059\ \ \ \textcolor{keywordflow}{return}\ ClipPel(\ (\ ((P0\ +\ IF\_INTERNAL\_OFFS)\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng\ );}
-\DoxyCodeLine{00060\ \}}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Pel\ noWeightOffsetUnidir(\ Pel\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
-\DoxyCodeLine{00063\ \{}
-\DoxyCodeLine{00064\ \ \ \textcolor{keywordflow}{return}\ ClipPel(\ (\ ((P0\ +\ IF\_INTERNAL\_OFFS)\ +\ round)\ >>\ shift\ ),\ clpRng\ );}
-\DoxyCodeLine{00065\ \}}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ }
-\DoxyCodeLine{00068\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00069\ \textcolor{comment}{//\ Class\ definition}}
-\DoxyCodeLine{00070\ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00071\ }
-\DoxyCodeLine{00072\ WeightPrediction::WeightPrediction()}
-\DoxyCodeLine{00073\ \{}
-\DoxyCodeLine{00074\ \}}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \textcolor{keywordtype}{void}\ WeightPrediction::getWpScaling(Slice\ *pcSlice,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \&iRefIdx0,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \&iRefIdx1,\ WPScalingParam\ *\&wp0,}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ WPScalingParam\ *\&wp1,\ \textcolor{keyword}{const}\ ComponentID\ maxNumComp)}
-\DoxyCodeLine{00078\ \{}
-\DoxyCodeLine{00079\ \ \ CHECK(iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ <\ 0,\ \textcolor{stringliteral}{"{}Both\ picture\ reference\ list\ indizes\ smaller\ than\ '0'"{}});}
-\DoxyCodeLine{00080\ }
-\DoxyCodeLine{00081\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ wpBiPred\ \ \ \ \ \ \ \ =\ pcSlice-\/>getPPS()-\/>getWPBiPred();}
-\DoxyCodeLine{00082\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bBiPred\ \ \ \ \ \ \ \ \ =\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ >=\ 0);}
-\DoxyCodeLine{00083\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bUniPred\ \ \ \ \ \ \ \ =\ !bBiPred;}
-\DoxyCodeLine{00084\ }
-\DoxyCodeLine{00085\ \ \ \textcolor{keywordflow}{if}\ (bUniPred\ ||\ wpBiPred)}
-\DoxyCodeLine{00086\ \ \ \{}
-\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ explicit\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00088\ \ \ \ \ wp0\ =\ pcSlice-\/>getWpScaling(REF\_PIC\_LIST\_0,\ iRefIdx0);}
-\DoxyCodeLine{00089\ \ \ \ \ wp1\ =\ pcSlice-\/>getWpScaling(REF\_PIC\_LIST\_1,\ iRefIdx1);}
-\DoxyCodeLine{00090\ \ \ \}}
-\DoxyCodeLine{00091\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00092\ \ \ \{}
-\DoxyCodeLine{00093\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Unsupported\ WP\ configuration"{}}\ );}
-\DoxyCodeLine{00094\ \ \ \}}
-\DoxyCodeLine{00095\ }
-\DoxyCodeLine{00096\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0)}
-\DoxyCodeLine{00097\ \ \ \{}
-\DoxyCodeLine{00098\ \ \ \ \ wp0\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00099\ \ \ \}}
-\DoxyCodeLine{00100\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx1\ <\ 0)}
-\DoxyCodeLine{00101\ \ \ \{}
-\DoxyCodeLine{00102\ \ \ \ \ wp1\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00103\ \ \ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ getNumberValidComponents(pcSlice-\/>getSPS()-\/>getChromaFormatIdc());}
-\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bUseHighPrecisionPredictionWeighting\ =\ pcSlice-\/>getSPS()-\/>getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag();}
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ \ \ \textcolor{keywordflow}{if}\ (bBiPred)}
-\DoxyCodeLine{00109\ \ \ \{}
-\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Bi-\/predictive\ case}}
-\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yuv\ =\ 0;\ yuv\ <\ numValidComponent\ \&\&\ yuv\ <=\ maxNumComp;\ yuv++)}
-\DoxyCodeLine{00112\ \ \ \ \ \{}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth\ =\ pcSlice-\/>getSPS()-\/>getBitDepth(toChannelType(ComponentID(yuv)));}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offsetScalingFactor\ =\ bUseHighPrecisionPredictionWeighting\ ?\ 1\ :\ (1\ <<\ (bitDepth\ -\/\ 8));}
-\DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ \ \ \ \ \ \ wp0[yuv].w\ \ \ \ \ \ =\ wp0[yuv].codedWeight;}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ wp1[yuv].w\ \ \ \ \ \ =\ wp1[yuv].codedWeight;}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ wp0[yuv].o\ \ \ \ \ \ =\ wp0[yuv].codedOffset\ *\ offsetScalingFactor;}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ wp1[yuv].o\ \ \ \ \ \ =\ wp1[yuv].codedOffset\ *\ offsetScalingFactor;}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ wp0[yuv].offset\ =\ wp0[yuv].o\ +\ wp1[yuv].o;}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ wp0[yuv].shift\ \ =\ wp0[yuv].log2WeightDenom\ +\ 1;}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ wp0[yuv].round\ \ =\ (1\ <<\ wp0[yuv].log2WeightDenom);}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ wp1[yuv].offset\ =\ wp0[yuv].offset;}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ wp1[yuv].shift\ =\ wp0[yuv].shift;}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ wp1[yuv].round\ =\ wp0[yuv].round;}
-\DoxyCodeLine{00126\ \ \ \ \ \}}
-\DoxyCodeLine{00127\ \ \ \}}
-\DoxyCodeLine{00128\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00129\ \ \ \{}
-\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ UniPred}}
-\DoxyCodeLine{00131\ \ \ \ \ WPScalingParam\ *\textcolor{keyword}{const}\ pwp\ =\ (iRefIdx0\ >=\ 0)\ ?\ wp0\ :\ wp1;}
-\DoxyCodeLine{00132\ }
-\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yuv\ =\ 0;\ yuv\ <\ numValidComponent\ \&\&\ yuv\ <=\ maxNumComp;\ yuv++)}
-\DoxyCodeLine{00134\ \ \ \ \ \{}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth\ \ \ \ \ \ \ \ \ \ \ \ =\ pcSlice-\/>getSPS()-\/>getBitDepth(toChannelType(ComponentID(yuv)));}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offsetScalingFactor\ =\ bUseHighPrecisionPredictionWeighting\ ?\ 1\ :\ (1\ <<\ (bitDepth\ -\/\ 8));}
-\DoxyCodeLine{00137\ }
-\DoxyCodeLine{00138\ \ \ \ \ \ \ pwp[yuv].w\ \ \ \ \ \ =\ pwp[yuv].codedWeight;}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ pwp[yuv].offset\ =\ pwp[yuv].codedOffset\ *\ offsetScalingFactor;}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ pwp[yuv].shift\ \ =\ pwp[yuv].log2WeightDenom;}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ pwp[yuv].round\ \ =\ (pwp[yuv].log2WeightDenom\ >=\ 1)\ ?\ (1\ <<\ (pwp[yuv].log2WeightDenom\ -\/\ 1))\ :\ (0);}
-\DoxyCodeLine{00142\ \ \ \ \ \}}
-\DoxyCodeLine{00143\ \ \ \}}
-\DoxyCodeLine{00144\ \}}
-\DoxyCodeLine{00145\ }
-\DoxyCodeLine{00146\ \textcolor{keywordtype}{void}\ WeightPrediction::addWeightBi(\textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ClpRngs\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ WPScalingParam\ *\textcolor{keyword}{const}\ wp0,}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ WPScalingParam\ *\textcolor{keyword}{const}\ wp1,}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PelUnitBuf\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bRoundLuma\ \textcolor{comment}{/*=\ true*/},}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
-\DoxyCodeLine{00156\ )}
-\DoxyCodeLine{00157\ \{}
-\DoxyCodeLine{00158\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enableRounding[MAX\_NUM\_COMPONENT]\ =\ \{\ bRoundLuma,\ \textcolor{keyword}{true},\ \textcolor{keyword}{true}\ \};}
-\DoxyCodeLine{00159\ }
-\DoxyCodeLine{00160\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ (\textcolor{keyword}{const}\ uint32\_t)pcYuvSrc0.bufs.size();}
-\DoxyCodeLine{00161\ }
-\DoxyCodeLine{00162\ \ \ CHECK(\ lumaOnly\ \&\&\ chromaOnly,\ \textcolor{stringliteral}{"{}Not\ allowed\ to\ have\ both\ lumaOnly\ and\ chromaOnly\ selected"{}}\ );}
-\DoxyCodeLine{00163\ \ \ \textcolor{keywordtype}{int}\ firstComponent\ =\ chromaOnly\ ?\ 1\ :\ 0;}
-\DoxyCodeLine{00164\ \ \ \textcolor{keywordtype}{int}\ lastComponent\ =\ lumaOnly\ ?\ 0\ :\ maxNumComp;}
-\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ componentIndex\ =\ firstComponent;\ componentIndex\ <\ numValidComponent\ \&\&\ componentIndex\ <=\ lastComponent;\ componentIndex++)}
-\DoxyCodeLine{00166\ \ \ \{}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(componentIndex);}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{const}\ Pel*\ pSrc0\ =\ pcYuvSrc0.bufs[compID].buf;}
-\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keyword}{const}\ Pel*\ pSrc1\ =\ pcYuvSrc1.bufs[compID].buf;}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ Pel*\ pDst\ \ =\ rpcYuvDst.bufs[compID].buf;}
-\DoxyCodeLine{00172\ }
-\DoxyCodeLine{00173\ \ \ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ =\ clpRngs.comp[compID];}
-\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ =\ wp0[compID].w;}
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ =\ wp0[compID].offset;}
-\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ =\ clpRng.bd;}
-\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ IF\_INTERNAL\_FRAC\_BITS(clipBD);}
-\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ =\ wp0[compID].shift\ +\ shiftNum;}
-\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ \ \ \ =\ (enableRounding[compID]\ \&\&\ (shift\ >\ 0))\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w1\ \ \ \ \ \ \ =\ wp1[compID].w;}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iHeight\ \ =\ rpcYuvDst.bufs[compID].height;}
-\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iWidth\ \ \ =\ rpcYuvDst.bufs[compID].width;}
-\DoxyCodeLine{00184\ }
-\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc0Stride\ =\ pcYuvSrc0.bufs[compID].stride;}
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc1Stride\ =\ pcYuvSrc1.bufs[compID].stride;}
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iDstStride\ =\ \ rpcYuvDst.bufs[compID].stride;}
-\DoxyCodeLine{00188\ }
-\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
-\DoxyCodeLine{00190\ \ \ \ \ \{}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{comment}{//\ do\ it\ in\ batches\ of\ 4\ (partial\ unroll)}}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
-\DoxyCodeLine{00193\ }
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00205\ }
-\DoxyCodeLine{00206\ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ pSrc1\ +=\ iSrc1Stride;}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
-\DoxyCodeLine{00209\ \ \ \ \ \}\ \textcolor{comment}{//\ y\ loop}}
-\DoxyCodeLine{00210\ \ \ \}\ \textcolor{comment}{//\ compID\ loop}}
-\DoxyCodeLine{00211\ \}}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ \textcolor{keywordtype}{void}\ WeightPrediction::addWeightBiComponent(\textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ClpRngs\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ WPScalingParam\ *\textcolor{keyword}{const}\ wp0,}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ WPScalingParam\ *\textcolor{keyword}{const}\ wp1,}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PelUnitBuf\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bRoundLuma\ \textcolor{comment}{/*=\ true*/},}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ \ \ \ \ \ \ Comp)}
-\DoxyCodeLine{00221\ \{}
-\DoxyCodeLine{00222\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enableRounding[MAX\_NUM\_COMPONENT]\ =\ \{\ bRoundLuma,\ \textcolor{keyword}{true},\ \textcolor{keyword}{true}\ \};}
-\DoxyCodeLine{00223\ }
-\DoxyCodeLine{00224\ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(Comp);}
-\DoxyCodeLine{00225\ }
-\DoxyCodeLine{00226\ \ \ \textcolor{keyword}{const}\ Pel*\ src0\ =\ pcYuvSrc0.bufs[compID].buf;}
-\DoxyCodeLine{00227\ \ \ \textcolor{keyword}{const}\ Pel*\ src1\ =\ pcYuvSrc1.bufs[compID].buf;}
-\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ Pel*\ dst\ \ =\ rpcYuvDst.bufs[compID].buf;}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00231\ \ \ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ =\ clpRngs.comp[compID];}
-\DoxyCodeLine{00232\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ =\ wp0[compID].w;}
-\DoxyCodeLine{00233\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ =\ wp0[compID].offset;}
-\DoxyCodeLine{00234\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ =\ clpRng.bd;}
-\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ IF\_INTERNAL\_FRAC\_BITS(clipBD);}
-\DoxyCodeLine{00236\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ =\ wp0[compID].shift\ +\ shiftNum;}
-\DoxyCodeLine{00237\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ \ \ \ =\ (enableRounding[compID]\ \&\&\ (shift\ >\ 0))\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
-\DoxyCodeLine{00238\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w1\ \ \ \ \ \ \ =\ wp1[compID].w;}
-\DoxyCodeLine{00239\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ height\ \ =\ rpcYuvDst.bufs[compID].height;}
-\DoxyCodeLine{00240\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ width\ \ \ =\ rpcYuvDst.bufs[compID].width;}
-\DoxyCodeLine{00241\ }
-\DoxyCodeLine{00242\ \ \ \textcolor{keyword}{const}\ uint32\_t\ src0Stride\ =\ pcYuvSrc0.bufs[compID].stride;}
-\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{const}\ uint32\_t\ src1Stride\ =\ pcYuvSrc1.bufs[compID].stride;}
-\DoxyCodeLine{00244\ \ \ \textcolor{keyword}{const}\ uint32\_t\ dstStride\ =\ \ rpcYuvDst.bufs[compID].stride;}
-\DoxyCodeLine{00245\ }
-\DoxyCodeLine{00246\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ height\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
-\DoxyCodeLine{00247\ \ \ \{}
-\DoxyCodeLine{00248\ \ \ \ \ \textcolor{comment}{//\ do\ it\ in\ batches\ of\ 4\ (partial\ unroll)}}
-\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ width\ -\/\ 1;}
-\DoxyCodeLine{00250\ }
-\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
-\DoxyCodeLine{00252\ \ \ \ \ \{}
-\DoxyCodeLine{00253\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00254\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
-\DoxyCodeLine{00257\ \ \ \ \ \}}
-\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
-\DoxyCodeLine{00259\ \ \ \ \ \{}
-\DoxyCodeLine{00260\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );}
-\DoxyCodeLine{00261\ \ \ \ \ \}}
-\DoxyCodeLine{00262\ }
-\DoxyCodeLine{00263\ \ \ \ \ src0\ +=\ src0Stride;}
-\DoxyCodeLine{00264\ \ \ \ \ src1\ +=\ src1Stride;}
-\DoxyCodeLine{00265\ \ \ \ \ dst\ +=\ dstStride;}
-\DoxyCodeLine{00266\ \ \ \}\ \textcolor{comment}{//\ y\ loop}}
-\DoxyCodeLine{00267\ \}}
-\DoxyCodeLine{00268\ }
-\DoxyCodeLine{00269\ \textcolor{keywordtype}{void}\ \ WeightPrediction::addWeightUni(\textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
-\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ClpRngs\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ WPScalingParam\ *\textcolor{keyword}{const}\ wp0,}
-\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PelUnitBuf\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
-\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
-\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
-\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
-\DoxyCodeLine{00276\ )}
-\DoxyCodeLine{00277\ \{}
-\DoxyCodeLine{00278\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ (\textcolor{keyword}{const}\ uint32\_t)pcYuvSrc0.bufs.size();}
-\DoxyCodeLine{00279\ }
-\DoxyCodeLine{00280\ \ \ CHECK(\ lumaOnly\ \&\&\ chromaOnly,\ \textcolor{stringliteral}{"{}Not\ allowed\ to\ have\ both\ lumaOnly\ and\ chromaOnly\ selected"{}}\ );}
-\DoxyCodeLine{00281\ \ \ \textcolor{keywordtype}{int}\ firstComponent\ =\ chromaOnly\ ?\ 1\ :\ 0;}
-\DoxyCodeLine{00282\ \ \ \textcolor{keywordtype}{int}\ lastComponent\ \ =\ lumaOnly\ ?\ 0\ :\ maxNumComp;}
-\DoxyCodeLine{00283\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ componentIndex\ =\ firstComponent;\ componentIndex\ <\ numValidComponent\ \&\&\ componentIndex\ <=\ lastComponent;}
-\DoxyCodeLine{00284\ \ \ \ \ \ \ \ componentIndex++)}
-\DoxyCodeLine{00285\ \ \ \{}
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ compID\ =\ ComponentID(componentIndex);}
-\DoxyCodeLine{00287\ }
-\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keyword}{const}\ Pel*\ pSrc0\ =\ pcYuvSrc0.bufs[compID].buf;}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ Pel*\ pDst\ \ =\ rpcYuvDst.bufs[compID].buf;}
-\DoxyCodeLine{00290\ }
-\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keyword}{const}\ ClpRng\&\ clpRng\ \ \ \ =\ clpRngs.comp[compID];}
-\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ \ \ \ \ =\ wp0[compID].w;}
-\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ \ \ \ \ =\ wp0[compID].offset;}
-\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ \ \ \ \ =\ clpRng.bd;}
-\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ \ \ \ \ \ =\ IF\_INTERNAL\_FRAC\_BITS(clipBD);}
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ \ \ \ \ =\ wp0[compID].shift\ +\ shiftNum;}
-\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc0Stride\ \ =\ pcYuvSrc0.bufs[compID].stride;}
-\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iDstStride\ \ \ =\ rpcYuvDst.bufs[compID].stride;}
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iHeight\ \ \ \ \ \ =\ rpcYuvDst.bufs[compID].height;}
-\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iWidth\ \ \ \ \ \ \ =\ rpcYuvDst.bufs[compID].width;}
-\DoxyCodeLine{00302\ }
-\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordflow}{if}\ (w0\ !=\ 1\ <<\ wp0[compID].shift)}
-\DoxyCodeLine{00304\ \ \ \ \ \{}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ =\ (shift\ >\ 0)\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);}
-\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00323\ \ \ \ \ \}}
-\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00325\ \ \ \ \ \{}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ =\ (shiftNum\ >\ 0)\ ?\ (1\ <<\ (shiftNum\ -\/\ 1))\ :\ 0;}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
-\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
-\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
-\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
-\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);}
-\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
-\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
-\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00346\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00347\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00348\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
-\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
-\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
-\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
-\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);}
-\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00366\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00367\ \ \ \ \ \}}
-\DoxyCodeLine{00368\ \ \ \}}
-\DoxyCodeLine{00369\ \}}
-\DoxyCodeLine{00370\ }
-\DoxyCodeLine{00371\ \textcolor{keywordtype}{void}\ \ WeightPrediction::xWeightedPredictionUni(\textcolor{keyword}{const}\ PredictionUnit\ \ \ \ \ \ \ \&pu,}
-\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc,}
-\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ RefPicList\ \ \ \ \ \ \ \ \ \ \ \&eRefPicList,}
-\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PelUnitBuf\ \ \ \ \ \ \ \ \ \ \ \&pcYuvPred,}
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ iRefIdx\_input\textcolor{comment}{/*\ =\ -\/1*/},}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
-\DoxyCodeLine{00379\ )}
-\DoxyCodeLine{00380\ \{}
-\DoxyCodeLine{00381\ \ \ WPScalingParam\ \ *pwp,\ *pwpTmp;}
-\DoxyCodeLine{00382\ }
-\DoxyCodeLine{00383\ \ \ \textcolor{keywordtype}{int}\ iRefIdx\ =\ iRefIdx\_input;}
-\DoxyCodeLine{00384\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx\ <\ 0)}
-\DoxyCodeLine{00385\ \ \ \{}
-\DoxyCodeLine{00386\ \ \ \ \ iRefIdx\ =\ pu.refIdx[eRefPicList];}
-\DoxyCodeLine{00387\ \ \ \}}
-\DoxyCodeLine{00388\ }
-\DoxyCodeLine{00389\ \ \ CHECK(iRefIdx\ <\ 0,\ \textcolor{stringliteral}{"{}Negative\ reference\ picture\ list\ index"{}});}
-\DoxyCodeLine{00390\ }
-\DoxyCodeLine{00391\ \ \ \textcolor{keywordflow}{if}\ (eRefPicList\ ==\ REF\_PIC\_LIST\_0)}
-\DoxyCodeLine{00392\ \ \ \{}
-\DoxyCodeLine{00393\ \ \ \ \ getWpScaling(pu.cs-\/>slice,\ iRefIdx,\ -\/1,\ pwp,\ pwpTmp,\ maxNumComp);}
-\DoxyCodeLine{00394\ \ \ \}}
-\DoxyCodeLine{00395\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00396\ \ \ \{}
-\DoxyCodeLine{00397\ \ \ \ \ getWpScaling(pu.cs-\/>slice,\ -\/1,\ iRefIdx,\ pwpTmp,\ pwp,\ maxNumComp);}
-\DoxyCodeLine{00398\ \ \ \}}
-\DoxyCodeLine{00399\ \ \ addWeightUni(pcYuvSrc,\ pu.cu-\/>slice-\/>clpRngs(),\ pwp,\ pcYuvPred,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
-\DoxyCodeLine{00400\ \}}
-\DoxyCodeLine{00401\ }
-\DoxyCodeLine{00402\ \textcolor{keywordtype}{void}\ \ WeightPrediction::xWeightedPredictionBi(\textcolor{keyword}{const}\ PredictionUnit\ \ \ \ \ \ \ \&pu,}
-\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
-\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ CPelUnitBuf\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
-\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ PelUnitBuf\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
-\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
-\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
-\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
-\DoxyCodeLine{00409\ )}
-\DoxyCodeLine{00410\ \{}
-\DoxyCodeLine{00411\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iRefIdx0\ =\ pu.refIdx[0];}
-\DoxyCodeLine{00412\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iRefIdx1\ =\ pu.refIdx[1];}
-\DoxyCodeLine{00413\ \ \ WPScalingParam\ \ *pwp0;}
-\DoxyCodeLine{00414\ \ \ WPScalingParam\ \ *pwp1;}
-\DoxyCodeLine{00415\ }
-\DoxyCodeLine{00416\ \ \ CHECK(\ !pu.cs-\/>pps-\/>getWPBiPred(),\ \textcolor{stringliteral}{"{}Weighted\ Bi-\/prediction\ disabled"{}}\ );}
-\DoxyCodeLine{00417\ }
-\DoxyCodeLine{00418\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ <\ 0)\ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00419\ }
-\DoxyCodeLine{00420\ \ \ getWpScaling(pu.cu-\/>slice,\ iRefIdx0,\ iRefIdx1,\ pwp0,\ pwp1,\ maxNumComp);}
-\DoxyCodeLine{00421\ }
-\DoxyCodeLine{00422\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ >=\ 0)}
-\DoxyCodeLine{00423\ \ \ \{}
-\DoxyCodeLine{00424\ \ \ \ \ addWeightBi(pcYuvSrc0,\ pcYuvSrc1,\ pu.cu-\/>slice-\/>clpRngs(),\ pwp0,\ pwp1,\ rpcYuvDst,\ \textcolor{keyword}{true},\ maxNumComp,\ lumaOnly,\ chromaOnly);}
-\DoxyCodeLine{00425\ \ \ \}}
-\DoxyCodeLine{00426\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ <\ 0)}
-\DoxyCodeLine{00427\ \ \ \{}
-\DoxyCodeLine{00428\ \ \ \ \ addWeightUni(pcYuvSrc0,\ pu.cu-\/>slice-\/>clpRngs(),\ pwp0,\ rpcYuvDst,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
-\DoxyCodeLine{00429\ \ \ \}}
-\DoxyCodeLine{00430\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ >=\ 0)}
-\DoxyCodeLine{00431\ \ \ \{}
-\DoxyCodeLine{00432\ \ \ \ \ addWeightUni(pcYuvSrc1,\ pu.cu-\/>slice-\/>clpRngs(),\ pwp1,\ rpcYuvDst,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
-\DoxyCodeLine{00433\ \ \ \}}
-\DoxyCodeLine{00434\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00435\ \ \ \{}
-\DoxyCodeLine{00436\ \ \ \ \ THROW(\ \textcolor{stringliteral}{"{}Both\ reference\ picture\ list\ indizes\ are\ negative"{}}\ );}
-\DoxyCodeLine{00437\ \ \ \}}
-\DoxyCodeLine{00438\ \}}
-\DoxyCodeLine{00439\ }
-\DoxyCodeLine{00440\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00001}00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00002}00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00003}00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00004}00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00005}00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00006}00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00007}00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00008}00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00009}00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00010}00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00011}00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00012}00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00013}00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00014}00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00015}00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00016}00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00017}00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00018}00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00019}00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00020}00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00021}00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00022}00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00023}00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00024}00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00025}00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00026}00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00027}00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00028}00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00029}00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00030}00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00031}00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00032}00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00038}00038\ \textcolor{comment}{//\ Include\ files}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00039}00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CommonDef_8h}{CommonDef.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Unit_8h}{Unit.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{InterpolationFilter_8h}{InterpolationFilter.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{WeightPrediction_8h}{WeightPrediction.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CodingStructure_8h}{CodingStructure.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00045}00045\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacevtm}{vtm}}\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00047}00047\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ weightBidir(\ \textcolor{keywordtype}{int}\ w0,\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ P0,\ \textcolor{keywordtype}{int}\ w1,\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ P1,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00048}00048\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00049}00049\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ (\ (w0*(P0\ +\ \mbox{\hyperlink{InterpolationFilter_8h_a97675faf3a08fc4732c1a353989b7b06}{IF\_INTERNAL\_OFFS}})\ +\ w1*(P1\ +\ \mbox{\hyperlink{InterpolationFilter_8h_a97675faf3a08fc4732c1a353989b7b06}{IF\_INTERNAL\_OFFS}})\ +\ round\ +\ (offset\ <<\ (shift-\/1)))\ >>\ shift\ ),\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00050}00050\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00052}00052\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ weightUnidir(\ \textcolor{keywordtype}{int}\ w0,\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00053}00053\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00054}00054\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ (\ (w0*(P0\ +\ \mbox{\hyperlink{InterpolationFilter_8h_a97675faf3a08fc4732c1a353989b7b06}{IF\_INTERNAL\_OFFS}})\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00055}00055\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00056}00056\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00057}00057\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ noWeightUnidir(\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keywordtype}{int}\ offset,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00058}00058\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00059}00059\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ (\ ((P0\ +\ \mbox{\hyperlink{InterpolationFilter_8h_a97675faf3a08fc4732c1a353989b7b06}{IF\_INTERNAL\_OFFS}})\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00060}00060\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00062}00062\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ noWeightOffsetUnidir(\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ P0,\ \textcolor{keywordtype}{int}\ round,\ \textcolor{keywordtype}{int}\ shift,\ \textcolor{keyword}{const}\ ClpRng\&\ clpRng)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00063}00063\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00064}00064\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ (\ ((P0\ +\ \mbox{\hyperlink{InterpolationFilter_8h_a97675faf3a08fc4732c1a353989b7b06}{IF\_INTERNAL\_OFFS}})\ +\ round)\ >>\ shift\ ),\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00065}00065\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00068}00068\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00069}00069\ \textcolor{comment}{//\ Class\ definition}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00070}00070\ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00072}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a290db1cf0b3d72d03bec8375acd97ac3}{00072}}\ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a290db1cf0b3d72d03bec8375acd97ac3}{WeightPrediction::WeightPrediction}}()}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00073}00073\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00074}00074\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00076}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a3bf67541a00a5b9b8424b78293fd67cd}{00076}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a3bf67541a00a5b9b8424b78293fd67cd}{WeightPrediction::getWpScaling}}(\mbox{\hyperlink{classvtm_1_1Slice}{Slice}}\ *pcSlice,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \&iRefIdx0,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \&iRefIdx1,\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\&wp0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\&wp1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ maxNumComp)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00078}00078\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00079}00079\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ <\ 0,\ \textcolor{stringliteral}{"{}Both\ picture\ reference\ list\ indizes\ smaller\ than\ '0'"{}});}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00081}00081\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ wpBiPred\ \ \ \ \ \ \ \ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_acfb15ab6dddc0f171d4944dd44cf28ca}{getPPS}}()-\/>\mbox{\hyperlink{classvtm_1_1PPS_a493aaf59433f3b010b69d43e2c3fdf85}{getWPBiPred}}();}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00082}00082\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bBiPred\ \ \ \ \ \ \ \ \ =\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ >=\ 0);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00083}00083\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bUniPred\ \ \ \ \ \ \ \ =\ !bBiPred;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00084}00084\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00085}00085\ \ \ \textcolor{keywordflow}{if}\ (bUniPred\ ||\ wpBiPred)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00086}00086\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00087}00087\ \ \ \ \ \textcolor{comment}{//\ explicit\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00088}00088\ \ \ \ \ wp0\ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a3fadc53d2267173f9b9731e6f288c11b}{getWpScaling}}(\mbox{\hyperlink{namespacevtm_a6aa563f369ba59110c899a58b4d15ccdac745007141ab71196bbde7c02efef860}{REF\_PIC\_LIST\_0}},\ iRefIdx0);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00089}00089\ \ \ \ \ wp1\ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a3fadc53d2267173f9b9731e6f288c11b}{getWpScaling}}(\mbox{\hyperlink{namespacevtm_a6aa563f369ba59110c899a58b4d15ccda646199142eec3770ba7b7e5dc5bf152c}{REF\_PIC\_LIST\_1}},\ iRefIdx1);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00090}00090\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00091}00091\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00092}00092\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00093}00093\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a27264efd631c4f584ddcb2f5888ae6ed}{THROW}}(\ \textcolor{stringliteral}{"{}Unsupported\ WP\ configuration"{}}\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00094}00094\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00096}00096\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00097}00097\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00098}00098\ \ \ \ \ wp0\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00099}00099\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00100}00100\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx1\ <\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00101}00101\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00102}00102\ \ \ \ \ wp1\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00103}00103\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00105}00105\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ getNumberValidComponents(pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a120e2ce7f9e5f0d9bc1157577a068949}{getSPS}}()-\/>\mbox{\hyperlink{classvtm_1_1SPS_a5c208de4db0d6d5e529d68f2f9bbb815}{getChromaFormatIdc}}());}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00106}00106\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ bUseHighPrecisionPredictionWeighting\ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a120e2ce7f9e5f0d9bc1157577a068949}{getSPS}}()-\/>\mbox{\hyperlink{classvtm_1_1SPS_a7d7ce2f5c21aad1401a701797293edf2}{getSpsRangeExtension}}().\mbox{\hyperlink{classvtm_1_1SPSRExt_aec3c7a330a9402d328e302f2f79fad3f}{getHighPrecisionOffsetsEnabledFlag}}();}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00108}00108\ \ \ \textcolor{keywordflow}{if}\ (bBiPred)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00109}00109\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00110}00110\ \ \ \ \ \textcolor{comment}{//\ Bi-\/predictive\ case}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00111}00111\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yuv\ =\ 0;\ yuv\ <\ numValidComponent\ \&\&\ yuv\ <=\ maxNumComp;\ yuv++)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00112}00112\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00113}00113\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth\ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a120e2ce7f9e5f0d9bc1157577a068949}{getSPS}}()-\/>\mbox{\hyperlink{classvtm_1_1SPS_ac73e18c1d6a4d4bb2e653dbd000833b4}{getBitDepth}}(toChannelType(\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(yuv)));}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00114}00114\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offsetScalingFactor\ =\ bUseHighPrecisionPredictionWeighting\ ?\ 1\ :\ (1\ <<\ (bitDepth\ -\/\ 8));}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00116}00116\ \ \ \ \ \ \ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}}\ \ \ \ \ \ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a036f229f08693250d8fad840a1d75bba}{codedWeight}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00117}00117\ \ \ \ \ \ \ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}}\ \ \ \ \ \ =\ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a036f229f08693250d8fad840a1d75bba}{codedWeight}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00118}00118\ \ \ \ \ \ \ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a25a83ec64d29b196bd6b2934e9ae1b89}{o}}\ \ \ \ \ \ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a96617409ad9b738ecec3f4faa4d8cdf5}{codedOffset}}\ *\ offsetScalingFactor;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00119}00119\ \ \ \ \ \ \ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a25a83ec64d29b196bd6b2934e9ae1b89}{o}}\ \ \ \ \ \ =\ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a96617409ad9b738ecec3f4faa4d8cdf5}{codedOffset}}\ *\ offsetScalingFactor;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00120}00120\ \ \ \ \ \ \ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}}\ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a25a83ec64d29b196bd6b2934e9ae1b89}{o}}\ +\ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a25a83ec64d29b196bd6b2934e9ae1b89}{o}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00121}00121\ \ \ \ \ \ \ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ \ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a9874557f2c76744cefb01665978bd82e}{log2WeightDenom}}\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00122}00122\ \ \ \ \ \ \ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}}\ \ =\ (1\ <<\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a9874557f2c76744cefb01665978bd82e}{log2WeightDenom}});}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00123}00123\ \ \ \ \ \ \ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}}\ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00124}00124\ \ \ \ \ \ \ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00125}00125\ \ \ \ \ \ \ wp1[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}}\ =\ wp0[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00126}00126\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00127}00127\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00128}00128\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00129}00129\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00130}00130\ \ \ \ \ \textcolor{comment}{//\ UniPred}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00131}00131\ \ \ \ \ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ pwp\ =\ (iRefIdx0\ >=\ 0)\ ?\ wp0\ :\ wp1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00133}00133\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yuv\ =\ 0;\ yuv\ <\ numValidComponent\ \&\&\ yuv\ <=\ maxNumComp;\ yuv++)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00134}00134\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00135}00135\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ bitDepth\ \ \ \ \ \ \ \ \ \ \ \ =\ pcSlice-\/>\mbox{\hyperlink{classvtm_1_1Slice_a120e2ce7f9e5f0d9bc1157577a068949}{getSPS}}()-\/>\mbox{\hyperlink{classvtm_1_1SPS_ac73e18c1d6a4d4bb2e653dbd000833b4}{getBitDepth}}(toChannelType(\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(yuv)));}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00136}00136\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offsetScalingFactor\ =\ bUseHighPrecisionPredictionWeighting\ ?\ 1\ :\ (1\ <<\ (bitDepth\ -\/\ 8));}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00137}00137\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00138}00138\ \ \ \ \ \ \ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}}\ \ \ \ \ \ =\ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a036f229f08693250d8fad840a1d75bba}{codedWeight}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00139}00139\ \ \ \ \ \ \ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}}\ =\ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a96617409ad9b738ecec3f4faa4d8cdf5}{codedOffset}}\ *\ offsetScalingFactor;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00140}00140\ \ \ \ \ \ \ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ \ =\ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a9874557f2c76744cefb01665978bd82e}{log2WeightDenom}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00141}00141\ \ \ \ \ \ \ pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}}\ \ =\ (pwp[yuv].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a9874557f2c76744cefb01665978bd82e}{log2WeightDenom}}\ >=\ 1)\ ?\ (1\ <<\ (pwp[yuv].log2WeightDenom\ -\/\ 1))\ :\ (0);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00142}00142\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00143}00143\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00144}00144\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00145}00145\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00146}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a44633944707e09d61725bb6d92426dbb}{00146}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a44633944707e09d61725bb6d92426dbb}{WeightPrediction::addWeightBi}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00148}00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRngs}{ClpRngs}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ wp0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ wp1,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00151}00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bRoundLuma\ \textcolor{comment}{/*=\ true*/},}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00153}00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00156}00156\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00157}00157\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00158}00158\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enableRounding[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]\ =\ \{\ bRoundLuma,\ \textcolor{keyword}{true},\ \textcolor{keyword}{true}\ \};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00159}00159\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00160}00160\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ (\textcolor{keyword}{const}\ uint32\_t)pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}.\mbox{\hyperlink{classvtm_1_1static__vector_aba8388bd78a0da94d6d3c29abfbe27e6}{size}}();}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00161}00161\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00162}00162\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ lumaOnly\ \&\&\ chromaOnly,\ \textcolor{stringliteral}{"{}Not\ allowed\ to\ have\ both\ lumaOnly\ and\ chromaOnly\ selected"{}}\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00163}00163\ \ \ \textcolor{keywordtype}{int}\ firstComponent\ =\ chromaOnly\ ?\ 1\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00164}00164\ \ \ \textcolor{keywordtype}{int}\ lastComponent\ =\ lumaOnly\ ?\ 0\ :\ maxNumComp;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00165}00165\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ componentIndex\ =\ firstComponent;\ componentIndex\ <\ numValidComponent\ \&\&\ componentIndex\ <=\ lastComponent;\ componentIndex++)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00166}00166\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00167}00167\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compID\ =\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(componentIndex);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00169}00169\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ pSrc0\ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00170}00170\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ pSrc1\ =\ pcYuvSrc1.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ pDst\ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00172}00172\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00173}00173\ \ \ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00174}00174\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRng}{ClpRng}}\&\ clpRng\ =\ clpRngs.\mbox{\hyperlink{structvtm_1_1ClpRngs_a685983568f447b62019236a51542d904}{comp}}[compID];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00175}00175\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00176}00176\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00177}00177\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ =\ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a7b842e477fd61f23414bd16d4d616646}{bd}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00178}00178\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ \mbox{\hyperlink{InterpolationFilter_8h_ae6bfe737f8df23f1b494e6578d77b137}{IF\_INTERNAL\_FRAC\_BITS}}(clipBD);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00179}00179\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ +\ shiftNum;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00180}00180\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ \ \ \ =\ (enableRounding[compID]\ \&\&\ (shift\ >\ 0))\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00181}00181\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w1\ \ \ \ \ \ \ =\ wp1[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00182}00182\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iHeight\ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].height;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00183}00183\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iWidth\ \ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].width;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00184}00184\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00185}00185\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc0Stride\ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00186}00186\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc1Stride\ =\ pcYuvSrc1.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00187}00187\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iDstStride\ =\ \ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00188}00188\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00189}00189\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00190}00190\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00191}00191\ \ \ \ \ \ \ \textcolor{comment}{//\ do\ it\ in\ batches\ of\ 4\ (partial\ unroll)}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00192}00192\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00193}00193\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00194}00194\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00195}00195\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00197}00197\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00200}00200\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00201}00201\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00202}00202\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00203}00203\ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightBidir(w0,\ pSrc0[x],\ w1,\ pSrc1[x],\ round,\ shift,\ offset,\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00204}00204\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00205}00205\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00206}00206\ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00207}00207\ \ \ \ \ \ \ pSrc1\ +=\ iSrc1Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00208}00208\ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00209}00209\ \ \ \ \ \}\ \textcolor{comment}{//\ y\ loop}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00210}00210\ \ \ \}\ \textcolor{comment}{//\ compID\ loop}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00211}00211\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00213}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a900725f10bc681a6bddfb8e2d5df1284}{00213}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a900725f10bc681a6bddfb8e2d5df1284}{WeightPrediction::addWeightBiComponent}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRngs}{ClpRngs}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ wp0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ wp1,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bRoundLuma\ \textcolor{comment}{/*=\ true*/},}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ \ \ \ \ \ \ Comp)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00221}00221\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00222}00222\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enableRounding[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]\ =\ \{\ bRoundLuma,\ \textcolor{keyword}{true},\ \textcolor{keyword}{true}\ \};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00223}00223\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00224}00224\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compID\ =\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(Comp);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00225}00225\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00226}00226\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ src0\ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00227}00227\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ src1\ =\ pcYuvSrc1.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ dst\ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00229}00229\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00230}00230\ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00231}00231\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRng}{ClpRng}}\&\ clpRng\ =\ clpRngs.\mbox{\hyperlink{structvtm_1_1ClpRngs_a685983568f447b62019236a51542d904}{comp}}[compID];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00232}00232\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00233}00233\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00234}00234\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ =\ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a7b842e477fd61f23414bd16d4d616646}{bd}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00235}00235\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ =\ \mbox{\hyperlink{InterpolationFilter_8h_ae6bfe737f8df23f1b494e6578d77b137}{IF\_INTERNAL\_FRAC\_BITS}}(clipBD);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00236}00236\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ +\ shiftNum;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00237}00237\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ \ \ \ =\ (enableRounding[compID]\ \&\&\ (shift\ >\ 0))\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00238}00238\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w1\ \ \ \ \ \ \ =\ wp1[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00239}00239\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ height\ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].height;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00240}00240\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ width\ \ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].width;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00242}00242\ \ \ \textcolor{keyword}{const}\ uint32\_t\ src0Stride\ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00243}00243\ \ \ \textcolor{keyword}{const}\ uint32\_t\ src1Stride\ =\ pcYuvSrc1.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00244}00244\ \ \ \textcolor{keyword}{const}\ uint32\_t\ dstStride\ =\ \ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00245}00245\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00246}00246\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ height\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00247}00247\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00248}00248\ \ \ \ \ \textcolor{comment}{//\ do\ it\ in\ batches\ of\ 4\ (partial\ unroll)}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00249}00249\ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ width\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00250}00250\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00251}00251\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00252}00252\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00253}00253\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00254}00254\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00255}00255\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00256}00256\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00257}00257\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00258}00258\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00259}00259\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00260}00260\ \ \ \ \ \ \ dst[x]\ =\ weightBidir(w0,\ src0[x],\ w1,\ src1[x],\ round,\ shift,\ offset,\ clpRng\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00261}00261\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00262}00262\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00263}00263\ \ \ \ \ src0\ +=\ src0Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00264}00264\ \ \ \ \ src1\ +=\ src1Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00265}00265\ \ \ \ \ dst\ +=\ dstStride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00266}00266\ \ \ \}\ \textcolor{comment}{//\ y\ loop}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00267}00267\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00268}00268\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00269}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a1a03e025948ae4dc2a71e21796100f5c}{00269}}\ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a1a03e025948ae4dc2a71e21796100f5c}{WeightPrediction::addWeightUni}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00270}00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRngs}{ClpRngs}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \&clpRngs,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00271}00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ *\textcolor{keyword}{const}\ wp0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00272}00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00273}00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00274}00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00275}00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00276}00276\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00277}00277\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00278}00278\ \ \ \textcolor{keyword}{const}\ uint32\_t\ numValidComponent\ =\ (\textcolor{keyword}{const}\ uint32\_t)pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}.\mbox{\hyperlink{classvtm_1_1static__vector_aba8388bd78a0da94d6d3c29abfbe27e6}{size}}();}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00279}00279\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00280}00280\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ lumaOnly\ \&\&\ chromaOnly,\ \textcolor{stringliteral}{"{}Not\ allowed\ to\ have\ both\ lumaOnly\ and\ chromaOnly\ selected"{}}\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00281}00281\ \ \ \textcolor{keywordtype}{int}\ firstComponent\ =\ chromaOnly\ ?\ 1\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00282}00282\ \ \ \textcolor{keywordtype}{int}\ lastComponent\ \ =\ lumaOnly\ ?\ 0\ :\ maxNumComp;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00283}00283\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ componentIndex\ =\ firstComponent;\ componentIndex\ <\ numValidComponent\ \&\&\ componentIndex\ <=\ lastComponent;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00284}00284\ \ \ \ \ \ \ \ componentIndex++)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00285}00285\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00286}00286\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compID\ =\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(componentIndex);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00287}00287\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00288}00288\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ pSrc0\ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ pDst\ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].buf;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00290}00290\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00291}00291\ \ \ \ \ \textcolor{comment}{//\ Luma\ :\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00292}00292\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1ClpRng}{ClpRng}}\&\ clpRng\ \ \ \ =\ clpRngs.\mbox{\hyperlink{structvtm_1_1ClpRngs_a685983568f447b62019236a51542d904}{comp}}[compID];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00293}00293\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ w0\ \ \ \ \ \ \ \ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00294}00294\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ offset\ \ \ \ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00295}00295\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ clipBD\ \ \ \ \ \ \ =\ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a7b842e477fd61f23414bd16d4d616646}{bd}};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00296}00296\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shiftNum\ \ \ \ \ \ =\ \mbox{\hyperlink{InterpolationFilter_8h_ae6bfe737f8df23f1b494e6578d77b137}{IF\_INTERNAL\_FRAC\_BITS}}(clipBD);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00297}00297\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ shift\ \ \ \ \ \ \ \ =\ wp0[compID].\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}}\ +\ shiftNum;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00298}00298\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iSrc0Stride\ \ =\ pcYuvSrc0.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00299}00299\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ iDstStride\ \ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00300}00300\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iHeight\ \ \ \ \ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].height;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00301}00301\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ iWidth\ \ \ \ \ \ \ =\ rpcYuvDst.\mbox{\hyperlink{structvtm_1_1UnitBuf_aadc01e845d02ba7a08ed6427a8e05d20}{bufs}}[compID].width;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00302}00302\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00303}00303\ \ \ \ \ \textcolor{keywordflow}{if}\ (w0\ !=\ 1\ <<\ wp0[compID].shift)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00304}00304\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00305}00305\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ =\ (shift\ >\ 0)\ ?\ (1\ <<\ (shift\ -\/\ 1))\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00306}00306\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00307}00307\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00308}00308\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00312}00312\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ weightUnidir(w0,\ pSrc0[x],\ round,\ shift,\ offset,\ clpRng);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00320}00320\ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00321}00321\ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00322}00322\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00323}00323\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00324}00324\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00325}00325\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00326}00326\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ round\ =\ (shiftNum\ >\ 0)\ ?\ (1\ <<\ (shiftNum\ -\/\ 1))\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00327}00327\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00328}00328\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00330}00330\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00331}00331\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00332}00332\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00333}00333\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00334}00334\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00335}00335\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00336}00336\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00337}00337\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00338}00338\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00339}00339\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00340}00340\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00341}00341\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightOffsetUnidir(pSrc0[x],\ round,\ shiftNum,\ clpRng);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00342}00342\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00343}00343\ \ \ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00344}00344\ \ \ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00345}00345\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00346}00346\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00347}00347\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00348}00348\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00349}00349\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y\ =\ iHeight\ -\/\ 1;\ y\ >=\ 0;\ y-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00350}00350\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00351}00351\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ x\ =\ iWidth\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00352}00352\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 3;\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00354}00354\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00355}00355\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00356}00356\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);\ x-\/-\/;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00358}00358\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ x\ >=\ 0;\ x-\/-\/)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00361}00361\ \ \ \ \ \ \ \ \ \ \ \ \ pDst[x]\ =\ noWeightUnidir(pSrc0[x],\ round,\ shiftNum,\ offset,\ clpRng);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00362}00362\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00363}00363\ \ \ \ \ \ \ \ \ \ \ pSrc0\ +=\ iSrc0Stride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00364}00364\ \ \ \ \ \ \ \ \ \ \ pDst\ +=\ iDstStride;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00365}00365\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00366}00366\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00367}00367\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00368}00368\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00369}00369\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00370}00370\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00371}\mbox{\hyperlink{classvtm_1_1WeightPrediction_aefa37d1dff25cce348f5e3f72bf76c11}{00371}}\ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_aefa37d1dff25cce348f5e3f72bf76c11}{WeightPrediction::xWeightedPredictionUni}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1PredictionUnit}{PredictionUnit}}\ \ \ \ \ \ \ \&pu,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00372}00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00373}00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_a6aa563f369ba59110c899a58b4d15ccd}{RefPicList}}\ \ \ \ \ \ \ \ \ \ \ \&eRefPicList,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \ \&pcYuvPred,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ iRefIdx\_input\textcolor{comment}{/*\ =\ -\/1*/},}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00379}00379\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00380}00380\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00381}00381\ \ \ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \ *pwp,\ *pwpTmp;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00382}00382\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00383}00383\ \ \ \textcolor{keywordtype}{int}\ iRefIdx\ =\ iRefIdx\_input;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00384}00384\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx\ <\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00385}00385\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00386}00386\ \ \ \ \ iRefIdx\ =\ pu.\mbox{\hyperlink{structvtm_1_1InterPredictionData_af13e907ecac44f72e29ad6c81286441f}{refIdx}}[eRefPicList];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00387}00387\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00388}00388\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00389}00389\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(iRefIdx\ <\ 0,\ \textcolor{stringliteral}{"{}Negative\ reference\ picture\ list\ index"{}});}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00390}00390\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00391}00391\ \ \ \textcolor{keywordflow}{if}\ (eRefPicList\ ==\ \mbox{\hyperlink{namespacevtm_a6aa563f369ba59110c899a58b4d15ccdac745007141ab71196bbde7c02efef860}{REF\_PIC\_LIST\_0}})}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00392}00392\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00393}00393\ \ \ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a3bf67541a00a5b9b8424b78293fd67cd}{getWpScaling}}(pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_ae2b2c7af37971eb92551a66adb96fae9}{cs}}-\/>\mbox{\hyperlink{classvtm_1_1CodingStructure_a966f805d2e453fabb854558a7fe944db}{slice}},\ iRefIdx,\ -\/1,\ pwp,\ pwpTmp,\ maxNumComp);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00394}00394\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00395}00395\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00396}00396\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00397}00397\ \ \ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a3bf67541a00a5b9b8424b78293fd67cd}{getWpScaling}}(pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_ae2b2c7af37971eb92551a66adb96fae9}{cs}}-\/>\mbox{\hyperlink{classvtm_1_1CodingStructure_a966f805d2e453fabb854558a7fe944db}{slice}},\ -\/1,\ iRefIdx,\ pwpTmp,\ pwp,\ maxNumComp);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00398}00398\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00399}00399\ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a1a03e025948ae4dc2a71e21796100f5c}{addWeightUni}}(pcYuvSrc,\ pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_aa7bd1fca913c40a61261b8c3a7a3b87c}{cu}}-\/>\mbox{\hyperlink{structvtm_1_1CodingUnit_abaf9eb7ee29555e2c1f0569b3d66bf04}{slice}}-\/>\mbox{\hyperlink{classvtm_1_1Slice_a6924412441ff2e8f1a1dd2969dfbab35}{clpRngs}}(),\ pwp,\ pcYuvPred,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00400}00400\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00401}00401\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00402}\mbox{\hyperlink{classvtm_1_1WeightPrediction_a20664a4f2a359dff7631ac674b8f7359}{00402}}\ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a20664a4f2a359dff7631ac674b8f7359}{WeightPrediction::xWeightedPredictionBi}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1PredictionUnit}{PredictionUnit}}\ \ \ \ \ \ \ \&pu,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00403}00403\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc0,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00404}00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{CPelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \&pcYuvSrc1,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00405}00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \ \ \ \ \ \ \ \ \ \ \&rpcYuvDst,}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00406}00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ \ \ \ \ \ \ maxNumComp}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00407}00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lumaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00408}00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ chromaOnly}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00409}00409\ )}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00410}00410\ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00411}00411\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iRefIdx0\ =\ pu.\mbox{\hyperlink{structvtm_1_1InterPredictionData_af13e907ecac44f72e29ad6c81286441f}{refIdx}}[0];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00412}00412\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iRefIdx1\ =\ pu.\mbox{\hyperlink{structvtm_1_1InterPredictionData_af13e907ecac44f72e29ad6c81286441f}{refIdx}}[1];}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00413}00413\ \ \ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \ *pwp0;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00414}00414\ \ \ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \ *pwp1;}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00415}00415\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00416}00416\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ !pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_ae2b2c7af37971eb92551a66adb96fae9}{cs}}-\/>\mbox{\hyperlink{classvtm_1_1CodingStructure_a471ba665058ea521d167041c8f25d60b}{pps}}-\/>\mbox{\hyperlink{classvtm_1_1PPS_a493aaf59433f3b010b69d43e2c3fdf85}{getWPBiPred}}(),\ \textcolor{stringliteral}{"{}Weighted\ Bi-\/prediction\ disabled"{}}\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00417}00417\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00418}00418\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ <\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00419}00419\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00420}00420\ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a3bf67541a00a5b9b8424b78293fd67cd}{getWpScaling}}(pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_aa7bd1fca913c40a61261b8c3a7a3b87c}{cu}}-\/>\mbox{\hyperlink{structvtm_1_1CodingUnit_abaf9eb7ee29555e2c1f0569b3d66bf04}{slice}},\ iRefIdx0,\ iRefIdx1,\ pwp0,\ pwp1,\ maxNumComp);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00421}00421\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00422}00422\ \ \ \textcolor{keywordflow}{if}\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ >=\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00423}00423\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00424}00424\ \ \ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a44633944707e09d61725bb6d92426dbb}{addWeightBi}}(pcYuvSrc0,\ pcYuvSrc1,\ pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_aa7bd1fca913c40a61261b8c3a7a3b87c}{cu}}-\/>\mbox{\hyperlink{structvtm_1_1CodingUnit_abaf9eb7ee29555e2c1f0569b3d66bf04}{slice}}-\/>\mbox{\hyperlink{classvtm_1_1Slice_a6924412441ff2e8f1a1dd2969dfbab35}{clpRngs}}(),\ pwp0,\ pwp1,\ rpcYuvDst,\ \textcolor{keyword}{true},\ maxNumComp,\ lumaOnly,\ chromaOnly);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00425}00425\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00426}00426\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iRefIdx0\ >=\ 0\ \&\&\ iRefIdx1\ <\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00427}00427\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00428}00428\ \ \ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a1a03e025948ae4dc2a71e21796100f5c}{addWeightUni}}(pcYuvSrc0,\ pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_aa7bd1fca913c40a61261b8c3a7a3b87c}{cu}}-\/>\mbox{\hyperlink{structvtm_1_1CodingUnit_abaf9eb7ee29555e2c1f0569b3d66bf04}{slice}}-\/>\mbox{\hyperlink{classvtm_1_1Slice_a6924412441ff2e8f1a1dd2969dfbab35}{clpRngs}}(),\ pwp0,\ rpcYuvDst,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00429}00429\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00430}00430\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iRefIdx0\ <\ 0\ \&\&\ iRefIdx1\ >=\ 0)}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00431}00431\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00432}00432\ \ \ \ \ \mbox{\hyperlink{classvtm_1_1WeightPrediction_a1a03e025948ae4dc2a71e21796100f5c}{addWeightUni}}(pcYuvSrc1,\ pu.\mbox{\hyperlink{structvtm_1_1PredictionUnit_aa7bd1fca913c40a61261b8c3a7a3b87c}{cu}}-\/>\mbox{\hyperlink{structvtm_1_1CodingUnit_abaf9eb7ee29555e2c1f0569b3d66bf04}{slice}}-\/>\mbox{\hyperlink{classvtm_1_1Slice_a6924412441ff2e8f1a1dd2969dfbab35}{clpRngs}}(),\ pwp1,\ rpcYuvDst,\ maxNumComp,\ lumaOnly,\ chromaOnly);}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00433}00433\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00434}00434\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00435}00435\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00436}00436\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a27264efd631c4f584ddcb2f5888ae6ed}{THROW}}(\ \textcolor{stringliteral}{"{}Both\ reference\ picture\ list\ indizes\ are\ negative"{}}\ );}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00437}00437\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00438}00438\ \}}
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00439}00439\ }
+\DoxyCodeLine{\Hypertarget{WeightPrediction_8cpp_source_l00440}00440\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
 
 \end{DoxyCode}

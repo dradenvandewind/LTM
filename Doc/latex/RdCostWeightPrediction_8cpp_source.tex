@@ -1,636 +1,636 @@
 \doxysection{Rd\+Cost\+Weight\+Prediction.\+cpp}
-\label{RdCostWeightPrediction_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/RdCostWeightPrediction.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/RdCostWeightPrediction.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{RdCostWeightPrediction_8cpp_source}{}\label{RdCostWeightPrediction_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/RdCostWeightPrediction.cpp@{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/RdCostWeightPrediction.cpp}}
+\mbox{\hyperlink{RdCostWeightPrediction_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{00033\ }
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}RdCostWeightPrediction.h"{}}}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}RdCost.h"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <math.h>}}
-\DoxyCodeLine{00043\ }
-\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }vtm\ \{}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{keyword}{static}\ Distortion\ xCalcHADs2x2w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
-\DoxyCodeLine{00047\ \textcolor{keyword}{static}\ Distortion\ xCalcHADs4x4w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
-\DoxyCodeLine{00048\ \textcolor{keyword}{static}\ Distortion\ xCalcHADs8x8w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00051\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00052\ \textcolor{comment}{//\ SAD}}
-\DoxyCodeLine{00053\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00058\ Distortion\ RdCostWeightPrediction::xGetSADw(\ \textcolor{keyword}{const}\ DistParam\ \&rcDtParam\ )}
-\DoxyCodeLine{00059\ \{}
-\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.org.buf;}
-\DoxyCodeLine{00061\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.cur.buf;}
-\DoxyCodeLine{00062\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.org.width;}
-\DoxyCodeLine{00063\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.cur.stride;}
-\DoxyCodeLine{00064\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.org.stride;}
-\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ compID\ \ \ \ \ =\ rcDtParam.compID;}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \ \ CHECK(\ compID\ >=\ MAX\_NUM\_COMPONENT,\ \textcolor{stringliteral}{"{}Invalid\ component"{}}\ );}
-\DoxyCodeLine{00068\ }
-\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur\ \ \ \ \ \ =\ rcDtParam.wpCur[compID];}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ w0\ \ \ \ \ \ \ \ \ =\ wpCur.w;}
-\DoxyCodeLine{00072\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ \ \ \ \ =\ wpCur.offset;}
-\DoxyCodeLine{00073\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ shift\ \ \ \ \ \ =\ wpCur.shift;}
-\DoxyCodeLine{00074\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ round\ \ \ \ \ \ =\ wpCur.round;}
-\DoxyCodeLine{00075\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ distortionShift\ =\ DISTORTION\_PRECISION\_ADJUSTMENT(rcDtParam.bitDepth);}
-\DoxyCodeLine{00076\ }
-\DoxyCodeLine{00077\ \ \ Distortion\ uiSum\ =\ 0;}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#if\ !U0040\_MODIFIED\_WEIGHTEDPREDICTION\_WITH\_BIPRED\_AND\_CLIPPING}}
-\DoxyCodeLine{00080\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00081\ \ \ \{}
-\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00083\ \ \ \ \ \{}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00085\ }
-\DoxyCodeLine{00086\ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
-\DoxyCodeLine{00087\ \ \ \ \ \}}
-\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00089\ \ \ \ \ \{}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00091\ \ \ \ \ \}}
-\DoxyCodeLine{00092\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00093\ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00094\ \ \ \}}
-\DoxyCodeLine{00095\ }
-\DoxyCodeLine{00096\ \ \ \textcolor{comment}{//rcDtParam.compID\ =\ MAX\_NUM\_COMPONENT;\ \ //\ reset\ for\ DEBUG\ (assert\ test)}}
-\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00098\ \ \ ClpRng\ clpRng;\ \textcolor{comment}{//\ this\ just\ affects\ the\ cost}}
-\DoxyCodeLine{00099\ \ \ clpRng.min\ =\ 0;}
-\DoxyCodeLine{00100\ \ \ clpRng.max\ =\ (1\ <<\ rcDtParam.bitDepth)\ -\/\ 1;}
-\DoxyCodeLine{00101\ }
-\DoxyCodeLine{00102\ \ \ \textcolor{comment}{//\ Default\ weight}}
-\DoxyCodeLine{00103\ \ \ \textcolor{keywordflow}{if}\ (w0\ ==\ 1\ <<\ shift)}
-\DoxyCodeLine{00104\ \ \ \{}
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{comment}{//\ no\ offset}}
-\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
-\DoxyCodeLine{00107\ \ \ \ \ \{}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ piCur[n]\ );}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00121\ \ \ \ \ \}}
-\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00123\ \ \ \ \ \{}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{comment}{//\ Lets\ not\ clip\ for\ the\ bipredictive\ case\ since\ clipping\ should\ be\ done\ after}}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \textcolor{comment}{//\ combining\ both\ elements.\ Unfortunately\ the\ code\ uses\ the\ suboptimal\ "{}subtraction"{}}}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{comment}{//\ method,\ which\ is\ faster\ but\ introduces\ the\ clipping\ issue\ (therefore\ Bipred\ is\ suboptimal).}}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.isBiPred)}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ (piCur[n]\ +\ offset)\ );}
-\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00139\ }
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ =\ ClipPel(\ piCur[n]\ +\ offset,\ clpRng);}
-\DoxyCodeLine{00151\ }
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00162\ \ \ \ \ \}}
-\DoxyCodeLine{00163\ \ \ \}}
-\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00165\ \ \ \{}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Lets\ not\ clip\ for\ the\ bipredictive\ case\ since\ clipping\ should\ be\ done\ after}}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{//\ combining\ both\ elements.\ Unfortunately\ the\ code\ uses\ the\ suboptimal\ "{}subtraction"{}}}
-\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ method,\ which\ is\ faster\ but\ introduces\ the\ clipping\ issue\ (therefore\ Bipred\ is\ suboptimal).}}
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.isBiPred)}
-\DoxyCodeLine{00170\ \ \ \ \ \{}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00182\ }
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00186\ \ \ \ \ \}}
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00188\ \ \ \ \ \{}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ =\ ClipPel(\ (w0*piCur[n]\ +\ round)\ >>\ shift,\ clpRng);}
-\DoxyCodeLine{00196\ }
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ =\ ClipPel(((w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset,\ \ clpRng)\ ;}
-\DoxyCodeLine{00214\ }
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.maximumDistortionForEarlyExit\ <\ \ (\ uiSum\ >>\ distortionShift))}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00225\ \ \ \ \ \}}
-\DoxyCodeLine{00226\ \ \ \}}
-\DoxyCodeLine{00227\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ \ //\ reset\ for\ DEBUG\ (assert\ test)}}
-\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
-\DoxyCodeLine{00231\ \}}
-\DoxyCodeLine{00232\ }
-\DoxyCodeLine{00233\ }
-\DoxyCodeLine{00234\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00235\ \textcolor{comment}{//\ SSE}}
-\DoxyCodeLine{00236\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00241\ Distortion\ RdCostWeightPrediction::xGetSSEw(\ \textcolor{keyword}{const}\ DistParam\ \&rcDtParam\ )}
-\DoxyCodeLine{00242\ \{}
-\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.org.buf;}
-\DoxyCodeLine{00244\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.cur.buf;}
-\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.org.width;}
-\DoxyCodeLine{00246\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.cur.stride;}
-\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.org.stride;}
-\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{const}\ ComponentID\ \ \ \ \ compID\ \ \ \ \ =\ rcDtParam.compID;}
-\DoxyCodeLine{00249\ }
-\DoxyCodeLine{00250\ \ \ CHECK(\ rcDtParam.subShift\ !=\ 0,\ \textcolor{stringliteral}{"{}Subshift\ not\ supported"{}}\ );\ \textcolor{comment}{//\ NOTE:\ what\ is\ this\ protecting?}}
-\DoxyCodeLine{00251\ \ \ CHECK(\ compID\ >=\ MAX\_NUM\_COMPONENT,\ \textcolor{stringliteral}{"{}Invalid\ channel"{}}\ );}
-\DoxyCodeLine{00252\ }
-\DoxyCodeLine{00253\ \ \ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur\ \ \ \ \ \ \ \ \ \ \ =\ rcDtParam.wpCur[compID];}
-\DoxyCodeLine{00254\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ w0\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ wpCur.w;}
-\DoxyCodeLine{00255\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ \ \ \ \ \ \ \ \ \ =\ wpCur.offset;}
-\DoxyCodeLine{00256\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ shift\ \ \ \ \ \ \ \ \ \ \ =\ wpCur.shift;}
-\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ round\ \ \ \ \ \ \ \ \ \ \ =\ wpCur.round;}
-\DoxyCodeLine{00258\ \ \ \textcolor{keyword}{const}\ uint32\_t\ distortionShift\ =\ DISTORTION\_PRECISION\_ADJUSTMENT(rcDtParam.bitDepth)\ <<\ 1;}
-\DoxyCodeLine{00259\ }
-\DoxyCodeLine{00260\ \ \ Distortion\ sum\ =\ 0;}
-\DoxyCodeLine{00261\ }
-\DoxyCodeLine{00262\ \textcolor{preprocessor}{\#if\ !U0040\_MODIFIED\_WEIGHTEDPREDICTION\_WITH\_BIPRED\_AND\_CLIPPING}}
-\DoxyCodeLine{00263\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height\ ;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00264\ \ \ \{}
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00266\ \ \ \ \ \{}
-\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ \ \ \ \ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00268\ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ residual\ =\ piOrg[n]\ -\/\ pred;}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ sum\ +=\ (\ Distortion(residual)\ *\ Distortion(residual)\ )\ >>\ distortionShift;}
-\DoxyCodeLine{00270\ \ \ \ \ \}}
-\DoxyCodeLine{00271\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00272\ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00273\ \ \ \}}
-\DoxyCodeLine{00274\ }
-\DoxyCodeLine{00275\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ //\ reset\ for\ DEBUG\ (assert\ test)}}
-\DoxyCodeLine{00276\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00277\ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.isBiPred)}
-\DoxyCodeLine{00278\ \ \ \{}
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height\ ;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00280\ \ \ \ \ \{}
-\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00282\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ \ \ \ \ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ residual\ =\ piOrg[n]\ -\/\ pred;}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ sum\ +=\ (\ Distortion(residual)\ *\ Distortion(residual)\ )\ >>\ distortionShift;}
-\DoxyCodeLine{00286\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00287\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00289\ \ \ \ \ \}}
-\DoxyCodeLine{00290\ \ \ \}}
-\DoxyCodeLine{00291\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00292\ \ \ \{}
-\DoxyCodeLine{00293\ \ \ \ \ ClpRng\ clpRng;\ \ \textcolor{comment}{//\ this\ just\ affects\ the\ cost\ -\/\ fix\ this\ later}}
-\DoxyCodeLine{00294\ \ \ \ \ clpRng.min\ =\ 0;}
-\DoxyCodeLine{00295\ \ \ \ \ clpRng.max\ =\ (1\ <<\ rcDtParam.bitDepth)\ -\/\ 1;}
-\DoxyCodeLine{00296\ }
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.org.height;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
-\DoxyCodeLine{00298\ \ \ \ \ \{}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ pred\ \ \ \ \ =\ ClipPel((\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng)\ ;}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Pel\ residual\ =\ piOrg[n]\ -\/\ pred;}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ sum\ +=\ (\ Distortion(residual)\ *\ Distortion(residual)\ )\ >>\ distortionShift;}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00307\ \ \ \ \ \}}
-\DoxyCodeLine{00308\ \ \ \}}
-\DoxyCodeLine{00309\ }
-\DoxyCodeLine{00310\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ //\ reset\ for\ DEBUG\ (assert\ test)}}
-\DoxyCodeLine{00311\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00312\ }
-\DoxyCodeLine{00313\ \ \ \textcolor{keywordflow}{return}\ sum;}
-\DoxyCodeLine{00314\ \}}
-\DoxyCodeLine{00315\ }
-\DoxyCodeLine{00316\ }
-\DoxyCodeLine{00317\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00318\ \textcolor{comment}{//\ HADAMARD\ with\ step\ (used\ in\ fractional\ search)}}
-\DoxyCodeLine{00319\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
-\DoxyCodeLine{00321\ Distortion\ xCalcHADs2x2w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
-\DoxyCodeLine{00322\ \{}
-\DoxyCodeLine{00323\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.round;}
-\DoxyCodeLine{00324\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.shift;}
-\DoxyCodeLine{00325\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.offset;}
-\DoxyCodeLine{00326\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.w;}
-\DoxyCodeLine{00327\ }
-\DoxyCodeLine{00328\ \ \ Distortion\ satd\ \ =\ 0;}
-\DoxyCodeLine{00329\ \ \ TCoeff\ \ \ \ \ diff[4];}
-\DoxyCodeLine{00330\ \ \ TCoeff\ \ \ \ \ m[4];}
-\DoxyCodeLine{00331\ }
-\DoxyCodeLine{00332\ \ \ Pel\ \ \ pred;}
-\DoxyCodeLine{00333\ }
-\DoxyCodeLine{00334\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[0*iStep\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00335\ \ \ diff[0]\ =\ piOrg[0\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ pred;}
-\DoxyCodeLine{00336\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[1*iStep\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00337\ \ \ diff[1]\ =\ piOrg[1\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ pred;}
-\DoxyCodeLine{00338\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[0*iStep\ +\ iStrideCur]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00339\ \ \ diff[2]\ =\ piOrg[iStrideOrg\ \ \ \ ]\ -\/\ pred;}
-\DoxyCodeLine{00340\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[1*iStep\ +\ iStrideCur]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00341\ \ \ diff[3]\ =\ piOrg[iStrideOrg\ +\ 1]\ -\/\ pred;}
-\DoxyCodeLine{00342\ }
-\DoxyCodeLine{00343\ \ \ m[0]\ =\ diff[0]\ +\ diff[2];}
-\DoxyCodeLine{00344\ \ \ m[1]\ =\ diff[1]\ +\ diff[3];}
-\DoxyCodeLine{00345\ \ \ m[2]\ =\ diff[0]\ -\/\ diff[2];}
-\DoxyCodeLine{00346\ \ \ m[3]\ =\ diff[1]\ -\/\ diff[3];}
-\DoxyCodeLine{00347\ }
-\DoxyCodeLine{00348\ \ \ satd\ +=\ abs(m[0]\ +\ m[1]);}
-\DoxyCodeLine{00349\ \ \ satd\ +=\ abs(m[0]\ -\/\ m[1]);}
-\DoxyCodeLine{00350\ \ \ satd\ +=\ abs(m[2]\ +\ m[3]);}
-\DoxyCodeLine{00351\ \ \ satd\ +=\ abs(m[2]\ -\/\ m[3]);}
-\DoxyCodeLine{00352\ }
-\DoxyCodeLine{00353\ \ \ \textcolor{keywordflow}{return}\ satd;}
-\DoxyCodeLine{00354\ \}}
-\DoxyCodeLine{00355\ }
-\DoxyCodeLine{00356\ }
-\DoxyCodeLine{00358\ Distortion\ xCalcHADs4x4w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
-\DoxyCodeLine{00359\ \{}
-\DoxyCodeLine{00360\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.round;}
-\DoxyCodeLine{00361\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.shift;}
-\DoxyCodeLine{00362\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.offset;}
-\DoxyCodeLine{00363\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.w;}
-\DoxyCodeLine{00364\ }
-\DoxyCodeLine{00365\ \ \ Distortion\ satd\ =\ 0;}
-\DoxyCodeLine{00366\ \ \ TCoeff\ \ \ \ \ diff[16];}
-\DoxyCodeLine{00367\ \ \ TCoeff\ \ \ \ \ m[16];}
-\DoxyCodeLine{00368\ \ \ TCoeff\ \ \ \ \ d[16];}
-\DoxyCodeLine{00369\ }
-\DoxyCodeLine{00370\ }
-\DoxyCodeLine{00371\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 16;\ k+=4\ )}
-\DoxyCodeLine{00372\ \ \ \{}
-\DoxyCodeLine{00373\ \ \ \ \ Pel\ pred;}
-\DoxyCodeLine{00374\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[0*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00375\ \ \ \ \ diff[k+0]\ =\ piOrg[0]\ -\/\ pred;}
-\DoxyCodeLine{00376\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[1*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00377\ \ \ \ \ diff[k+1]\ =\ piOrg[1]\ -\/\ pred;}
-\DoxyCodeLine{00378\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[2*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00379\ \ \ \ \ diff[k+2]\ =\ piOrg[2]\ -\/\ pred;}
-\DoxyCodeLine{00380\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[3*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00381\ \ \ \ \ diff[k+3]\ =\ piOrg[3]\ -\/\ pred;}
-\DoxyCodeLine{00382\ }
-\DoxyCodeLine{00383\ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00384\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00385\ \ \ \}}
-\DoxyCodeLine{00386\ }
-\DoxyCodeLine{00387\ \ \ \textcolor{comment}{/*=====\ hadamard\ transform\ =====*/}}
-\DoxyCodeLine{00388\ \ \ m[\ 0]\ =\ diff[\ 0]\ +\ diff[12];}
-\DoxyCodeLine{00389\ \ \ m[\ 1]\ =\ diff[\ 1]\ +\ diff[13];}
-\DoxyCodeLine{00390\ \ \ m[\ 2]\ =\ diff[\ 2]\ +\ diff[14];}
-\DoxyCodeLine{00391\ \ \ m[\ 3]\ =\ diff[\ 3]\ +\ diff[15];}
-\DoxyCodeLine{00392\ \ \ m[\ 4]\ =\ diff[\ 4]\ +\ diff[\ 8];}
-\DoxyCodeLine{00393\ \ \ m[\ 5]\ =\ diff[\ 5]\ +\ diff[\ 9];}
-\DoxyCodeLine{00394\ \ \ m[\ 6]\ =\ diff[\ 6]\ +\ diff[10];}
-\DoxyCodeLine{00395\ \ \ m[\ 7]\ =\ diff[\ 7]\ +\ diff[11];}
-\DoxyCodeLine{00396\ \ \ m[\ 8]\ =\ diff[\ 4]\ -\/\ diff[\ 8];}
-\DoxyCodeLine{00397\ \ \ m[\ 9]\ =\ diff[\ 5]\ -\/\ diff[\ 9];}
-\DoxyCodeLine{00398\ \ \ m[10]\ =\ diff[\ 6]\ -\/\ diff[10];}
-\DoxyCodeLine{00399\ \ \ m[11]\ =\ diff[\ 7]\ -\/\ diff[11];}
-\DoxyCodeLine{00400\ \ \ m[12]\ =\ diff[\ 0]\ -\/\ diff[12];}
-\DoxyCodeLine{00401\ \ \ m[13]\ =\ diff[\ 1]\ -\/\ diff[13];}
-\DoxyCodeLine{00402\ \ \ m[14]\ =\ diff[\ 2]\ -\/\ diff[14];}
-\DoxyCodeLine{00403\ \ \ m[15]\ =\ diff[\ 3]\ -\/\ diff[15];}
-\DoxyCodeLine{00404\ }
-\DoxyCodeLine{00405\ \ \ d[\ 0]\ =\ m[\ 0]\ +\ m[\ 4];}
-\DoxyCodeLine{00406\ \ \ d[\ 1]\ =\ m[\ 1]\ +\ m[\ 5];}
-\DoxyCodeLine{00407\ \ \ d[\ 2]\ =\ m[\ 2]\ +\ m[\ 6];}
-\DoxyCodeLine{00408\ \ \ d[\ 3]\ =\ m[\ 3]\ +\ m[\ 7];}
-\DoxyCodeLine{00409\ \ \ d[\ 4]\ =\ m[\ 8]\ +\ m[12];}
-\DoxyCodeLine{00410\ \ \ d[\ 5]\ =\ m[\ 9]\ +\ m[13];}
-\DoxyCodeLine{00411\ \ \ d[\ 6]\ =\ m[10]\ +\ m[14];}
-\DoxyCodeLine{00412\ \ \ d[\ 7]\ =\ m[11]\ +\ m[15];}
-\DoxyCodeLine{00413\ \ \ d[\ 8]\ =\ m[\ 0]\ -\/\ m[\ 4];}
-\DoxyCodeLine{00414\ \ \ d[\ 9]\ =\ m[\ 1]\ -\/\ m[\ 5];}
-\DoxyCodeLine{00415\ \ \ d[10]\ =\ m[\ 2]\ -\/\ m[\ 6];}
-\DoxyCodeLine{00416\ \ \ d[11]\ =\ m[\ 3]\ -\/\ m[\ 7];}
-\DoxyCodeLine{00417\ \ \ d[12]\ =\ m[12]\ -\/\ m[\ 8];}
-\DoxyCodeLine{00418\ \ \ d[13]\ =\ m[13]\ -\/\ m[\ 9];}
-\DoxyCodeLine{00419\ \ \ d[14]\ =\ m[14]\ -\/\ m[10];}
-\DoxyCodeLine{00420\ \ \ d[15]\ =\ m[15]\ -\/\ m[11];}
-\DoxyCodeLine{00421\ }
-\DoxyCodeLine{00422\ \ \ m[\ 0]\ =\ d[\ 0]\ +\ d[\ 3];}
-\DoxyCodeLine{00423\ \ \ m[\ 1]\ =\ d[\ 1]\ +\ d[\ 2];}
-\DoxyCodeLine{00424\ \ \ m[\ 2]\ =\ d[\ 1]\ -\/\ d[\ 2];}
-\DoxyCodeLine{00425\ \ \ m[\ 3]\ =\ d[\ 0]\ -\/\ d[\ 3];}
-\DoxyCodeLine{00426\ \ \ m[\ 4]\ =\ d[\ 4]\ +\ d[\ 7];}
-\DoxyCodeLine{00427\ \ \ m[\ 5]\ =\ d[\ 5]\ +\ d[\ 6];}
-\DoxyCodeLine{00428\ \ \ m[\ 6]\ =\ d[\ 5]\ -\/\ d[\ 6];}
-\DoxyCodeLine{00429\ \ \ m[\ 7]\ =\ d[\ 4]\ -\/\ d[\ 7];}
-\DoxyCodeLine{00430\ \ \ m[\ 8]\ =\ d[\ 8]\ +\ d[11];}
-\DoxyCodeLine{00431\ \ \ m[\ 9]\ =\ d[\ 9]\ +\ d[10];}
-\DoxyCodeLine{00432\ \ \ m[10]\ =\ d[\ 9]\ -\/\ d[10];}
-\DoxyCodeLine{00433\ \ \ m[11]\ =\ d[\ 8]\ -\/\ d[11];}
-\DoxyCodeLine{00434\ \ \ m[12]\ =\ d[12]\ +\ d[15];}
-\DoxyCodeLine{00435\ \ \ m[13]\ =\ d[13]\ +\ d[14];}
-\DoxyCodeLine{00436\ \ \ m[14]\ =\ d[13]\ -\/\ d[14];}
-\DoxyCodeLine{00437\ \ \ m[15]\ =\ d[12]\ -\/\ d[15];}
-\DoxyCodeLine{00438\ }
-\DoxyCodeLine{00439\ \ \ d[\ 0]\ =\ m[\ 0]\ +\ m[\ 1];}
-\DoxyCodeLine{00440\ \ \ d[\ 1]\ =\ m[\ 0]\ -\/\ m[\ 1];}
-\DoxyCodeLine{00441\ \ \ d[\ 2]\ =\ m[\ 2]\ +\ m[\ 3];}
-\DoxyCodeLine{00442\ \ \ d[\ 3]\ =\ m[\ 3]\ -\/\ m[\ 2];}
-\DoxyCodeLine{00443\ \ \ d[\ 4]\ =\ m[\ 4]\ +\ m[\ 5];}
-\DoxyCodeLine{00444\ \ \ d[\ 5]\ =\ m[\ 4]\ -\/\ m[\ 5];}
-\DoxyCodeLine{00445\ \ \ d[\ 6]\ =\ m[\ 6]\ +\ m[\ 7];}
-\DoxyCodeLine{00446\ \ \ d[\ 7]\ =\ m[\ 7]\ -\/\ m[\ 6];}
-\DoxyCodeLine{00447\ \ \ d[\ 8]\ =\ m[\ 8]\ +\ m[\ 9];}
-\DoxyCodeLine{00448\ \ \ d[\ 9]\ =\ m[\ 8]\ -\/\ m[\ 9];}
-\DoxyCodeLine{00449\ \ \ d[10]\ =\ m[10]\ +\ m[11];}
-\DoxyCodeLine{00450\ \ \ d[11]\ =\ m[11]\ -\/\ m[10];}
-\DoxyCodeLine{00451\ \ \ d[12]\ =\ m[12]\ +\ m[13];}
-\DoxyCodeLine{00452\ \ \ d[13]\ =\ m[12]\ -\/\ m[13];}
-\DoxyCodeLine{00453\ \ \ d[14]\ =\ m[14]\ +\ m[15];}
-\DoxyCodeLine{00454\ \ \ d[15]\ =\ m[15]\ -\/\ m[14];}
-\DoxyCodeLine{00455\ }
-\DoxyCodeLine{00456\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k=0;\ k<16;\ ++k)}
-\DoxyCodeLine{00457\ \ \ \{}
-\DoxyCodeLine{00458\ \ \ \ \ satd\ +=\ abs(d[k]);}
-\DoxyCodeLine{00459\ \ \ \}}
-\DoxyCodeLine{00460\ \ \ satd\ =\ ((satd+1)>>1);}
-\DoxyCodeLine{00461\ }
-\DoxyCodeLine{00462\ \ \ \textcolor{keywordflow}{return}\ satd;}
-\DoxyCodeLine{00463\ \}}
-\DoxyCodeLine{00464\ }
-\DoxyCodeLine{00465\ }
-\DoxyCodeLine{00467\ Distortion\ xCalcHADs8x8w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ Pel\ *piOrg,\ \textcolor{keyword}{const}\ Pel\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
-\DoxyCodeLine{00468\ \{}
-\DoxyCodeLine{00469\ \ \ Distortion\ sad=0;}
-\DoxyCodeLine{00470\ \ \ TCoeff\ diff[64],\ m1[8][8],\ m2[8][8],\ m3[8][8];}
-\DoxyCodeLine{00471\ \ \ \textcolor{keywordtype}{int}\ iStep2\ =\ iStep<<1;}
-\DoxyCodeLine{00472\ \ \ \textcolor{keywordtype}{int}\ iStep3\ =\ iStep2\ +\ iStep;}
-\DoxyCodeLine{00473\ \ \ \textcolor{keywordtype}{int}\ iStep4\ =\ iStep3\ +\ iStep;}
-\DoxyCodeLine{00474\ \ \ \textcolor{keywordtype}{int}\ iStep5\ =\ iStep4\ +\ iStep;}
-\DoxyCodeLine{00475\ \ \ \textcolor{keywordtype}{int}\ iStep6\ =\ iStep5\ +\ iStep;}
-\DoxyCodeLine{00476\ \ \ \textcolor{keywordtype}{int}\ iStep7\ =\ iStep6\ +\ iStep;}
-\DoxyCodeLine{00477\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.round;}
-\DoxyCodeLine{00478\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.shift;}
-\DoxyCodeLine{00479\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.offset;}
-\DoxyCodeLine{00480\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.w;}
-\DoxyCodeLine{00481\ }
-\DoxyCodeLine{00482\ \ \ Pel\ \ \ pred;}
-\DoxyCodeLine{00483\ }
-\DoxyCodeLine{00484\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 64;\ k+=8\ )}
-\DoxyCodeLine{00485\ \ \ \{}
-\DoxyCodeLine{00486\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[\ \ \ \ \ 0]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00487\ \ \ \ \ diff[k+0]\ =\ piOrg[0]\ -\/\ pred;}
-\DoxyCodeLine{00488\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep\ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00489\ \ \ \ \ diff[k+1]\ =\ piOrg[1]\ -\/\ pred;}
-\DoxyCodeLine{00490\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep2]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00491\ \ \ \ \ diff[k+2]\ =\ piOrg[2]\ -\/\ pred;}
-\DoxyCodeLine{00492\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep3]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00493\ \ \ \ \ diff[k+3]\ =\ piOrg[3]\ -\/\ pred;}
-\DoxyCodeLine{00494\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep4]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00495\ \ \ \ \ diff[k+4]\ =\ piOrg[4]\ -\/\ pred;}
-\DoxyCodeLine{00496\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep5]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00497\ \ \ \ \ diff[k+5]\ =\ piOrg[5]\ -\/\ pred;}
-\DoxyCodeLine{00498\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep6]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00499\ \ \ \ \ diff[k+6]\ =\ piOrg[6]\ -\/\ pred;}
-\DoxyCodeLine{00500\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep7]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
-\DoxyCodeLine{00501\ \ \ \ \ diff[k+7]\ =\ piOrg[7]\ -\/\ pred;}
-\DoxyCodeLine{00502\ }
-\DoxyCodeLine{00503\ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00504\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00505\ \ \ \}}
-\DoxyCodeLine{00506\ }
-\DoxyCodeLine{00507\ \ \ \textcolor{comment}{//horizontal}}
-\DoxyCodeLine{00508\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j=0;\ j\ <\ 8;\ j++)}
-\DoxyCodeLine{00509\ \ \ \{}
-\DoxyCodeLine{00510\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jj\ =\ j\ <<\ 3;}
-\DoxyCodeLine{00511\ \ \ \ \ m2[j][0]\ =\ diff[jj\ \ ]\ +\ diff[jj+4];}
-\DoxyCodeLine{00512\ \ \ \ \ m2[j][1]\ =\ diff[jj+1]\ +\ diff[jj+5];}
-\DoxyCodeLine{00513\ \ \ \ \ m2[j][2]\ =\ diff[jj+2]\ +\ diff[jj+6];}
-\DoxyCodeLine{00514\ \ \ \ \ m2[j][3]\ =\ diff[jj+3]\ +\ diff[jj+7];}
-\DoxyCodeLine{00515\ \ \ \ \ m2[j][4]\ =\ diff[jj\ \ ]\ -\/\ diff[jj+4];}
-\DoxyCodeLine{00516\ \ \ \ \ m2[j][5]\ =\ diff[jj+1]\ -\/\ diff[jj+5];}
-\DoxyCodeLine{00517\ \ \ \ \ m2[j][6]\ =\ diff[jj+2]\ -\/\ diff[jj+6];}
-\DoxyCodeLine{00518\ \ \ \ \ m2[j][7]\ =\ diff[jj+3]\ -\/\ diff[jj+7];}
-\DoxyCodeLine{00519\ }
-\DoxyCodeLine{00520\ \ \ \ \ m1[j][0]\ =\ m2[j][0]\ +\ m2[j][2];}
-\DoxyCodeLine{00521\ \ \ \ \ m1[j][1]\ =\ m2[j][1]\ +\ m2[j][3];}
-\DoxyCodeLine{00522\ \ \ \ \ m1[j][2]\ =\ m2[j][0]\ -\/\ m2[j][2];}
-\DoxyCodeLine{00523\ \ \ \ \ m1[j][3]\ =\ m2[j][1]\ -\/\ m2[j][3];}
-\DoxyCodeLine{00524\ \ \ \ \ m1[j][4]\ =\ m2[j][4]\ +\ m2[j][6];}
-\DoxyCodeLine{00525\ \ \ \ \ m1[j][5]\ =\ m2[j][5]\ +\ m2[j][7];}
-\DoxyCodeLine{00526\ \ \ \ \ m1[j][6]\ =\ m2[j][4]\ -\/\ m2[j][6];}
-\DoxyCodeLine{00527\ \ \ \ \ m1[j][7]\ =\ m2[j][5]\ -\/\ m2[j][7];}
-\DoxyCodeLine{00528\ }
-\DoxyCodeLine{00529\ \ \ \ \ m2[j][0]\ =\ m1[j][0]\ +\ m1[j][1];}
-\DoxyCodeLine{00530\ \ \ \ \ m2[j][1]\ =\ m1[j][0]\ -\/\ m1[j][1];}
-\DoxyCodeLine{00531\ \ \ \ \ m2[j][2]\ =\ m1[j][2]\ +\ m1[j][3];}
-\DoxyCodeLine{00532\ \ \ \ \ m2[j][3]\ =\ m1[j][2]\ -\/\ m1[j][3];}
-\DoxyCodeLine{00533\ \ \ \ \ m2[j][4]\ =\ m1[j][4]\ +\ m1[j][5];}
-\DoxyCodeLine{00534\ \ \ \ \ m2[j][5]\ =\ m1[j][4]\ -\/\ m1[j][5];}
-\DoxyCodeLine{00535\ \ \ \ \ m2[j][6]\ =\ m1[j][6]\ +\ m1[j][7];}
-\DoxyCodeLine{00536\ \ \ \ \ m2[j][7]\ =\ m1[j][6]\ -\/\ m1[j][7];}
-\DoxyCodeLine{00537\ \ \ \}}
-\DoxyCodeLine{00538\ }
-\DoxyCodeLine{00539\ \ \ \textcolor{comment}{//vertical}}
-\DoxyCodeLine{00540\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)}
-\DoxyCodeLine{00541\ \ \ \{}
-\DoxyCodeLine{00542\ \ \ \ \ m3[0][i]\ =\ m2[0][i]\ +\ m2[4][i];}
-\DoxyCodeLine{00543\ \ \ \ \ m3[1][i]\ =\ m2[1][i]\ +\ m2[5][i];}
-\DoxyCodeLine{00544\ \ \ \ \ m3[2][i]\ =\ m2[2][i]\ +\ m2[6][i];}
-\DoxyCodeLine{00545\ \ \ \ \ m3[3][i]\ =\ m2[3][i]\ +\ m2[7][i];}
-\DoxyCodeLine{00546\ \ \ \ \ m3[4][i]\ =\ m2[0][i]\ -\/\ m2[4][i];}
-\DoxyCodeLine{00547\ \ \ \ \ m3[5][i]\ =\ m2[1][i]\ -\/\ m2[5][i];}
-\DoxyCodeLine{00548\ \ \ \ \ m3[6][i]\ =\ m2[2][i]\ -\/\ m2[6][i];}
-\DoxyCodeLine{00549\ \ \ \ \ m3[7][i]\ =\ m2[3][i]\ -\/\ m2[7][i];}
-\DoxyCodeLine{00550\ }
-\DoxyCodeLine{00551\ \ \ \ \ m1[0][i]\ =\ m3[0][i]\ +\ m3[2][i];}
-\DoxyCodeLine{00552\ \ \ \ \ m1[1][i]\ =\ m3[1][i]\ +\ m3[3][i];}
-\DoxyCodeLine{00553\ \ \ \ \ m1[2][i]\ =\ m3[0][i]\ -\/\ m3[2][i];}
-\DoxyCodeLine{00554\ \ \ \ \ m1[3][i]\ =\ m3[1][i]\ -\/\ m3[3][i];}
-\DoxyCodeLine{00555\ \ \ \ \ m1[4][i]\ =\ m3[4][i]\ +\ m3[6][i];}
-\DoxyCodeLine{00556\ \ \ \ \ m1[5][i]\ =\ m3[5][i]\ +\ m3[7][i];}
-\DoxyCodeLine{00557\ \ \ \ \ m1[6][i]\ =\ m3[4][i]\ -\/\ m3[6][i];}
-\DoxyCodeLine{00558\ \ \ \ \ m1[7][i]\ =\ m3[5][i]\ -\/\ m3[7][i];}
-\DoxyCodeLine{00559\ }
-\DoxyCodeLine{00560\ \ \ \ \ m2[0][i]\ =\ m1[0][i]\ +\ m1[1][i];}
-\DoxyCodeLine{00561\ \ \ \ \ m2[1][i]\ =\ m1[0][i]\ -\/\ m1[1][i];}
-\DoxyCodeLine{00562\ \ \ \ \ m2[2][i]\ =\ m1[2][i]\ +\ m1[3][i];}
-\DoxyCodeLine{00563\ \ \ \ \ m2[3][i]\ =\ m1[2][i]\ -\/\ m1[3][i];}
-\DoxyCodeLine{00564\ \ \ \ \ m2[4][i]\ =\ m1[4][i]\ +\ m1[5][i];}
-\DoxyCodeLine{00565\ \ \ \ \ m2[5][i]\ =\ m1[4][i]\ -\/\ m1[5][i];}
-\DoxyCodeLine{00566\ \ \ \ \ m2[6][i]\ =\ m1[6][i]\ +\ m1[7][i];}
-\DoxyCodeLine{00567\ \ \ \ \ m2[7][i]\ =\ m1[6][i]\ -\/\ m1[7][i];}
-\DoxyCodeLine{00568\ \ \ \}}
-\DoxyCodeLine{00569\ }
-\DoxyCodeLine{00570\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j=0;\ j\ <\ 8;\ j++)}
-\DoxyCodeLine{00571\ \ \ \{}
-\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)}
-\DoxyCodeLine{00573\ \ \ \ \ \{}
-\DoxyCodeLine{00574\ \ \ \ \ \ \ sad\ +=\ (abs(m2[j][i]));}
-\DoxyCodeLine{00575\ \ \ \ \ \}}
-\DoxyCodeLine{00576\ \ \ \}}
-\DoxyCodeLine{00577\ }
-\DoxyCodeLine{00578\ \ \ sad=((sad+2)>>2);}
-\DoxyCodeLine{00579\ }
-\DoxyCodeLine{00580\ \ \ \textcolor{keywordflow}{return}\ sad;}
-\DoxyCodeLine{00581\ \}}
-\DoxyCodeLine{00582\ }
-\DoxyCodeLine{00583\ }
-\DoxyCodeLine{00585\ Distortion\ RdCostWeightPrediction::xGetHADsw(\ \textcolor{keyword}{const}\ DistParam\ \&rcDtParam\ )}
-\DoxyCodeLine{00586\ \{}
-\DoxyCodeLine{00587\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.org.buf;}
-\DoxyCodeLine{00588\ \ \ \textcolor{keyword}{const}\ Pel\ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.cur.buf;}
-\DoxyCodeLine{00589\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iRows\ \ \ \ \ \ =\ rcDtParam.org.height;}
-\DoxyCodeLine{00590\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.org.width;}
-\DoxyCodeLine{00591\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.cur.stride;}
-\DoxyCodeLine{00592\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.org.stride;}
-\DoxyCodeLine{00593\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStep\ \ \ \ \ \ =\ rcDtParam.step;}
-\DoxyCodeLine{00594\ \ \ \textcolor{keyword}{const}\ ComponentID\ compIdx\ \ \ \ =\ rcDtParam.compID;}
-\DoxyCodeLine{00595\ \ \ CHECK(compIdx>=MAX\_NUM\_COMPONENT,\ \textcolor{stringliteral}{"{}Invalid\ component"{}});}
-\DoxyCodeLine{00596\ \ \ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur\ \ =\ rcDtParam.wpCur[compIdx];}
-\DoxyCodeLine{00597\ }
-\DoxyCodeLine{00598\ \ \ Distortion\ uiSum\ =\ 0;}
-\DoxyCodeLine{00599\ }
-\DoxyCodeLine{00600\ }
-\DoxyCodeLine{00601\ \ \ \textcolor{keywordflow}{if}(\ (\ iRows\ \%\ 8\ ==\ 0)\ \&\&\ (iCols\ \%\ 8\ ==\ 0)\ )}
-\DoxyCodeLine{00602\ \ \ \{}
-\DoxyCodeLine{00603\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetOrg\ =\ iStrideOrg<<3;}
-\DoxyCodeLine{00604\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetCur\ =\ iStrideCur<<3;}
-\DoxyCodeLine{00605\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=\ 8\ )}
-\DoxyCodeLine{00606\ \ \ \ \ \{}
-\DoxyCodeLine{00607\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=\ 8\ )}
-\DoxyCodeLine{00608\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs8x8w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
-\DoxyCodeLine{00610\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00611\ \ \ \ \ \ \ piOrg\ +=\ iOffsetOrg;}
-\DoxyCodeLine{00612\ \ \ \ \ \ \ piCur\ +=\ iOffsetCur;}
-\DoxyCodeLine{00613\ \ \ \ \ \}}
-\DoxyCodeLine{00614\ \ \ \}}
-\DoxyCodeLine{00615\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ iRows\ \%\ 4\ ==\ 0)\ \&\&\ (iCols\ \%\ 4\ ==\ 0)\ )}
-\DoxyCodeLine{00616\ \ \ \{}
-\DoxyCodeLine{00617\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetOrg\ =\ iStrideOrg<<2;}
-\DoxyCodeLine{00618\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetCur\ =\ iStrideCur<<2;}
-\DoxyCodeLine{00619\ }
-\DoxyCodeLine{00620\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=\ 4\ )}
-\DoxyCodeLine{00621\ \ \ \ \ \{}
-\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=\ 4\ )}
-\DoxyCodeLine{00623\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs4x4w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
-\DoxyCodeLine{00625\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00626\ \ \ \ \ \ \ piOrg\ +=\ iOffsetOrg;}
-\DoxyCodeLine{00627\ \ \ \ \ \ \ piCur\ +=\ iOffsetCur;}
-\DoxyCodeLine{00628\ \ \ \ \ \}}
-\DoxyCodeLine{00629\ \ \ \}}
-\DoxyCodeLine{00630\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00631\ \ \ \{}
-\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=2\ )}
-\DoxyCodeLine{00633\ \ \ \ \ \{}
-\DoxyCodeLine{00634\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=2\ )}
-\DoxyCodeLine{00635\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs2x2w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
-\DoxyCodeLine{00637\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00638\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
-\DoxyCodeLine{00639\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
-\DoxyCodeLine{00640\ \ \ \ \ \}}
-\DoxyCodeLine{00641\ \ \ \}}
-\DoxyCodeLine{00642\ }
-\DoxyCodeLine{00643\ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ DISTORTION\_PRECISION\_ADJUSTMENT(rcDtParam.bitDepth);}
-\DoxyCodeLine{00644\ \}}
-\DoxyCodeLine{00645\ }
-\DoxyCodeLine{00646\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00001}00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00002}00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00003}00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00004}00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00005}00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00006}00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00007}00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00008}00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00009}00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00010}00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00011}00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00012}00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00013}00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00014}00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00015}00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00016}00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00017}00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00018}00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00019}00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00020}00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00021}00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00022}00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00023}00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00024}00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00025}00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00026}00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00027}00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00028}00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00029}00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00030}00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00031}00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00032}00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{RdCostWeightPrediction_8h}{RdCostWeightPrediction.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{RdCost_8h}{RdCost.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ <math.h>}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00044}00044\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacevtm}{vtm}}\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00046}00046\ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs2x2w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00047}00047\ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs4x4w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00048}00048\ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs8x8w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCurr,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00051}00051\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00052}00052\ \textcolor{comment}{//\ SAD}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00053}00053\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00058}\mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_aed5b29a47930215596f29965ee9a0968}{00058}}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ \mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_aed5b29a47930215596f29965ee9a0968}{RdCostWeightPrediction::xGetSADw}}(\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classvtm_1_1DistParam}{DistParam}}\ \&rcDtParam\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00059}00059\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00060}00060\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00061}00061\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00062}00062\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a6f0c0cd63ae0337888615491b4ab1a19}{width}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00063}00063\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00064}00064\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00065}00065\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ compID\ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a8966d3ff09572e1c038bd9200be804c9}{compID}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00067}00067\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ compID\ >=\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}},\ \textcolor{stringliteral}{"{}Invalid\ component"{}}\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00069}00069\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \&wpCur\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a99bee8e5bde4db44e966119f0e4953ab}{wpCur}}[compID];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00071}00071\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ w0\ \ \ \ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00072}00072\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00073}00073\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ shift\ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00074}00074\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ round\ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00075}00075\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ distortionShift\ =\ \mbox{\hyperlink{TypeDef_8h_a29d5c9e713ec90b037a5aaa3865ccfa9}{DISTORTION\_PRECISION\_ADJUSTMENT}}(rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aa12f62669e43c9ede3244b36d40978ef}{bitDepth}});}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00077}00077\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ uiSum\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00079}00079\ \textcolor{preprocessor}{\#if\ !U0040\_MODIFIED\_WEIGHTEDPREDICTION\_WITH\_BIPRED\_AND\_CLIPPING}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00080}00080\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00081}00081\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00082}00082\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00083}00083\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00084}00084\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00086}00086\ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00087}00087\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00088}00088\ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00089}00089\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00090}00090\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00091}00091\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00092}00092\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00093}00093\ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00094}00094\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00096}00096\ \ \ \textcolor{comment}{//rcDtParam.compID\ =\ MAX\_NUM\_COMPONENT;\ \ //\ reset\ for\ DEBUG\ (assert\ test)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00097}00097\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00098}00098\ \ \ \mbox{\hyperlink{structvtm_1_1ClpRng}{ClpRng}}\ clpRng;\ \textcolor{comment}{//\ this\ just\ affects\ the\ cost}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00099}00099\ \ \ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a391fb5c1e39725f0fa35a5ce10fad130}{min}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00100}00100\ \ \ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a2d664dc73552265c2ea162b9f07c439d}{max}}\ =\ (1\ <<\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aa12f62669e43c9ede3244b36d40978ef}{bitDepth}})\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00102}00102\ \ \ \textcolor{comment}{//\ Default\ weight}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00103}00103\ \ \ \textcolor{keywordflow}{if}\ (w0\ ==\ 1\ <<\ shift)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00104}00104\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00105}00105\ \ \ \ \ \textcolor{comment}{//\ no\ offset}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00106}00106\ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00107}00107\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00108}00108\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00109}00109\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ piCur[n]\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00120}00120\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00121}00121\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00122}00122\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00123}00123\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00124}00124\ \ \ \ \ \ \ \textcolor{comment}{//\ Lets\ not\ clip\ for\ the\ bipredictive\ case\ since\ clipping\ should\ be\ done\ after}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00125}00125\ \ \ \ \ \ \ \textcolor{comment}{//\ combining\ both\ elements.\ Unfortunately\ the\ code\ uses\ the\ suboptimal\ "{}subtraction"{}}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00126}00126\ \ \ \ \ \ \ \textcolor{comment}{//\ method,\ which\ is\ faster\ but\ introduces\ the\ clipping\ issue\ (therefore\ Bipred\ is\ suboptimal).}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00127}00127\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_af8ba9606a0efbe24dc5f7a4f4758031b}{isBiPred}})}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00128}00128\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ (piCur[n]\ +\ offset)\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00139}00139\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00143}00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00144}00144\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00145}00145\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00148}00148\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ =\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ piCur[n]\ +\ offset,\ clpRng);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00151}00151\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00153}00153\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00161}00161\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00162}00162\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00163}00163\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00164}00164\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00165}00165\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00166}00166\ \ \ \ \ \textcolor{comment}{//\ Lets\ not\ clip\ for\ the\ bipredictive\ case\ since\ clipping\ should\ be\ done\ after}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00167}00167\ \ \ \ \ \textcolor{comment}{//\ combining\ both\ elements.\ Unfortunately\ the\ code\ uses\ the\ suboptimal\ "{}subtraction"{}}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00168}00168\ \ \ \ \ \textcolor{comment}{//\ method,\ which\ is\ faster\ but\ introduces\ the\ clipping\ issue\ (therefore\ Bipred\ is\ suboptimal).}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00169}00169\ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_af8ba9606a0efbe24dc5f7a4f4758031b}{isBiPred}})}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00170}00170\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00171}00171\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00172}00172\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00182}00182\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00185}00185\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00186}00186\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00187}00187\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00188}00188\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00189}00189\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (offset\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00190}00190\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ =\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(\ (w0*piCur[n]\ +\ round)\ >>\ shift,\ clpRng);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00196}00196\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00206}00206\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00207}00207\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00208}00208\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ =\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}(((w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset,\ \ clpRng)\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00214}00214\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ uiSum\ +=\ abs(\ piOrg[n]\ -\/\ pred\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aad80816ad5d786943d485dfd48095764}{maximumDistortionForEarlyExit}}\ <\ \ (\ uiSum\ >>\ distortionShift))}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00224}00224\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00225}00225\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00226}00226\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00227}00227\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ \ //\ reset\ for\ DEBUG\ (assert\ test)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00228}00228\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00229}00229\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00230}00230\ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00231}00231\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00232}00232\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00234}00234\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00235}00235\ \textcolor{comment}{//\ SSE}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00236}00236\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00241}\mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_a5c6ff41397d6f3c659c30b83bdfb5aa1}{00241}}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ \mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_a5c6ff41397d6f3c659c30b83bdfb5aa1}{RdCostWeightPrediction::xGetSSEw}}(\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classvtm_1_1DistParam}{DistParam}}\ \&rcDtParam\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00242}00242\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00243}00243\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00244}00244\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00245}00245\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a6f0c0cd63ae0337888615491b4ab1a19}{width}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00246}00246\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00247}00247\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00248}00248\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ \ \ \ \ compID\ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a8966d3ff09572e1c038bd9200be804c9}{compID}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00249}00249\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00250}00250\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a2ba56262f559d362d1fd05f308147ab0}{subShift}}\ !=\ 0,\ \textcolor{stringliteral}{"{}Subshift\ not\ supported"{}}\ );\ \textcolor{comment}{//\ NOTE:\ what\ is\ this\ protecting?}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00251}00251\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\ compID\ >=\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}},\ \textcolor{stringliteral}{"{}Invalid\ channel"{}}\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00252}00252\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00253}00253\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \&wpCur\ \ \ \ \ \ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a99bee8e5bde4db44e966119f0e4953ab}{wpCur}}[compID];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00254}00254\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ w0\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00255}00255\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ offset\ \ \ \ \ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00256}00256\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ shift\ \ \ \ \ \ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00257}00257\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \ \ round\ \ \ \ \ \ \ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00258}00258\ \ \ \textcolor{keyword}{const}\ uint32\_t\ distortionShift\ =\ \mbox{\hyperlink{TypeDef_8h_a29d5c9e713ec90b037a5aaa3865ccfa9}{DISTORTION\_PRECISION\_ADJUSTMENT}}(rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aa12f62669e43c9ede3244b36d40978ef}{bitDepth}})\ <<\ 1;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00260}00260\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ sum\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00261}00261\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00262}00262\ \textcolor{preprocessor}{\#if\ !U0040\_MODIFIED\_WEIGHTEDPREDICTION\_WITH\_BIPRED\_AND\_CLIPPING}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00263}00263\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}}\ ;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00264}00264\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00265}00265\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00266}00266\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00267}00267\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ \ \ \ \ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00268}00268\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ residual\ =\ piOrg[n]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00269}00269\ \ \ \ \ \ \ sum\ +=\ (\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ *\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ )\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00270}00270\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00271}00271\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00272}00272\ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00273}00273\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00274}00274\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00275}00275\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ //\ reset\ for\ DEBUG\ (assert\ test)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00276}00276\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00277}00277\ \ \ \textcolor{keywordflow}{if}\ (rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_af8ba9606a0efbe24dc5f7a4f4758031b}{isBiPred}})}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00278}00278\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00279}00279\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}}\ ;\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00280}00280\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00281}00281\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00282}00282\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00283}00283\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ \ \ \ \ =\ (\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00284}00284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ residual\ =\ piOrg[n]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ sum\ +=\ (\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ *\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ )\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00286}00286\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00287}00287\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00288}00288\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00289}00289\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00290}00290\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00291}00291\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00292}00292\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00293}00293\ \ \ \ \ \mbox{\hyperlink{structvtm_1_1ClpRng}{ClpRng}}\ clpRng;\ \ \textcolor{comment}{//\ this\ just\ affects\ the\ cost\ -\/\ fix\ this\ later}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00294}00294\ \ \ \ \ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a391fb5c1e39725f0fa35a5ce10fad130}{min}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00295}00295\ \ \ \ \ clpRng.\mbox{\hyperlink{structvtm_1_1ClpRng_a2d664dc73552265c2ea162b9f07c439d}{max}}\ =\ (1\ <<\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aa12f62669e43c9ede3244b36d40978ef}{bitDepth}})\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00296}00296\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00297}00297\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ iRows\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};\ iRows\ !=\ 0;\ iRows-\/-\/\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00298}00298\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00299}00299\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ n\ =\ 0;\ n\ <\ iCols;\ n++\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00300}00300\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred\ \ \ \ \ =\ \mbox{\hyperlink{namespacevtm_a2dc2c3d4633d563335a81e1a61e9dd47}{ClipPel}}((\ (w0*piCur[n]\ +\ round)\ >>\ shift\ )\ +\ offset,\ clpRng)\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ residual\ =\ piOrg[n]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ sum\ +=\ (\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ *\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}(residual)\ )\ >>\ distortionShift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00304}00304\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00305}00305\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00306}00306\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00307}00307\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00308}00308\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00309}00309\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00310}00310\ \ \ \textcolor{comment}{//rcDtParam.compIdx\ =\ MAX\_NUM\_COMPONENT;\ //\ reset\ for\ DEBUG\ (assert\ test)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00311}00311\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00312}00312\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00313}00313\ \ \ \textcolor{keywordflow}{return}\ sum;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00314}00314\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00315}00315\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00316}00316\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00317}00317\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00318}00318\ \textcolor{comment}{//\ HADAMARD\ with\ step\ (used\ in\ fractional\ search)}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00319}00319\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00321}00321\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs2x2w(\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00322}00322\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00323}00323\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a8fad2f942f965013d30210ba68af5b27}{round}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00324}00324\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_af39f9db0f5021ca28faf7d680480160b}{shift}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00325}00325\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a66f8eae7548d91b1a35401071aa3540a}{offset}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00326}00326\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.\mbox{\hyperlink{structvtm_1_1WPScalingParam_a52b7672d191b5b7e948a5a97988eeb72}{w}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00327}00327\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00328}00328\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ satd\ \ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00329}00329\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ \ \ \ \ diff[4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00330}00330\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ \ \ \ \ m[4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00331}00331\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00332}00332\ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00333}00333\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00334}00334\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[0*iStep\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00335}00335\ \ \ diff[0]\ =\ piOrg[0\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00336}00336\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[1*iStep\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00337}00337\ \ \ diff[1]\ =\ piOrg[1\ \ \ \ \ \ \ \ \ \ \ \ \ ]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00338}00338\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[0*iStep\ +\ iStrideCur]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00339}00339\ \ \ diff[2]\ =\ piOrg[iStrideOrg\ \ \ \ ]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00340}00340\ \ \ pred\ \ \ \ =\ (\ (w0*piCur[1*iStep\ +\ iStrideCur]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00341}00341\ \ \ diff[3]\ =\ piOrg[iStrideOrg\ +\ 1]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00342}00342\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00343}00343\ \ \ m[0]\ =\ diff[0]\ +\ diff[2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00344}00344\ \ \ m[1]\ =\ diff[1]\ +\ diff[3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00345}00345\ \ \ m[2]\ =\ diff[0]\ -\/\ diff[2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00346}00346\ \ \ m[3]\ =\ diff[1]\ -\/\ diff[3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00347}00347\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00348}00348\ \ \ satd\ +=\ abs(m[0]\ +\ m[1]);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00349}00349\ \ \ satd\ +=\ abs(m[0]\ -\/\ m[1]);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00350}00350\ \ \ satd\ +=\ abs(m[2]\ +\ m[3]);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00351}00351\ \ \ satd\ +=\ abs(m[2]\ -\/\ m[3]);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00352}00352\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00353}00353\ \ \ \textcolor{keywordflow}{return}\ satd;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00354}00354\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00355}00355\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00356}00356\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00358}00358\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs4x4w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00359}00359\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00360}00360\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.round;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00361}00361\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.shift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00362}00362\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.offset;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00363}00363\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.w;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00364}00364\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00365}00365\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ satd\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00366}00366\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ \ \ \ \ diff[16];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00367}00367\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ \ \ \ \ m[16];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00368}00368\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ \ \ \ \ d[16];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00369}00369\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00370}00370\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00371}00371\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 16;\ k+=4\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00372}00372\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00373}00373\ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00374}00374\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[0*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00375}00375\ \ \ \ \ diff[k+0]\ =\ piOrg[0]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00376}00376\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[1*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00377}00377\ \ \ \ \ diff[k+1]\ =\ piOrg[1]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00378}00378\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[2*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00379}00379\ \ \ \ \ diff[k+2]\ =\ piOrg[2]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00380}00380\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[3*iStep]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00381}00381\ \ \ \ \ diff[k+3]\ =\ piOrg[3]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00382}00382\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00383}00383\ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00384}00384\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00385}00385\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00386}00386\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00387}00387\ \ \ \textcolor{comment}{/*=====\ hadamard\ transform\ =====*/}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00388}00388\ \ \ m[\ 0]\ =\ diff[\ 0]\ +\ diff[12];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00389}00389\ \ \ m[\ 1]\ =\ diff[\ 1]\ +\ diff[13];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00390}00390\ \ \ m[\ 2]\ =\ diff[\ 2]\ +\ diff[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00391}00391\ \ \ m[\ 3]\ =\ diff[\ 3]\ +\ diff[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00392}00392\ \ \ m[\ 4]\ =\ diff[\ 4]\ +\ diff[\ 8];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00393}00393\ \ \ m[\ 5]\ =\ diff[\ 5]\ +\ diff[\ 9];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00394}00394\ \ \ m[\ 6]\ =\ diff[\ 6]\ +\ diff[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00395}00395\ \ \ m[\ 7]\ =\ diff[\ 7]\ +\ diff[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00396}00396\ \ \ m[\ 8]\ =\ diff[\ 4]\ -\/\ diff[\ 8];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00397}00397\ \ \ m[\ 9]\ =\ diff[\ 5]\ -\/\ diff[\ 9];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00398}00398\ \ \ m[10]\ =\ diff[\ 6]\ -\/\ diff[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00399}00399\ \ \ m[11]\ =\ diff[\ 7]\ -\/\ diff[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00400}00400\ \ \ m[12]\ =\ diff[\ 0]\ -\/\ diff[12];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00401}00401\ \ \ m[13]\ =\ diff[\ 1]\ -\/\ diff[13];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00402}00402\ \ \ m[14]\ =\ diff[\ 2]\ -\/\ diff[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00403}00403\ \ \ m[15]\ =\ diff[\ 3]\ -\/\ diff[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00404}00404\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00405}00405\ \ \ d[\ 0]\ =\ m[\ 0]\ +\ m[\ 4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00406}00406\ \ \ d[\ 1]\ =\ m[\ 1]\ +\ m[\ 5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00407}00407\ \ \ d[\ 2]\ =\ m[\ 2]\ +\ m[\ 6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00408}00408\ \ \ d[\ 3]\ =\ m[\ 3]\ +\ m[\ 7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00409}00409\ \ \ d[\ 4]\ =\ m[\ 8]\ +\ m[12];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00410}00410\ \ \ d[\ 5]\ =\ m[\ 9]\ +\ m[13];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00411}00411\ \ \ d[\ 6]\ =\ m[10]\ +\ m[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00412}00412\ \ \ d[\ 7]\ =\ m[11]\ +\ m[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00413}00413\ \ \ d[\ 8]\ =\ m[\ 0]\ -\/\ m[\ 4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00414}00414\ \ \ d[\ 9]\ =\ m[\ 1]\ -\/\ m[\ 5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00415}00415\ \ \ d[10]\ =\ m[\ 2]\ -\/\ m[\ 6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00416}00416\ \ \ d[11]\ =\ m[\ 3]\ -\/\ m[\ 7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00417}00417\ \ \ d[12]\ =\ m[12]\ -\/\ m[\ 8];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00418}00418\ \ \ d[13]\ =\ m[13]\ -\/\ m[\ 9];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00419}00419\ \ \ d[14]\ =\ m[14]\ -\/\ m[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00420}00420\ \ \ d[15]\ =\ m[15]\ -\/\ m[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00421}00421\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00422}00422\ \ \ m[\ 0]\ =\ d[\ 0]\ +\ d[\ 3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00423}00423\ \ \ m[\ 1]\ =\ d[\ 1]\ +\ d[\ 2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00424}00424\ \ \ m[\ 2]\ =\ d[\ 1]\ -\/\ d[\ 2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00425}00425\ \ \ m[\ 3]\ =\ d[\ 0]\ -\/\ d[\ 3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00426}00426\ \ \ m[\ 4]\ =\ d[\ 4]\ +\ d[\ 7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00427}00427\ \ \ m[\ 5]\ =\ d[\ 5]\ +\ d[\ 6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00428}00428\ \ \ m[\ 6]\ =\ d[\ 5]\ -\/\ d[\ 6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00429}00429\ \ \ m[\ 7]\ =\ d[\ 4]\ -\/\ d[\ 7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00430}00430\ \ \ m[\ 8]\ =\ d[\ 8]\ +\ d[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00431}00431\ \ \ m[\ 9]\ =\ d[\ 9]\ +\ d[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00432}00432\ \ \ m[10]\ =\ d[\ 9]\ -\/\ d[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00433}00433\ \ \ m[11]\ =\ d[\ 8]\ -\/\ d[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00434}00434\ \ \ m[12]\ =\ d[12]\ +\ d[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00435}00435\ \ \ m[13]\ =\ d[13]\ +\ d[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00436}00436\ \ \ m[14]\ =\ d[13]\ -\/\ d[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00437}00437\ \ \ m[15]\ =\ d[12]\ -\/\ d[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00438}00438\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00439}00439\ \ \ d[\ 0]\ =\ m[\ 0]\ +\ m[\ 1];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00440}00440\ \ \ d[\ 1]\ =\ m[\ 0]\ -\/\ m[\ 1];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00441}00441\ \ \ d[\ 2]\ =\ m[\ 2]\ +\ m[\ 3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00442}00442\ \ \ d[\ 3]\ =\ m[\ 3]\ -\/\ m[\ 2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00443}00443\ \ \ d[\ 4]\ =\ m[\ 4]\ +\ m[\ 5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00444}00444\ \ \ d[\ 5]\ =\ m[\ 4]\ -\/\ m[\ 5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00445}00445\ \ \ d[\ 6]\ =\ m[\ 6]\ +\ m[\ 7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00446}00446\ \ \ d[\ 7]\ =\ m[\ 7]\ -\/\ m[\ 6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00447}00447\ \ \ d[\ 8]\ =\ m[\ 8]\ +\ m[\ 9];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00448}00448\ \ \ d[\ 9]\ =\ m[\ 8]\ -\/\ m[\ 9];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00449}00449\ \ \ d[10]\ =\ m[10]\ +\ m[11];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00450}00450\ \ \ d[11]\ =\ m[11]\ -\/\ m[10];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00451}00451\ \ \ d[12]\ =\ m[12]\ +\ m[13];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00452}00452\ \ \ d[13]\ =\ m[12]\ -\/\ m[13];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00453}00453\ \ \ d[14]\ =\ m[14]\ +\ m[15];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00454}00454\ \ \ d[15]\ =\ m[15]\ -\/\ m[14];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00455}00455\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00456}00456\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k=0;\ k<16;\ ++k)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00457}00457\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00458}00458\ \ \ \ \ satd\ +=\ abs(d[k]);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00459}00459\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00460}00460\ \ \ satd\ =\ ((satd+1)>>1);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00461}00461\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00462}00462\ \ \ \textcolor{keywordflow}{return}\ satd;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00463}00463\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00464}00464\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00465}00465\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00467}00467\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ xCalcHADs8x8w(\ \textcolor{keyword}{const}\ WPScalingParam\ \&wpCur,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piOrg,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ *piCur,\ \textcolor{keywordtype}{int}\ iStrideOrg,\ \textcolor{keywordtype}{int}\ iStrideCur,\ \textcolor{keywordtype}{int}\ iStep\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00468}00468\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00469}00469\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ sad=0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00470}00470\ \ \ \mbox{\hyperlink{namespacevtm_aabdbebbbe0e3ec89d58ed4795bdef40b}{TCoeff}}\ diff[64],\ m1[8][8],\ m2[8][8],\ m3[8][8];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00471}00471\ \ \ \textcolor{keywordtype}{int}\ iStep2\ =\ iStep<<1;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00472}00472\ \ \ \textcolor{keywordtype}{int}\ iStep3\ =\ iStep2\ +\ iStep;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00473}00473\ \ \ \textcolor{keywordtype}{int}\ iStep4\ =\ iStep3\ +\ iStep;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00474}00474\ \ \ \textcolor{keywordtype}{int}\ iStep5\ =\ iStep4\ +\ iStep;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00475}00475\ \ \ \textcolor{keywordtype}{int}\ iStep6\ =\ iStep5\ +\ iStep;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00476}00476\ \ \ \textcolor{keywordtype}{int}\ iStep7\ =\ iStep6\ +\ iStep;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00477}00477\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ round\ \ =\ wpCur.round;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00478}00478\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ shift\ \ =\ wpCur.shift;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00479}00479\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ offset\ =\ wpCur.offset;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00480}00480\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ w0\ \ \ \ \ =\ wpCur.w;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00481}00481\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00482}00482\ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00483}00483\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00484}00484\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 64;\ k+=8\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00485}00485\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00486}00486\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[\ \ \ \ \ 0]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00487}00487\ \ \ \ \ diff[k+0]\ =\ piOrg[0]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00488}00488\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep\ ]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00489}00489\ \ \ \ \ diff[k+1]\ =\ piOrg[1]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00490}00490\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep2]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00491}00491\ \ \ \ \ diff[k+2]\ =\ piOrg[2]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00492}00492\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep3]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00493}00493\ \ \ \ \ diff[k+3]\ =\ piOrg[3]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00494}00494\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep4]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00495}00495\ \ \ \ \ diff[k+4]\ =\ piOrg[4]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00496}00496\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep5]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00497}00497\ \ \ \ \ diff[k+5]\ =\ piOrg[5]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00498}00498\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep6]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00499}00499\ \ \ \ \ diff[k+6]\ =\ piOrg[6]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00500}00500\ \ \ \ \ pred\ \ \ \ \ \ =\ (\ (w0*piCur[iStep7]\ +\ round)\ >>\ shift\ )\ +\ offset\ ;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00501}00501\ \ \ \ \ diff[k+7]\ =\ piOrg[7]\ -\/\ pred;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00502}00502\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00503}00503\ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00504}00504\ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00505}00505\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00506}00506\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00507}00507\ \ \ \textcolor{comment}{//horizontal}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00508}00508\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j=0;\ j\ <\ 8;\ j++)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00509}00509\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00510}00510\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ jj\ =\ j\ <<\ 3;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00511}00511\ \ \ \ \ m2[j][0]\ =\ diff[jj\ \ ]\ +\ diff[jj+4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00512}00512\ \ \ \ \ m2[j][1]\ =\ diff[jj+1]\ +\ diff[jj+5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00513}00513\ \ \ \ \ m2[j][2]\ =\ diff[jj+2]\ +\ diff[jj+6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00514}00514\ \ \ \ \ m2[j][3]\ =\ diff[jj+3]\ +\ diff[jj+7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00515}00515\ \ \ \ \ m2[j][4]\ =\ diff[jj\ \ ]\ -\/\ diff[jj+4];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00516}00516\ \ \ \ \ m2[j][5]\ =\ diff[jj+1]\ -\/\ diff[jj+5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00517}00517\ \ \ \ \ m2[j][6]\ =\ diff[jj+2]\ -\/\ diff[jj+6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00518}00518\ \ \ \ \ m2[j][7]\ =\ diff[jj+3]\ -\/\ diff[jj+7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00519}00519\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00520}00520\ \ \ \ \ m1[j][0]\ =\ m2[j][0]\ +\ m2[j][2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00521}00521\ \ \ \ \ m1[j][1]\ =\ m2[j][1]\ +\ m2[j][3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00522}00522\ \ \ \ \ m1[j][2]\ =\ m2[j][0]\ -\/\ m2[j][2];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00523}00523\ \ \ \ \ m1[j][3]\ =\ m2[j][1]\ -\/\ m2[j][3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00524}00524\ \ \ \ \ m1[j][4]\ =\ m2[j][4]\ +\ m2[j][6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00525}00525\ \ \ \ \ m1[j][5]\ =\ m2[j][5]\ +\ m2[j][7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00526}00526\ \ \ \ \ m1[j][6]\ =\ m2[j][4]\ -\/\ m2[j][6];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00527}00527\ \ \ \ \ m1[j][7]\ =\ m2[j][5]\ -\/\ m2[j][7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00528}00528\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00529}00529\ \ \ \ \ m2[j][0]\ =\ m1[j][0]\ +\ m1[j][1];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00530}00530\ \ \ \ \ m2[j][1]\ =\ m1[j][0]\ -\/\ m1[j][1];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00531}00531\ \ \ \ \ m2[j][2]\ =\ m1[j][2]\ +\ m1[j][3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00532}00532\ \ \ \ \ m2[j][3]\ =\ m1[j][2]\ -\/\ m1[j][3];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00533}00533\ \ \ \ \ m2[j][4]\ =\ m1[j][4]\ +\ m1[j][5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00534}00534\ \ \ \ \ m2[j][5]\ =\ m1[j][4]\ -\/\ m1[j][5];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00535}00535\ \ \ \ \ m2[j][6]\ =\ m1[j][6]\ +\ m1[j][7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00536}00536\ \ \ \ \ m2[j][7]\ =\ m1[j][6]\ -\/\ m1[j][7];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00537}00537\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00538}00538\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00539}00539\ \ \ \textcolor{comment}{//vertical}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00540}00540\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00541}00541\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00542}00542\ \ \ \ \ m3[0][i]\ =\ m2[0][i]\ +\ m2[4][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00543}00543\ \ \ \ \ m3[1][i]\ =\ m2[1][i]\ +\ m2[5][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00544}00544\ \ \ \ \ m3[2][i]\ =\ m2[2][i]\ +\ m2[6][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00545}00545\ \ \ \ \ m3[3][i]\ =\ m2[3][i]\ +\ m2[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00546}00546\ \ \ \ \ m3[4][i]\ =\ m2[0][i]\ -\/\ m2[4][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00547}00547\ \ \ \ \ m3[5][i]\ =\ m2[1][i]\ -\/\ m2[5][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00548}00548\ \ \ \ \ m3[6][i]\ =\ m2[2][i]\ -\/\ m2[6][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00549}00549\ \ \ \ \ m3[7][i]\ =\ m2[3][i]\ -\/\ m2[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00550}00550\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00551}00551\ \ \ \ \ m1[0][i]\ =\ m3[0][i]\ +\ m3[2][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00552}00552\ \ \ \ \ m1[1][i]\ =\ m3[1][i]\ +\ m3[3][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00553}00553\ \ \ \ \ m1[2][i]\ =\ m3[0][i]\ -\/\ m3[2][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00554}00554\ \ \ \ \ m1[3][i]\ =\ m3[1][i]\ -\/\ m3[3][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00555}00555\ \ \ \ \ m1[4][i]\ =\ m3[4][i]\ +\ m3[6][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00556}00556\ \ \ \ \ m1[5][i]\ =\ m3[5][i]\ +\ m3[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00557}00557\ \ \ \ \ m1[6][i]\ =\ m3[4][i]\ -\/\ m3[6][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00558}00558\ \ \ \ \ m1[7][i]\ =\ m3[5][i]\ -\/\ m3[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00559}00559\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00560}00560\ \ \ \ \ m2[0][i]\ =\ m1[0][i]\ +\ m1[1][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00561}00561\ \ \ \ \ m2[1][i]\ =\ m1[0][i]\ -\/\ m1[1][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00562}00562\ \ \ \ \ m2[2][i]\ =\ m1[2][i]\ +\ m1[3][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00563}00563\ \ \ \ \ m2[3][i]\ =\ m1[2][i]\ -\/\ m1[3][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00564}00564\ \ \ \ \ m2[4][i]\ =\ m1[4][i]\ +\ m1[5][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00565}00565\ \ \ \ \ m2[5][i]\ =\ m1[4][i]\ -\/\ m1[5][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00566}00566\ \ \ \ \ m2[6][i]\ =\ m1[6][i]\ +\ m1[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00567}00567\ \ \ \ \ m2[7][i]\ =\ m1[6][i]\ -\/\ m1[7][i];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00568}00568\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00569}00569\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00570}00570\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j=0;\ j\ <\ 8;\ j++)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00571}00571\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00572}00572\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i\ <\ 8;\ i++)}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00573}00573\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00574}00574\ \ \ \ \ \ \ sad\ +=\ (abs(m2[j][i]));}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00575}00575\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00576}00576\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00577}00577\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00578}00578\ \ \ sad=((sad+2)>>2);}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00579}00579\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00580}00580\ \ \ \textcolor{keywordflow}{return}\ sad;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00581}00581\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00582}00582\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00583}00583\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00585}\mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_ae4900948fcf05c14c193ee8261d89d16}{00585}}\ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ \mbox{\hyperlink{namespacevtm_1_1RdCostWeightPrediction_ae4900948fcf05c14c193ee8261d89d16}{RdCostWeightPrediction::xGetHADsw}}(\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classvtm_1_1DistParam}{DistParam}}\ \&rcDtParam\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00586}00586\ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00587}00587\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ *piOrg\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00588}00588\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}\ \ \ \ \ \ \ \ *piCur\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_ac44357f658de418b0e47023f77f5c8eb}{buf}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00589}00589\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iRows\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a61d83da123d4ffa7d49827b08159c50f}{height}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00590}00590\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iCols\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1Size_a6f0c0cd63ae0337888615491b4ab1a19}{width}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00591}00591\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStrideCur\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a0b740ad43a7ae7ce33a3c80ee4858082}{cur}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00592}00592\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStrideOrg\ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a66c2c64e0b0c02c29bf55e17c2a6444c}{org}}.\mbox{\hyperlink{structvtm_1_1AreaBuf_af3cb9f441bafc8c14d378d3da8eb7622}{stride}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00593}00593\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ iStep\ \ \ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a8e6e91739968bba471116573a7f3d8b3}{step}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00594}00594\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compIdx\ \ \ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a8966d3ff09572e1c038bd9200be804c9}{compID}};}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00595}00595\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(compIdx>=\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}},\ \textcolor{stringliteral}{"{}Invalid\ component"{}});}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00596}00596\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1WPScalingParam}{WPScalingParam}}\ \&wpCur\ \ =\ rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_a99bee8e5bde4db44e966119f0e4953ab}{wpCur}}[compIdx];}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00597}00597\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00598}00598\ \ \ \mbox{\hyperlink{namespacevtm_a1f03b313cf93f4984766bc220626e53a}{Distortion}}\ uiSum\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00599}00599\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00600}00600\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00601}00601\ \ \ \textcolor{keywordflow}{if}(\ (\ iRows\ \%\ 8\ ==\ 0)\ \&\&\ (iCols\ \%\ 8\ ==\ 0)\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00602}00602\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00603}00603\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetOrg\ =\ iStrideOrg<<3;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00604}00604\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetCur\ =\ iStrideCur<<3;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00605}00605\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=\ 8\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00606}00606\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00607}00607\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=\ 8\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00608}00608\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00609}00609\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs8x8w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00610}00610\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00611}00611\ \ \ \ \ \ \ piOrg\ +=\ iOffsetOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00612}00612\ \ \ \ \ \ \ piCur\ +=\ iOffsetCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00613}00613\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00614}00614\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00615}00615\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\ iRows\ \%\ 4\ ==\ 0)\ \&\&\ (iCols\ \%\ 4\ ==\ 0)\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00616}00616\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00617}00617\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetOrg\ =\ iStrideOrg<<2;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00618}00618\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iOffsetCur\ =\ iStrideCur<<2;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00619}00619\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00620}00620\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=\ 4\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00621}00621\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00622}00622\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=\ 4\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00623}00623\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00624}00624\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs4x4w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00625}00625\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00626}00626\ \ \ \ \ \ \ piOrg\ +=\ iOffsetOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00627}00627\ \ \ \ \ \ \ piCur\ +=\ iOffsetCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00628}00628\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00629}00629\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00630}00630\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00631}00631\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00632}00632\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ y=0;\ y<iRows;\ y+=2\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00633}00633\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00634}00634\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ x=0;\ x<iCols;\ x+=2\ )}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00635}00635\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00636}00636\ \ \ \ \ \ \ \ \ uiSum\ +=\ xCalcHADs2x2w(\ wpCur,\ \&piOrg[x],\ \&piCur[x*iStep],\ iStrideOrg,\ iStrideCur,\ iStep\ );}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00637}00637\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00638}00638\ \ \ \ \ \ \ piOrg\ +=\ iStrideOrg;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00639}00639\ \ \ \ \ \ \ piCur\ +=\ iStrideCur;}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00640}00640\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00641}00641\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00642}00642\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00643}00643\ \ \ \textcolor{keywordflow}{return}\ uiSum\ >>\ \mbox{\hyperlink{TypeDef_8h_a29d5c9e713ec90b037a5aaa3865ccfa9}{DISTORTION\_PRECISION\_ADJUSTMENT}}(rcDtParam.\mbox{\hyperlink{classvtm_1_1DistParam_aa12f62669e43c9ede3244b36d40978ef}{bitDepth}});}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00644}00644\ \}}
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00645}00645\ }
+\DoxyCodeLine{\Hypertarget{RdCostWeightPrediction_8cpp_source_l00646}00646\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
 
 \end{DoxyCode}

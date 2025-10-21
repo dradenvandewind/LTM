@@ -1,241 +1,241 @@
 \doxysection{Upsampling.\+cpp}
-\label{Upsampling_8cpp_source}\index{decoder/src/Upsampling.cpp@{decoder/src/Upsampling.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{Upsampling_8cpp_source}{}\label{Upsampling_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/decoder/src/Upsampling.cpp@{/media/erwan/T7/formation/Video/LTM/decoder/src/Upsampling.cpp}}
+\mbox{\hyperlink{Upsampling_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ Upsampling.cpp}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ }
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Upsampling.hpp"{}}}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Convert.hpp"{}}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00042\ }
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{keyword}{using\ namespace\ }std;}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \textcolor{keyword}{typedef}\ int32\_t\ UpsampleKernel[4];}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ UpsampleKernel\ upsample\_kernels[]\ =\ \{}
-\DoxyCodeLine{00053\ \ \ \ \ \{0,\ 16384,\ 0,\ 0\},\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Upsample\_Nearest}}
-\DoxyCodeLine{00054\ \ \ \ \ \{0,\ 12288,\ 4096,\ 0\},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Upsample\_Linear}}
-\DoxyCodeLine{00055\ \ \ \ \ \{-\/1382,\ 14285,\ 3942,\ -\/461\},\ \ \textcolor{comment}{//\ Upsample\_Cubic}}
-\DoxyCodeLine{00056\ \ \ \ \ \{-\/2360,\ 15855,\ 4165,\ -\/1276\},\ \textcolor{comment}{//\ Upsample\_ModifiedCubic}}
-\DoxyCodeLine{00057\ \};}
-\DoxyCodeLine{00058\ }
-\DoxyCodeLine{00059\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ make\_kernel(UpsampleKernel\ \&kernel,\ Upsample\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
-\DoxyCodeLine{00060\ \ \ \ \ CHECK(upsample\ >=\ Upsample\_Nearest\ \&\&\ upsample\ <=\ Upsample\_AdaptiveCubic);}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}\ (upsample\ <=\ Upsample\_ModifiedCubic)}
-\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ ARRAY\_SIZE(kernel);\ ++i)}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ kernel[i]\ =\ upsample\_kernels[upsample][i];}
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ CHECK(upsample\ ==\ Upsample\_AdaptiveCubic);}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ CHECK(coefficients\ !=\ \textcolor{keyword}{nullptr});}
-\DoxyCodeLine{00068\ }
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ kernel[0]\ =\ -\/(int32\_t)coefficients[0];}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ kernel[1]\ =\ (int32\_t)coefficients[1];}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ kernel[2]\ =\ (int32\_t)coefficients[2];}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ kernel[3]\ =\ -\/(int32\_t)coefficients[3];}
-\DoxyCodeLine{00073\ \ \ \ \ \}}
-\DoxyCodeLine{00074\ \}}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ int16\_t\ us\_shift\_clamp\_s16(int32\_t\ v)\ \{}
-\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#if\ 0}}
-\DoxyCodeLine{00078\ \ \ \ \ v\ >>=\ 14;}
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{if}(v\ >\ 32767)}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ v\ =\ 32767;}
-\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(v\ <\ -\/32768)}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ v\ =\ -\/32768;}
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{return}\ v;}
-\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#else}}
-\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{return}\ v\ >>\ 14;}
-\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00087\ \}}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \textcolor{comment}{//\ Specialised\ for\ a\ 4\ tap\ kernel,\ offset\ by\ -\/1}}
-\DoxyCodeLine{00090\ \textcolor{comment}{//}}
-\DoxyCodeLine{00091\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \textcolor{keyword}{inline}\ apply\_kernel(int16\_t\ *\_\_restrict\ dest,\ \textcolor{keywordtype}{unsigned}\ dest\_stride,\ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ src,\ \textcolor{keywordtype}{unsigned}\ src\_stride,}
-\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ size,\ \textcolor{keyword}{const}\ UpsampleKernel\ \&kernel)\ \{}
-\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ 0)}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00095\ }
-\DoxyCodeLine{00096\ \ \ \ \ assert(size\ >=\ 4);\ \textcolor{comment}{//\ Head\ and\ tail\ have\ been\ unrolled}}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ First\ sample}}
-\DoxyCodeLine{00099\ \ \ \ \ int32\_t\ ds\ =\ 0x2000;}
-\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ ds\ +=\ kernel[3\ -\/\ k]\ *\ src[src\_stride\ *\ clamp(k\ -\/\ 2,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
-\DoxyCodeLine{00102\ }
-\DoxyCodeLine{00103\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds);}
-\DoxyCodeLine{00104\ \ \ \ \ dest\ +=\ dest\_stride;}
-\DoxyCodeLine{00105\ }
-\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{//\ Second\ pair}}
-\DoxyCodeLine{00107\ \ \ \ \ int32\_t\ ds0\ =\ 0x2000,\ ds1\ =\ 0x2000;}
-\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ clamp(k\ -\/\ 1,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ ds0\ +=\ kernel[k]\ *\ sample;}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ ds1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
-\DoxyCodeLine{00112\ \ \ \ \ \}}
-\DoxyCodeLine{00113\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds0);}
-\DoxyCodeLine{00114\ \ \ \ \ dest\ +=\ dest\_stride;}
-\DoxyCodeLine{00115\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds1);}
-\DoxyCodeLine{00116\ \ \ \ \ dest\ +=\ dest\_stride;}
-\DoxyCodeLine{00117\ }
-\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ Pairs\ of\ output\ samples}}
-\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ s\ =\ 1;\ s\ <\ (int)(size\ -\/\ 2);\ ++s)\ \{}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ int32\_t\ d0\ =\ 0x2000,\ d1\ =\ 0x2000;}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ (s\ +\ k\ -\/\ 1)];}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ d0\ +=\ kernel[k]\ *\ sample;}
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ d1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ dest[0]\ =\ us\_shift\_clamp\_s16(d0);}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ dest[dest\_stride]\ =\ us\_shift\_clamp\_s16(d1);}
-\DoxyCodeLine{00128\ }
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ dest\ +=\ 2\ *\ dest\_stride;}
-\DoxyCodeLine{00130\ \ \ \ \ \}}
-\DoxyCodeLine{00131\ }
-\DoxyCodeLine{00132\ \ \ \ \ \textcolor{comment}{//\ Last\ pair}}
-\DoxyCodeLine{00133\ \ \ \ \ int32\_t\ de0\ =\ 0x2000,\ de1\ =\ 0x2000;}
-\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ clamp(((\textcolor{keywordtype}{int})size\ -\/\ 3)\ +\ k,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ de0\ +=\ kernel[k]\ *\ sample;}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ de1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
-\DoxyCodeLine{00138\ \ \ \ \ \}}
-\DoxyCodeLine{00139\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de0);}
-\DoxyCodeLine{00140\ \ \ \ \ dest\ +=\ dest\_stride;}
-\DoxyCodeLine{00141\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de1);}
-\DoxyCodeLine{00142\ \ \ \ \ dest\ +=\ dest\_stride;}
-\DoxyCodeLine{00143\ }
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ Last\ sample}}
-\DoxyCodeLine{00145\ \ \ \ \ int32\_t\ de\ =\ 0x2000;}
-\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ de\ +=\ kernel[k]\ *\ src[src\_stride\ *\ clamp(((\textcolor{keywordtype}{int})size\ -\/\ 2)\ +\ k,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de);}
-\DoxyCodeLine{00150\ \}}
-\DoxyCodeLine{00151\ }
-\DoxyCodeLine{00152\ Surface\ Upsampling::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ Upsample\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
-\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ src\_plane.width();}
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ src\_plane.height();}
-\DoxyCodeLine{00155\ }
-\DoxyCodeLine{00156\ \ \ \ \ UpsampleKernel\ kernel;}
-\DoxyCodeLine{00157\ \ \ \ \ make\_kernel(kernel,\ upsample,\ coefficients);}
-\DoxyCodeLine{00158\ }
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Intermediate\ is\ w,2h}}
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keyword}{auto}\ v\_src\ =\ src\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{auto}\ v\_dest\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00162\ \ \ \ \ v\_dest.reserve(width,\ height\ *\ 2);}
-\DoxyCodeLine{00163\ }
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{comment}{//\ Vertical\ scale}}
-\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ apply\_kernel(v\_dest.data(x,\ 0),\ width,\ v\_src.data(x,\ 0),\ width,\ height,\ kernel);}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ Surface\ intermediate\ =\ v\_dest.finish();}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Final\ is\ 2w,2h}}
-\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{auto}\ h\_src\ =\ intermediate.view\_as<int16\_t>();}
-\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{auto}\ h\_dst\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00174\ \ \ \ \ h\_dst.reserve(width\ *\ 2,\ height\ *\ 2);}
-\DoxyCodeLine{00175\ }
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{comment}{//\ Horizontal\ scale}}
-\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height\ *\ 2;\ ++y)}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ apply\_kernel(h\_dst.data(0,\ y),\ 1,\ h\_src.data(0,\ y),\ 1,\ width,\ kernel);}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{return}\ h\_dst.finish();}
-\DoxyCodeLine{00182\ \}}
-\DoxyCodeLine{00183\ }
-\DoxyCodeLine{00184\ Surface\ Upsampling\_1D::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ Upsample\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
-\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ src\_plane.width();}
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ src\_plane.height();}
-\DoxyCodeLine{00187\ }
-\DoxyCodeLine{00188\ \ \ \ \ UpsampleKernel\ kernel;}
-\DoxyCodeLine{00189\ \ \ \ \ make\_kernel(kernel,\ upsample,\ coefficients);}
-\DoxyCodeLine{00190\ }
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ Final\ is\ 2w,h}}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{auto}\ h\_src\ =\ src\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keyword}{auto}\ h\_dest\ =\ Surface::build\_from<int16\_t>();}
-\DoxyCodeLine{00194\ \ \ \ \ h\_dest.reserve(2\ *\ width,\ height);}
-\DoxyCodeLine{00195\ }
-\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ Horizontal\ scale}}
-\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ apply\_kernel(h\_dest.data(0,\ y),\ 1,\ h\_src.data(0,\ y),\ 1,\ width,\ kernel);}
-\DoxyCodeLine{00200\ }
-\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordflow}{return}\ h\_dest.finish();}
-\DoxyCodeLine{00202\ \}}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ Image\ UpsampleImage(\textcolor{keyword}{const}\ Image\ \&src,\ Upsample\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ upsampling\_coefficients[4],\ ScalingMode\ scaling\_mode)\ \{}
-\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{if}\ (scaling\_mode\ ==\ ScalingMode\_None)}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ src;}
-\DoxyCodeLine{00207\ }
-\DoxyCodeLine{00208\ \ \ \ \ vector<Surface>\ upsampled\_surfaces;}
-\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ src.description().num\_planes();\ ++p)\ \{}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Surface\ s\ =\ ConvertToInternal().process(src.plane(p),\ src.description().bit\_depth());}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ Surface\ scaled;}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (scaling\_mode)\ \{}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_1D:}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ Upsampling\_1D().process(s,\ upsample,\ upsampling\_coefficients);}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00217\ }
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ ScalingMode\_2D:}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ Upsampling().process(s,\ upsample,\ upsampling\_coefficients);}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00221\ }
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00226\ }
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ upsampled\_surfaces.push\_back(ConvertFromInternal().process(scaled,\ src.description().bit\_depth()));}
-\DoxyCodeLine{00228\ \ \ \ \ \}}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescription\ us\_desc(src.description().format(),\ upsampled\_surfaces[0].width(),\ upsampled\_surfaces[0].height());}
-\DoxyCodeLine{00231\ }
-\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{return}\ Image(\textcolor{stringliteral}{"{}upsampled"{}},\ us\_desc,\ src.timestamp(),\ upsampled\_surfaces);}
-\DoxyCodeLine{00233\ \}}
-\DoxyCodeLine{00234\ }
-\DoxyCodeLine{00235\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00035}00035\ \textcolor{comment}{//\ Upsampling.cpp}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Upsampling_8hpp}{Upsampling.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Convert_8hpp}{Convert.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00046}00046\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacestd}{std}};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00048}00048\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00050}\mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{00050}}\ \textcolor{keyword}{typedef}\ int32\_t\ \mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}[4];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00052}00052\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}\ upsample\_kernels[]\ =\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00053}00053\ \ \ \ \ \{0,\ 16384,\ 0,\ 0\},\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Upsample\_Nearest}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00054}00054\ \ \ \ \ \{0,\ 12288,\ 4096,\ 0\},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Upsample\_Linear}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00055}00055\ \ \ \ \ \{-\/1382,\ 14285,\ 3942,\ -\/461\},\ \ \textcolor{comment}{//\ Upsample\_Cubic}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00056}00056\ \ \ \ \ \{-\/2360,\ 15855,\ 4165,\ -\/1276\},\ \textcolor{comment}{//\ Upsample\_ModifiedCubic}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00057}00057\ \};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00059}00059\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ make\_kernel(\mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}\ \&kernel,\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658c}{Upsample}}\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00060}00060\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(upsample\ >=\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658ca3f507aafd38ff78dfa956c38dd3e813e}{Upsample\_Nearest}}\ \&\&\ upsample\ <=\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658cae1e9692a262ad58dca282bc1c8dd4032}{Upsample\_AdaptiveCubic}});}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00062}00062\ \ \ \ \ \textcolor{keywordflow}{if}\ (upsample\ <=\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658ca6e4c3847fe76ec30911ca681cb111c12}{Upsample\_ModifiedCubic}})}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(kernel);\ ++i)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ kernel[i]\ =\ upsample\_kernels[upsample][i];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00065}00065\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(upsample\ ==\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658cae1e9692a262ad58dca282bc1c8dd4032}{Upsample\_AdaptiveCubic}});}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(coefficients\ !=\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ kernel[0]\ =\ -\/(int32\_t)coefficients[0];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ kernel[1]\ =\ (int32\_t)coefficients[1];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ kernel[2]\ =\ (int32\_t)coefficients[2];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ kernel[3]\ =\ -\/(int32\_t)coefficients[3];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00073}00073\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00074}00074\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00076}00076\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ int16\_t\ us\_shift\_clamp\_s16(int32\_t\ v)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00077}00077\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00078}00078\ \ \ \ \ v\ >>=\ 14;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00079}00079\ \ \ \ \ \textcolor{keywordflow}{if}(v\ >\ 32767)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ v\ =\ 32767;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00081}00081\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(v\ <\ -\/32768)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ v\ =\ -\/32768;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00083}00083\ \ \ \ \ \textcolor{keywordflow}{return}\ v;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00084}00084\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00085}00085\ \ \ \ \ \textcolor{keywordflow}{return}\ v\ >>\ 14;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00086}00086\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00087}00087\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00089}00089\ \textcolor{comment}{//\ Specialised\ for\ a\ 4\ tap\ kernel,\ offset\ by\ -\/1}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00090}00090\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00091}00091\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \textcolor{keyword}{inline}\ apply\_kernel(int16\_t\ *\_\_restrict\ dest,\ \textcolor{keywordtype}{unsigned}\ dest\_stride,\ \textcolor{keyword}{const}\ int16\_t\ *\_\_restrict\ src,\ \textcolor{keywordtype}{unsigned}\ src\_stride,}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ size,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}\ \&kernel)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00093}00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00096}00096\ \ \ \ \ assert(size\ >=\ 4);\ \textcolor{comment}{//\ Head\ and\ tail\ have\ been\ unrolled}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00098}00098\ \ \ \ \ \textcolor{comment}{//\ First\ sample}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00099}00099\ \ \ \ \ int32\_t\ ds\ =\ 0x2000;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00100}00100\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ ds\ +=\ kernel[3\ -\/\ k]\ *\ src[src\_stride\ *\ \mbox{\hyperlink{namespacelctm_a64a9a3f7794a4c79658d12716ebf5778}{clamp}}(k\ -\/\ 2,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00103}00103\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00104}00104\ \ \ \ \ dest\ +=\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00106}00106\ \ \ \ \ \textcolor{comment}{//\ Second\ pair}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00107}00107\ \ \ \ \ int32\_t\ ds0\ =\ 0x2000,\ ds1\ =\ 0x2000;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00108}00108\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ \mbox{\hyperlink{namespacelctm_a64a9a3f7794a4c79658d12716ebf5778}{clamp}}(k\ -\/\ 1,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ ds0\ +=\ kernel[k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ ds1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00112}00112\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00113}00113\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds0);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00114}00114\ \ \ \ \ dest\ +=\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00115}00115\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(ds1);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00116}00116\ \ \ \ \ dest\ +=\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00118}00118\ \ \ \ \ \textcolor{comment}{//\ Pairs\ of\ output\ samples}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00119}00119\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ s\ =\ 1;\ s\ <\ (int)(size\ -\/\ 2);\ ++s)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ int32\_t\ d0\ =\ 0x2000,\ d1\ =\ 0x2000;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ (s\ +\ k\ -\/\ 1)];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ d0\ +=\ kernel[k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ d1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ dest[0]\ =\ us\_shift\_clamp\_s16(d0);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00127}00127\ \ \ \ \ \ \ \ \ dest[dest\_stride]\ =\ us\_shift\_clamp\_s16(d1);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00128}00128\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ dest\ +=\ 2\ *\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00130}00130\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00131}00131\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00132}00132\ \ \ \ \ \textcolor{comment}{//\ Last\ pair}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00133}00133\ \ \ \ \ int32\_t\ de0\ =\ 0x2000,\ de1\ =\ 0x2000;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00134}00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ int32\_t\ sample\ =\ src[src\_stride\ *\ \mbox{\hyperlink{namespacelctm_a64a9a3f7794a4c79658d12716ebf5778}{clamp}}(((\textcolor{keywordtype}{int})size\ -\/\ 3)\ +\ k,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ de0\ +=\ kernel[k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ de1\ +=\ kernel[3\ -\/\ k]\ *\ sample;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00138}00138\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00139}00139\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de0);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00140}00140\ \ \ \ \ dest\ +=\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00141}00141\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de1);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00142}00142\ \ \ \ \ dest\ +=\ dest\_stride;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00143}00143\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00144}00144\ \ \ \ \ \textcolor{comment}{//\ Last\ sample}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00145}00145\ \ \ \ \ int32\_t\ de\ =\ 0x2000;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00146}00146\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ de\ +=\ kernel[k]\ *\ src[src\_stride\ *\ \mbox{\hyperlink{namespacelctm_a64a9a3f7794a4c79658d12716ebf5778}{clamp}}(((\textcolor{keywordtype}{int})size\ -\/\ 2)\ +\ k,\ 0,\ (\textcolor{keywordtype}{int})size\ -\/\ 1)];}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00149}00149\ \ \ \ \ *dest\ =\ us\_shift\_clamp\_s16(de);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00150}00150\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00151}00151\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00152}\mbox{\hyperlink{classlctm_1_1Upsampling_ae30c08c37376edf13546db9590a1beca}{00152}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1Upsampling_ae30c08c37376edf13546db9590a1beca}{Upsampling::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane,\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658c}{Upsample}}\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00153}00153\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00154}00154\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00155}00155\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00156}00156\ \ \ \ \ \mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}\ kernel;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00157}00157\ \ \ \ \ make\_kernel(kernel,\ upsample,\ coefficients);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00158}00158\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00159}00159\ \ \ \ \ \textcolor{comment}{//\ Intermediate\ is\ w,2h}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00160}00160\ \ \ \ \ \textcolor{keyword}{auto}\ v\_src\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00161}00161\ \ \ \ \ \textcolor{keyword}{auto}\ v\_dest\ =\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00162}00162\ \ \ \ \ v\_dest.reserve(width,\ height\ *\ 2);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00163}00163\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00164}00164\ \ \ \ \ \textcolor{comment}{//\ Vertical\ scale}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00165}00165\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00166}00166\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ apply\_kernel(v\_dest.data(x,\ 0),\ width,\ v\_src.data(x,\ 0),\ width,\ height,\ kernel);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00169}00169\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ intermediate\ =\ v\_dest.finish();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00170}00170\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00171}00171\ \ \ \ \ \textcolor{comment}{//\ Final\ is\ 2w,2h}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00172}00172\ \ \ \ \ \textcolor{keyword}{auto}\ h\_src\ =\ intermediate.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00173}00173\ \ \ \ \ \textcolor{keyword}{auto}\ h\_dst\ =\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00174}00174\ \ \ \ \ h\_dst.reserve(width\ *\ 2,\ height\ *\ 2);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00176}00176\ \ \ \ \ \textcolor{comment}{//\ Horizontal\ scale}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00177}00177\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00178}00178\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height\ *\ 2;\ ++y)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ apply\_kernel(h\_dst.data(0,\ y),\ 1,\ h\_src.data(0,\ y),\ 1,\ width,\ kernel);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00181}00181\ \ \ \ \ \textcolor{keywordflow}{return}\ h\_dst.finish();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00182}00182\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00183}00183\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00184}\mbox{\hyperlink{classlctm_1_1Upsampling__1D_af919ace20f20bb9617b23e72e32334be}{00184}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1Upsampling__1D_af919ace20f20bb9617b23e72e32334be}{Upsampling\_1D::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane,\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658c}{Upsample}}\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ *coefficients)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00185}00185\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00186}00186\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00187}00187\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00188}00188\ \ \ \ \ \mbox{\hyperlink{namespacelctm_af92378e3a0a3aa8023e4662323931f85}{UpsampleKernel}}\ kernel;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00189}00189\ \ \ \ \ make\_kernel(kernel,\ upsample,\ coefficients);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00190}00190\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00191}00191\ \ \ \ \ \textcolor{comment}{//\ Final\ is\ 2w,h}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00192}00192\ \ \ \ \ \textcolor{keyword}{auto}\ h\_src\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00193}00193\ \ \ \ \ \textcolor{keyword}{auto}\ h\_dest\ =\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00194}00194\ \ \ \ \ h\_dest.reserve(2\ *\ width,\ height);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00195}00195\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00196}00196\ \ \ \ \ \textcolor{comment}{//\ Horizontal\ scale}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00197}00197\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00198}00198\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ apply\_kernel(h\_dest.data(0,\ y),\ 1,\ h\_src.data(0,\ y),\ 1,\ width,\ kernel);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00200}00200\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00201}00201\ \ \ \ \ \textcolor{keywordflow}{return}\ h\_dest.finish();}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00202}00202\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00204}\mbox{\hyperlink{namespacelctm_a332fdf7731ee42fa26bc1dd9d3a3441e}{00204}}\ \mbox{\hyperlink{classlctm_1_1Image}{Image}}\ \mbox{\hyperlink{namespacelctm_a332fdf7731ee42fa26bc1dd9d3a3441e}{UpsampleImage}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Image}{Image}}\ \&src,\ \mbox{\hyperlink{namespacelctm_ae182e52747fb3d8299e41f8d4424658c}{Upsample}}\ upsample,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ upsampling\_coefficients[4],\ \mbox{\hyperlink{namespacelctm_adc3f49b17aed7f676a12be9df6a36c86}{ScalingMode}}\ scaling\_mode)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00205}00205\ \ \ \ \ \textcolor{keywordflow}{if}\ (scaling\_mode\ ==\ \mbox{\hyperlink{namespacelctm_adc3f49b17aed7f676a12be9df6a36c86ade3f7698f8308d9222691919b394e98c}{ScalingMode\_None}})}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ src;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00207}00207\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00208}00208\ \ \ \ \ vector<Surface>\ upsampled\_surfaces;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00209}00209\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ src.\mbox{\hyperlink{classlctm_1_1Image_ad8abb0815fb19be34e41c3b0e7134da1}{description}}().num\_planes();\ ++p)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ s\ =\ \mbox{\hyperlink{classlctm_1_1ConvertToInternal}{ConvertToInternal}}().\mbox{\hyperlink{classlctm_1_1ConvertToInternal_adb7abaa9839ee070351ad77c0ec5ddfa}{process}}(src.\mbox{\hyperlink{classlctm_1_1Image_ad0b93b84eae787cfd87545e974c6f23b}{plane}}(p),\ src.\mbox{\hyperlink{classlctm_1_1Image_ad8abb0815fb19be34e41c3b0e7134da1}{description}}().\mbox{\hyperlink{classlctm_1_1ImageDescription_a878adca08e6b883083aa3006228c26a0}{bit\_depth}}());}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ scaled;}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (scaling\_mode)\ \{}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacelctm_adc3f49b17aed7f676a12be9df6a36c86a0a885c6181c11d23df14404e628cc371}{ScalingMode\_1D}}:}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ \mbox{\hyperlink{classlctm_1_1Upsampling__1D}{Upsampling\_1D}}().\mbox{\hyperlink{classlctm_1_1Upsampling__1D_af919ace20f20bb9617b23e72e32334be}{process}}(s,\ upsample,\ upsampling\_coefficients);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00217}00217\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacelctm_adc3f49b17aed7f676a12be9df6a36c86a1fbf868aaed7dc618715e71f631f4fa8}{ScalingMode\_2D}}:}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ scaled\ =\ \mbox{\hyperlink{classlctm_1_1Upsampling}{Upsampling}}().\mbox{\hyperlink{classlctm_1_1Upsampling_ae30c08c37376edf13546db9590a1beca}{process}}(s,\ upsample,\ upsampling\_coefficients);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00221}00221\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(0);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00226}00226\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00227}00227\ \ \ \ \ \ \ \ \ upsampled\_surfaces.push\_back(\mbox{\hyperlink{classlctm_1_1ConvertFromInternal}{ConvertFromInternal}}().process(scaled,\ src.\mbox{\hyperlink{classlctm_1_1Image_ad8abb0815fb19be34e41c3b0e7134da1}{description}}().\mbox{\hyperlink{classlctm_1_1ImageDescription_a878adca08e6b883083aa3006228c26a0}{bit\_depth}}()));}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00228}00228\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00229}00229\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00230}00230\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ us\_desc(src.\mbox{\hyperlink{classlctm_1_1Image_ad8abb0815fb19be34e41c3b0e7134da1}{description}}().\mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{format}}(),\ upsampled\_surfaces[0].width(),\ upsampled\_surfaces[0].height());}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00231}00231\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00232}00232\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Image}{Image}}(\textcolor{stringliteral}{"{}upsampled"{}},\ us\_desc,\ src.\mbox{\hyperlink{classlctm_1_1Image_ad8a89b7b5c65dd5ee8bcdcc8f8f061b8}{timestamp}}(),\ upsampled\_surfaces);}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00233}00233\ \}}
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00234}00234\ }
+\DoxyCodeLine{\Hypertarget{Upsampling_8cpp_source_l00235}00235\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

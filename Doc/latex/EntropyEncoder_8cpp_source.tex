@@ -1,559 +1,559 @@
 \doxysection{Entropy\+Encoder.\+cpp}
-\label{EntropyEncoder_8cpp_source}\index{encoder/src/EntropyEncoder.cpp@{encoder/src/EntropyEncoder.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{EntropyEncoder_8cpp_source}{}\label{EntropyEncoder_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/encoder/src/EntropyEncoder.cpp@{/media/erwan/T7/formation/Video/LTM/encoder/src/EntropyEncoder.cpp}}
+\mbox{\hyperlink{EntropyEncoder_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ EntropyEncoder.cpp}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ }
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}EntropyEncoder.hpp"{}}}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}BitstreamPacker.hpp"{}}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}HuffmanEncoder.hpp"{}}}
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Packet.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{00048\ }
-\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00052\ \textcolor{comment}{//}}
-\DoxyCodeLine{00053\ \textcolor{keyword}{class\ }EntropyModelResiduals\ \{}
-\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ residual\ RLE\ modelling\ -\/\ used\ to\ select\ between\ 3\ huffman\ trees}}
-\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_ZERO,\ STATE\_COUNT\ \};}
-\DoxyCodeLine{00056\ }
-\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00058\ \ \ \ \ EntropyModelResiduals()\ \{\}}
-\DoxyCodeLine{00059\ }
-\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_high\_count(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
-\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_run(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros);}
-\DoxyCodeLine{00062\ \ \ \ \ EncodedChunk\ finish();}
-\DoxyCodeLine{00063\ }
-\DoxyCodeLine{00064\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
-\DoxyCodeLine{00068\ }
-\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_LSB;}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
-\DoxyCodeLine{00074\ \ \ \ \ \};}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
-\DoxyCodeLine{00077\ \};}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
-\DoxyCodeLine{00080\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
-\DoxyCodeLine{00081\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
-\DoxyCodeLine{00082\ \}}
-\DoxyCodeLine{00083\ }
-\DoxyCodeLine{00084\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
-\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ c\ >>\ 7);}
-\DoxyCodeLine{00087\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
-\DoxyCodeLine{00088\ \}}
-\DoxyCodeLine{00089\ }
-\DoxyCodeLine{00090\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_run(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros)\ \{}
-\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ run?}}
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ zeros\_bit\ =\ (zeros\ >\ 0)\ ?\ 0x80\ :\ 0;}
-\DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{//\ Encode\ value}}
-\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{if}\ (residual\ >=\ -\/32\ \&\&\ residual\ <\ 32)\ \{}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (residual\ *\ 2\ +\ 0x40)\ |\ zeros\_bit);}
-\DoxyCodeLine{00097\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ clamped\_residual\ =\ std::min(std::max(residual\ +\ 0x2000,\ 0),\ 0x3fff)\ <<\ 1;}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (clamped\_residual\ \&\ 0xfe)\ |\ 0x01);}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ ((clamped\_residual\ >>\ 8)\ \&\ 0x7f)\ |\ zeros\_bit);}
-\DoxyCodeLine{00101\ \ \ \ \ \}}
-\DoxyCodeLine{00102\ }
-\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Add\ any\ required\ run\ symbols}}
-\DoxyCodeLine{00104\ \ \ \ \ \textcolor{comment}{//\ LSByte\ first}}
-\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ /***}}
-\DoxyCodeLine{00106\ \textcolor{comment}{\ \ \ \ while\ (zeros)\ \{}}
-\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ \ \ \ const\ uint8\_t\ low\_bits\ =\ zeros\ \&\ 0x7f;}}
-\DoxyCodeLine{00108\ \textcolor{comment}{\ \ \ \ \ \ \ \ zeros\ >>=\ 7;}}
-\DoxyCodeLine{00109\ \textcolor{comment}{}}
-\DoxyCodeLine{00110\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (zeros)}}
-\DoxyCodeLine{00111\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits\ |\ 0x80);}}
-\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ \ \ \ \ else}}
-\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits);}}
-\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \}}}
-\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ ***/}}
-\DoxyCodeLine{00116\ \ \ \ \ \textcolor{comment}{//\ MSByte\ first}}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{comment}{/***/}}
-\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\_bit)\ \{}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ >\ 0x7f)}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ encode\_high\_count(STATE\_ZERO,\ zeros\ >>\ 7);}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ zeros\ \&\ 0x7f);}
-\DoxyCodeLine{00122\ \ \ \ \ \}}
-\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{/***/}}
-\DoxyCodeLine{00124\ \}}
-\DoxyCodeLine{00125\ }
-\DoxyCodeLine{00126\ EncodedChunk\ EntropyModelResiduals::finish()\ \{}
-\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
-\DoxyCodeLine{00128\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
-\DoxyCodeLine{00129\ }
-\DoxyCodeLine{00130\ \ \ \ \ BitstreamPacker\ raw\_packer;}
-\DoxyCodeLine{00131\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
-\DoxyCodeLine{00132\ }
-\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
-\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
-\DoxyCodeLine{00137\ \ \ \ \ \}}
-\DoxyCodeLine{00138\ }
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
-\DoxyCodeLine{00143\ \ \ \ \ \}}
-\DoxyCodeLine{00144\ }
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
-\DoxyCodeLine{00146\ \}}
-\DoxyCodeLine{00147\ }
-\DoxyCodeLine{00148\ EncodedChunk\ EntropyEncoderResiduals::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<int16\_t>();}
-\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
-\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
-\DoxyCodeLine{00152\ }
-\DoxyCodeLine{00153\ \ \ \ \ EntropyModelResiduals\ models;}
-\DoxyCodeLine{00154\ }
-\DoxyCodeLine{00155\ \ \ \ \ int16\_t\ residual\ =\ 0;}
-\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
-\DoxyCodeLine{00157\ }
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00159\ }
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
-\DoxyCodeLine{00162\ }
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
-\DoxyCodeLine{00164\ }
-\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00175\ }
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(residual,\ zeros);}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00186\ \ \ \ \ \}}
-\DoxyCodeLine{00187\ }
-\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
-\DoxyCodeLine{00189\ \ \ \ \ models.encode\_run(residual,\ zeros);}
-\DoxyCodeLine{00190\ }
-\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
-\DoxyCodeLine{00195\ \}}
-\DoxyCodeLine{00196\ }
-\DoxyCodeLine{00197\ EncodedChunk\ EntropyEncoderResidualsTiled::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
-\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<int16\_t>();}
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
-\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
-\DoxyCodeLine{00201\ }
-\DoxyCodeLine{00202\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
-\DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \ \ \ \ EntropyModelResiduals\ models;}
-\DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ int16\_t\ residual\ =\ 0;}
-\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
-\DoxyCodeLine{00209\ }
-\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00211\ }
-\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
-\DoxyCodeLine{00214\ }
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
-\DoxyCodeLine{00219\ }
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00223\ }
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00230\ }
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(residual,\ zeros);}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00243\ \ \ \ \ \}}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
-\DoxyCodeLine{00246\ \ \ \ \ models.encode\_run(residual,\ zeros);}
-\DoxyCodeLine{00247\ }
-\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
-\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
-\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
-\DoxyCodeLine{00252\ \}}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00255\ \textcolor{comment}{//}}
-\DoxyCodeLine{00256\ }
-\DoxyCodeLine{00258\ \textcolor{comment}{//}}
-\DoxyCodeLine{00259\ \textcolor{comment}{//\ Encode\ a\ mask\ of\ 0,1\ runs\ using\ two\ models}}
-\DoxyCodeLine{00260\ \textcolor{comment}{//}}
-\DoxyCodeLine{00261\ \textcolor{keyword}{class\ }EntropyModelRleFlag\ \{}
-\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ RLE\ parser\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees\ (0..,\ 1..)}}
-\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_ZERO\_RUN,\ STATE\_ONE\_RUN,\ STATE\_COUNT\ \};}
-\DoxyCodeLine{00264\ }
-\DoxyCodeLine{00265\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00266\ \ \ \ \ EntropyModelRleFlag()\ \{\}}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c);}
-\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_run(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count);}
-\DoxyCodeLine{00270\ \ \ \ \ EncodedChunk\ finish(\textcolor{keywordtype}{bool}\ start\_value);}
-\DoxyCodeLine{00271\ }
-\DoxyCodeLine{00272\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
-\DoxyCodeLine{00274\ }
-\DoxyCodeLine{00275\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
-\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_ZERO\_RUN;}
-\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
-\DoxyCodeLine{00282\ \ \ \ \ \};}
-\DoxyCodeLine{00283\ }
-\DoxyCodeLine{00284\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
-\DoxyCodeLine{00285\ \};}
-\DoxyCodeLine{00286\ }
-\DoxyCodeLine{00287\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
-\DoxyCodeLine{00288\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
-\DoxyCodeLine{00289\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
-\DoxyCodeLine{00290\ \}}
-\DoxyCodeLine{00291\ }
-\DoxyCodeLine{00292\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_high\_count(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
-\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ c\ >>\ 7);}
-\DoxyCodeLine{00295\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
-\DoxyCodeLine{00296\ \}}
-\DoxyCodeLine{00297\ }
-\DoxyCodeLine{00298\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_run(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count)\ \{}
-\DoxyCodeLine{00299\ }
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{const}\ State\ s\ =\ value\ ?\ STATE\_ONE\_RUN\ :\ STATE\_ZERO\_RUN;}
-\DoxyCodeLine{00301\ }
-\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ >\ 0x7f)}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ encode\_high\_count(s,\ count\ >>\ 7);}
-\DoxyCodeLine{00304\ \ \ \ \ encode\_symbol(s,\ count\ \&\ 0x7f);}
-\DoxyCodeLine{00305\ \}}
-\DoxyCodeLine{00306\ }
-\DoxyCodeLine{00307\ EncodedChunk\ EntropyModelRleFlag::finish(\textcolor{keywordtype}{bool}\ start\_value)\ \{}
-\DoxyCodeLine{00308\ }
-\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
-\DoxyCodeLine{00310\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
-\DoxyCodeLine{00311\ }
-\DoxyCodeLine{00312\ \ \ \ \ BitstreamPacker\ raw\_packer;}
-\DoxyCodeLine{00313\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
-\DoxyCodeLine{00314\ }
-\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
-\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
-\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
-\DoxyCodeLine{00319\ \ \ \ \ \}}
-\DoxyCodeLine{00320\ }
-\DoxyCodeLine{00321\ \ \ \ \ \textcolor{comment}{//\ Add\ starting\ value\ to\ each\ bitstream}}
-\DoxyCodeLine{00322\ \ \ \ \ raw\_packer.u(8,\ start\_value\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{00323\ \ \ \ \ huffman\_packer.u(8,\ start\_value\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{00324\ }
-\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
-\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
-\DoxyCodeLine{00329\ \ \ \ \ \}}
-\DoxyCodeLine{00330\ }
-\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
-\DoxyCodeLine{00332\ \}}
-\DoxyCodeLine{00333\ }
-\DoxyCodeLine{00334\ EncodedChunk\ EntropyEncoderTemporal::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{bool}\ use\_reduced\_signalling)\ \{}
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
-\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
-\DoxyCodeLine{00338\ }
-\DoxyCodeLine{00339\ \ \ \ \ EntropyModelRleFlag\ models;}
-\DoxyCodeLine{00340\ }
-\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
-\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
-\DoxyCodeLine{00343\ }
-\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
-\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
-\DoxyCodeLine{00346\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
-\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
-\DoxyCodeLine{00348\ }
-\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00350\ }
-\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ (including\ any\ part\ tiles)\ ...}}
-\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
-\DoxyCodeLine{00354\ }
-\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ intra\_tile\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00356\ }
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
-\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
-\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
-\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ first\_transform\_in\_tile\ =\ (tx\ ==\ x)\ \&\&\ (ty\ ==\ y);}
-\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ ==\ TemporalType::TEMPORAL\_INTR)\ ?\ 1\ :\ 0;}
-\DoxyCodeLine{00362\ }
-\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (v)}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00366\ }
-\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ intra\ flag\ for\ whole\ tile}}
-\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_reduced\_signalling\ \&\&\ first\_transform\_in\_tile\ \&\&\ v\ !=\ 0)}
-\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intra\_tile\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00370\ }
-\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reduced\ signalling\ -\/\ don't\ encode\ rest\ of\ tile\ if\ first\ is\ intra}}
-\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!first\_transform\_in\_tile\ \&\&\ use\_reduced\_signalling\ \&\&\ intra\_tile)}
-\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{00374\ }
-\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
-\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
-\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
-\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
-\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
-\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
-\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
-\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
-\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(value,\ count);}
-\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00391\ \ \ \ \ \}}
-\DoxyCodeLine{00392\ }
-\DoxyCodeLine{00393\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
-\DoxyCodeLine{00394\ \ \ \ \ models.encode\_run(value,\ count);}
-\DoxyCodeLine{00395\ }
-\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
-\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish(start);}
-\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk();}
-\DoxyCodeLine{00400\ \}}
-\DoxyCodeLine{00401\ }
-\DoxyCodeLine{00402\ EncodedChunk\ EntropyEncoderFlags::process(\textcolor{keyword}{const}\ Surface\ \&surface)\ \{}
-\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint8\_t>();}
-\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
-\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
-\DoxyCodeLine{00406\ }
-\DoxyCodeLine{00407\ \ \ \ \ EntropyModelRleFlag\ models;}
-\DoxyCodeLine{00408\ }
-\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
-\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
-\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
-\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
-\DoxyCodeLine{00413\ }
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{//\ For\ each\ flag\ ...}}
-\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
-\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
-\DoxyCodeLine{00417\ }
-\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ !=\ 0)\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00419\ }
-\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
-\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
-\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
-\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
-\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
-\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
-\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_run(value,\ count);}
-\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00434\ \ \ \ \ \}}
-\DoxyCodeLine{00435\ }
-\DoxyCodeLine{00436\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
-\DoxyCodeLine{00437\ \ \ \ \ models.encode\_run(value,\ count);}
-\DoxyCodeLine{00438\ }
-\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish(start);}
-\DoxyCodeLine{00440\ \}}
-\DoxyCodeLine{00441\ }
-\DoxyCodeLine{00443\ \textcolor{comment}{//}}
-\DoxyCodeLine{00444\ \textcolor{comment}{//\ Used\ for\ tile\ sizes}}
-\DoxyCodeLine{00445\ \textcolor{comment}{//}}
-\DoxyCodeLine{00446\ \textcolor{keyword}{class\ }EntropyModelSizes\ \{}
-\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ size\ modelling\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees}}
-\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_COUNT\ \};}
-\DoxyCodeLine{00449\ }
-\DoxyCodeLine{00450\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00451\ \ \ \ \ EntropyModelSizes()\ \{\}}
-\DoxyCodeLine{00452\ }
-\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_size(uint16\_t\ value);}
-\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_size\_delta(int32\_t\ value);}
-\DoxyCodeLine{00455\ \ \ \ \ EncodedChunk\ finish();}
-\DoxyCodeLine{00456\ }
-\DoxyCodeLine{00457\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
-\DoxyCodeLine{00459\ }
-\DoxyCodeLine{00460\ \ \ \ \ HuffmanEncoderBuilder\ huffman\_state\_[STATE\_COUNT];}
-\DoxyCodeLine{00461\ }
-\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
-\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ RleSymbol(State\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
-\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ State\ state\ =\ STATE\_LSB;}
-\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
-\DoxyCodeLine{00467\ \ \ \ \ \};}
-\DoxyCodeLine{00468\ }
-\DoxyCodeLine{00469\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
-\DoxyCodeLine{00470\ \};}
-\DoxyCodeLine{00471\ }
-\DoxyCodeLine{00472\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_symbol(State\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
-\DoxyCodeLine{00473\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
-\DoxyCodeLine{00474\ \ \ \ \ huffman\_state\_[state].add\_symbol(symbol,\ 1);}
-\DoxyCodeLine{00475\ \}}
-\DoxyCodeLine{00476\ }
-\DoxyCodeLine{00477\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_size(uint16\_t\ value)\ \{}
-\DoxyCodeLine{00478\ \ \ \ \ CHECK(value\ <=\ 32767);}
-\DoxyCodeLine{00479\ }
-\DoxyCodeLine{00480\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ <\ 0x80)\ \{}
-\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (value\ *\ 2)\ |\ 0x00);}
-\DoxyCodeLine{00482\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
-\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ value\ >>\ 7);}
-\DoxyCodeLine{00485\ \ \ \ \ \}}
-\DoxyCodeLine{00486\ \}}
-\DoxyCodeLine{00487\ }
-\DoxyCodeLine{00488\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_size\_delta(int32\_t\ value)\ \{}
-\DoxyCodeLine{00489\ \ \ \ \ CHECK(value\ >=\ -\/16384\ \&\&\ value\ <=\ 16383);}
-\DoxyCodeLine{00490\ }
-\DoxyCodeLine{00491\ \ \ \ \ \textcolor{comment}{//\ Decoder\ will\ sign\ extend}}
-\DoxyCodeLine{00492\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ >=\ -\/64\ \&\&\ value\ <=\ 63)\ \{}
-\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ *\ 2)\ |\ 0x00)\ \&\ 0xff);}
-\DoxyCodeLine{00494\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
-\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ (value\ >>\ 7)\ \&\ 0xff);}
-\DoxyCodeLine{00497\ \ \ \ \ \}}
-\DoxyCodeLine{00498\ \}}
-\DoxyCodeLine{00499\ }
-\DoxyCodeLine{00500\ EncodedChunk\ EntropyModelSizes::finish()\ \{}
-\DoxyCodeLine{00501\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
-\DoxyCodeLine{00502\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
-\DoxyCodeLine{00503\ }
-\DoxyCodeLine{00504\ \ \ \ \ BitstreamPacker\ raw\_packer;}
-\DoxyCodeLine{00505\ \ \ \ \ BitstreamPacker\ huffman\_packer;}
-\DoxyCodeLine{00506\ }
-\DoxyCodeLine{00507\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
-\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
-\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].finish());}
-\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
-\DoxyCodeLine{00511\ \ \ \ \ \}}
-\DoxyCodeLine{00512\ }
-\DoxyCodeLine{00513\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
-\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
-\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ raw\_packer.u(8,\ s.symbol);}
-\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
-\DoxyCodeLine{00517\ \ \ \ \ \}}
-\DoxyCodeLine{00518\ }
-\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keywordflow}{return}\ EncodedChunk(raw\_packer.finish(),\ huffman\_packer.finish());}
-\DoxyCodeLine{00520\ \}}
-\DoxyCodeLine{00521\ }
-\DoxyCodeLine{00522\ EncodedChunk\ EntropyEncoderSizes::process(\textcolor{keyword}{const}\ Surface\ \&surface,\ \textcolor{keyword}{const}\ std::vector<bool>\ entropy\_enabled,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_idx,}
-\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CompressionType\ compression\_type)\ \{}
-\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.view\_as<uint16\_t>();}
-\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
-\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
-\DoxyCodeLine{00527\ }
-\DoxyCodeLine{00528\ \ \ \ \ EntropyModelSizes\ models;}
-\DoxyCodeLine{00529\ }
-\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (compression\_type\ ==\ CompressionType\_Prefix)\ \{}
-\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
-\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
-\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
-\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
-\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(v\ !=\ 0);}
-\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_size(v);}
-\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00540\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ uint16\_t\ p\ =\ 0;}
-\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
-\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
-\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
-\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
-\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(v\ !=\ 0);}
-\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.encode\_size\_delta(v\ -\/\ p);}
-\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p\ =\ v;}
-\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00552\ \ \ \ \ \}}
-\DoxyCodeLine{00553\ }
-\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keywordflow}{return}\ models.finish();}
-\DoxyCodeLine{00555\ \}}
-\DoxyCodeLine{00556\ }
-\DoxyCodeLine{00557\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00035}00035\ \textcolor{comment}{//\ EntropyEncoder.cpp}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{EntropyEncoder_8hpp}{EntropyEncoder.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{BitstreamPacker_8hpp}{BitstreamPacker.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{HuffmanEncoder_8hpp}{HuffmanEncoder.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Packet_8hpp}{Packet.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{TemporalDecode_8hpp}{TemporalDecode.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00047}00047\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00049}00049\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00052}00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00053}\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals}{00053}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals}{EntropyModelResiduals}}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00054}00054\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ residual\ RLE\ modelling\ -\/\ used\ to\ select\ between\ 3\ huffman\ trees}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_ZERO,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00056}00056\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00057}00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00058}\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ac6a91fedf3d93ac8dea36a9538db5cd0}{00058}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ac6a91fedf3d93ac8dea36a9538db5cd0}{EntropyModelResiduals}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00060}00060\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a72f6e923fbfcacb65164ea3c1c5b74a9}{encode\_high\_count}}(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00061}00061\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{encode\_run}}(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00062}00062\ \ \ \ \ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{finish}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00064}00064\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00065}00065\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00067}00067\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder}{HuffmanEncoderBuilder}}\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00069}00069\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ RleSymbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state\ =\ STATE\_LSB;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00074}00074\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00076}00076\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00077}00077\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00079}00079\ \textcolor{keywordtype}{void}\ EntropyModelResiduals::encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00080}00080\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00081}00081\ \ \ \ \ huffman\_state\_[state].\mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder_ae06a3cf068027a640247bdaef641c79b}{add\_symbol}}(symbol,\ 1);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00082}00082\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00083}00083\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00084}\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a72f6e923fbfcacb65164ea3c1c5b74a9}{00084}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a72f6e923fbfcacb65164ea3c1c5b74a9}{EntropyModelResiduals::encode\_high\_count}}(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00085}00085\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a72f6e923fbfcacb65164ea3c1c5b74a9}{encode\_high\_count}}(s,\ c\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00087}00087\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00088}00088\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00090}\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{00090}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{EntropyModelResiduals::encode\_run}}(int16\_t\ residual,\ \textcolor{keywordtype}{unsigned}\ zeros)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00091}00091\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ run?}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ zeros\_bit\ =\ (zeros\ >\ 0)\ ?\ 0x80\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00094}00094\ \ \ \ \ \textcolor{comment}{//\ Encode\ value}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00095}00095\ \ \ \ \ \textcolor{keywordflow}{if}\ (residual\ >=\ -\/32\ \&\&\ residual\ <\ 32)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (residual\ *\ 2\ +\ 0x40)\ |\ zeros\_bit);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00097}00097\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ clamped\_residual\ =\ std::min(std::max(residual\ +\ 0x2000,\ 0),\ 0x3fff)\ <<\ 1;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (clamped\_residual\ \&\ 0xfe)\ |\ 0x01);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ ((clamped\_residual\ >>\ 8)\ \&\ 0x7f)\ |\ zeros\_bit);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00101}00101\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00103}00103\ \ \ \ \ \textcolor{comment}{//\ Add\ any\ required\ run\ symbols}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00104}00104\ \ \ \ \ \textcolor{comment}{//\ LSByte\ first}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00105}00105\ \textcolor{comment}{\ \ \ \ /***}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00106}00106\ \textcolor{comment}{\ \ \ \ while\ (zeros)\ \{}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00107}00107\ \textcolor{comment}{\ \ \ \ \ \ \ \ const\ uint8\_t\ low\_bits\ =\ zeros\ \&\ 0x7f;}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00108}00108\ \textcolor{comment}{\ \ \ \ \ \ \ \ zeros\ >>=\ 7;}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00109}00109\ \textcolor{comment}{}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00110}00110\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (zeros)}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00111}00111\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits\ |\ 0x80);}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00112}00112\ \textcolor{comment}{\ \ \ \ \ \ \ \ else}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00113}00113\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ low\_bits);}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00114}00114\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00115}00115\ \textcolor{comment}{\ \ \ \ ***/}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00116}00116\ \ \ \ \ \textcolor{comment}{//\ MSByte\ first}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00117}00117\ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00118}00118\ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\_bit)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zeros\ >\ 0x7f)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a72f6e923fbfcacb65164ea3c1c5b74a9}{encode\_high\_count}}(STATE\_ZERO,\ zeros\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_ZERO,\ zeros\ \&\ 0x7f);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00122}00122\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00123}00123\ \ \ \ \ \textcolor{comment}{/***/}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00124}00124\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00125}00125\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00126}\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{00126}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{EntropyModelResiduals::finish}}()\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00127}00127\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00128}00128\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00129}00129\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00130}00130\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ raw\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00131}00131\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ huffman\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00133}00133\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00134}00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00137}00137\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00138}00138\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00139}00139\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00140}00140\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_a73df9432dc4d1489ce0fd3613901e36b}{u}}(8,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00143}00143\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00144}00144\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00145}00145\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}(raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}(),\ huffman\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00146}00146\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00147}00147\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00148}\mbox{\hyperlink{classlctm_1_1EntropyEncoderResiduals_a3cdd303d948be301912eeed3f0a7c489}{00148}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyEncoderResiduals_a3cdd303d948be301912eeed3f0a7c489}{EntropyEncoderResiduals::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&surface)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00149}00149\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00150}00150\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00151}00151\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00152}00152\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00153}00153\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals}{EntropyModelResiduals}}\ models;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00154}00154\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00155}00155\ \ \ \ \ int16\_t\ residual\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00156}00156\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00157}00157\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00158}00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00159}00159\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00160}00160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00162}00162\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00164}00164\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{encode\_run}}(residual,\ zeros);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00186}00186\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00187}00187\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00188}00188\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00189}00189\ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{encode\_run}}(residual,\ zeros);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00190}00190\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00191}00191\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{finish}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00193}00193\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00195}00195\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00196}00196\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00197}\mbox{\hyperlink{classlctm_1_1EntropyEncoderResidualsTiled_a8700cdcff89eda9b1ccd0f6e6944fa6f}{00197}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyEncoderResidualsTiled_a8700cdcff89eda9b1ccd0f6e6944fa6f}{EntropyEncoderResidualsTiled::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00198}00198\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00199}00199\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00200}00200\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00201}00201\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00202}00202\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00203}00203\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00205}00205\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelResiduals}{EntropyModelResiduals}}\ models;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00206}00206\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00207}00207\ \ \ \ \ int16\_t\ residual\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00208}00208\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00209}00209\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00210}00210\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00211}00211\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00212}00212\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00214}00214\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ r\ =\ view.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00219}00219\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00223}00223\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ always\ have\ to\ encode\ first\ symbol,\ even\ if\ it\ is\ zero}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00230}00230\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ current\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros++;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Emit\ previous\ run\ and\ record\ this\ residual}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{encode\_run}}(residual,\ zeros);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ residual\ =\ r;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ zeros\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00243}00243\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00244}00244\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00245}00245\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00246}00246\ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_ad8a8d73ad19e039cd0da5cc66bd1413f}{encode\_run}}(residual,\ zeros);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00247}00247\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00248}00248\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.\mbox{\hyperlink{classlctm_1_1EntropyModelResiduals_a4f52497ff39a241461a3c3b8cd417bdb}{finish}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00250}00250\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00252}00252\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00253}00253\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00255}00255\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00256}00256\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00258}00258\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00259}00259\ \textcolor{comment}{//\ Encode\ a\ mask\ of\ 0,1\ runs\ using\ two\ models}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00260}00260\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00261}\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag}{00261}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag}{EntropyModelRleFlag}}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00262}00262\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ RLE\ parser\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees\ (0..,\ 1..)}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00263}00263\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_ZERO\_RUN,\ STATE\_ONE\_RUN,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00264}00264\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00265}00265\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00266}\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a0286f8563e07178e646f2d57ad5fe17f}{00266}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a0286f8563e07178e646f2d57ad5fe17f}{EntropyModelRleFlag}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00268}00268\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a6ef2604132944266fa21fa9ad821cbfe}{encode\_high\_count}}(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ s,\ \textcolor{keywordtype}{unsigned}\ c);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00269}00269\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{encode\_run}}(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00270}00270\ \ \ \ \ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{finish}}(\textcolor{keywordtype}{bool}\ start\_value);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00271}00271\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00272}00272\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00273}00273\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00274}00274\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00275}00275\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder}{HuffmanEncoderBuilder}}\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00276}00276\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00277}00277\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00279}00279\ \ \ \ \ \ \ \ \ RleSymbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00280}00280\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state\ =\ STATE\_ZERO\_RUN;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00281}00281\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00282}00282\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00283}00283\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00284}00284\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00285}00285\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00286}00286\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00287}00287\ \textcolor{keywordtype}{void}\ EntropyModelRleFlag::encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00288}00288\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00289}00289\ \ \ \ \ huffman\_state\_[state].\mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder_ae06a3cf068027a640247bdaef641c79b}{add\_symbol}}(symbol,\ 1);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00290}00290\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00291}00291\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00292}\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a6ef2604132944266fa21fa9ad821cbfe}{00292}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a6ef2604132944266fa21fa9ad821cbfe}{EntropyModelRleFlag::encode\_high\_count}}(State\ s,\ \textcolor{keywordtype}{unsigned}\ c)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00293}00293\ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ >\ 0x7f)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a6ef2604132944266fa21fa9ad821cbfe}{encode\_high\_count}}(s,\ c\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00295}00295\ \ \ \ \ encode\_symbol(s,\ (c\ \&\ 0x7f)\ |\ 0x80);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00296}00296\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00297}00297\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00298}\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{00298}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{EntropyModelRleFlag::encode\_run}}(\textcolor{keywordtype}{bool}\ value,\ \textcolor{keywordtype}{unsigned}\ count)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00299}00299\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00300}00300\ \ \ \ \ \textcolor{keyword}{const}\ State\ s\ =\ value\ ?\ STATE\_ONE\_RUN\ :\ STATE\_ZERO\_RUN;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00301}00301\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00302}00302\ \ \ \ \ \textcolor{keywordflow}{if}\ (count\ >\ 0x7f)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a6ef2604132944266fa21fa9ad821cbfe}{encode\_high\_count}}(s,\ count\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00304}00304\ \ \ \ \ encode\_symbol(s,\ count\ \&\ 0x7f);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00305}00305\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00306}00306\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00307}\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{00307}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{EntropyModelRleFlag::finish}}(\textcolor{keywordtype}{bool}\ start\_value)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00308}00308\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00309}00309\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00310}00310\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00311}00311\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00312}00312\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ raw\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00313}00313\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ huffman\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00314}00314\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00315}00315\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00316}00316\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00317}00317\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00318}00318\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00319}00319\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00320}00320\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00321}00321\ \ \ \ \ \textcolor{comment}{//\ Add\ starting\ value\ to\ each\ bitstream}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00322}00322\ \ \ \ \ raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_a73df9432dc4d1489ce0fd3613901e36b}{u}}(8,\ start\_value\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00323}00323\ \ \ \ \ huffman\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_a73df9432dc4d1489ce0fd3613901e36b}{u}}(8,\ start\_value\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00324}00324\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00325}00325\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00326}00326\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00327}00327\ \ \ \ \ \ \ \ \ raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_a73df9432dc4d1489ce0fd3613901e36b}{u}}(8,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00328}00328\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00329}00329\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00330}00330\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00331}00331\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}(raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}(),\ huffman\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00332}00332\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00333}00333\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00334}\mbox{\hyperlink{classlctm_1_1EntropyEncoderTemporal_a76516edae009829bfcc88854604f6926}{00334}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyEncoderTemporal_a76516edae009829bfcc88854604f6926}{EntropyEncoderTemporal::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&surface,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{bool}\ use\_reduced\_signalling)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00335}00335\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00336}00336\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00337}00337\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00338}00338\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00339}00339\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag}{EntropyModelRleFlag}}\ models;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00340}00340\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00341}00341\ \ \ \ \ \textcolor{comment}{//\ Divisor\ for\ block-\/>tiles}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00342}00342\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ d\ =\ 32\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00343}00343\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00344}00344\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00345}00345\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00346}00346\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00347}00347\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00348}00348\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00349}00349\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_entropy\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00350}00350\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00351}00351\ \ \ \ \ \textcolor{comment}{//\ For\ each\ tile\ (including\ any\ part\ tiles)\ ...}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00352}00352\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ ty\ =\ 0;\ ty\ <\ height;\ ty\ +=\ d)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ tx\ =\ 0;\ tx\ <\ width;\ tx\ +=\ d)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00354}00354\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00355}00355\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ intra\_tile\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00356}00356\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ transform\ in\ tile\ ...}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00358}00358\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ ty;\ y\ <\ std::min(ty\ +\ d,\ height);\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ tx;\ x\ <\ std::min(tx\ +\ d,\ width);\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ first\_transform\_in\_tile\ =\ (tx\ ==\ x)\ \&\&\ (ty\ ==\ y);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00361}00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ ==\ \mbox{\hyperlink{namespacelctm_a5648420a6aba66d900dc35de7c655cabae4c951af1a8c0b72c8633abb9e4bfc71}{TemporalType::TEMPORAL\_INTR}})\ ?\ 1\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00362}00362\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00363}00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ if\ there\ is\ any\ data\ in\ surface}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00364}00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (v)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00365}00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ has\_entropy\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00366}00366\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00367}00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ intra\ flag\ for\ whole\ tile}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00368}00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_reduced\_signalling\ \&\&\ first\_transform\_in\_tile\ \&\&\ v\ !=\ 0)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00369}00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intra\_tile\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00370}00370\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00371}00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Reduced\ signalling\ -\/\ don't\ encode\ rest\ of\ tile\ if\ first\ is\ intra}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00372}00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!first\_transform\_in\_tile\ \&\&\ use\_reduced\_signalling\ \&\&\ intra\_tile)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00373}00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00374}00374\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00380}00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00383}00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00384}00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{encode\_run}}(value,\ count);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00385}00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00386}00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00387}00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00388}00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00389}00389\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00390}00390\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00391}00391\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00392}00392\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00393}00393\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00394}00394\ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{encode\_run}}(value,\ count);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00395}00395\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00396}00396\ \ \ \ \ \textcolor{keywordflow}{if}\ (has\_entropy)}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00397}00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{finish}}(start);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00398}00398\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00399}00399\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00400}00400\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00401}00401\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00402}\mbox{\hyperlink{classlctm_1_1EntropyEncoderFlags_ab6fa49903d7667ad4eeb3920ed826101}{00402}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyEncoderFlags_ab6fa49903d7667ad4eeb3920ed826101}{EntropyEncoderFlags::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&surface)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00403}00403\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00404}00404\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00405}00405\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00406}00406\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00407}00407\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag}{EntropyModelRleFlag}}\ models;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00408}00408\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00409}00409\ \ \ \ \ \textcolor{comment}{//\ RLE\ state}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00410}00410\ \ \ \ \ \textcolor{keywordtype}{bool}\ start\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00411}00411\ \ \ \ \ \textcolor{keywordtype}{bool}\ value\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00412}00412\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ count\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00413}00413\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00414}00414\ \ \ \ \ \textcolor{comment}{//\ For\ each\ flag\ ...}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00415}00415\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00416}00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00417}00417\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00418}00418\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ v\ =\ (view.read(x,\ y)\ !=\ 0)\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00419}00419\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00420}00420\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (x\ ==\ 0\ \&\&\ y\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00421}00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Special\ case\ -\/\ store\ first\ symbol}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00422}00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\ =\ value\ =\ v;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00423}00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00424}00424\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (v\ ==\ value)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00425}00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Extend\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00426}00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++count;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00427}00427\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00428}00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Encode\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00429}00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{encode\_run}}(value,\ count);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00430}00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ value\ =\ v;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00431}00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00432}00432\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00433}00433\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00434}00434\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00435}00435\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00436}00436\ \ \ \ \ \textcolor{comment}{//\ Emit\ last\ run}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00437}00437\ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_abbaf0dad8e62b1d383b4c48f85c9e557}{encode\_run}}(value,\ count);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00438}00438\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00439}00439\ \ \ \ \ \textcolor{keywordflow}{return}\ models.\mbox{\hyperlink{classlctm_1_1EntropyModelRleFlag_a9017a7d165651959704d041f2017632d}{finish}}(start);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00440}00440\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00441}00441\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00443}00443\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00444}00444\ \textcolor{comment}{//\ Used\ for\ tile\ sizes}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00445}00445\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00446}\mbox{\hyperlink{classlctm_1_1EntropyModelSizes}{00446}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classlctm_1_1EntropyModelSizes}{EntropyModelSizes}}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00447}00447\ \ \ \ \ \textcolor{comment}{//\ State\ of\ the\ size\ modelling\ -\/\ used\ to\ select\ between\ 2\ huffman\ trees}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00448}00448\ \ \ \ \ \textcolor{keyword}{enum}\ State\ \{\ STATE\_LSB,\ STATE\_MSB,\ STATE\_COUNT\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00449}00449\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00450}00450\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00451}\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_add435ba5ac56564e3fa6a633f15d97c4}{00451}}\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_add435ba5ac56564e3fa6a633f15d97c4}{EntropyModelSizes}}()\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00452}00452\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00453}00453\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a34777d7c8ba0fe5da466c726c0461243}{encode\_size}}(uint16\_t\ value);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00454}00454\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a43c06cdb3c8854928d1753b1c04bee6d}{encode\_size\_delta}}(int32\_t\ value);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00455}00455\ \ \ \ \ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a5a6e27fb2865381067072a9036330dc9}{finish}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00456}00456\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00457}00457\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00458}00458\ \ \ \ \ \textcolor{keywordtype}{void}\ encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00459}00459\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00460}00460\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder}{HuffmanEncoderBuilder}}\ huffman\_state\_[STATE\_COUNT];}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00461}00461\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00462}00462\ \ \ \ \ \textcolor{keyword}{struct\ }RleSymbol\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00463}00463\ \ \ \ \ \ \ \ \ RleSymbol()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00464}00464\ \ \ \ \ \ \ \ \ RleSymbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ st,\ uint8\_t\ sy)\ :\ state(st),\ symbol(sy)\ \{\}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00465}00465\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state\ =\ STATE\_LSB;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00466}00466\ \ \ \ \ \ \ \ \ uint8\_t\ symbol\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00467}00467\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00468}00468\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00469}00469\ \ \ \ \ std::vector<RleSymbol>\ rle\_symbols\_;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00470}00470\ \};}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00471}00471\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00472}00472\ \textcolor{keywordtype}{void}\ EntropyModelSizes::encode\_symbol(\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ state,\ \textcolor{keywordtype}{unsigned}\ symbol)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00473}00473\ \ \ \ \ rle\_symbols\_.emplace\_back(state,\ symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00474}00474\ \ \ \ \ huffman\_state\_[state].\mbox{\hyperlink{classlctm_1_1HuffmanEncoderBuilder_ae06a3cf068027a640247bdaef641c79b}{add\_symbol}}(symbol,\ 1);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00475}00475\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00476}00476\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00477}\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a34777d7c8ba0fe5da466c726c0461243}{00477}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a34777d7c8ba0fe5da466c726c0461243}{EntropyModelSizes::encode\_size}}(uint16\_t\ value)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00478}00478\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(value\ <=\ 32767);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00479}00479\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00480}00480\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ <\ 0x80)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00481}00481\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ (value\ *\ 2)\ |\ 0x00);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00482}00482\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00483}00483\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00484}00484\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ value\ >>\ 7);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00485}00485\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00486}00486\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00487}00487\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00488}\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a43c06cdb3c8854928d1753b1c04bee6d}{00488}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a43c06cdb3c8854928d1753b1c04bee6d}{EntropyModelSizes::encode\_size\_delta}}(int32\_t\ value)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00489}00489\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(value\ >=\ -\/16384\ \&\&\ value\ <=\ 16383);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00490}00490\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00491}00491\ \ \ \ \ \textcolor{comment}{//\ Decoder\ will\ sign\ extend}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00492}00492\ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ >=\ -\/64\ \&\&\ value\ <=\ 63)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00493}00493\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ *\ 2)\ |\ 0x00)\ \&\ 0xff);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00494}00494\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00495}00495\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_LSB,\ ((value\ \&\ 0x7f)\ *\ 2)\ |\ 0x01);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00496}00496\ \ \ \ \ \ \ \ \ encode\_symbol(STATE\_MSB,\ (value\ >>\ 7)\ \&\ 0xff);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00497}00497\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00498}00498\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00499}00499\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00500}\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a5a6e27fb2865381067072a9036330dc9}{00500}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a5a6e27fb2865381067072a9036330dc9}{EntropyModelSizes::finish}}()\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00501}00501\ \ \ \ \ \textcolor{comment}{//\ Generate\ huffman\ encoders}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00502}00502\ \ \ \ \ std::vector<HuffmanEncoder>\ huffman\_encoders;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00503}00503\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00504}00504\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ raw\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00505}00505\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1BitstreamPacker}{BitstreamPacker}}\ huffman\_packer;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00506}00506\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00507}00507\ \ \ \ \ \textcolor{comment}{//\ Finialise\ huffman\ encoders\ state}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00508}00508\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ h\ =\ 0;\ h\ <\ STATE\_COUNT;\ ++h)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00509}00509\ \ \ \ \ \ \ \ \ huffman\_encoders.emplace\_back(huffman\_state\_[h].\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a5a6e27fb2865381067072a9036330dc9}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00510}00510\ \ \ \ \ \ \ \ \ huffman\_encoders.back().write\_codes(huffman\_packer);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00511}00511\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00512}00512\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00513}00513\ \ \ \ \ \textcolor{comment}{//\ Code\ symbols\ both\ ways:\ raw\ vs.\ prefix}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00514}00514\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ :\ rle\_symbols\_)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00515}00515\ \ \ \ \ \ \ \ \ raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_a73df9432dc4d1489ce0fd3613901e36b}{u}}(8,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00516}00516\ \ \ \ \ \ \ \ \ huffman\_encoders[s.state].write\_symbol(huffman\_packer,\ s.symbol);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00517}00517\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00518}00518\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00519}00519\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}(raw\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}(),\ huffman\_packer.\mbox{\hyperlink{classlctm_1_1BitstreamPacker_ad6b97f7b02899db3a60a53f7f94d8834}{finish}}());}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00520}00520\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00521}00521\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00522}\mbox{\hyperlink{classlctm_1_1EntropyEncoderSizes_a0f9993104b334e55ddfcdce42a76e813}{00522}}\ \mbox{\hyperlink{structlctm_1_1EncodedChunk}{EncodedChunk}}\ \mbox{\hyperlink{classlctm_1_1EntropyEncoderSizes_a0f9993104b334e55ddfcdce42a76e813}{EntropyEncoderSizes::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&surface,\ \textcolor{keyword}{const}\ std::vector<bool>\ entropy\_enabled,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ tile\_idx,}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00523}00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacelctm_aef9a0eb0bacc839b033e2cdfe58c4e30}{CompressionType}}\ compression\_type)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00524}00524\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ surface.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint16\_t>();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00525}00525\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ width\ =\ view.width();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00526}00526\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ height\ =\ view.height();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00527}00527\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00528}00528\ \ \ \ \ \mbox{\hyperlink{classlctm_1_1EntropyModelSizes}{EntropyModelSizes}}\ models;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00529}00529\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00530}00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (compression\_type\ ==\ \mbox{\hyperlink{namespacelctm_aef9a0eb0bacc839b033e2cdfe58c4e30a17deab0c573d971fccd43dac66a11926}{CompressionType\_Prefix}})\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00531}00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00532}00532\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00533}00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00534}00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00535}00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(v\ !=\ 0);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00536}00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a34777d7c8ba0fe5da466c726c0461243}{encode\_size}}(v);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00537}00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00538}00538\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00539}00539\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00540}00540\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00541}00541\ \ \ \ \ \ \ \ \ uint16\_t\ p\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00542}00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ y\ =\ 0;\ y\ <\ height;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00543}00543\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ x\ =\ 0;\ x\ <\ width;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00544}00544\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entropy\_enabled[tile\_idx\ +\ x])\ \{}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00545}00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint16\_t\ v\ =\ view.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00546}00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(v\ !=\ 0);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00547}00547\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ models.\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a43c06cdb3c8854928d1753b1c04bee6d}{encode\_size\_delta}}(v\ -\/\ p);}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00548}00548\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p\ =\ v;}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00549}00549\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00550}00550\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00551}00551\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00552}00552\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00553}00553\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00554}00554\ \ \ \ \ \textcolor{keywordflow}{return}\ models.\mbox{\hyperlink{classlctm_1_1EntropyModelSizes_a5a6e27fb2865381067072a9036330dc9}{finish}}();}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00555}00555\ \}}
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00556}00556\ }
+\DoxyCodeLine{\Hypertarget{EntropyEncoder_8cpp_source_l00557}00557\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

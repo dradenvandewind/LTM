@@ -1,111 +1,111 @@
 \doxysection{Codec.\+cpp}
-\label{Codec_8cpp_source}\index{util/src/Codec.cpp@{util/src/Codec.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{Codec_8cpp_source}{}\label{Codec_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/util/src/Codec.cpp@{/media/erwan/T7/formation/Video/LTM/util/src/Codec.cpp}}
+\mbox{\hyperlink{Codec_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//}}
-\DoxyCodeLine{00036\ }
-\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}Codec.hpp"{}}}
-\DoxyCodeLine{00038\ }
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <memory>}}
-\DoxyCodeLine{00040\ }
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Platform.hpp"{}}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ "{}SharedLibrary.hpp"{}}}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ "{}CodecApi.h"{}}}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{keyword}{using\ namespace\ }std;}
-\DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ \textcolor{keyword}{typedef}\ uint32\_t\ (*codec\_api\_version\_fn\_t)();}
-\DoxyCodeLine{00053\ \textcolor{keyword}{typedef}\ uint32\_t\ (*codec\_api\_query\_fn\_t)(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size);}
-\DoxyCodeLine{00054\ \textcolor{keyword}{typedef}\ Codec*\ (*codec\_api\_create\_fn\_t)(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration);}
-\DoxyCodeLine{00055\ }
-\DoxyCodeLine{00056\ Codec*\ CodecCreate(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&create\_options)\ \{}
-\DoxyCodeLine{00057\ }
-\DoxyCodeLine{00058\ \ \ \ \ \textcolor{comment}{//\ Try\ to\ load\ a\ library\ of\ form\ "{}<program>/external\_codecs/libs/base\_<name>.so"{}}}
-\DoxyCodeLine{00059\ }
-\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{string}\ library\_file\ =\ get\_program\_directory(format(\textcolor{stringliteral}{"{}external\_codecs/libs/\%sbase\_\%s.\%s"{}},\ SHARED\_PREFIX,\ name.c\_str(),\ SHARED\_SUFFIX));}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordflow}{if}(file\_size(library\_file)\ <\ 0)\ \{}
-\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ find\ base\ codec\ library:\ \(\backslash\)"{}\%s\(\backslash\)"{}"{}},\ library\_file.c\_str());}
-\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00065\ \ \ \ \ \}}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \ \ \ \ codec\_api\_version\_fn\_t\ version\_fn;}
-\DoxyCodeLine{00068\ \ \ \ \ codec\_api\_query\_fn\_t\ query\_fn;}
-\DoxyCodeLine{00069\ \ \ \ \ codec\_api\_create\_fn\_t\ create\_fn;}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \ \ \ \ shared\_handle\_t\ h\ =\ CHECK(SHARED\_LOAD(library\_file.c\_str()));}
-\DoxyCodeLine{00072\ }
-\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{if}(!h)}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ version\_fn\ =\ (codec\_api\_version\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Version"{}}));}
-\DoxyCodeLine{00077\ }
-\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ version\ =\ version\_fn();}
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{if}(version\ !=\ LOADABLE\_CODEC\_API\_VERSION)\ \{}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Base\ codec\ library\ \(\backslash\)"{}\%s\(\backslash\)"{}\ has\ wrong\ version:\ \%d"{}},\ library\_file.c\_str(),\ version);}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00082\ \ \ \ \ \}}
-\DoxyCodeLine{00083\ }
-\DoxyCodeLine{00084\ \ \ \ \ query\_fn\ =\ (codec\_api\_query\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Query"{}}));}
-\DoxyCodeLine{00085\ \ \ \ \ create\_fn\ =\ (codec\_api\_create\_fn\_t)CHECK(SHARED\_SYMBOL(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Create"{}}));}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \ \ \ \ Codec*\ codec\ =\ create\_fn(name.c\_str(),\ operation,\ create\_options.c\_str());}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
-\DoxyCodeLine{00090\ \}}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \textcolor{keywordtype}{void}\ CodecRelease(Codec*\ codec)\ \{}
-\DoxyCodeLine{00093\ \}}
-\DoxyCodeLine{00094\ }
-\DoxyCodeLine{00095\ \textcolor{comment}{//\ Convert\ a\ codec\ error\ to\ a\ user\ string}}
-\DoxyCodeLine{00096\ \textcolor{comment}{//}}
-\DoxyCodeLine{00097\ \textcolor{keywordtype}{string}\ CodecErrorToString(Codec*\ codec,\ CodecError\ error)\ \{}
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ buffer\_len\ =\ codec-\/>get\_error\_message(error,\ 0,\ 0);}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordtype}{char}\ *buffer\ =\ CHECK((\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(alloca(buffer\_len))));}
-\DoxyCodeLine{00100\ \ \ \ \ codec-\/>get\_error\_message(error,\ buffer,\ buffer\_len);}
-\DoxyCodeLine{00101\ \ \ \ \ codec-\/>release\_error(error);}
-\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{return}\ string(buffer,\ buffer\ +\ buffer\_len);}
-\DoxyCodeLine{00103\ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00033}00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00034}00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00035}00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00037}00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Codec_8hpp}{Codec.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00039}00039\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Platform_8hpp}{Platform.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{SharedLibrary_8hpp}{SharedLibrary.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00046}00046\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CodecApi_8h}{CodecApi.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00048}00048\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacestd}{std}};}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00050}00050\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00052}\mbox{\hyperlink{namespacelctm_a63d8cd408606a616e87e1c322e1bcd5b}{00052}}\ \textcolor{keyword}{typedef}\ uint32\_t\ (*\mbox{\hyperlink{namespacelctm_a63d8cd408606a616e87e1c322e1bcd5b}{codec\_api\_version\_fn\_t}})();}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00053}\mbox{\hyperlink{namespacelctm_a8b2ffab09be5ae86bec0eed2cacc9da6}{00053}}\ \textcolor{keyword}{typedef}\ uint32\_t\ (*\mbox{\hyperlink{namespacelctm_a8b2ffab09be5ae86bec0eed2cacc9da6}{codec\_api\_query\_fn\_t}})(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00054}\mbox{\hyperlink{namespacelctm_a5c9bf11857fba923ccf7272be3cda3e9}{00054}}\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structCodec}{Codec}}*\ (*codec\_api\_create\_fn\_t)(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \mbox{\hyperlink{CodecApi_8h_acca53023810ef8d56974434b3e35a1c8}{CodecOperation}}\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00056}\mbox{\hyperlink{namespacelctm_a3481c6a89044b6eb0a5b331f2c7dbfee}{00056}}\ \mbox{\hyperlink{structCodec}{Codec}}*\ \mbox{\hyperlink{namespacelctm_a5e5edd9adf381696dd4f2735eda99733}{CodecCreate}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \mbox{\hyperlink{CodecApi_8h_acca53023810ef8d56974434b3e35a1c8}{CodecOperation}}\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{string}\ \&create\_options)\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00058}00058\ \ \ \ \ \textcolor{comment}{//\ Try\ to\ load\ a\ library\ of\ form\ "{}<program>/external\_codecs/libs/base\_<name>.so"{}}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00060}00060\ \ \ \ \ \textcolor{keywordtype}{string}\ library\_file\ =\ \mbox{\hyperlink{namespacelctm_a8bbe880a9fc72f5a4c49f980bf073a21}{get\_program\_directory}}(\mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{format}}(\textcolor{stringliteral}{"{}external\_codecs/libs/\%sbase\_\%s.\%s"{}},\ \mbox{\hyperlink{SharedLibrary_8hpp_a80c3df2e5c0dfed69404eab1f0aba2c2}{SHARED\_PREFIX}},\ \mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}.c\_str(),\ \mbox{\hyperlink{SharedLibrary_8hpp_a96d3aa8188105eb95895d00802737b61}{SHARED\_SUFFIX}}));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00062}00062\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{namespacelctm_a7de48ffc5d2ff3d5636185d1162c1401}{file\_size}}(library\_file)\ <\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ find\ base\ codec\ library:\ \(\backslash\)"{}\%s\(\backslash\)"{}"{}},\ library\_file.c\_str());}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00065}00065\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00067}00067\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a63d8cd408606a616e87e1c322e1bcd5b}{codec\_api\_version\_fn\_t}}\ version\_fn;}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00068}00068\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a8b2ffab09be5ae86bec0eed2cacc9da6}{codec\_api\_query\_fn\_t}}\ query\_fn;}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00069}00069\ \ \ \ \ \mbox{\hyperlink{namespacelctm_a5c9bf11857fba923ccf7272be3cda3e9}{codec\_api\_create\_fn\_t}}\ create\_fn;}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00071}00071\ \ \ \ \ \mbox{\hyperlink{SharedLibrary_8hpp_ac6ef8daf75ddeb8230514e6769acaf2d}{shared\_handle\_t}}\ h\ =\ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\mbox{\hyperlink{SharedLibrary_8hpp_aa1404ab99d89ba6b8391bb264fb58330}{SHARED\_LOAD}}(library\_file.c\_str()));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00073}00073\ \ \ \ \ \textcolor{keywordflow}{if}(!h)}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00076}00076\ \ \ \ \ version\_fn\ =\ (\mbox{\hyperlink{namespacelctm_a63d8cd408606a616e87e1c322e1bcd5b}{codec\_api\_version\_fn\_t}})\mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\mbox{\hyperlink{SharedLibrary_8hpp_a7fa275035faa1054cc5a011dfba8dc03}{SHARED\_SYMBOL}}(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Version"{}}));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00078}00078\ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ version\ =\ version\_fn();}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00079}00079\ \ \ \ \ \textcolor{keywordflow}{if}(version\ !=\ \mbox{\hyperlink{CodecApi_8h_a853360b5a9fa7d887fb278fc2a7c5843}{LOADABLE\_CODEC\_API\_VERSION}})\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Base\ codec\ library\ \(\backslash\)"{}\%s\(\backslash\)"{}\ has\ wrong\ version:\ \%d"{}},\ library\_file.c\_str(),\ version);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00082}00082\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00083}00083\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00084}00084\ \ \ \ \ query\_fn\ =\ (\mbox{\hyperlink{namespacelctm_a8b2ffab09be5ae86bec0eed2cacc9da6}{codec\_api\_query\_fn\_t}})\mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\mbox{\hyperlink{SharedLibrary_8hpp_a7fa275035faa1054cc5a011dfba8dc03}{SHARED\_SYMBOL}}(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Query"{}}));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00085}00085\ \ \ \ \ create\_fn\ =\ (\mbox{\hyperlink{namespacelctm_a5c9bf11857fba923ccf7272be3cda3e9}{codec\_api\_create\_fn\_t}})\mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(\mbox{\hyperlink{SharedLibrary_8hpp_a7fa275035faa1054cc5a011dfba8dc03}{SHARED\_SYMBOL}}(h,\ \textcolor{stringliteral}{"{}CodecAPI\_Create"{}}));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00087}00087\ \ \ \ \ \mbox{\hyperlink{structCodec}{Codec}}*\ codec\ =\ create\_fn(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}.c\_str(),\ operation,\ create\_options.c\_str());}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00089}00089\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00090}00090\ \}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00092}\mbox{\hyperlink{namespacelctm_a175025c21316582833da4b630b64f097}{00092}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacelctm_a175025c21316582833da4b630b64f097}{CodecRelease}}(\mbox{\hyperlink{structCodec}{Codec}}*\ codec)\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00093}00093\ \}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00095}00095\ \textcolor{comment}{//\ Convert\ a\ codec\ error\ to\ a\ user\ string}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00096}00096\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00097}\mbox{\hyperlink{namespacelctm_af42d2848fe665ad1521d890a1cf458f3}{00097}}\ \textcolor{keywordtype}{string}\ \mbox{\hyperlink{namespacelctm_af42d2848fe665ad1521d890a1cf458f3}{CodecErrorToString}}(\mbox{\hyperlink{structCodec}{Codec}}*\ codec,\ \mbox{\hyperlink{CodecApi_8h_a39c4f594f59e82dcebd73c5bde911bb9}{CodecError}}\ error)\ \{}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00098}00098\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ buffer\_len\ =\ codec-\/>\mbox{\hyperlink{structCodec_a6f68fb81e215b67e6eaa595f0f9c9ba9}{get\_error\_message}}(error,\ 0,\ 0);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00099}00099\ \ \ \ \ \textcolor{keywordtype}{char}\ *buffer\ =\ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}((\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(alloca(buffer\_len))));}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00100}00100\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_a6f68fb81e215b67e6eaa595f0f9c9ba9}{get\_error\_message}}(error,\ buffer,\ buffer\_len);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00101}00101\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_a45e7247d7ea71481737bc0f3d2c0d9e9}{release\_error}}(error);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00102}00102\ \ \ \ \ \textcolor{keywordflow}{return}\ string(buffer,\ buffer\ +\ buffer\_len);}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00103}00103\ \}}
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{Codec_8cpp_source_l00105}00105\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

@@ -1,109 +1,109 @@
 \doxysection{Residual\+Map.\+cpp}
-\label{ResidualMap_8cpp_source}\index{encoder/src/ResidualMap.cpp@{encoder/src/ResidualMap.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{ResidualMap_8cpp_source}{}\label{ResidualMap_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/encoder/src/ResidualMap.cpp@{/media/erwan/T7/formation/Video/LTM/encoder/src/ResidualMap.cpp}}
+\mbox{\hyperlink{ResidualMap_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ ResidualMap.cpp}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//\ Process\ used\ kill\ coefficients\ depending\ on\ preprocessed\ residual\ map}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//}}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}ResidualMap.hpp"{}}}
-\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}Types.hpp"{}}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ kill\ coefficients\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
-\DoxyCodeLine{00048\ \textcolor{comment}{//}}
-\DoxyCodeLine{00049\ Surface\ ApplyPreprocessedMap::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ \textcolor{keyword}{const}\ Surface\ \&map\_plane)\ \{}
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ residual\ map\ to\ cover\ source\ image}}
-\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(map\_plane.width(),\ src\_plane.width());}
-\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(map\_plane.height(),\ src\_plane.height());}
-\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bw\ =\ log2(block\_w);}
-\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bh\ =\ log2(block\_h);}
-\DoxyCodeLine{00057\ }
-\DoxyCodeLine{00058\ \ \ \ \ CHECK(src\_plane.width()\ ==\ map\_plane.width()\ *\ block\_w);}
-\DoxyCodeLine{00059\ \ \ \ \ CHECK(src\_plane.height()\ ==\ map\_plane.height()\ *\ block\_h);}
-\DoxyCodeLine{00060\ }
-\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ src\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ map\ =\ map\_plane.view\_as<uint8\_t>();}
-\DoxyCodeLine{00063\ }
-\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ .generate(src.width(),\ src.height(),}
-\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (map.read(x\ >>\ shift\_bw,\ y\ >>\ shift\_bh)\ ==\ ResidualLabel::RESIDUAL\_KILL)}
-\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ 0;}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src.read(x,\ y);}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00073\ \}}
-\DoxyCodeLine{00074\ }
-\DoxyCodeLine{00075\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ zero\ residual\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
-\DoxyCodeLine{00076\ \textcolor{comment}{//}}
-\DoxyCodeLine{00077\ Surface\ ApplyResidualMap::process(\textcolor{keyword}{const}\ Surface\ \&src\_plane,\ Surface\ \&map\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ residual\ map\ to\ cover\ source\ image}}
-\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(map\_plane.width(),\ src\_plane.width());}
-\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(map\_plane.height(),\ src\_plane.height());}
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bw\ =\ log2(block\_w);}
-\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bh\ =\ log2(block\_h);}
-\DoxyCodeLine{00085\ }
-\DoxyCodeLine{00086\ \ \ \ \ CHECK(src\_plane.width()\ ==\ map\_plane.width()\ *\ block\_w);}
-\DoxyCodeLine{00087\ \ \ \ \ CHECK(src\_plane.height()\ ==\ map\_plane.height()\ *\ block\_h);}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ src\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ map\ =\ map\_plane.view\_as<uint8\_t>();}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ .generate(src.width(),\ src.height(),}
-\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (map.read(x\ >>\ shift\_bw,\ y\ >>\ shift\_bh)\ ==\ ResidualLabel::RESIDUAL\_KILL)}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ 0;}
-\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else}
-\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src.read(x,\ y);}
-\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00101\ \}}
-\DoxyCodeLine{00102\ }
-\DoxyCodeLine{00103\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00035}00035\ \textcolor{comment}{//\ ResidualMap.cpp}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00037}00037\ \textcolor{comment}{//\ Process\ used\ kill\ coefficients\ depending\ on\ preprocessed\ residual\ map}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00038}00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{ResidualMap_8hpp}{ResidualMap.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00041}00041\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{TemporalDecode_8hpp}{TemporalDecode.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Types_8hpp}{Types.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00045}00045\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00047}00047\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ kill\ coefficients\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00048}00048\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00049}\mbox{\hyperlink{classlctm_1_1ApplyPreprocessedMap_a5d07d4b4ae074de2bee7b954e11d109e}{00049}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1ApplyPreprocessedMap_a5d07d4b4ae074de2bee7b954e11d109e}{ApplyPreprocessedMap::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&map\_plane)\ \{}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00051}00051\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ residual\ map\ to\ cover\ source\ image}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00052}00052\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00053}00053\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}());}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00054}00054\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}(),\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bw\ =\ log2(block\_w);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00056}00056\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bh\ =\ log2(block\_h);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00058}00058\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ *\ block\_w);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00059}00059\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ *\ block\_h);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00062}00062\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ map\ =\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00064}00064\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00065}00065\ \ \ \ \ \ \ \ \ .generate(src.width(),\ src.height(),}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (map.read(x\ >>\ shift\_bw,\ y\ >>\ shift\_bh)\ ==\ ResidualLabel::RESIDUAL\_KILL)}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ 0;}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00073}00073\ \}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00075}00075\ \textcolor{comment}{//\ For\ each\ block\ in\ map\ -\/\ zero\ residual\ if\ corresponding\ block\ is\ set\ to\ 0\ in\ map}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00076}00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00077}\mbox{\hyperlink{classlctm_1_1ApplyResidualMap_a0d741dc84fd691ccfcbd9fcd3e755134}{00077}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1ApplyResidualMap_a0d741dc84fd691ccfcbd9fcd3e755134}{ApplyResidualMap::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&src\_plane,\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&map\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00079}00079\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ residual\ map\ to\ cover\ source\ image}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00080}00080\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00081}00081\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}());}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00082}00082\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}(),\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00083}00083\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bw\ =\ log2(block\_w);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00084}00084\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_bh\ =\ log2(block\_h);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00086}00086\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ *\ block\_w);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00087}00087\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ *\ block\_h);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00089}00089\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ src\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00090}00090\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ map\ =\ map\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00093}00093\ \ \ \ \ \ \ \ \ .generate(src.width(),\ src.height(),}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (map.read(x\ >>\ shift\_bw,\ y\ >>\ shift\_bh)\ ==\ ResidualLabel::RESIDUAL\_KILL)}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ 0;}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00101}00101\ \}}
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{ResidualMap_8cpp_source_l00103}00103\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

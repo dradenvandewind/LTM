@@ -1,328 +1,328 @@
 \doxysection{codec\+\_\+api.\+cpp}
-\label{base__avc_2src_2codec__api_8cpp_source}\index{deps/base\_avc/src/codec\_api.cpp@{deps/base\_avc/src/codec\_api.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{base__avc_2src_2codec__api_8cpp_source}{}\label{base__avc_2src_2codec__api_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_avc/src/codec\_api.cpp@{/media/erwan/T7/formation/Video/LTM/deps/base\_avc/src/codec\_api.cpp}}
+\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//}}
-\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <cstdio>}}
-\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
-\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <string>}}
-\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <thread>}}
-\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00008\ }
-\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}memory.h"{}}}
-\DoxyCodeLine{00010\ }
-\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}CodecApi.h"{}}}
-\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}CodecUtils.h"{}}}
-\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}RingBuffer.hpp"{}}}
-\DoxyCodeLine{00016\ }
-\DoxyCodeLine{00017\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
-\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}h264decoder.h"{}}}
-\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}inject\_annexb.h"{}}}
-\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}configfile.h"{}}}
-\DoxyCodeLine{00021\ }
-\DoxyCodeLine{00022\ \textcolor{keyword}{extern}\ DecoderParams\ *p\_Dec;}
-\DoxyCodeLine{00023\ \}}
-\DoxyCodeLine{00024\ }
-\DoxyCodeLine{00025\ \textcolor{keyword}{using\ namespace\ }std;}
-\DoxyCodeLine{00026\ }
-\DoxyCodeLine{00027\ \textcolor{keyword}{struct\ }Metadata\ \{}
-\DoxyCodeLine{00028\ \ \ \ \ int32\_t\ width;}
-\DoxyCodeLine{00029\ \ \ \ \ int32\_t\ height;}
-\DoxyCodeLine{00030\ \ \ \ \ int32\_t\ planes;}
-\DoxyCodeLine{00031\ \ \ \ \ int32\_t\ bpp;}
-\DoxyCodeLine{00032\ }
-\DoxyCodeLine{00033\ \ \ \ \ uint64\_t\ timestamp;}
-\DoxyCodeLine{00034\ \ \ \ \ uint64\_t\ poc;}
-\DoxyCodeLine{00035\ \ \ \ \ uint32\_t\ qp;}
-\DoxyCodeLine{00036\ }
-\DoxyCodeLine{00037\ \ \ \ \ uint32\_t\ frame\_type;}
-\DoxyCodeLine{00038\ \};}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{keyword}{struct\ }Error\ \{}
-\DoxyCodeLine{00041\ \ \ \ \ uint32\_t\ code;}
-\DoxyCodeLine{00042\ \ \ \ \ std::string\ msg;}
-\DoxyCodeLine{00043\ \ \ \ \ std::string\ file;}
-\DoxyCodeLine{00044\ \ \ \ \ uint32\_t\ line;}
-\DoxyCodeLine{00045\ \};}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{keyword}{enum}\ State\ \{}
-\DoxyCodeLine{00048\ \ \ \ \ StateNone\ =\ 0,}
-\DoxyCodeLine{00049\ \ \ \ \ StatePushing,}
-\DoxyCodeLine{00050\ \ \ \ \ StateDecoding,}
-\DoxyCodeLine{00051\ \ \ \ \ StateFlushing,}
-\DoxyCodeLine{00052\ \ \ \ \ StateFinished,}
-\DoxyCodeLine{00053\ \};}
-\DoxyCodeLine{00054\ }
-\DoxyCodeLine{00055\ \textcolor{keyword}{struct\ }DecodedImage\ \{}
-\DoxyCodeLine{00056\ \ \ \ \ vector<uint8\_t>\ buffer\_;}
-\DoxyCodeLine{00057\ \ \ \ \ CodecImage\ image\_;}
-\DoxyCodeLine{00058\ \};}
-\DoxyCodeLine{00059\ }
-\DoxyCodeLine{00060\ \textcolor{keyword}{class\ }Context\ \{}
-\DoxyCodeLine{00061\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keywordtype}{void}\ flush();}
-\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordtype}{void}\ decode\_enhanced\_frames(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames);}
-\DoxyCodeLine{00064\ }
-\DoxyCodeLine{00065\ \ \ \ \ std::string\ configuration\_;}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \ \ \ \ State\ state\_;}
-\DoxyCodeLine{00068\ \ \ \ \ vector<uint8\_t>\ base\_bitstream\_;}
-\DoxyCodeLine{00069\ }
-\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordtype}{int}\ frame\_count\_\ =\ 0;}
-\DoxyCodeLine{00071\ }
-\DoxyCodeLine{00072\ \ \ \ \ thread\ decoder\_thread\_;}
-\DoxyCodeLine{00073\ }
-\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ output\_frame\_\ =\ 0;}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ shallow\ ring\ buffer\ used\ to\ move\ pictures\ from\ docoder\ to\ codec\ api}}
-\DoxyCodeLine{00077\ \ \ \ \ RingBuffer<shared\_ptr<DecodedImage>>\ decoded\_images\_\ =\ \{2\};}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ Image\ returned\ to\ API\ client}}
-\DoxyCodeLine{00080\ \ \ \ \ shared\_ptr<DecodedImage>\ decoded\_image\_;}
-\DoxyCodeLine{00081\ \};}
-\DoxyCodeLine{00082\ }
-\DoxyCodeLine{00083\ \textcolor{keyword}{static}\ int32\_t\ create\_context(CodecContext\ *cp,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration,\ CodecError\ *error)\ \{}
-\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \ \ \ \ Context\ *context\ =\ \textcolor{keyword}{new}\ Context();}
-\DoxyCodeLine{00088\ \ \ \ \ context-\/>configuration\_\ =\ json\_configuration;}
-\DoxyCodeLine{00089\ \ \ \ \ context-\/>state\_\ =\ StatePushing;}
-\DoxyCodeLine{00090\ \ \ \ \ *cp\ =\ (\textcolor{keywordtype}{void}\ *)context;}
-\DoxyCodeLine{00091\ }
-\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
-\DoxyCodeLine{00093\ \}}
-\DoxyCodeLine{00094\ }
-\DoxyCodeLine{00095\ \textcolor{comment}{//\ Push\ encoded\ data\ into\ decoder}}
-\DoxyCodeLine{00096\ \textcolor{comment}{//}}
-\DoxyCodeLine{00097\ \textcolor{comment}{//\ To\ avoid\ messing\ with\ JM\ any\ more\ than\ necessary,\ this\ cheats\ a\ bit\ and\ saves\ the\ entire\ input\ bitstream}}
-\DoxyCodeLine{00098\ \textcolor{comment}{//\ until\ EOS,\ then\ starts\ the\ JM\ decoder\ with\ the\ whole\ stream.}}
-\DoxyCodeLine{00099\ \textcolor{comment}{//}}
-\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ int32\_t\ push\_packet(CodecContext\ c,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ length,\ CodecMetadata\ metadata,\ int8\_t\ eos,}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CodecError\ *error)\ \{}
-\DoxyCodeLine{00102\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
-\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
-\DoxyCodeLine{00105\ }
-\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>state\_)\ \{}
-\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{case}\ StatePushing:}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!eos)\ \{}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(data);}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(length\ >=\ 3);}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
-\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>base\_bitstream\_.push\_back(0);}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00116\ }
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ buffer}}
-\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>base\_bitstream\_.insert(context-\/>base\_bitstream\_.end(),\ data,\ data\ +\ length);}
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>state\_\ =\ StateDecoding;}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00124\ }
-\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
-\DoxyCodeLine{00127\ \ \ \ \ \}}
-\DoxyCodeLine{00128\ }
-\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00130\ \}}
-\DoxyCodeLine{00131\ }
-\DoxyCodeLine{00132\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ extract\_image(DecodedPicList\ *pic,\ CodecImage\ *codec\_image)\ \{}
-\DoxyCodeLine{00133\ }
-\DoxyCodeLine{00134\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ picture?}}
-\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00137\ \ \ \ \ \}}
-\DoxyCodeLine{00138\ }
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00142\ \ \ \ \ \}}
-\DoxyCodeLine{00143\ }
-\DoxyCodeLine{00144\ \ \ \ \ CHECK(codec\_image);}
-\DoxyCodeLine{00145\ \ \ \ \ codec\_image-\/>bpp\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
-\DoxyCodeLine{00146\ \ \ \ \ codec\_image-\/>width\_y\ =\ pic-\/>iWidth;}
-\DoxyCodeLine{00147\ \ \ \ \ codec\_image-\/>height\_y\ =\ pic-\/>iHeight;}
-\DoxyCodeLine{00148\ \ \ \ \ codec\_image-\/>stride\_y\ =\ pic-\/>iYBufStride;}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \ \ \ \ codec\_image-\/>width\_uv\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
-\DoxyCodeLine{00151\ \ \ \ \ codec\_image-\/>height\_uv\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
-\DoxyCodeLine{00152\ \ \ \ \ codec\_image-\/>stride\_uv\ =\ pic-\/>iUVBufStride;}
-\DoxyCodeLine{00153\ }
-\DoxyCodeLine{00154\ \ \ \ \ codec\_image-\/>data\_y\ =\ pic-\/>pY;}
-\DoxyCodeLine{00155\ \ \ \ \ codec\_image-\/>data\_u\ =\ pic-\/>pU;}
-\DoxyCodeLine{00156\ \ \ \ \ codec\_image-\/>data\_v\ =\ pic-\/>pV;}
-\DoxyCodeLine{00157\ }
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00159\ \}}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \textcolor{keyword}{static}\ int32\_t\ pull\_image(CodecContext\ c,\ CodecImage\ *image,\ CodecMetadata\ *metadata,\ int8\_t\ *eos,\ CodecError\ *error)\ \{}
-\DoxyCodeLine{00162\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
-\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>state\_)\ \{}
-\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{case}\ StatePushing:}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Still\ accumulating\ input\ stream}}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00171\ }
-\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{case}\ StateDecoding:}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ context-\/>decoder\_thread\_\ =\ std::thread([context]\ \{}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>flush();}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>decoded\_images\_.push(\textcolor{keyword}{nullptr});}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \});}
-\DoxyCodeLine{00177\ }
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ context-\/>state\_\ =\ StateFlushing;}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Fall\ through\ */}}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{case}\ StateFlushing:}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ context-\/>decoded\_images\_.pop(context-\/>decoded\_image\_);}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>decoded\_image\_)\ \{}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ *image\ =\ context-\/>decoded\_image\_-\/>image\_;}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
-\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>decoder\_thread\_.joinable())}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>decoder\_thread\_.join();}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 1;}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
-\DoxyCodeLine{00195\ \ \ \ \ \}}
-\DoxyCodeLine{00196\ }
-\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00198\ \}}
-\DoxyCodeLine{00199\ }
-\DoxyCodeLine{00200\ \textcolor{comment}{//}}
-\DoxyCodeLine{00201\ \textcolor{comment}{//}}
-\DoxyCodeLine{00202\ \textcolor{keywordtype}{void}\ Context::flush()\ \{}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{//\ Poke\ bitstream\ into\ our\ JM\ hooks}}
-\DoxyCodeLine{00205\ \ \ \ \ inject\_annex\_b\_bitstream(base\_bitstream\_.data(),\ (\textcolor{keywordtype}{unsigned})base\_bitstream\_.size());}
-\DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ InputParameters\ input\_parameters;}
-\DoxyCodeLine{00208\ \ \ \ \ memset(\&input\_parameters,\ 0,\ \textcolor{keyword}{sizeof}(input\_parameters));}
-\DoxyCodeLine{00209\ \ \ \ \ strcpy(input\_parameters.infile,\ \textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00210\ \ \ \ \ strcpy(input\_parameters.outfile,\ \textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00211\ \ \ \ \ strcpy(input\_parameters.reffile,\ \textcolor{stringliteral}{"{}"{}});}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keyword}{const}\ decoder\_args[]\ =\ \{\textcolor{stringliteral}{"{}ldecod"{}}\};}
-\DoxyCodeLine{00214\ \ \ \ \ ParseCommand(\&input\_parameters,\ ARRAY\_SIZE(decoder\_args),\ (\textcolor{keywordtype}{char}\ **)decoder\_args);}
-\DoxyCodeLine{00215\ }
-\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ Open\ decoder}}
-\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (OpenDecoder(\&input\_parameters)\ !=\ DEC\_OPEN\_NOERR)\ \{}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Cannot\ open\ base\ decoder"{}});}
-\DoxyCodeLine{00219\ \ \ \ \ \}}
-\DoxyCodeLine{00220\ }
-\DoxyCodeLine{00221\ \ \ \ \ p\_Dec-\/>p\_Vid-\/>p\_out\ =\ -\/2;}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ Run\ decoder}}
-\DoxyCodeLine{00224\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00225\ \ \ \ \ DecodedPicList\ *pDecPicList\ =\ 0;}
-\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordtype}{int}\ frame\_count\ =\ 0;}
-\DoxyCodeLine{00227\ }
-\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ 0;}
-\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ r\ =\ DecodeOneFrame(\&pDecPicList);}
-\DoxyCodeLine{00231\ }
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ DEC\_EOS\ ||\ r\ ==\ DEC\_SUCCEED)\ \{}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ decode\_enhanced\_frames(pDecPicList,\ \textcolor{keyword}{false});}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ frame\_count++;}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}Error\ in\ decoding\ process:\ 0x\%x"{}},\ r);}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00238\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ ((r\ ==\ DEC\_SUCCEED)\ \&\&\ ((p\_Dec-\/>p\_Inp-\/>iDecFrmNum\ ==\ 0)\ ||\ (frame\_count\ <\ p\_Dec-\/>p\_Inp-\/>iDecFrmNum)));}
-\DoxyCodeLine{00239\ }
-\DoxyCodeLine{00240\ \ \ \ \ FinitDecoder(\&pDecPicList);}
-\DoxyCodeLine{00241\ }
-\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ Write\ last\ frame}}
-\DoxyCodeLine{00243\ \ \ \ \ decode\_enhanced\_frames(pDecPicList,\ \textcolor{keyword}{true});}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \ \ \ \ CloseDecoder();}
-\DoxyCodeLine{00246\ \}}
-\DoxyCodeLine{00247\ }
-\DoxyCodeLine{00248\ \textcolor{comment}{//}}
-\DoxyCodeLine{00249\ \textcolor{comment}{//}}
-\DoxyCodeLine{00250\ \textcolor{keywordtype}{void}\ Context::decode\_enhanced\_frames(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames)\ \{}
-\DoxyCodeLine{00251\ \ \ \ \ \textcolor{comment}{//\ Check\ picture\ and\ plane\ pointers\ -\/\ valid\ flag\ seems\ to\ be\ wrong\ sometimes!?}}
-\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
-\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00254\ \ \ \ \ \}}
-\DoxyCodeLine{00255\ }
-\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ INFO(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
-\DoxyCodeLine{00258\ \ \ \ \ \}}
-\DoxyCodeLine{00259\ }
-\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ output\_image\ =\ std::shared\_ptr<DecodedImage>(\textcolor{keyword}{new}\ DecodedImage());}
-\DoxyCodeLine{00262\ }
-\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.bpp\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_y\ =\ pic-\/>iWidth;}
-\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_y\ =\ pic-\/>iHeight;}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_y\ =\ pic-\/>iYBufStride;}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_uv\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_uv\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
-\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_uv\ =\ pic-\/>iUVBufStride;}
-\DoxyCodeLine{00271\ }
-\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_y\ =\ output\_image-\/>image\_.height\_y\ *\ output\_image-\/>image\_.stride\_y;}
-\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_uv\ =\ output\_image-\/>image\_.height\_uv\ *\ output\_image-\/>image\_.stride\_uv;}
-\DoxyCodeLine{00274\ }
-\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ output\_image-\/>buffer\_.reserve(plane\_size\_y\ +\ 2\ *\ plane\_size\_uv);}
-\DoxyCodeLine{00276\ }
-\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data(),\ pic-\/>pY,\ plane\_size\_y);}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y,\ pic-\/>pU,\ plane\_size\_uv);}
-\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y\ +\ plane\_size\_uv,\ pic-\/>pV,\ plane\_size\_uv);}
-\DoxyCodeLine{00280\ }
-\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_y\ =\ output\_image-\/>buffer\_.data();}
-\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_u\ =\ output\_image-\/>image\_.data\_y\ +\ plane\_size\_y;}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_v\ =\ output\_image-\/>image\_.data\_u\ +\ plane\_size\_uv;}
-\DoxyCodeLine{00284\ }
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ decoded\_images\_.push(output\_image);}
-\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ as\ used\ and\ move\ to\ next}}
-\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ pic-\/>bValid\ =\ 0;}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ pic\ =\ pic-\/>pNext;}
-\DoxyCodeLine{00289\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (pic\ !=\ NULL\ \&\&\ pic-\/>bValid\ \&\&\ all\_frames);}
-\DoxyCodeLine{00290\ \}}
-\DoxyCodeLine{00291\ }
-\DoxyCodeLine{00292\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_context(CodecContext\ c)\ \{}
-\DoxyCodeLine{00293\ \ \ \ \ Context\ *context\ =\ (Context\ *)c;}
-\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keywordflow}{if}\ (!context)}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00296\ }
-\DoxyCodeLine{00298\ \ \ \ \ free(context);}
-\DoxyCodeLine{00299\ \}}
-\DoxyCodeLine{00300\ }
-\DoxyCodeLine{00301\ CODEC\_API\_EXPORT\ uint32\_t\ CodecAPI\_Version()\ \{\ \textcolor{keywordflow}{return}\ LOADABLE\_CODEC\_API\_VERSION;\ \}}
-\DoxyCodeLine{00302\ }
-\DoxyCodeLine{00303\ CODEC\_API\_EXPORT\ uint32\_t\ CodecAPI\_Query(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size)\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
-\DoxyCodeLine{00304\ }
-\DoxyCodeLine{00305\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_name[]\ =\ \textcolor{stringliteral}{"{}avc"{}};}
-\DoxyCodeLine{00306\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_version\_string[]\ =\ \textcolor{stringliteral}{"{}LTM\ xxx"{}};}
-\DoxyCodeLine{00307\ }
-\DoxyCodeLine{00308\ CODEC\_API\_EXPORT\ Codec\ *CodecAPI\_Create(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ CodecOperation\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_create\_options)\ \{}
-\DoxyCodeLine{00309\ \ \ \ \ Codec\ *codec\ =\ LTMCodecAllocate(codec\_name,\ codec\_version\_string,\ operation);}
-\DoxyCodeLine{00310\ }
-\DoxyCodeLine{00311\ \ \ \ \ codec-\/>create\_context\ =\ create\_context;}
-\DoxyCodeLine{00312\ \ \ \ \ codec-\/>push\_packet\ =\ push\_packet;}
-\DoxyCodeLine{00313\ \ \ \ \ codec-\/>pull\_image\ =\ pull\_image;}
-\DoxyCodeLine{00314\ \ \ \ \ codec-\/>release\_context\ =\ release\_context;}
-\DoxyCodeLine{00315\ }
-\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
-\DoxyCodeLine{00317\ \}}
-\DoxyCodeLine{00318\ }
-\DoxyCodeLine{00319\ CODEC\_API\_EXPORT\ \textcolor{keywordtype}{void}\ CodecAPI\_Release(Codec\ *codec)\ \{}
-\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordflow}{if}\ (!codec)}
-\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00322\ }
-\DoxyCodeLine{00323\ \ \ \ \ LTMCodecFree(codec);}
-\DoxyCodeLine{00324\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00001}00001\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00002}00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00003}00003\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00004}00004\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}memory.h"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CodecApi_8h}{CodecApi.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{CodecUtils_8h}{CodecUtils.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00014}00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00015}00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{RingBuffer_8hpp}{RingBuffer.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00017}00017\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00018}00018\ \textcolor{preprocessor}{\#include\ "{}h264decoder.h"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00019}00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{inject__annexb_8h}{inject\_annexb.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00020}00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{configfile_8h}{configfile.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00022}00022\ \textcolor{keyword}{extern}\ DecoderParams\ *\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00023}00023\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00024}00024\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00025}00025\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespacestd}{std}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00026}00026\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00027}\mbox{\hyperlink{structMetadata}{00027}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structMetadata}{Metadata}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00028}\mbox{\hyperlink{structMetadata_ac7882f6012a5159f8d3facf62bd348ae}{00028}}\ \ \ \ \ int32\_t\ \mbox{\hyperlink{structMetadata_ac7882f6012a5159f8d3facf62bd348ae}{width}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00029}\mbox{\hyperlink{structMetadata_a1c4a8fff8d947225d95b7e64452f5576}{00029}}\ \ \ \ \ int32\_t\ \mbox{\hyperlink{structMetadata_a1c4a8fff8d947225d95b7e64452f5576}{height}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00030}\mbox{\hyperlink{structMetadata_a77780b808cb757ac1059564e056e6c55}{00030}}\ \ \ \ \ int32\_t\ \mbox{\hyperlink{structMetadata_a77780b808cb757ac1059564e056e6c55}{planes}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00031}\mbox{\hyperlink{structMetadata_a7c4f94d2710eb67ebdcbe10c6d2a5327}{00031}}\ \ \ \ \ int32\_t\ \mbox{\hyperlink{structMetadata_a7c4f94d2710eb67ebdcbe10c6d2a5327}{bpp}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00032}00032\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00033}\mbox{\hyperlink{structMetadata_a97d1aaee50e79708824b044b2baadbd7}{00033}}\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{structMetadata_a97d1aaee50e79708824b044b2baadbd7}{timestamp}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00034}\mbox{\hyperlink{structMetadata_ae8ac0a429bc9b404d5870673189593dd}{00034}}\ \ \ \ \ uint64\_t\ \mbox{\hyperlink{structMetadata_ae8ac0a429bc9b404d5870673189593dd}{poc}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00035}\mbox{\hyperlink{structMetadata_a01139f3b55ad4efbd223f32b53ef701e}{00035}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{structMetadata_a01139f3b55ad4efbd223f32b53ef701e}{qp}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00037}\mbox{\hyperlink{structMetadata_a4d9729f6dde2fbc4cd8e03c136e8b669}{00037}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{structMetadata_a4d9729f6dde2fbc4cd8e03c136e8b669}{frame\_type}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00038}00038\ \};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00040}\mbox{\hyperlink{structError}{00040}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structError}{Error}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00041}\mbox{\hyperlink{structError_a346463656059871686d180f71f900a7a}{00041}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{structError_a346463656059871686d180f71f900a7a}{code}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00042}\mbox{\hyperlink{structError_ab658956d4b570329a05280ed9d71e458}{00042}}\ \ \ \ \ std::string\ \mbox{\hyperlink{structError_ab658956d4b570329a05280ed9d71e458}{msg}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00043}\mbox{\hyperlink{structError_a430d5522db482f3242a235b07f99423a}{00043}}\ \ \ \ \ std::string\ \mbox{\hyperlink{structError_a430d5522db482f3242a235b07f99423a}{file}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00044}\mbox{\hyperlink{structError_ace7c138567008afea62d66aee9b0063d}{00044}}\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{structError_ace7c138567008afea62d66aee9b0063d}{line}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00045}00045\ \};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00047}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{00047}}\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00048}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a37f2d46cb013e02d179bd376110b13c4}{00048}}\ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a37f2d46cb013e02d179bd376110b13c4}{StateNone}}\ =\ 0,}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00049}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb}{00049}}\ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb}{StatePushing}},}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00050}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f}{00050}}\ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f}{StateDecoding}},}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00051}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7}{00051}}\ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7}{StateFlushing}},}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00052}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8add37f7d39aa98f563b061ed1d4eb6839}{00052}}\ \ \ \ \ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8add37f7d39aa98f563b061ed1d4eb6839}{StateFinished}},}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00053}00053\ \};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00055}\mbox{\hyperlink{structDecodedImage}{00055}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structDecodedImage}{DecodedImage}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00056}\mbox{\hyperlink{structDecodedImage_aef46bb3c3d16f8d24b5097bbf31fd12e}{00056}}\ \ \ \ \ vector<uint8\_t>\ \mbox{\hyperlink{structDecodedImage_aef46bb3c3d16f8d24b5097bbf31fd12e}{buffer\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00057}\mbox{\hyperlink{structDecodedImage_af5ef8fc79f8aec91f61fd247a42d75d2}{00057}}\ \ \ \ \ \mbox{\hyperlink{structCodecImage}{CodecImage}}\ \mbox{\hyperlink{structDecodedImage_af5ef8fc79f8aec91f61fd247a42d75d2}{image\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00058}00058\ \};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00059}00059\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00060}\mbox{\hyperlink{classContext}{00060}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classContext}{Context}}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00061}00061\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00062}00062\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classContext_a8843e8692caa3f02e714c26a12ccafd9}{flush}}();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00063}00063\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classContext_a37a2f838e3f5c25b6f034f7620717373}{decode\_enhanced\_frames}}(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00065}\mbox{\hyperlink{classContext_ab1ea6d384b79a0f9f4ea1ee3c8595aad}{00065}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classContext_ab1ea6d384b79a0f9f4ea1ee3c8595aad}{configuration\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00067}\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{00067}}\ \ \ \ \ \mbox{\hyperlink{base__vvc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8}{State}}\ \mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00068}\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{00068}}\ \ \ \ \ vector<uint8\_t>\ \mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00069}00069\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00070}\mbox{\hyperlink{classContext_a89805f3f395ffe088716eedb0fc1e02b}{00070}}\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classContext_a89805f3f395ffe088716eedb0fc1e02b}{frame\_count\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00072}\mbox{\hyperlink{classContext_af6ec2c9f19b0de79a58a53c4d01d7ae8}{00072}}\ \ \ \ \ thread\ \mbox{\hyperlink{classContext_af6ec2c9f19b0de79a58a53c4d01d7ae8}{decoder\_thread\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00074}\mbox{\hyperlink{classContext_a35a3292c1ad01dbc2407ff8c458a6377}{00074}}\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classContext_a35a3292c1ad01dbc2407ff8c458a6377}{output\_frame\_}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00076}00076\ \ \ \ \ \textcolor{comment}{//\ shallow\ ring\ buffer\ used\ to\ move\ pictures\ from\ docoder\ to\ codec\ api}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00077}\mbox{\hyperlink{classContext_abce66a0709690e66c22b1ca83ce26bcf}{00077}}\ \ \ \ \ \mbox{\hyperlink{classRingBuffer}{RingBuffer<shared\_ptr<DecodedImage>}}>\ \mbox{\hyperlink{classContext_abce66a0709690e66c22b1ca83ce26bcf}{decoded\_images\_}}\ =\ \{2\};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00079}00079\ \ \ \ \ \textcolor{comment}{//\ Image\ returned\ to\ API\ client}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00080}\mbox{\hyperlink{classContext_adf46c3ca3c1cecf2ce0f88dfe111813b}{00080}}\ \ \ \ \ shared\_ptr<DecodedImage>\ \mbox{\hyperlink{classContext_adf46c3ca3c1cecf2ce0f88dfe111813b}{decoded\_image\_}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00081}00081\ \};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00083}00083\ \textcolor{keyword}{static}\ int32\_t\ create\_context(\mbox{\hyperlink{CodecApi_8h_ab99f392e5c5516a0b3567438a6c67a80}{CodecContext}}\ *cp,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_configuration,\ \mbox{\hyperlink{CodecApi_8h_a39c4f594f59e82dcebd73c5bde911bb9}{CodecError}}\ *error)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00084}00084\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00087}00087\ \ \ \ \ \mbox{\hyperlink{classContext}{Context}}\ *context\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classContext}{Context}}();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00088}00088\ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_ab1ea6d384b79a0f9f4ea1ee3c8595aad}{configuration\_}}\ =\ json\_configuration;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00089}00089\ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}}\ =\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb}{StatePushing}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00090}00090\ \ \ \ \ *cp\ =\ (\textcolor{keywordtype}{void}\ *)context;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00092}00092\ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00093}00093\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00095}00095\ \textcolor{comment}{//\ Push\ encoded\ data\ into\ decoder}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00096}00096\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00097}00097\ \textcolor{comment}{//\ To\ avoid\ messing\ with\ JM\ any\ more\ than\ necessary,\ this\ cheats\ a\ bit\ and\ saves\ the\ entire\ input\ bitstream}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00098}00098\ \textcolor{comment}{//\ until\ EOS,\ then\ starts\ the\ JM\ decoder\ with\ the\ whole\ stream.}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00099}00099\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00100}00100\ \textcolor{keyword}{static}\ int32\_t\ push\_packet(\mbox{\hyperlink{CodecApi_8h_ab99f392e5c5516a0b3567438a6c67a80}{CodecContext}}\ c,\ \textcolor{keyword}{const}\ uint8\_t\ *data,\ \textcolor{keywordtype}{size\_t}\ length,\ \mbox{\hyperlink{CodecApi_8h_aefeeff6e2bff20fb9f068dfb09808478}{CodecMetadata}}\ metadata,\ int8\_t\ eos,}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{CodecApi_8h_a39c4f594f59e82dcebd73c5bde911bb9}{CodecError}}\ *error)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00102}00102\ \ \ \ \ \mbox{\hyperlink{classContext}{Context}}\ *context\ =\ (\mbox{\hyperlink{classContext}{Context}}\ *)c;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00103}00103\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00104}00104\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00106}00106\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb}{StatePushing}}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!eos)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(data);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(length\ >=\ 3);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fixup\ NALU\ start\ code\ -\/\ if\ first\ is\ 3\ bytes,\ make\ it\ 4}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (data[0]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[1]\ ==\ \textcolor{charliteral}{'\(\backslash\)0'}\ \&\&\ data[2]\ ==\ \textcolor{charliteral}{'\(\backslash\)1'})\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \textcolor{keyword}{const}\ zero\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}}.push\_back(0);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00116}00116\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumulate\ AUs\ into\ a\ temporary\ buffer}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}}.insert(context-\/>\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}}.end(),\ data,\ data\ +\ length);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}}\ =\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f}{StateDecoding}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00125}00125\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00127}00127\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00128}00128\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00129}00129\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00130}00130\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00131}00131\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00132}00132\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ extract\_image(DecodedPicList\ *pic,\ \mbox{\hyperlink{structCodecImage}{CodecImage}}\ *codec\_image)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00133}00133\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00134}00134\ \ \ \ \ \textcolor{comment}{//\ Is\ there\ a\ picture?}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00135}00135\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00137}00137\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00138}00138\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00139}00139\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00142}00142\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00143}00143\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00144}00144\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(codec\_image);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00145}00145\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_abe465b9f80be0297ddd5803aedafde13}{bpp}}\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00146}00146\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_a16aa0f7041605b7615b7aeb28950df28}{width\_y}}\ =\ pic-\/>iWidth;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00147}00147\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_a066c763a1396f215d0e501c7c44a844b}{height\_y}}\ =\ pic-\/>iHeight;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00148}00148\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_ad5eb61abf4b16cc240202f4de72c417f}{stride\_y}}\ =\ pic-\/>iYBufStride;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00150}00150\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_afea747c670e8ee6b2f5f0b7294fcb04e}{width\_uv}}\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00151}00151\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_a78a2cc64b1d2707fcec12fad14ab5987}{height\_uv}}\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00152}00152\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_ad93eb685f06a32b48c06a3e297e01695}{stride\_uv}}\ =\ pic-\/>iUVBufStride;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00153}00153\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00154}00154\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_ae93ad769efefa117cc0b0ba3efd74036}{data\_y}}\ =\ pic-\/>pY;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00155}00155\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_a7682c435d5f28a456b0083296042526b}{data\_u}}\ =\ pic-\/>pU;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00156}00156\ \ \ \ \ codec\_image-\/>\mbox{\hyperlink{structCodecImage_a23bf8a0577933eee29d26b4ce4edcb75}{data\_v}}\ =\ pic-\/>pV;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00157}00157\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00158}00158\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00159}00159\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00161}00161\ \textcolor{keyword}{static}\ int32\_t\ pull\_image(\mbox{\hyperlink{CodecApi_8h_ab99f392e5c5516a0b3567438a6c67a80}{CodecContext}}\ c,\ \mbox{\hyperlink{structCodecImage}{CodecImage}}\ *image,\ \mbox{\hyperlink{CodecApi_8h_aefeeff6e2bff20fb9f068dfb09808478}{CodecMetadata}}\ *metadata,\ int8\_t\ *eos,\ \mbox{\hyperlink{CodecApi_8h_a39c4f594f59e82dcebd73c5bde911bb9}{CodecError}}\ *error)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00162}00162\ \ \ \ \ \mbox{\hyperlink{classContext}{Context}}\ *context\ =\ (\mbox{\hyperlink{classContext}{Context}}\ *)c;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00163}00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (error)}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ *error\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00165}00165\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00166}00166\ \ \ \ \ \textcolor{keywordflow}{switch}\ (context-\/>\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00167}00167\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8af5211d98577e0abe88275f66096ac8eb}{StatePushing}}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Still\ accumulating\ input\ stream}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00171}00171\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00172}00172\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8ab27bcd4a5170a797f53f57355f66fe9f}{StateDecoding}}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00173}00173\ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_af6ec2c9f19b0de79a58a53c4d01d7ae8}{decoder\_thread\_}}\ =\ std::thread([context]\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a8843e8692caa3f02e714c26a12ccafd9}{flush}}();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_abce66a0709690e66c22b1ca83ce26bcf}{decoded\_images\_}}.\mbox{\hyperlink{classRingBuffer_a0617f299bd97acf8f88392070bd5877b}{push}}(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00177}00177\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_a88d2b5073fdf4d3287026b075628076a}{state\_}}\ =\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7}{StateFlushing}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Fall\ through\ */}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00181}00181\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a5d74787dedbc4e11c1ab15bf487e61f8a89d65afd26e9740321a7ffc4242662f7}{StateFlushing}}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_abce66a0709690e66c22b1ca83ce26bcf}{decoded\_images\_}}.\mbox{\hyperlink{classRingBuffer_a598c5cfce60f33812e6a0a513b090dcc}{pop}}(context-\/>\mbox{\hyperlink{classContext_adf46c3ca3c1cecf2ce0f88dfe111813b}{decoded\_image\_}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>\mbox{\hyperlink{classContext_adf46c3ca3c1cecf2ce0f88dfe111813b}{decoded\_image\_}})\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ *image\ =\ context-\/>\mbox{\hyperlink{classContext_adf46c3ca3c1cecf2ce0f88dfe111813b}{decoded\_image\_}}-\/>image\_;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (context-\/>\mbox{\hyperlink{classContext_af6ec2c9f19b0de79a58a53c4d01d7ae8}{decoder\_thread\_}}.joinable())}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ context-\/>\mbox{\hyperlink{classContext_af6ec2c9f19b0de79a58a53c4d01d7ae8}{decoder\_thread\_}}.join();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ *eos\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00193}00193\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Unexpected\ decoder\ state"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00195}00195\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00196}00196\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00197}00197\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00198}00198\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00199}00199\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00200}00200\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00201}00201\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00202}\mbox{\hyperlink{classContext_a8843e8692caa3f02e714c26a12ccafd9}{00202}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classContext_a8843e8692caa3f02e714c26a12ccafd9}{Context::flush}}()\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00204}00204\ \ \ \ \ \textcolor{comment}{//\ Poke\ bitstream\ into\ our\ JM\ hooks}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00205}00205\ \ \ \ \ \mbox{\hyperlink{inject__annexb_8h_ad78c37e6d9fa7a3fee5180616b716826}{inject\_annex\_b\_bitstream}}(\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}}.data(),\ (\textcolor{keywordtype}{unsigned})\mbox{\hyperlink{classContext_a6f7c64f2efeda9cda95b8b2ad0e1afc8}{base\_bitstream\_}}.size());}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00206}00206\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00207}00207\ \ \ \ \ InputParameters\ input\_parameters;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00208}00208\ \ \ \ \ memset(\&input\_parameters,\ 0,\ \textcolor{keyword}{sizeof}(input\_parameters));}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00209}00209\ \ \ \ \ strcpy(input\_parameters.infile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00210}00210\ \ \ \ \ strcpy(input\_parameters.outfile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00211}00211\ \ \ \ \ strcpy(input\_parameters.reffile,\ \textcolor{stringliteral}{"{}"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00213}00213\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *\textcolor{keyword}{const}\ decoder\_args[]\ =\ \{\textcolor{stringliteral}{"{}ldecod"{}}\};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00214}00214\ \ \ \ \ \mbox{\hyperlink{configfile_8h_a3a73362c1d4523a94a5663a084a505e7}{ParseCommand}}(\&input\_parameters,\ \mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(decoder\_args),\ (\textcolor{keywordtype}{char}\ **)decoder\_args);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00215}00215\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00216}00216\ \ \ \ \ \textcolor{comment}{//\ Open\ decoder}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00217}00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (OpenDecoder(\&input\_parameters)\ !=\ DEC\_OPEN\_NOERR)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Cannot\ open\ base\ decoder"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00219}00219\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00220}00220\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00221}00221\ \ \ \ \ \mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_Vid-\/>p\_out\ =\ -\/2;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00223}00223\ \ \ \ \ \textcolor{comment}{//\ Run\ decoder}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00224}00224\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00225}00225\ \ \ \ \ DecodedPicList\ *pDecPicList\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00226}00226\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classContext_a663f4f03c5ab865fe1cf5c4ee97a6e3f}{frame\_count}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00227}00227\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00228}00228\ \ \ \ \ \textcolor{keywordtype}{int}\ r\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00229}00229\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00230}00230\ \ \ \ \ \ \ \ \ r\ =\ DecodeOneFrame(\&pDecPicList);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00231}00231\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ DEC\_EOS\ ||\ r\ ==\ DEC\_SUCCEED)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classContext_a37a2f838e3f5c25b6f034f7620717373}{decode\_enhanced\_frames}}(pDecPicList,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classContext_a663f4f03c5ab865fe1cf5c4ee97a6e3f}{frame\_count}}++;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}Error\ in\ decoding\ process:\ 0x\%x"{}},\ r);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00238}00238\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ ((r\ ==\ DEC\_SUCCEED)\ \&\&\ ((\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_Inp-\/>iDecFrmNum\ ==\ 0)\ ||\ (frame\_count\ <\ p\_Dec-\/>p\_Inp-\/>iDecFrmNum)));}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00240}00240\ \ \ \ \ FinitDecoder(\&pDecPicList);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00242}00242\ \ \ \ \ \textcolor{comment}{//\ Write\ last\ frame}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00243}00243\ \ \ \ \ \mbox{\hyperlink{classContext_a37a2f838e3f5c25b6f034f7620717373}{decode\_enhanced\_frames}}(pDecPicList,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00244}00244\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00245}00245\ \ \ \ \ CloseDecoder();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00246}00246\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00247}00247\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00248}00248\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00249}00249\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00250}\mbox{\hyperlink{classContext_a37a2f838e3f5c25b6f034f7620717373}{00250}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classContext_a37a2f838e3f5c25b6f034f7620717373}{Context::decode\_enhanced\_frames}}(DecodedPicList\ *pic,\ \textcolor{keywordtype}{bool}\ all\_frames)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00251}00251\ \ \ \ \ \textcolor{comment}{//\ Check\ picture\ and\ plane\ pointers\ -\/\ valid\ flag\ seems\ to\ be\ wrong\ sometimes!?}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00252}00252\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic\ ||\ !pic-\/>pY\ ||\ !pic-\/>pU\ ||\ !pic-\/>pV)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00254}00254\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00255}00255\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00256}00256\ \ \ \ \ \textcolor{keywordflow}{if}\ (!pic-\/>bValid)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_ab56f6599fb46785e4265a3033ba91aa6}{INFO}}(\textcolor{stringliteral}{"{}Picture\ not\ marked\ valid?"{}});}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00258}00258\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00260}00260\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ output\_image\ =\ std::shared\_ptr<DecodedImage>(\textcolor{keyword}{new}\ \mbox{\hyperlink{structDecodedImage}{DecodedImage}}());}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00262}00262\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00263}00263\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.bpp\ =\ ((pic-\/>iBitDepth\ +\ 7)\ >>\ 3);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00264}00264\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_y\ =\ pic-\/>iWidth;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00265}00265\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_y\ =\ pic-\/>iHeight;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00266}00266\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_y\ =\ pic-\/>iYBufStride;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00268}00268\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.width\_uv\ =\ (pic-\/>iYUVFormat\ !=\ YUV444)\ ?\ (pic-\/>iWidth\ /\ 2)\ :\ pic-\/>iWidth;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00269}00269\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.height\_uv\ =\ (pic-\/>iYUVFormat\ ==\ YUV420)\ ?\ (pic-\/>iHeight\ /\ 2)\ :\ pic-\/>iHeight;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00270}00270\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.stride\_uv\ =\ pic-\/>iUVBufStride;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00271}00271\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00272}00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_y\ =\ output\_image-\/>image\_.height\_y\ *\ output\_image-\/>image\_.stride\_y;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00273}00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ plane\_size\_uv\ =\ output\_image-\/>image\_.height\_uv\ *\ output\_image-\/>image\_.stride\_uv;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00274}00274\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00275}00275\ \ \ \ \ \ \ \ \ output\_image-\/>buffer\_.reserve(plane\_size\_y\ +\ 2\ *\ plane\_size\_uv);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00276}00276\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00277}00277\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data(),\ pic-\/>pY,\ plane\_size\_y);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y,\ pic-\/>pU,\ plane\_size\_uv);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00279}00279\ \ \ \ \ \ \ \ \ memcpy(output\_image-\/>buffer\_.data()\ +\ plane\_size\_y\ +\ plane\_size\_uv,\ pic-\/>pV,\ plane\_size\_uv);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00281}00281\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_y\ =\ output\_image-\/>buffer\_.data();}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00282}00282\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_u\ =\ output\_image-\/>image\_.data\_y\ +\ plane\_size\_y;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00283}00283\ \ \ \ \ \ \ \ \ output\_image-\/>image\_.data\_v\ =\ output\_image-\/>image\_.data\_u\ +\ plane\_size\_uv;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00284}00284\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classContext_abce66a0709690e66c22b1ca83ce26bcf}{decoded\_images\_}}.\mbox{\hyperlink{classRingBuffer_a0617f299bd97acf8f88392070bd5877b}{push}}(output\_image);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ as\ used\ and\ move\ to\ next}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00287}00287\ \ \ \ \ \ \ \ \ pic-\/>bValid\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00288}00288\ \ \ \ \ \ \ \ \ pic\ =\ pic-\/>pNext;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00289}00289\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (pic\ !=\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ \&\&\ pic-\/>bValid\ \&\&\ all\_frames);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00290}00290\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00291}00291\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00292}00292\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ release\_context(\mbox{\hyperlink{CodecApi_8h_ab99f392e5c5516a0b3567438a6c67a80}{CodecContext}}\ c)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00293}00293\ \ \ \ \ \mbox{\hyperlink{classContext}{Context}}\ *context\ =\ (\mbox{\hyperlink{classContext}{Context}}\ *)c;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00294}00294\ \ \ \ \ \textcolor{keywordflow}{if}\ (!context)}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00296}00296\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00298}00298\ \ \ \ \ free(context);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00299}00299\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00300}00300\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00301}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a94895c920aa3532906ab4aa6a323d4b5}{00301}}\ CODEC\_API\_EXPORT\ uint32\_t\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a94895c920aa3532906ab4aa6a323d4b5}{CodecAPI\_Version}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{CodecApi_8h_a853360b5a9fa7d887fb278fc2a7c5843}{LOADABLE\_CODEC\_API\_VERSION}};\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00302}00302\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00303}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a61fe27bc1c47250821bae6da63960abc}{00303}}\ CODEC\_API\_EXPORT\ uint32\_t\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a61fe27bc1c47250821bae6da63960abc}{CodecAPI\_Query}}(\textcolor{keywordtype}{int}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *buffer,\ uint32\_t\ buffer\_size)\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00304}00304\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00305}00305\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_name[]\ =\ \textcolor{stringliteral}{"{}avc"{}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00306}00306\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ codec\_version\_string[]\ =\ \textcolor{stringliteral}{"{}LTM\ xxx"{}};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00307}00307\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00308}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a279d7f9c6688abd97dec02b0f10d8579}{00308}}\ CODEC\_API\_EXPORT\ \mbox{\hyperlink{structCodec}{Codec}}\ *\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a279d7f9c6688abd97dec02b0f10d8579}{CodecAPI\_Create}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ \mbox{\hyperlink{CodecApi_8h_acca53023810ef8d56974434b3e35a1c8}{CodecOperation}}\ operation,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *json\_create\_options)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00309}00309\ \ \ \ \ \mbox{\hyperlink{structCodec}{Codec}}\ *codec\ =\ \mbox{\hyperlink{CodecUtils_8h_a92da2141ced63659ba91bb093eb9548d}{LTMCodecAllocate}}(codec\_name,\ codec\_version\_string,\ operation);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00310}00310\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00311}00311\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_a67dfe36e8684be224c3fd0b167feeadd}{create\_context}}\ =\ create\_context;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00312}00312\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_a1fe21f04e3d376ef0b947f219a60d343}{push\_packet}}\ =\ push\_packet;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00313}00313\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_ad56657750d1e1bc77b2b92123d8b7d68}{pull\_image}}\ =\ pull\_image;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00314}00314\ \ \ \ \ codec-\/>\mbox{\hyperlink{structCodec_a803e89e99f6a780601ddef59dae2da52}{release\_context}}\ =\ release\_context;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00315}00315\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00316}00316\ \ \ \ \ \textcolor{keywordflow}{return}\ codec;}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00317}00317\ \}}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00318}00318\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00319}\mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a4da0a4a2bd73a2803982c2dc36bf8c5c}{00319}}\ CODEC\_API\_EXPORT\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{base__avc_2src_2codec__api_8cpp_a4da0a4a2bd73a2803982c2dc36bf8c5c}{CodecAPI\_Release}}(\mbox{\hyperlink{structCodec}{Codec}}\ *codec)\ \{}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00320}00320\ \ \ \ \ \textcolor{keywordflow}{if}\ (!codec)}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00322}00322\ }
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00323}00323\ \ \ \ \ \mbox{\hyperlink{CodecUtils_8h_acac8c073cd1535560f6c15f30bdbba58}{LTMCodecFree}}(codec);}
+\DoxyCodeLine{\Hypertarget{base__avc_2src_2codec__api_8cpp_source_l00324}00324\ \}}
 
 \end{DoxyCode}

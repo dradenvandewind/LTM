@@ -1,344 +1,344 @@
 \doxysection{Image.\+cpp}
-\label{Image_8cpp_source}\index{util/src/Image.cpp@{util/src/Image.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{Image_8cpp_source}{}\label{Image_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/util/src/Image.cpp@{/media/erwan/T7/formation/Video/LTM/util/src/Image.cpp}}
+\mbox{\hyperlink{Image_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//\ Image.cpp}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//}}
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}Image.hpp"{}}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}Diagnostics.hpp"{}}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
-\DoxyCodeLine{00043\ }
-\DoxyCodeLine{00044\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{comment}{//\ Various\ properties\ of\ the\ Image\ pixel\ formats}}
-\DoxyCodeLine{00047\ \textcolor{comment}{//}}
-\DoxyCodeLine{00048\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }ImageDescInfo\ \{}
-\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ planes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ distinct\ planes\ in\ image}}
-\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_mask;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Width\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
-\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_mask;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Height\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
-\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_plane\_shift[4];\ \ \textcolor{comment}{//\ width\ of\ image\ must\ divide\ by\ 2\string^width\_plane\_shift\ for\ all\ planes}}
-\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_plane\_shift[4];\ \textcolor{comment}{//\ height\ of\ image\ must\ divide\ by\ 2\string^height\_plane\_shift\ for\ all\ planes}}
-\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ bytes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NUmber\ of\ bytes\ per\ component}}
-\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keywordtype}{int}\ component\_bits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ LSB\ bits\ per\ component}}
-\DoxyCodeLine{00056\ \ \ \ \ Colourspace\ colourspace;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ colourspace}}
-\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *suffix;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Vooya\ compatible\ suffix\ for\ files}}
-\DoxyCodeLine{00058\ \}\ s\_PictureDescInfo[]\ =\ \{}
-\DoxyCodeLine{00059\ \ \ \ \ \{0,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 0,\ 0,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}none"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_NONE}}
-\DoxyCodeLine{00060\ }
-\DoxyCodeLine{00061\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 1,\ 8,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P8}}
-\DoxyCodeLine{00062\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P8}}
-\DoxyCodeLine{00063\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P8}}
-\DoxyCodeLine{00064\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y8}}
-\DoxyCodeLine{00065\ }
-\DoxyCodeLine{00066\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 10,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_10bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P10}}
-\DoxyCodeLine{00067\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_10bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P10}}
-\DoxyCodeLine{00068\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_10bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P10}}
-\DoxyCodeLine{00069\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_10bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y10}}
-\DoxyCodeLine{00070\ }
-\DoxyCodeLine{00071\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 12,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_12bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P12}}
-\DoxyCodeLine{00072\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_12bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P12}}
-\DoxyCodeLine{00073\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_12bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P12}}
-\DoxyCodeLine{00074\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_12bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y12}}
-\DoxyCodeLine{00075\ }
-\DoxyCodeLine{00076\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 14,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_14bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P14}}
-\DoxyCodeLine{00077\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_14bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P14}}
-\DoxyCodeLine{00078\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_14bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P14}}
-\DoxyCodeLine{00079\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_14bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y14}}
-\DoxyCodeLine{00080\ }
-\DoxyCodeLine{00081\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 16,\ Colourspace\_YUV420,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P16}}
-\DoxyCodeLine{00082\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_YUV422,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P16}}
-\DoxyCodeLine{00083\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_YUV444,\ \textcolor{stringliteral}{"{}\_-\/16bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P16}}
-\DoxyCodeLine{00084\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ Colourspace\_Y,\ \textcolor{stringliteral}{"{}\_-\/16bit.y"{}}\}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y16}}
-\DoxyCodeLine{00085\ \};}
-\DoxyCodeLine{00086\ }
-\DoxyCodeLine{00087\ \textcolor{keyword}{static\_assert}(ARRAY\_SIZE(s\_PictureDescInfo)\ ==\ \_IMAGE\_FORMAT\_MAX,\ \textcolor{stringliteral}{"{}Image\ format\ mismatch"{}});}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \textcolor{keyword}{const}\ \textcolor{keyword}{inline}\ ImageDescInfo\ \&ImageDescription::imagedesc()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00090\ \ \ \ \ assert(format\_\ >\ 0\ \&\&\ format\_\ <\ ARRAY\_SIZE(s\_PictureDescInfo));}
-\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordflow}{return}\ s\_PictureDescInfo[format\_];}
-\DoxyCodeLine{00092\ \}}
-\DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \textcolor{comment}{//\ ImageDescription}}
-\DoxyCodeLine{00095\ \textcolor{comment}{//}}
-\DoxyCodeLine{00096\ ImageDescription::ImageDescription()\ :\ format\_(IMAGE\_FORMAT\_NONE),\ width\_(0),\ height\_(0)\ \{\}}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ ImageDescription::ImageDescription(ImageFormat\ f,\ \textcolor{keywordtype}{unsigned}\ w,\ \textcolor{keywordtype}{unsigned}\ h)\ :\ format\_(f),\ width\_(w),\ height\_(h)\ \{\}}
-\DoxyCodeLine{00099\ }
-\DoxyCodeLine{00100\ ImageFormat\ ImageDescription::format()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ format\_;\ \}}
-\DoxyCodeLine{00101\ }
-\DoxyCodeLine{00102\ Colourspace\ ImageDescription::colourspace()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().colourspace;\ \}}
-\DoxyCodeLine{00103\ }
-\DoxyCodeLine{00104\ \textcolor{keywordtype}{unsigned}\ ImageDescription::width(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00105\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00106\ }
-\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ width\_\ >>\ imagedesc().width\_plane\_shift[plane];}
-\DoxyCodeLine{00108\ \}}
-\DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \textcolor{keywordtype}{unsigned}\ ImageDescription::height(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00111\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{return}\ height\_\ >>\ imagedesc().height\_plane\_shift[plane];}
-\DoxyCodeLine{00114\ \}}
-\DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ \textcolor{comment}{//\ Return\ true\ if\ image\ dimensions\ are\ valid\ for\ format}}
-\DoxyCodeLine{00117\ \textcolor{comment}{//}}
-\DoxyCodeLine{00118\ \textcolor{keywordtype}{bool}\ ImageDescription::is\_valid()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
-\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ !(width\_\ \&\ info.width\_mask\ ||\ height\_\ \&\ info.height\_mask);}
-\DoxyCodeLine{00121\ \}}
-\DoxyCodeLine{00122\ }
-\DoxyCodeLine{00123\ \textcolor{comment}{//\ Total\ number\ of\ planes\ in\ image}}
-\DoxyCodeLine{00124\ \textcolor{keywordtype}{unsigned}\ ImageDescription::num\_planes()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().planes;\ \}}
-\DoxyCodeLine{00125\ }
-\DoxyCodeLine{00126\ \textcolor{keywordtype}{unsigned}\ ImageDescription::plane\_size(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00127\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{return}\ row\_stride(plane)\ *\ (height\_\ >>\ imagedesc().height\_plane\_shift[plane]);}
-\DoxyCodeLine{00129\ \}}
-\DoxyCodeLine{00130\ }
-\DoxyCodeLine{00131\ \textcolor{comment}{//\ Total\ number\ of\ bytes\ to\ store\ an\ image}}
-\DoxyCodeLine{00132\ \textcolor{keywordtype}{unsigned}\ ImageDescription::byte\_size()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
-\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ num\_planes();\ ++p)}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ r\ +=\ plane\_size(p);}
-\DoxyCodeLine{00136\ }
-\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
-\DoxyCodeLine{00138\ \}}
-\DoxyCodeLine{00139\ }
-\DoxyCodeLine{00140\ \textcolor{comment}{//\ Return\ byte\ offset\ of\ pixel\ row\ within\ buffer}}
-\DoxyCodeLine{00141\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_offset(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane,\ \textcolor{keywordtype}{unsigned}\ row)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00142\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00143\ \ \ \ \ assert(row\ <\ height\_);}
-\DoxyCodeLine{00144\ }
-\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
-\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ plane;\ ++p)}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ r\ +=\ plane\_size(p);}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordflow}{return}\ r\ +\ row\ *\ row\_stride(plane);}
-\DoxyCodeLine{00150\ \}}
-\DoxyCodeLine{00151\ }
-\DoxyCodeLine{00152\ \textcolor{comment}{//\ Return\ byte\ size\ of\ pixel\ row\ (may\ be\ less\ than\ stride\ due\ to\ alignment)}}
-\DoxyCodeLine{00153\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_size(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00154\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
-\DoxyCodeLine{00156\ }
-\DoxyCodeLine{00157\ \ \ \ \ \textcolor{comment}{//\ Width\ of\ plane,\ rounded\ up\ to\ component\ units}}
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ info.bytes\ *\ (width\_\ >>\ imagedesc().width\_plane\_shift[plane]);}
-\DoxyCodeLine{00159\ \}}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \textcolor{comment}{//\ Return\ byte\ stride\ of\ plane}}
-\DoxyCodeLine{00162\ \textcolor{keywordtype}{unsigned}\ ImageDescription::row\_stride(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00163\ \ \ \ \ assert(plane\ <\ num\_planes());}
-\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ a\ =\ 1;}
-\DoxyCodeLine{00165\ }
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ Align\ stride\ to\ required\ power-\/of-\/2}}
-\DoxyCodeLine{00167\ \ \ \ \ assert(((a\ +\ 1)\ \&\ a)\ ==\ 0);}
-\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{return}\ (row\_size(plane)\ +\ a)\ \&\ \string~a;}
-\DoxyCodeLine{00169\ \}}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \textcolor{keywordtype}{bool}\ ImageDescription::rows\_are\_contiguous(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ row\_size(p)\ ==\ row\_stride(p);\ \}}
-\DoxyCodeLine{00172\ }
-\DoxyCodeLine{00173\ \textcolor{keywordtype}{unsigned}\ ImageDescription::bit\_depth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().component\_bits;\ \}}
-\DoxyCodeLine{00174\ }
-\DoxyCodeLine{00175\ \textcolor{keywordtype}{unsigned}\ ImageDescription::byte\_depth()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().bytes;\ \}}
-\DoxyCodeLine{00176\ }
-\DoxyCodeLine{00177\ std::string\ ImageDescription::make\_name(\textcolor{keyword}{const}\ std::string\ \&base)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordflow}{return}\ lctm::format(\textcolor{stringliteral}{"{}\%s\_\%dx\%d\%s"{}},\ base.c\_str(),\ width\_,\ height\_,\ imagedesc().suffix);}
-\DoxyCodeLine{00179\ \}}
-\DoxyCodeLine{00180\ }
-\DoxyCodeLine{00181\ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ ImageDescription\ \&lhs,\ \textcolor{keyword}{const}\ ImageDescription\ \&rhs)\ \{}
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ lhs.format()\ ==\ rhs.format()\ \&\&\ lhs.width()\ ==\ rhs.width()\ \&\&\ lhs.height()\ ==\ rhs.height();}
-\DoxyCodeLine{00183\ \}}
-\DoxyCodeLine{00184\ }
-\DoxyCodeLine{00185\ Image::Image(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ std::vector<Surface>\ \&planes)}
-\DoxyCodeLine{00186\ \ \ \ \ :\ name\_(name),\ description\_(description),\ timestamp\_(timestamp),\ planes\_(planes)\ \{}
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
-\DoxyCodeLine{00188\ \}}
-\DoxyCodeLine{00189\ }
-\DoxyCodeLine{00190\ Image::Image(\textcolor{keyword}{const}\ std::string\ \&name,\ \textcolor{keyword}{const}\ ImageDescription\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ Surface\ (\&planes)[3])}
-\DoxyCodeLine{00191\ \ \ \ \ :\ name\_(name),\ description\_(description),\ timestamp\_(timestamp)\ \{}
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
-\DoxyCodeLine{00193\ \ \ \ \ planes\_.push\_back(planes[0]);}
-\DoxyCodeLine{00194\ \ \ \ \ planes\_.push\_back(planes[1]);}
-\DoxyCodeLine{00195\ \ \ \ \ planes\_.push\_back(planes[2]);}
-\DoxyCodeLine{00196\ \}}
-\DoxyCodeLine{00197\ }
-\DoxyCodeLine{00198\ Image::Image()\ :\ name\_(\textcolor{stringliteral}{"{}"{}}),\ description\_(ImageDescription(IMAGE\_FORMAT\_NONE,\ 0,\ 0)),\ timestamp\_(0)\ \{\}}
-\DoxyCodeLine{00199\ }
-\DoxyCodeLine{00200\ \textcolor{keyword}{const}\ Surface\ \&Image::plane(uint32\_t\ p)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00201\ \ \ \ \ assert(p\ <\ planes\_.size());}
-\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordflow}{return}\ planes\_[p];}
-\DoxyCodeLine{00203\ \}}
-\DoxyCodeLine{00204\ }
-\DoxyCodeLine{00205\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ bit\ depth}}
-\DoxyCodeLine{00206\ ImageDescription\ ImageDescription::with\_depth(\textcolor{keywordtype}{unsigned}\ depth)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ fmt\ =\ (format\_\ -\/\ IMAGE\_FORMAT\_YUV420P8)\ \%\ (IMAGE\_FORMAT\_YUV420P10\ -\/\ IMAGE\_FORMAT\_YUV420P8);}
-\DoxyCodeLine{00208\ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00209\ }
-\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{switch}\ (depth)\ \{}
-\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P10\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P12\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P14\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{case}\ 16:}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ fmt\ +=\ IMAGE\_FORMAT\_YUV420P16\ -\/\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ CHECK(0);}
-\DoxyCodeLine{00227\ \ \ \ \ \}}
-\DoxyCodeLine{00228\ }
-\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(\textcolor{keyword}{static\_cast<}ImageFormat\textcolor{keyword}{>}(fmt),\ width(),\ height());}
-\DoxyCodeLine{00230\ \}}
-\DoxyCodeLine{00231\ }
-\DoxyCodeLine{00232\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ size}}
-\DoxyCodeLine{00233\ ImageDescription\ ImageDescription::with\_size(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{return}\ ImageDescription(format\_,\ width,\ height);}
-\DoxyCodeLine{00235\ \}}
-\DoxyCodeLine{00236\ }
-\DoxyCodeLine{00237\ \textcolor{comment}{//\ Parsing}}
-\DoxyCodeLine{00238\ \textcolor{comment}{//}}
-\DoxyCodeLine{00239\ std::istream\ \&operator>>(std::istream\ \&in,\ ImageFormat\ \&v)\ \{}
-\DoxyCodeLine{00240\ \ \ \ \ std::string\ s;}
-\DoxyCodeLine{00241\ \ \ \ \ in\ >>\ s;}
-\DoxyCodeLine{00242\ \ \ \ \ s\ =\ lowercase(s);}
-\DoxyCodeLine{00243\ }
-\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv"{}})}
-\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00246\ }
-\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420"{}})}
-\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422"{}})}
-\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
-\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444"{}})}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p"{}})}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p"{}})}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
-\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p"{}})}
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
-\DoxyCodeLine{00260\ }
-\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p8"{}})}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P8;}
-\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p8"{}})}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P8;}
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p8"{}})}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P8;}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p10"{}})}
-\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P10;}
-\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p10"{}})}
-\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P10;}
-\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p10"{}})}
-\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P10;}
-\DoxyCodeLine{00274\ }
-\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p12"{}})}
-\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P12;}
-\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p12"{}})}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P12;}
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p12"{}})}
-\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P12;}
-\DoxyCodeLine{00281\ }
-\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p14"{}})}
-\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P14;}
-\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p14"{}})}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P14;}
-\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p14"{}})}
-\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P14;}
-\DoxyCodeLine{00288\ }
-\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p16"{}})}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV420P16;}
-\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p16"{}})}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV422P16;}
-\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p16"{}})}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_YUV444P16;}
-\DoxyCodeLine{00295\ }
-\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y"{}})}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
-\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y8"{}})}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
-\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y10"{}})}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y10;}
-\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y12"{}})}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y12;}
-\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y14"{}})}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y14;}
-\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y16"{}})}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y16;}
-\DoxyCodeLine{00308\ }
-\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400"{}})}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
-\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p"{}})}
-\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y8;}
-\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p10"{}})}
-\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y10;}
-\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p12"{}})}
-\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y12;}
-\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p14"{}})}
-\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y14;}
-\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p16"{}})}
-\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ v\ =\ IMAGE\_FORMAT\_Y16;}
-\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ ERR(\textcolor{stringliteral}{"{}not\ an\ image\ format:\ \%s"{}},\ s.c\_str());}
-\DoxyCodeLine{00323\ }
-\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
-\DoxyCodeLine{00325\ \}}
-\DoxyCodeLine{00326\ }
-\DoxyCodeLine{00327\ std::istream\ \&operator>>(std::istream\ \&in,\ Colourspace\ \&v)\ \{}
-\DoxyCodeLine{00328\ \ \ \ \ ImageFormat\ f;}
-\DoxyCodeLine{00329\ \ \ \ \ in\ >>\ f;}
-\DoxyCodeLine{00330\ }
-\DoxyCodeLine{00331\ \ \ \ \ CHECK(f\ <\ ARRAY\_SIZE(s\_PictureDescInfo));}
-\DoxyCodeLine{00332\ }
-\DoxyCodeLine{00333\ \ \ \ \ v\ =\ s\_PictureDescInfo[f].colourspace;}
-\DoxyCodeLine{00334\ }
-\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
-\DoxyCodeLine{00336\ \}}
-\DoxyCodeLine{00337\ }
-\DoxyCodeLine{00338\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00033}00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00034}00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00035}00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00036}00036\ \textcolor{comment}{//\ Image.cpp}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00037}00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Image_8hpp}{Image.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00039}00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Diagnostics_8hpp}{Diagnostics.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00044}00044\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00046}00046\ \textcolor{comment}{//\ Various\ properties\ of\ the\ Image\ pixel\ formats}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00047}00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00048}00048\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{struct\ }ImageDescInfo\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00049}00049\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ planes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ distinct\ planes\ in\ image}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00050}00050\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_mask;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Width\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00051}00051\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_mask;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Height\ bits\ under\ this\ mask\ must\ be\ zero\ for\ valid\ picture}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00052}00052\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ width\_plane\_shift[4];\ \ \textcolor{comment}{//\ width\ of\ image\ must\ divide\ by\ 2\string^width\_plane\_shift\ for\ all\ planes}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00053}00053\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ height\_plane\_shift[4];\ \textcolor{comment}{//\ height\ of\ image\ must\ divide\ by\ 2\string^height\_plane\_shift\ for\ all\ planes}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00054}00054\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ bytes;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NUmber\ of\ bytes\ per\ component}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00055}00055\ \ \ \ \ \textcolor{keywordtype}{int}\ component\_bits;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Number\ of\ LSB\ bits\ per\ component}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00056}00056\ \ \ \ \ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1}{Colourspace}}\ colourspace;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ colourspace}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *suffix;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Vooya\ compatible\ suffix\ for\ files}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00058}00058\ \}\ s\_PictureDescInfo[]\ =\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00059}00059\ \ \ \ \ \{0,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 0,\ 0,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}none"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_NONE}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00061}00061\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 1,\ 8,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P8}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00062}00062\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a881ccc2e7a72fc2b0a9de124e7b2e0e2}{Colourspace\_YUV422}},\ \textcolor{stringliteral}{"{}\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P8}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00063}00063\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a9aee5fff26ea6f7dc026e6bfce578bfd}{Colourspace\_YUV444}},\ \textcolor{stringliteral}{"{}\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P8}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00064}00064\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 1,\ 8,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a68b6f994635f2eb487da5ef9d887cd7b}{Colourspace\_Y}},\ \textcolor{stringliteral}{"{}.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y8}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00066}00066\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 10,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}\_10bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P10}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00067}00067\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a881ccc2e7a72fc2b0a9de124e7b2e0e2}{Colourspace\_YUV422}},\ \textcolor{stringliteral}{"{}\_10bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P10}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00068}00068\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a9aee5fff26ea6f7dc026e6bfce578bfd}{Colourspace\_YUV444}},\ \textcolor{stringliteral}{"{}\_10bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P10}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00069}00069\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 10,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a68b6f994635f2eb487da5ef9d887cd7b}{Colourspace\_Y}},\ \textcolor{stringliteral}{"{}\_10bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y10}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00071}00071\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 12,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}\_12bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P12}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00072}00072\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a881ccc2e7a72fc2b0a9de124e7b2e0e2}{Colourspace\_YUV422}},\ \textcolor{stringliteral}{"{}\_12bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P12}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00073}00073\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a9aee5fff26ea6f7dc026e6bfce578bfd}{Colourspace\_YUV444}},\ \textcolor{stringliteral}{"{}\_12bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P12}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00074}00074\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 12,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a68b6f994635f2eb487da5ef9d887cd7b}{Colourspace\_Y}},\ \textcolor{stringliteral}{"{}\_12bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y12}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00076}00076\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 14,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}\_14bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P14}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00077}00077\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a881ccc2e7a72fc2b0a9de124e7b2e0e2}{Colourspace\_YUV422}},\ \textcolor{stringliteral}{"{}\_14bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P14}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00078}00078\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a9aee5fff26ea6f7dc026e6bfce578bfd}{Colourspace\_YUV444}},\ \textcolor{stringliteral}{"{}\_14bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P14}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00079}00079\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 14,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a68b6f994635f2eb487da5ef9d887cd7b}{Colourspace\_Y}},\ \textcolor{stringliteral}{"{}\_14bit.y"{}}\},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y14}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00081}00081\ \ \ \ \ \{3,\ 1,\ 1,\ \{0,\ 1,\ 1\},\ \{0,\ 1,\ 1\},\ 2,\ 16,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a384de8ce1507ab27f3c95f8ecc033ff9}{Colourspace\_YUV420}},\ \textcolor{stringliteral}{"{}\_-\/16bit\_p420.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV420P16}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00082}00082\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 1,\ 1\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a881ccc2e7a72fc2b0a9de124e7b2e0e2}{Colourspace\_YUV422}},\ \textcolor{stringliteral}{"{}\_-\/16bit\_p422.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV422P16}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00083}00083\ \ \ \ \ \{3,\ 1,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a9aee5fff26ea6f7dc026e6bfce578bfd}{Colourspace\_YUV444}},\ \textcolor{stringliteral}{"{}\_-\/16bit\_p444.yuv"{}}\},\ \textcolor{comment}{//\ IMAGE\_FORMAT\_YUV444P16}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00084}00084\ \ \ \ \ \{1,\ 0,\ 0,\ \{0,\ 0,\ 0\},\ \{0,\ 0,\ 0\},\ 2,\ 16,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1a68b6f994635f2eb487da5ef9d887cd7b}{Colourspace\_Y}},\ \textcolor{stringliteral}{"{}\_-\/16bit.y"{}}\}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ IMAGE\_FORMAT\_Y16}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00085}00085\ \};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00087}00087\ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(s\_PictureDescInfo)\ ==\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda210005c35b05616dfb9d1c84f83919f6}{\_IMAGE\_FORMAT\_MAX}},\ \textcolor{stringliteral}{"{}Image\ format\ mismatch"{}});}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00089}00089\ \textcolor{keyword}{const}\ \textcolor{keyword}{inline}\ ImageDescInfo\ \&ImageDescription::imagedesc()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00090}00090\ \ \ \ \ assert(format\_\ >\ 0\ \&\&\ format\_\ <\ \mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(s\_PictureDescInfo));}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00091}00091\ \ \ \ \ \textcolor{keywordflow}{return}\ s\_PictureDescInfo[format\_];}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00092}00092\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00094}00094\ \textcolor{comment}{//\ ImageDescription}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00095}00095\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00096}\mbox{\hyperlink{classlctm_1_1ImageDescription_a67493c950788b7e1649f904f3efe57de}{00096}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a67493c950788b7e1649f904f3efe57de}{ImageDescription::ImageDescription}}()\ :\ format\_(\mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdabc193bec1a79a460de3ee305e14fb226}{IMAGE\_FORMAT\_NONE}}),\ width\_(0),\ height\_(0)\ \{\}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00098}\mbox{\hyperlink{classlctm_1_1ImageDescription_a084e26b72e431752bb5d337f69988eca}{00098}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a67493c950788b7e1649f904f3efe57de}{ImageDescription::ImageDescription}}(\mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ f,\ \textcolor{keywordtype}{unsigned}\ w,\ \textcolor{keywordtype}{unsigned}\ h)\ :\ format\_(f),\ width\_(w),\ height\_(h)\ \{\}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00099}00099\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00100}\mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{00100}}\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{ImageDescription::format}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ format\_;\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00102}\mbox{\hyperlink{classlctm_1_1ImageDescription_a6bc6b37bdb54f2772d2834115e564504}{00102}}\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1}{Colourspace}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a6bc6b37bdb54f2772d2834115e564504}{ImageDescription::colourspace}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().colourspace;\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00103}00103\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00104}\mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{00104}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{ImageDescription::width}}(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00105}00105\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00106}00106\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{keywordflow}{return}\ width\_\ >>\ imagedesc().width\_plane\_shift[plane];}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00108}00108\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00110}\mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{00110}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{ImageDescription::height}}(\textcolor{keywordtype}{unsigned}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00111}00111\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00113}00113\ \ \ \ \ \textcolor{keywordflow}{return}\ height\_\ >>\ imagedesc().height\_plane\_shift[plane];}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00114}00114\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00116}00116\ \textcolor{comment}{//\ Return\ true\ if\ image\ dimensions\ are\ valid\ for\ format}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00117}00117\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00118}\mbox{\hyperlink{classlctm_1_1ImageDescription_a42ee6da63705e09e94d021e0b4593e4a}{00118}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a42ee6da63705e09e94d021e0b4593e4a}{ImageDescription::is\_valid}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00119}00119\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00120}00120\ \ \ \ \ \textcolor{keywordflow}{return}\ !(width\_\ \&\ info.width\_mask\ ||\ height\_\ \&\ info.height\_mask);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00121}00121\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00122}00122\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00123}00123\ \textcolor{comment}{//\ Total\ number\ of\ planes\ in\ image}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00124}\mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{00124}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{ImageDescription::num\_planes}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().planes;\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00125}00125\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00126}\mbox{\hyperlink{classlctm_1_1ImageDescription_aa657e6cd9b74ca0ca9e4d227c2532801}{00126}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_aa657e6cd9b74ca0ca9e4d227c2532801}{ImageDescription::plane\_size}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00127}00127\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00128}00128\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a85d25d1381a366af9bd982e373857a40}{row\_stride}}(plane)\ *\ (height\_\ >>\ imagedesc().height\_plane\_shift[plane]);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00129}00129\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00130}00130\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00131}00131\ \textcolor{comment}{//\ Total\ number\ of\ bytes\ to\ store\ an\ image}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00132}\mbox{\hyperlink{classlctm_1_1ImageDescription_aa0922c783a935f7d5bbc06e7fdd456fe}{00132}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_aa0922c783a935f7d5bbc06e7fdd456fe}{ImageDescription::byte\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00133}00133\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00134}00134\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}();\ ++p)}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ r\ +=\ \mbox{\hyperlink{classlctm_1_1ImageDescription_aa657e6cd9b74ca0ca9e4d227c2532801}{plane\_size}}(p);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00136}00136\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00137}00137\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00138}00138\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00139}00139\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00140}00140\ \textcolor{comment}{//\ Return\ byte\ offset\ of\ pixel\ row\ within\ buffer}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00141}\mbox{\hyperlink{classlctm_1_1ImageDescription_a6d654d4f2633922771cdb8897a26a555}{00141}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a6d654d4f2633922771cdb8897a26a555}{ImageDescription::row\_offset}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane,\ \textcolor{keywordtype}{unsigned}\ row)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00142}00142\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00143}00143\ \ \ \ \ assert(row\ <\ height\_);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00144}00144\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00145}00145\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ r\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00146}00146\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ p\ =\ 0;\ p\ <\ plane;\ ++p)}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ r\ +=\ \mbox{\hyperlink{classlctm_1_1ImageDescription_aa657e6cd9b74ca0ca9e4d227c2532801}{plane\_size}}(p);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00149}00149\ \ \ \ \ \textcolor{keywordflow}{return}\ r\ +\ row\ *\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a85d25d1381a366af9bd982e373857a40}{row\_stride}}(plane);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00150}00150\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00151}00151\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00152}00152\ \textcolor{comment}{//\ Return\ byte\ size\ of\ pixel\ row\ (may\ be\ less\ than\ stride\ due\ to\ alignment)}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00153}\mbox{\hyperlink{classlctm_1_1ImageDescription_a35ec3dc0d63a6b33f781a5b5bfc51340}{00153}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a35ec3dc0d63a6b33f781a5b5bfc51340}{ImageDescription::row\_size}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00154}00154\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00155}00155\ \ \ \ \ \textcolor{keyword}{const}\ ImageDescInfo\ \&info\ =\ imagedesc();}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00156}00156\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00157}00157\ \ \ \ \ \textcolor{comment}{//\ Width\ of\ plane,\ rounded\ up\ to\ component\ units}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00158}00158\ \ \ \ \ \textcolor{keywordflow}{return}\ info.bytes\ *\ (width\_\ >>\ imagedesc().width\_plane\_shift[plane]);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00159}00159\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00161}00161\ \textcolor{comment}{//\ Return\ byte\ stride\ of\ plane}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00162}\mbox{\hyperlink{classlctm_1_1ImageDescription_a85d25d1381a366af9bd982e373857a40}{00162}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a85d25d1381a366af9bd982e373857a40}{ImageDescription::row\_stride}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ plane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00163}00163\ \ \ \ \ assert(plane\ <\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ad01b2a0868a72c111b43eefe8c12201e}{num\_planes}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00164}00164\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ a\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00165}00165\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00166}00166\ \ \ \ \ \textcolor{comment}{//\ Align\ stride\ to\ required\ power-\/of-\/2}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00167}00167\ \ \ \ \ assert(((a\ +\ 1)\ \&\ a)\ ==\ 0);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00168}00168\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classlctm_1_1ImageDescription_a35ec3dc0d63a6b33f781a5b5bfc51340}{row\_size}}(plane)\ +\ a)\ \&\ \string~a;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00169}00169\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00170}00170\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00171}\mbox{\hyperlink{classlctm_1_1ImageDescription_a14eeca96a4395bd7bc8a7b7168337542}{00171}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a14eeca96a4395bd7bc8a7b7168337542}{ImageDescription::rows\_are\_contiguous}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ p)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a35ec3dc0d63a6b33f781a5b5bfc51340}{row\_size}}(p)\ ==\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a85d25d1381a366af9bd982e373857a40}{row\_stride}}(p);\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00172}00172\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00173}\mbox{\hyperlink{classlctm_1_1ImageDescription_a878adca08e6b883083aa3006228c26a0}{00173}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a878adca08e6b883083aa3006228c26a0}{ImageDescription::bit\_depth}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().component\_bits;\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00174}00174\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00175}\mbox{\hyperlink{classlctm_1_1ImageDescription_a8dd346b55fac05c869a6ae87f64d0053}{00175}}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a8dd346b55fac05c869a6ae87f64d0053}{ImageDescription::byte\_depth}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ imagedesc().bytes;\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00176}00176\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00177}\mbox{\hyperlink{classlctm_1_1ImageDescription_a8c5867d5ba2ee0e82462baff3501ed0f}{00177}}\ std::string\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a8c5867d5ba2ee0e82462baff3501ed0f}{ImageDescription::make\_name}}(\textcolor{keyword}{const}\ std::string\ \&base)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00178}00178\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacelctm_a82b543f438e87af950e9d3dcd540b23e}{lctm::format}}(\textcolor{stringliteral}{"{}\%s\_\%dx\%d\%s"{}},\ base.c\_str(),\ width\_,\ height\_,\ imagedesc().suffix);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00179}00179\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00181}\mbox{\hyperlink{namespacelctm_a92f13a06fbcd37c88cea416632d771e1}{00181}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacelctm_a90d128c6b3dea991f62e0e9416f93a5d}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&lhs,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&rhs)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00182}00182\ \ \ \ \ \textcolor{keywordflow}{return}\ lhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{format}}()\ ==\ rhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_a2ba2f3d82ca6a88e13a4b3d94358b26a}{format}}()\ \&\&\ lhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{width}}()\ ==\ rhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{width}}()\ \&\&\ lhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{height}}()\ ==\ rhs.\mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{height}}();}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00183}00183\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00184}00184\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00185}\mbox{\hyperlink{classlctm_1_1Image_a4680260751b436ee6dfa8fc8eef6526c}{00185}}\ \mbox{\hyperlink{classlctm_1_1Image_a7aa35da86005308b2784c3f5ba8b312f}{Image::Image}}(\textcolor{keyword}{const}\ std::string\ \&\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ std::vector<Surface>\ \&planes)}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00186}00186\ \ \ \ \ :\ name\_(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}),\ description\_(description),\ timestamp\_(timestamp),\ planes\_(planes)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00187}00187\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00188}00188\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00189}00189\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00190}\mbox{\hyperlink{classlctm_1_1Image_a9142da1de15c63224ae4e42e3e56ff24}{00190}}\ \mbox{\hyperlink{classlctm_1_1Image_a7aa35da86005308b2784c3f5ba8b312f}{Image::Image}}(\textcolor{keyword}{const}\ std::string\ \&\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \&description,\ uint64\_t\ timestamp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ (\&planes)[3])}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00191}00191\ \ \ \ \ :\ name\_(\mbox{\hyperlink{namespacelctm_a323292c16787d30461f299090ac1d86c}{name}}),\ description\_(description),\ timestamp\_(timestamp)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00192}00192\ \ \ \ \ \textcolor{comment}{//\ XXXX\ check\ that\ relative\ plane\ dimensions\ are\ ok}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00193}00193\ \ \ \ \ planes\_.push\_back(planes[0]);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00194}00194\ \ \ \ \ planes\_.push\_back(planes[1]);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00195}00195\ \ \ \ \ planes\_.push\_back(planes[2]);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00196}00196\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00198}\mbox{\hyperlink{classlctm_1_1Image_a7aa35da86005308b2784c3f5ba8b312f}{00198}}\ \mbox{\hyperlink{classlctm_1_1Image_a7aa35da86005308b2784c3f5ba8b312f}{Image::Image}}()\ :\ name\_(\textcolor{stringliteral}{"{}"{}}),\ description\_(\mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}(\mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdabc193bec1a79a460de3ee305e14fb226}{IMAGE\_FORMAT\_NONE}},\ 0,\ 0)),\ timestamp\_(0)\ \{\}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00199}00199\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00200}\mbox{\hyperlink{classlctm_1_1Image_ad0b93b84eae787cfd87545e974c6f23b}{00200}}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&\mbox{\hyperlink{classlctm_1_1Image_ad0b93b84eae787cfd87545e974c6f23b}{Image::plane}}(uint32\_t\ p)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00201}00201\ \ \ \ \ assert(p\ <\ planes\_.size());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00202}00202\ \ \ \ \ \textcolor{keywordflow}{return}\ planes\_[p];}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00203}00203\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00205}00205\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ bit\ depth}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00206}\mbox{\hyperlink{classlctm_1_1ImageDescription_ab759a0cbfc113cf83a21a578e4e92192}{00206}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ab759a0cbfc113cf83a21a578e4e92192}{ImageDescription::with\_depth}}(\textcolor{keywordtype}{unsigned}\ depth)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00207}00207\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ fmt\ =\ (format\_\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}})\ \%\ (\mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}});}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00208}00208\ \ \ \ \ fmt\ +=\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00209}00209\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00210}00210\ \ \ \ \ \textcolor{keywordflow}{switch}\ (depth)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00211}00211\ \ \ \ \ \textcolor{keywordflow}{case}\ 8:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00213}00213\ \ \ \ \ \textcolor{keywordflow}{case}\ 10:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00214}00214\ \ \ \ \ \ \ \ \ fmt\ +=\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}}\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00216}00216\ \ \ \ \ \textcolor{keywordflow}{case}\ 12:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00217}00217\ \ \ \ \ \ \ \ \ fmt\ +=\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda0cae966562d053792cf1e2c4d0ed01d5}{IMAGE\_FORMAT\_YUV420P12}}\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00219}00219\ \ \ \ \ \textcolor{keywordflow}{case}\ 14:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00220}00220\ \ \ \ \ \ \ \ \ fmt\ +=\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda6ed97feaeb8d510949df58adb65c286d}{IMAGE\_FORMAT\_YUV420P14}}\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00222}00222\ \ \ \ \ \textcolor{keywordflow}{case}\ 16:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00223}00223\ \ \ \ \ \ \ \ \ fmt\ +=\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda6725bb53c8882e0af8b9af19f20ee415}{IMAGE\_FORMAT\_YUV420P16}}\ -\/\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00225}00225\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(0);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00227}00227\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00228}00228\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00229}00229\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a67493c950788b7e1649f904f3efe57de}{ImageDescription}}(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\textcolor{keyword}{>}(fmt),\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{width}}(),\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{height}}());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00230}00230\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00231}00231\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00232}00232\ \textcolor{comment}{//\ Make\ a\ new\ image\ description\ with\ different\ size}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00233}\mbox{\hyperlink{classlctm_1_1ImageDescription_adb2c35dcfcdd308cc0568e613f61a5f6}{00233}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription}{ImageDescription}}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_adb2c35dcfcdd308cc0568e613f61a5f6}{ImageDescription::with\_size}}(\textcolor{keywordtype}{unsigned}\ width,\ \textcolor{keywordtype}{unsigned}\ height)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00234}00234\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a67493c950788b7e1649f904f3efe57de}{ImageDescription}}(format\_,\ \mbox{\hyperlink{classlctm_1_1ImageDescription_a2854db0b56f0ad8755ec3c31f164bde0}{width}},\ \mbox{\hyperlink{classlctm_1_1ImageDescription_ac6646299efd08a33d68c4f64e72401d7}{height}});}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00235}00235\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00236}00236\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00237}00237\ \textcolor{comment}{//\ Parsing}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00238}00238\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00239}\mbox{\hyperlink{namespacelctm_a6bf569210ac183df2583b27403a0d69a}{00239}}\ std::istream\ \&\mbox{\hyperlink{namespacelctm_ac6e6ad22c07fc55313ae5b322afee467}{operator>>}}(std::istream\ \&in,\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00240}00240\ \ \ \ \ std::string\ s;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00241}00241\ \ \ \ \ in\ >>\ s;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00242}00242\ \ \ \ \ s\ =\ \mbox{\hyperlink{namespacelctm_a6b13a57be95e448a443785886f38611a}{lowercase}}(s);}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00243}00243\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00244}00244\ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00245}00245\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00246}00246\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00247}00247\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00248}00248\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00249}00249\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00250}00250\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdada99bd2b9e627c7446fff751e87be4f8}{IMAGE\_FORMAT\_YUV422P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00251}00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00252}00252\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdab5fc0e06c4c0a7d3abfd46c273b77e79}{IMAGE\_FORMAT\_YUV444P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00253}00253\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00254}00254\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00255}00255\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00256}00256\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00257}00257\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdada99bd2b9e627c7446fff751e87be4f8}{IMAGE\_FORMAT\_YUV422P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00258}00258\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00259}00259\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdab5fc0e06c4c0a7d3abfd46c273b77e79}{IMAGE\_FORMAT\_YUV444P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00260}00260\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00261}00261\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p8"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00262}00262\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda25053f911f4f9e1fbe808b0dacd1402e}{IMAGE\_FORMAT\_YUV420P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00263}00263\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p8"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00264}00264\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdada99bd2b9e627c7446fff751e87be4f8}{IMAGE\_FORMAT\_YUV422P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00265}00265\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p8"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00266}00266\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdab5fc0e06c4c0a7d3abfd46c273b77e79}{IMAGE\_FORMAT\_YUV444P8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00268}00268\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p10"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00269}00269\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda4988dd5d4eb4a1986f548705269f6153}{IMAGE\_FORMAT\_YUV420P10}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00270}00270\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p10"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00271}00271\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda31862d60fceaf4bb241d716f5009436f}{IMAGE\_FORMAT\_YUV422P10}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00272}00272\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p10"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00273}00273\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdadfb8975288f4de3e31783091d5a3ffb6}{IMAGE\_FORMAT\_YUV444P10}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00274}00274\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00275}00275\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p12"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00276}00276\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda0cae966562d053792cf1e2c4d0ed01d5}{IMAGE\_FORMAT\_YUV420P12}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00277}00277\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p12"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda2ce8c8a70569b7db4c571e227271260d}{IMAGE\_FORMAT\_YUV422P12}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00279}00279\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p12"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00280}00280\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdaca4f2ab14c11ab15d864203c54aca909}{IMAGE\_FORMAT\_YUV444P12}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00281}00281\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00282}00282\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p14"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00283}00283\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda6ed97feaeb8d510949df58adb65c286d}{IMAGE\_FORMAT\_YUV420P14}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00284}00284\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p14"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda0341a1d740ffdfc1faf0135718fa968e}{IMAGE\_FORMAT\_YUV422P14}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00286}00286\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p14"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00287}00287\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda6a0f636a5ff3da50ed4849b2161ad4e6}{IMAGE\_FORMAT\_YUV444P14}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00288}00288\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00289}00289\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv420p16"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00290}00290\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda6725bb53c8882e0af8b9af19f20ee415}{IMAGE\_FORMAT\_YUV420P16}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00291}00291\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv422p16"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00292}00292\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda16cf7e5537328e9a67f27cbdfb157adf}{IMAGE\_FORMAT\_YUV422P16}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00293}00293\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv444p16"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda498952e5edae8cb897084107b1c2e011}{IMAGE\_FORMAT\_YUV444P16}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00295}00295\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00296}00296\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00297}00297\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda45fe72ad614bb739aa9ba7fabced6871}{IMAGE\_FORMAT\_Y8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00298}00298\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y8"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00299}00299\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda45fe72ad614bb739aa9ba7fabced6871}{IMAGE\_FORMAT\_Y8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00300}00300\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y10"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda7ae3777d0e6b92c96759744b22f133e1}{IMAGE\_FORMAT\_Y10}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00302}00302\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y12"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdaeb185502a19a11625879fd00284dc666}{IMAGE\_FORMAT\_Y12}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00304}00304\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y14"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00305}00305\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda005ae40c957422535db98c59a0db26f2}{IMAGE\_FORMAT\_Y14}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00306}00306\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}y16"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdafb953d68287d881ec39d8d44e0a07d0b}{IMAGE\_FORMAT\_Y16}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00308}00308\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00309}00309\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda45fe72ad614bb739aa9ba7fabced6871}{IMAGE\_FORMAT\_Y8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00311}00311\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00312}00312\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda45fe72ad614bb739aa9ba7fabced6871}{IMAGE\_FORMAT\_Y8}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00313}00313\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p10"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00314}00314\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda7ae3777d0e6b92c96759744b22f133e1}{IMAGE\_FORMAT\_Y10}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00315}00315\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p12"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00316}00316\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdaeb185502a19a11625879fd00284dc666}{IMAGE\_FORMAT\_Y12}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00317}00317\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p14"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00318}00318\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cda005ae40c957422535db98c59a0db26f2}{IMAGE\_FORMAT\_Y14}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00319}00319\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (s\ ==\ \textcolor{stringliteral}{"{}yuv400p16"{}})}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00320}00320\ \ \ \ \ \ \ \ \ v\ =\ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cdafb953d68287d881ec39d8d44e0a07d0b}{IMAGE\_FORMAT\_Y16}};}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00321}00321\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00322}00322\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{Diagnostics_8hpp_acb46ebc54cc32cc39cdd4779f736d332}{ERR}}(\textcolor{stringliteral}{"{}not\ an\ image\ format:\ \%s"{}},\ s.c\_str());}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00323}00323\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00324}00324\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00325}00325\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00326}00326\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00327}\mbox{\hyperlink{namespacelctm_a72a0ab78345750b6b1bcaf9e432daf80}{00327}}\ std::istream\ \&\mbox{\hyperlink{namespacelctm_ac6e6ad22c07fc55313ae5b322afee467}{operator>>}}(std::istream\ \&in,\ \mbox{\hyperlink{namespacelctm_ae7cf6dbf60e5ab7e21aa27a361760ac1}{Colourspace}}\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00328}00328\ \ \ \ \ \mbox{\hyperlink{namespacelctm_adc04c332883981ddab93bd952808b5cd}{ImageFormat}}\ f;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00329}00329\ \ \ \ \ in\ >>\ f;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00330}00330\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00331}00331\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(f\ <\ \mbox{\hyperlink{Misc_8hpp_a25f003de16c08a4888b69f619d70f427}{ARRAY\_SIZE}}(s\_PictureDescInfo));}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00332}00332\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00333}00333\ \ \ \ \ v\ =\ s\_PictureDescInfo[f].colourspace;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00334}00334\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00335}00335\ \ \ \ \ \textcolor{keywordflow}{return}\ in;}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00336}00336\ \}}
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00337}00337\ }
+\DoxyCodeLine{\Hypertarget{Image_8cpp_source_l00338}00338\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

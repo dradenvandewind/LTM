@@ -1,706 +1,706 @@
 \doxysection{Hash.\+cpp}
-\label{Hash_8cpp_source}\index{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Hash.cpp@{deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Hash.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{Hash_8cpp_source}{}\label{Hash_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Hash.cpp@{/media/erwan/T7/formation/Video/LTM/deps/base\_vvc/minimum\_VTM/source/Lib/CommonLib/Hash.cpp}}
+\mbox{\hyperlink{Hash_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{00033\ }
-\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ "{}CommonLib/dtrace\_codingstruct.h"{}}}
-\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ "{}CommonLib/Picture.h"{}}}
-\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ "{}CommonLib/UnitTools.h"{}}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}Hash.h"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{keyword}{namespace\ }vtm\ \{}
-\DoxyCodeLine{00043\ }
-\DoxyCodeLine{00044\ \ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00045\ \ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ create\ /\ destroy}}
-\DoxyCodeLine{00046\ \ \textcolor{comment}{//\ ====================================================================================================================}}
-\DoxyCodeLine{00047\ }
-\DoxyCodeLine{00048\ \textcolor{keywordtype}{int}\ TComHash::m\_blockSizeToIndex[65][65];}
-\DoxyCodeLine{00049\ TCRCCalculatorLight\ TComHash::m\_crcCalculator1(24,\ 0x5D6DCB);}
-\DoxyCodeLine{00050\ TCRCCalculatorLight\ TComHash::m\_crcCalculator2(24,\ 0x864CFB);}
-\DoxyCodeLine{00051\ }
-\DoxyCodeLine{00052\ TCRCCalculatorLight::TCRCCalculatorLight(uint32\_t\ bits,\ uint32\_t\ truncPoly)}
-\DoxyCodeLine{00053\ \{}
-\DoxyCodeLine{00054\ \ \ m\_remainder\ =\ 0;}
-\DoxyCodeLine{00055\ \ \ m\_bits\ =\ bits;}
-\DoxyCodeLine{00056\ \ \ m\_truncPoly\ =\ truncPoly;}
-\DoxyCodeLine{00057\ \ \ m\_finalResultMask\ =\ (1\ <<\ bits)\ -\/\ 1;}
-\DoxyCodeLine{00058\ }
-\DoxyCodeLine{00059\ \ \ xInitTable();}
-\DoxyCodeLine{00060\ \}}
-\DoxyCodeLine{00061\ }
-\DoxyCodeLine{00062\ TCRCCalculatorLight::\string~TCRCCalculatorLight()}
-\DoxyCodeLine{00063\ \{}
-\DoxyCodeLine{00064\ }
-\DoxyCodeLine{00065\ \}}
-\DoxyCodeLine{00066\ }
-\DoxyCodeLine{00067\ \textcolor{keywordtype}{void}\ TCRCCalculatorLight::xInitTable()}
-\DoxyCodeLine{00068\ \{}
-\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{const}\ uint32\_t\ highBit\ =\ 1\ <<\ (m\_bits\ -\/\ 1);}
-\DoxyCodeLine{00070\ \ \ \textcolor{keyword}{const}\ uint32\_t\ byteHighBit\ =\ 1\ <<\ (8\ -\/\ 1);}
-\DoxyCodeLine{00071\ }
-\DoxyCodeLine{00072\ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ value\ =\ 0;\ value\ <\ 256;\ value++)}
-\DoxyCodeLine{00073\ \ \ \{}
-\DoxyCodeLine{00074\ \ \ \ \ uint32\_t\ remainder\ =\ 0;}
-\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ mask\ =\ byteHighBit;\ mask\ !=\ 0;\ mask\ >>=\ 1)}
-\DoxyCodeLine{00076\ \ \ \ \ \{}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ \&\ mask)}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ remainder\ \string^=\ highBit;}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00081\ }
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (remainder\ \&\ highBit)}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ remainder\ <<=\ 1;}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ remainder\ \string^=\ m\_truncPoly;}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00087\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ remainder\ <<=\ 1;}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00091\ \ \ \ \ \}}
-\DoxyCodeLine{00092\ }
-\DoxyCodeLine{00093\ \ \ \ \ m\_table[value]\ =\ remainder;}
-\DoxyCodeLine{00094\ \ \ \}}
-\DoxyCodeLine{00095\ \}}
-\DoxyCodeLine{00096\ }
-\DoxyCodeLine{00097\ \textcolor{keywordtype}{void}\ TCRCCalculatorLight::processData(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ curData,\ uint32\_t\ dataLength)}
-\DoxyCodeLine{00098\ \{}
-\DoxyCodeLine{00099\ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ dataLength;\ i++)}
-\DoxyCodeLine{00100\ \ \ \{}
-\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ index\ =\ (m\_remainder\ >>\ (m\_bits\ -\/\ 8))\ \string^\ curData[i];}
-\DoxyCodeLine{00102\ \ \ \ \ m\_remainder\ <<=\ 8;}
-\DoxyCodeLine{00103\ \ \ \ \ m\_remainder\ \string^=\ m\_table[index];}
-\DoxyCodeLine{00104\ \ \ \}}
-\DoxyCodeLine{00105\ \}}
-\DoxyCodeLine{00106\ }
-\DoxyCodeLine{00107\ }
-\DoxyCodeLine{00108\ TComHash::TComHash()}
-\DoxyCodeLine{00109\ \{}
-\DoxyCodeLine{00110\ \ \ m\_lookupTable\ =\ NULL;}
-\DoxyCodeLine{00111\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00112\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 5;\ i++)}
-\DoxyCodeLine{00113\ \ \ \{}
-\DoxyCodeLine{00114\ \ \ \ \ hashPic[i]\ =\ NULL;}
-\DoxyCodeLine{00115\ \ \ \}}
-\DoxyCodeLine{00116\ \}}
-\DoxyCodeLine{00117\ }
-\DoxyCodeLine{00118\ TComHash::\string~TComHash()}
-\DoxyCodeLine{00119\ \{}
-\DoxyCodeLine{00120\ \ \ clearAll();}
-\DoxyCodeLine{00121\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable\ !=\ NULL)}
-\DoxyCodeLine{00122\ \ \ \{}
-\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{delete}[]\ m\_lookupTable;}
-\DoxyCodeLine{00124\ \ \ \ \ m\_lookupTable\ =\ NULL;}
-\DoxyCodeLine{00125\ \ \ \}}
-\DoxyCodeLine{00126\ \}}
-\DoxyCodeLine{00127\ \textcolor{keywordtype}{void}\ TComHash::create(\textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight)}
-\DoxyCodeLine{00128\ \{}
-\DoxyCodeLine{00129\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable)}
-\DoxyCodeLine{00130\ \ \ \{}
-\DoxyCodeLine{00131\ \ \ \ \ clearAll();}
-\DoxyCodeLine{00132\ \ \ \}}
-\DoxyCodeLine{00133\ \ \ \textcolor{keywordflow}{if}\ (!hashPic[0])}
-\DoxyCodeLine{00134\ \ \ \{}
-\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++)}
-\DoxyCodeLine{00136\ \ \ \ \ \{}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ hashPic[k]\ =\ \textcolor{keyword}{new}\ uint16\_t[picWidth*picHeight];}
-\DoxyCodeLine{00138\ \ \ \ \ \}}
-\DoxyCodeLine{00139\ \ \ \}}
-\DoxyCodeLine{00140\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable)}
-\DoxyCodeLine{00141\ \ \ \{}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00143\ \ \ \}}
-\DoxyCodeLine{00144\ \ \ \textcolor{keywordtype}{int}\ maxAddr\ =\ 1\ <<\ (m\_CRCBits\ +\ m\_blockSizeBits);}
-\DoxyCodeLine{00145\ \ \ m\_lookupTable\ =\ \textcolor{keyword}{new}\ std::vector<BlockHash>*[maxAddr];}
-\DoxyCodeLine{00146\ \ \ memset(m\_lookupTable,\ 0,\ \textcolor{keyword}{sizeof}(std::vector<BlockHash>*)\ *\ maxAddr);}
-\DoxyCodeLine{00147\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00148\ \}}
-\DoxyCodeLine{00149\ }
-\DoxyCodeLine{00150\ \textcolor{keywordtype}{void}\ TComHash::clearAll()}
-\DoxyCodeLine{00151\ \{}
-\DoxyCodeLine{00152\ \ \ \textcolor{keywordflow}{if}\ (hashPic[0])}
-\DoxyCodeLine{00153\ \ \ \{}
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++)}
-\DoxyCodeLine{00155\ \ \ \ \ \{}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ hashPic[k];}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ hashPic[k]\ =\ NULL;}
-\DoxyCodeLine{00158\ \ \ \ \ \}}
-\DoxyCodeLine{00159\ \ \ \}}
-\DoxyCodeLine{00160\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00161\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable\ ==\ NULL)}
-\DoxyCodeLine{00162\ \ \ \{}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{00164\ \ \ \}}
-\DoxyCodeLine{00165\ \ \ \textcolor{keywordtype}{int}\ maxAddr\ =\ 1\ <<\ (m\_CRCBits\ +\ m\_blockSizeBits);}
-\DoxyCodeLine{00166\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ maxAddr;\ i++)}
-\DoxyCodeLine{00167\ \ \ \{}
-\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[i]\ !=\ NULL)}
-\DoxyCodeLine{00169\ \ \ \ \ \{}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_lookupTable[i];}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ m\_lookupTable[i]\ =\ NULL;}
-\DoxyCodeLine{00172\ \ \ \ \ \}}
-\DoxyCodeLine{00173\ \ \ \}}
-\DoxyCodeLine{00174\ \}}
-\DoxyCodeLine{00175\ }
-\DoxyCodeLine{00176\ \textcolor{keywordtype}{void}\ TComHash::addToTable(uint32\_t\ hashValue,\ \textcolor{keyword}{const}\ BlockHash\&\ blockHash)}
-\DoxyCodeLine{00177\ \{}
-\DoxyCodeLine{00178\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ NULL)}
-\DoxyCodeLine{00179\ \ \ \{}
-\DoxyCodeLine{00180\ \ \ \ \ m\_lookupTable[hashValue]\ =\ \textcolor{keyword}{new}\ std::vector<BlockHash>;}
-\DoxyCodeLine{00181\ \ \ \ \ m\_lookupTable[hashValue]-\/>push\_back(blockHash);}
-\DoxyCodeLine{00182\ \ \ \}}
-\DoxyCodeLine{00183\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00184\ \ \ \{}
-\DoxyCodeLine{00185\ \ \ \ \ m\_lookupTable[hashValue]-\/>push\_back(blockHash);}
-\DoxyCodeLine{00186\ \ \ \}}
-\DoxyCodeLine{00187\ \}}
-\DoxyCodeLine{00188\ }
-\DoxyCodeLine{00189\ \textcolor{keywordtype}{int}\ TComHash::count(uint32\_t\ hashValue)}
-\DoxyCodeLine{00190\ \{}
-\DoxyCodeLine{00191\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ NULL)}
-\DoxyCodeLine{00192\ \ \ \{}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00194\ \ \ \}}
-\DoxyCodeLine{00195\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00196\ \ \ \{}
-\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(m\_lookupTable[hashValue]-\/>size());}
-\DoxyCodeLine{00198\ \ \ \}}
-\DoxyCodeLine{00199\ \}}
-\DoxyCodeLine{00200\ }
-\DoxyCodeLine{00201\ \textcolor{keywordtype}{int}\ TComHash::count(uint32\_t\ hashValue)\textcolor{keyword}{\ const}}
-\DoxyCodeLine{00202\ \textcolor{keyword}{}\{}
-\DoxyCodeLine{00203\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ NULL)}
-\DoxyCodeLine{00204\ \ \ \{}
-\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00206\ \ \ \}}
-\DoxyCodeLine{00207\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00208\ \ \ \{}
-\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(m\_lookupTable[hashValue]-\/>size());}
-\DoxyCodeLine{00210\ \ \ \}}
-\DoxyCodeLine{00211\ \}}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ MapIterator\ TComHash::getFirstIterator(uint32\_t\ hashValue)}
-\DoxyCodeLine{00214\ \{}
-\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{return}\ m\_lookupTable[hashValue]-\/>begin();}
-\DoxyCodeLine{00216\ \}}
-\DoxyCodeLine{00217\ }
-\DoxyCodeLine{00218\ \textcolor{keyword}{const}\ MapIterator\ TComHash::getFirstIterator(uint32\_t\ hashValue)\textcolor{keyword}{\ const}}
-\DoxyCodeLine{00219\ \textcolor{keyword}{}\{}
-\DoxyCodeLine{00220\ \ \ \textcolor{keywordflow}{return}\ m\_lookupTable[hashValue]-\/>begin();}
-\DoxyCodeLine{00221\ \}}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \textcolor{keywordtype}{bool}\ TComHash::hasExactMatch(uint32\_t\ hashValue1,\ uint32\_t\ hashValue2)}
-\DoxyCodeLine{00224\ \{}
-\DoxyCodeLine{00225\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue1]\ ==\ NULL)}
-\DoxyCodeLine{00226\ \ \ \{}
-\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00228\ \ \ \}}
-\DoxyCodeLine{00229\ \ \ std::vector<BlockHash>::iterator\ it;}
-\DoxyCodeLine{00230\ \ \ \textcolor{keywordflow}{for}\ (it\ =\ m\_lookupTable[hashValue1]-\/>begin();\ it\ !=\ m\_lookupTable[hashValue1]-\/>end();\ it++)}
-\DoxyCodeLine{00231\ \ \ \{}
-\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it).hashValue2\ ==\ hashValue2)}
-\DoxyCodeLine{00233\ \ \ \ \ \{}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00235\ \ \ \ \ \}}
-\DoxyCodeLine{00236\ \ \ \}}
-\DoxyCodeLine{00237\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00238\ \}}
-\DoxyCodeLine{00239\ }
-\DoxyCodeLine{00240\ \textcolor{keywordtype}{void}\ TComHash::generateBlock2x2HashValue(\textcolor{keyword}{const}\ PelUnitBuf\ \&curPicBuf,\ \textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keyword}{const}\ BitDepths\ bitDepths,\ uint32\_t*\ picBlockHash[2],\ \textcolor{keywordtype}{bool}*\ picBlockSameInfo[3])}
-\DoxyCodeLine{00241\ \{}
-\DoxyCodeLine{00242\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width\ =\ 2;}
-\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height\ =\ 2;}
-\DoxyCodeLine{00244\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
-\DoxyCodeLine{00245\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
-\DoxyCodeLine{00246\ }
-\DoxyCodeLine{00247\ \ \ \textcolor{keywordtype}{int}\ length\ =\ width\ *\ 2;}
-\DoxyCodeLine{00248\ \ \ \textcolor{keywordtype}{bool}\ includeChroma\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00249\ \ \ \textcolor{keywordflow}{if}\ ((curPicBuf).chromaFormat\ ==\ CHROMA\_444)}
-\DoxyCodeLine{00250\ \ \ \{}
-\DoxyCodeLine{00251\ \ \ \ \ length\ *=\ 3;}
-\DoxyCodeLine{00252\ \ \ \ \ includeChroma\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00253\ \ \ \}}
-\DoxyCodeLine{00254\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}[length];}
-\DoxyCodeLine{00255\ }
-\DoxyCodeLine{00256\ \ \ \textcolor{keywordtype}{int}\ pos\ =\ 0;}
-\DoxyCodeLine{00257\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
-\DoxyCodeLine{00258\ \ \ \{}
-\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
-\DoxyCodeLine{00260\ \ \ \ \ \{}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ TComHash::getPixelsIn1DCharArrayByBlock2x2(curPicBuf,\ p,\ xPos,\ yPos,\ bitDepths,\ includeChroma);}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ picBlockSameInfo[0][pos]\ =\ isBlock2x2RowSameValue(p,\ includeChroma);}
-\DoxyCodeLine{00263\ \ \ \ \ \ \ picBlockSameInfo[1][pos]\ =\ isBlock2x2ColSameValue(p,\ includeChroma);}
-\DoxyCodeLine{00264\ }
-\DoxyCodeLine{00265\ \ \ \ \ \ \ picBlockHash[0][pos]\ =\ TComHash::getCRCValue1(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
-\DoxyCodeLine{00266\ \ \ \ \ \ \ picBlockHash[1][pos]\ =\ TComHash::getCRCValue2(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00269\ \ \ \ \ \}}
-\DoxyCodeLine{00270\ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
-\DoxyCodeLine{00271\ \ \ \}}
-\DoxyCodeLine{00272\ }
-\DoxyCodeLine{00273\ \ \ \textcolor{keyword}{delete}[]\ p;}
-\DoxyCodeLine{00274\ \}}
-\DoxyCodeLine{00275\ }
-\DoxyCodeLine{00276\ \textcolor{keywordtype}{void}\ TComHash::generateBlockHashValue(\textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ uint32\_t*\ srcPicBlockHash[2],\ uint32\_t*\ dstPicBlockHash[2],\ \textcolor{keywordtype}{bool}*\ srcPicBlockSameInfo[3],\ \textcolor{keywordtype}{bool}*\ dstPicBlockSameInfo[3])}
-\DoxyCodeLine{00277\ \{}
-\DoxyCodeLine{00278\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
-\DoxyCodeLine{00279\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
-\DoxyCodeLine{00280\ }
-\DoxyCodeLine{00281\ \ \ \textcolor{keywordtype}{int}\ srcWidth\ =\ width\ >>\ 1;}
-\DoxyCodeLine{00282\ \ \ \textcolor{keywordtype}{int}\ quadWidth\ =\ width\ >>\ 2;}
-\DoxyCodeLine{00283\ \ \ \textcolor{keywordtype}{int}\ srcHeight\ =\ height\ >>\ 1;}
-\DoxyCodeLine{00284\ \ \ \textcolor{keywordtype}{int}\ quadHeight\ =\ height\ >>\ 2;}
-\DoxyCodeLine{00285\ }
-\DoxyCodeLine{00286\ \ \ \textcolor{keywordtype}{int}\ length\ =\ 4\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
-\DoxyCodeLine{00287\ }
-\DoxyCodeLine{00288\ \ \ uint32\_t\ p[4];}
-\DoxyCodeLine{00289\ \ \ \textcolor{keywordtype}{int}\ pos\ =\ 0;}
-\DoxyCodeLine{00290\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
-\DoxyCodeLine{00291\ \ \ \{}
-\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
-\DoxyCodeLine{00293\ \ \ \ \ \{}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ p[0]\ =\ srcPicBlockHash[0][pos];}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ p[1]\ =\ srcPicBlockHash[0][pos\ +\ srcWidth];}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ p[2]\ =\ srcPicBlockHash[0][pos\ +\ srcHeight\ *\ picWidth];}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ p[3]\ =\ srcPicBlockHash[0][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ dstPicBlockHash[0][pos]\ =\ TComHash::getCRCValue1((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)p,\ length);}
-\DoxyCodeLine{00299\ }
-\DoxyCodeLine{00300\ \ \ \ \ \ \ p[0]\ =\ srcPicBlockHash[1][pos];}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ p[1]\ =\ srcPicBlockHash[1][pos\ +\ srcWidth];}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ p[2]\ =\ srcPicBlockHash[1][pos\ +\ srcHeight\ *\ picWidth];}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ p[3]\ =\ srcPicBlockHash[1][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ dstPicBlockHash[1][pos]\ =\ TComHash::getCRCValue2((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)p,\ length);}
-\DoxyCodeLine{00305\ }
-\DoxyCodeLine{00306\ \ \ \ \ \ \ dstPicBlockSameInfo[0][pos]\ =\ srcPicBlockSameInfo[0][pos]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ quadWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcWidth]}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth\ +\ quadWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
-\DoxyCodeLine{00308\ }
-\DoxyCodeLine{00309\ \ \ \ \ \ \ dstPicBlockSameInfo[1][pos]\ =\ srcPicBlockSameInfo[1][pos]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ quadHeight\ *\ picWidth]}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \&\&\ srcPicBlockSameInfo[1][pos\ +\ quadHeight\ *\ picWidth\ +\ srcWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcHeight\ *\ picWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
-\DoxyCodeLine{00311\ }
-\DoxyCodeLine{00312\ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00313\ \ \ \ \ \}}
-\DoxyCodeLine{00314\ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
-\DoxyCodeLine{00315\ \ \ \}}
-\DoxyCodeLine{00316\ }
-\DoxyCodeLine{00317\ \ \ \textcolor{keywordflow}{if}\ (width\ >=\ 4)}
-\DoxyCodeLine{00318\ \ \ \{}
-\DoxyCodeLine{00319\ \ \ \ \ pos\ =\ 0;}
-\DoxyCodeLine{00320\ }
-\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
-\DoxyCodeLine{00322\ \ \ \ \ \{}
-\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
-\DoxyCodeLine{00324\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ dstPicBlockSameInfo[2][pos]\ =\ (!dstPicBlockSameInfo[0][pos]\ \&\&\ !dstPicBlockSameInfo[1][pos]);}
-\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00327\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00328\ \ \ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
-\DoxyCodeLine{00329\ \ \ \ \ \}}
-\DoxyCodeLine{00330\ \ \ \}}
-\DoxyCodeLine{00331\ \}}
-\DoxyCodeLine{00332\ }
-\DoxyCodeLine{00333\ \textcolor{keywordtype}{void}\ TComHash::addToHashMapByRowWithPrecalData(uint32\_t*\ picHash[2],\ \textcolor{keywordtype}{bool}*\ picIsSame,\ \textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
-\DoxyCodeLine{00334\ \{}
-\DoxyCodeLine{00335\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
-\DoxyCodeLine{00336\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
-\DoxyCodeLine{00337\ }
-\DoxyCodeLine{00338\ \ \ \textcolor{keywordtype}{bool}*\ srcIsAdded\ =\ picIsSame;}
-\DoxyCodeLine{00339\ \ \ uint32\_t*\ srcHash[2]\ =\ \{\ picHash[0],\ picHash[1]\ \};}
-\DoxyCodeLine{00340\ }
-\DoxyCodeLine{00341\ \ \ \textcolor{keywordtype}{int}\ addValue\ =\ m\_blockSizeToIndex[width][height];}
-\DoxyCodeLine{00342\ \ \ CHECK(addValue\ <\ 0,\ \textcolor{stringliteral}{"{}Wrong"{}})}
-\DoxyCodeLine{00343\ \ \ addValue\ <<=\ m\_CRCBits;}
-\DoxyCodeLine{00344\ \ \ \textcolor{keywordtype}{int}\ crcMask\ =\ 1\ <<\ m\_CRCBits;}
-\DoxyCodeLine{00345\ \ \ crcMask\ -\/=\ 1;}
-\DoxyCodeLine{00346\ \ \ \textcolor{keywordtype}{int}\ blockIdx\ =\ floorLog2(width)\ -\/\ 2;}
-\DoxyCodeLine{00347\ }
-\DoxyCodeLine{00348\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
-\DoxyCodeLine{00349\ \ \ \{}
-\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
-\DoxyCodeLine{00351\ \ \ \ \ \{}
-\DoxyCodeLine{00352\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pos\ =\ yPos\ *\ picWidth\ +\ xPos;}
-\DoxyCodeLine{00353\ \ \ \ \ \ \ hashPic[blockIdx][pos]\ =\ (uint16\_t)(srcHash[1][pos]\ \&\ crcMask);}
-\DoxyCodeLine{00354\ \ \ \ \ \ \ \textcolor{comment}{//valid\ data}}
-\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcIsAdded[pos])}
-\DoxyCodeLine{00356\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ BlockHash\ blockHash;}
-\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ blockHash.x\ =\ xPos;}
-\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ blockHash.y\ =\ yPos;}
-\DoxyCodeLine{00360\ }
-\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ uint32\_t\ hashValue1\ =\ (srcHash[0][pos]\ \&\ crcMask)\ +\ addValue;}
-\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ blockHash.hashValue2\ =\ srcHash[1][pos];}
-\DoxyCodeLine{00363\ }
-\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ addToTable(hashValue1,\ blockHash);}
-\DoxyCodeLine{00365\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00366\ \ \ \ \ \}}
-\DoxyCodeLine{00367\ \ \ \}}
-\DoxyCodeLine{00368\ \}}
-\DoxyCodeLine{00369\ }
-\DoxyCodeLine{00370\ \textcolor{keywordtype}{void}\ TComHash::getPixelsIn1DCharArrayByBlock2x2(\textcolor{keyword}{const}\ PelUnitBuf\ \&curPicBuf,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ pixelsIn1D,\ \textcolor{keywordtype}{int}\ xStart,\ \textcolor{keywordtype}{int}\ yStart,\ \textcolor{keyword}{const}\ BitDepths\&\ bitDepths,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
-\DoxyCodeLine{00371\ \{}
-\DoxyCodeLine{00372\ \ \ ChromaFormat\ fmt\ =\ (curPicBuf).chromaFormat;}
-\DoxyCodeLine{00373\ \ \ \textcolor{keywordflow}{if}\ (fmt\ !=\ CHROMA\_444)}
-\DoxyCodeLine{00374\ \ \ \{}
-\DoxyCodeLine{00375\ \ \ \ \ includeAllComponent\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00376\ \ \ \}}
-\DoxyCodeLine{00377\ }
-\DoxyCodeLine{00378\ \ \ \textcolor{keywordflow}{if}\ (bitDepths.recon[CHANNEL\_TYPE\_LUMA]\ ==\ 8\ \&\&\ bitDepths.recon[CHANNEL\_TYPE\_CHROMA]\ ==\ 8)}
-\DoxyCodeLine{00379\ \ \ \{}
-\DoxyCodeLine{00380\ \ \ \ \ Pel*\ curPel[MAX\_NUM\_COMPONENT]=\{\textcolor{keyword}{nullptr}\};}
-\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordtype}{int}\ stride[MAX\_NUM\_COMPONENT]=\{0\};}
-\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxComponent=includeAllComponent?MAX\_NUM\_COMPONENT:1;}
-\DoxyCodeLine{00383\ }
-\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0;\ \textcolor{keywordtype}{id}\ <\ maxComponent;\ \textcolor{keywordtype}{id}++)}
-\DoxyCodeLine{00385\ \ \ \ \ \{}
-\DoxyCodeLine{00386\ \ \ \ \ \ \ ComponentID\ compID\ =\ ComponentID(\textcolor{keywordtype}{id});}
-\DoxyCodeLine{00387\ \ \ \ \ \ \ stride[id]\ =\ (curPicBuf).get(compID).stride;}
-\DoxyCodeLine{00388\ \ \ \ \ \ \ curPel[id]\ =\ (curPicBuf).get(compID).buf;}
-\DoxyCodeLine{00389\ \ \ \ \ \ \ curPel[id]\ +=\ (yStart\ >>\ getComponentScaleY(compID,\ fmt))\ *\ stride[\textcolor{keywordtype}{id}]\ +\ (xStart\ >>\ getComponentScaleX(compID,\ fmt));}
-\DoxyCodeLine{00390\ \ \ \ \ \}}
-\DoxyCodeLine{00391\ }
-\DoxyCodeLine{00392\ \ \ \ \ \textcolor{keywordtype}{int}\ index\ =\ 0;}
-\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
-\DoxyCodeLine{00394\ \ \ \ \ \{}
-\DoxyCodeLine{00395\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
-\DoxyCodeLine{00396\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[0][j]);}
-\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[1][j]);}
-\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[2][j]);}
-\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00403\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00404\ \ \ \ \ \ \ curPel[0]\ +=\ stride[0];}
-\DoxyCodeLine{00405\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00406\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ curPel[1]\ +=\ stride[1];}
-\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ curPel[2]\ +=\ stride[2];}
-\DoxyCodeLine{00409\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00410\ \ \ \ \ \}}
-\DoxyCodeLine{00411\ \ \ \}}
-\DoxyCodeLine{00412\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00413\ \ \ \{}
-\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordtype}{int}\ shift\ =\ bitDepths.recon[CHANNEL\_TYPE\_LUMA]\ -\/\ 8;}
-\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordtype}{int}\ shiftc\ =\ includeAllComponent\ ?\ (bitDepths.recon[CHANNEL\_TYPE\_CHROMA]\ -\/\ 8)\ :\ 0;}
-\DoxyCodeLine{00416\ \ \ \ \ Pel*\ curPel[MAX\_NUM\_COMPONENT]=\{\textcolor{keyword}{nullptr}\};}
-\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keywordtype}{int}\ stride[MAX\_NUM\_COMPONENT]=\{0\};}
-\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxComponent=includeAllComponent?MAX\_NUM\_COMPONENT:1;}
-\DoxyCodeLine{00419\ }
-\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0;\ \textcolor{keywordtype}{id}\ <\ maxComponent;\ \textcolor{keywordtype}{id}++)}
-\DoxyCodeLine{00421\ \ \ \ \ \{}
-\DoxyCodeLine{00422\ \ \ \ \ \ \ ComponentID\ compID\ =\ ComponentID(\textcolor{keywordtype}{id});}
-\DoxyCodeLine{00423\ \ \ \ \ \ \ stride[id]\ =\ (curPicBuf).get(compID).stride;}
-\DoxyCodeLine{00424\ \ \ \ \ \ \ curPel[id]\ =\ (curPicBuf).get(compID).buf;}
-\DoxyCodeLine{00425\ \ \ \ \ \ \ curPel[id]\ +=\ (yStart\ >>\ getComponentScaleY(compID,\ fmt))\ *\ stride[\textcolor{keywordtype}{id}]\ +\ (xStart\ >>\ getComponentScaleX(compID,\ fmt));}
-\DoxyCodeLine{00426\ \ \ \ \ \}}
-\DoxyCodeLine{00427\ }
-\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keywordtype}{int}\ index\ =\ 0;}
-\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
-\DoxyCodeLine{00430\ \ \ \ \ \{}
-\DoxyCodeLine{00431\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
-\DoxyCodeLine{00432\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[0][j]\ >>\ shift);}
-\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[1][j]\ >>\ shiftc);}
-\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[2][j]\ >>\ shiftc);}
-\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00439\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00440\ \ \ \ \ \ \ curPel[0]\ +=\ stride[0];}
-\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00442\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ curPel[1]\ +=\ stride[1];}
-\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ curPel[2]\ +=\ stride[2];}
-\DoxyCodeLine{00445\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00446\ \ \ \ \ \}}
-\DoxyCodeLine{00447\ \ \ \}}
-\DoxyCodeLine{00448\ \}}
-\DoxyCodeLine{00449\ }
-\DoxyCodeLine{00450\ \textcolor{keywordtype}{bool}\ TComHash::isBlock2x2RowSameValue(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
-\DoxyCodeLine{00451\ \{}
-\DoxyCodeLine{00452\ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00453\ \ \ \{}
-\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[3]\ ||\ p[6]\ !=\ p[9])}
-\DoxyCodeLine{00455\ \ \ \ \ \{}
-\DoxyCodeLine{00456\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00457\ \ \ \ \ \}}
-\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[1]\ !=\ p[4]\ ||\ p[7]\ !=\ p[10])}
-\DoxyCodeLine{00459\ \ \ \ \ \{}
-\DoxyCodeLine{00460\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00461\ \ \ \ \ \}}
-\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[2]\ !=\ p[5]\ ||\ p[8]\ !=\ p[11])}
-\DoxyCodeLine{00463\ \ \ \ \ \{}
-\DoxyCodeLine{00464\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00465\ \ \ \ \ \}}
-\DoxyCodeLine{00466\ \ \ \}}
-\DoxyCodeLine{00467\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00468\ \ \ \{}
-\DoxyCodeLine{00469\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[1]\ ||\ p[2]\ !=\ p[3])}
-\DoxyCodeLine{00470\ \ \ \ \ \{}
-\DoxyCodeLine{00471\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00472\ \ \ \ \ \}}
-\DoxyCodeLine{00473\ \ \ \}}
-\DoxyCodeLine{00474\ }
-\DoxyCodeLine{00475\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00476\ \}}
-\DoxyCodeLine{00477\ }
-\DoxyCodeLine{00478\ \textcolor{keywordtype}{bool}\ TComHash::isBlock2x2ColSameValue(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
-\DoxyCodeLine{00479\ \{}
-\DoxyCodeLine{00480\ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
-\DoxyCodeLine{00481\ \ \ \{}
-\DoxyCodeLine{00482\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[6]\ ||\ p[3]\ !=\ p[9])}
-\DoxyCodeLine{00483\ \ \ \ \ \{}
-\DoxyCodeLine{00484\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00485\ \ \ \ \ \}}
-\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[1]\ !=\ p[7]\ ||\ p[4]\ !=\ p[10])}
-\DoxyCodeLine{00487\ \ \ \ \ \{}
-\DoxyCodeLine{00488\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00489\ \ \ \ \ \}}
-\DoxyCodeLine{00490\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[2]\ !=\ p[8]\ ||\ p[5]\ !=\ p[11])}
-\DoxyCodeLine{00491\ \ \ \ \ \{}
-\DoxyCodeLine{00492\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00493\ \ \ \ \ \}}
-\DoxyCodeLine{00494\ \ \ \}}
-\DoxyCodeLine{00495\ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00496\ \ \ \{}
-\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keywordflow}{if}\ ((p[0]\ !=\ p[2])\ ||\ (p[1]\ !=\ p[3]))}
-\DoxyCodeLine{00498\ \ \ \ \ \{}
-\DoxyCodeLine{00499\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00500\ \ \ \ \ \}}
-\DoxyCodeLine{00501\ \ \ \}}
-\DoxyCodeLine{00502\ }
-\DoxyCodeLine{00503\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00504\ \}}
-\DoxyCodeLine{00505\ \textcolor{keywordtype}{bool}\ TComHash::isHorizontalPerfectLuma(\textcolor{keyword}{const}\ Pel*\ srcPel,\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
-\DoxyCodeLine{00506\ \{}
-\DoxyCodeLine{00507\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)}
-\DoxyCodeLine{00508\ \ \ \{}
-\DoxyCodeLine{00509\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ width;\ j++)}
-\DoxyCodeLine{00510\ \ \ \ \ \{}
-\DoxyCodeLine{00511\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcPel[j]\ !=\ srcPel[0])}
-\DoxyCodeLine{00512\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00514\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00515\ \ \ \ \ \}}
-\DoxyCodeLine{00516\ \ \ \ \ srcPel\ +=\ stride;}
-\DoxyCodeLine{00517\ \ \ \}}
-\DoxyCodeLine{00518\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00519\ \}}
-\DoxyCodeLine{00520\ }
-\DoxyCodeLine{00521\ \textcolor{keywordtype}{bool}\ TComHash::isVerticalPerfectLuma(\textcolor{keyword}{const}\ Pel*\ srcPel,\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
-\DoxyCodeLine{00522\ \{}
-\DoxyCodeLine{00523\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ width;\ i++)}
-\DoxyCodeLine{00524\ \ \ \{}
-\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ height;\ j++)}
-\DoxyCodeLine{00526\ \ \ \ \ \{}
-\DoxyCodeLine{00527\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcPel[j*stride\ +\ i]\ !=\ srcPel[i])}
-\DoxyCodeLine{00528\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00530\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00531\ \ \ \ \ \}}
-\DoxyCodeLine{00532\ \ \ \}}
-\DoxyCodeLine{00533\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00534\ \}}
-\DoxyCodeLine{00535\ \textcolor{keywordtype}{bool}\ TComHash::getBlockHashValue(\textcolor{keyword}{const}\ PelUnitBuf\ \&curPicBuf,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ xStart,\ \textcolor{keywordtype}{int}\ yStart,\ \textcolor{keyword}{const}\ BitDepths\ bitDepths,\ uint32\_t\&\ hashValue1,\ uint32\_t\&\ hashValue2)}
-\DoxyCodeLine{00536\ \{}
-\DoxyCodeLine{00537\ \ \ \textcolor{keywordtype}{int}\ addValue\ =\ m\_blockSizeToIndex[width][height];}
-\DoxyCodeLine{00538\ }
-\DoxyCodeLine{00539\ \ \ CHECK(addValue\ <\ 0,\ \textcolor{stringliteral}{"{}Wrong"{}})}
-\DoxyCodeLine{00540\ \ \ addValue\ <<=\ m\_CRCBits;}
-\DoxyCodeLine{00541\ \ \ \textcolor{keywordtype}{int}\ crcMask\ =\ 1\ <<\ m\_CRCBits;}
-\DoxyCodeLine{00542\ \ \ crcMask\ -\/=\ 1;}
-\DoxyCodeLine{00543\ \ \ \textcolor{keywordtype}{int}\ length\ =\ 4;}
-\DoxyCodeLine{00544\ \ \ \textcolor{keywordtype}{bool}\ includeChroma\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00545\ \ \ \textcolor{keywordflow}{if}\ ((curPicBuf).chromaFormat\ ==\ CHROMA\_444)}
-\DoxyCodeLine{00546\ \ \ \{}
-\DoxyCodeLine{00547\ \ \ \ \ length\ *=\ 3;}
-\DoxyCodeLine{00548\ \ \ \ \ includeChroma\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00549\ \ \ \}}
-\DoxyCodeLine{00550\ }
-\DoxyCodeLine{00551\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}[length];}
-\DoxyCodeLine{00552\ \ \ uint32\_t\ toHash[4];}
-\DoxyCodeLine{00553\ }
-\DoxyCodeLine{00554\ \ \ \textcolor{keywordtype}{int}\ block2x2Num\ =\ (width*height)\ >>\ 2;}
-\DoxyCodeLine{00555\ }
-\DoxyCodeLine{00556\ \ \ uint32\_t*\ hashValueBuffer[2][2];}
-\DoxyCodeLine{00557\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
-\DoxyCodeLine{00558\ \ \ \{}
-\DoxyCodeLine{00559\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
-\DoxyCodeLine{00560\ \ \ \ \ \{}
-\DoxyCodeLine{00561\ \ \ \ \ \ \ hashValueBuffer[i][j]\ =\ \textcolor{keyword}{new}\ uint32\_t[block2x2Num];}
-\DoxyCodeLine{00562\ \ \ \ \ \}}
-\DoxyCodeLine{00563\ \ \ \}}
-\DoxyCodeLine{00564\ }
-\DoxyCodeLine{00565\ \ \ \textcolor{comment}{//2x2\ subblock\ hash\ values\ in\ current\ CU}}
-\DoxyCodeLine{00566\ \ \ \textcolor{keywordtype}{int}\ subBlockInWidth\ =\ (width\ >>\ 1);}
-\DoxyCodeLine{00567\ \ \ \textcolor{keywordtype}{int}\ subBlockInHeight\ =\ (height\ >>\ 1);}
-\DoxyCodeLine{00568\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ height;\ yPos\ +=\ 2)}
-\DoxyCodeLine{00569\ \ \ \{}
-\DoxyCodeLine{00570\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ width;\ xPos\ +=\ 2)}
-\DoxyCodeLine{00571\ \ \ \ \ \{}
-\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pos\ =\ (yPos\ >>\ 1)*subBlockInWidth\ +\ (xPos\ >>\ 1);}
-\DoxyCodeLine{00573\ \ \ \ \ \ \ TComHash::getPixelsIn1DCharArrayByBlock2x2(curPicBuf,\ p,\ xStart\ +\ xPos,\ yStart\ +\ yPos,\ bitDepths,\ includeChroma);}
-\DoxyCodeLine{00574\ }
-\DoxyCodeLine{00575\ \ \ \ \ \ \ hashValueBuffer[0][0][pos]\ =\ TComHash::getCRCValue1(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
-\DoxyCodeLine{00576\ \ \ \ \ \ \ hashValueBuffer[1][0][pos]\ =\ TComHash::getCRCValue2(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
-\DoxyCodeLine{00577\ \ \ \ \ \}}
-\DoxyCodeLine{00578\ \ \ \}}
-\DoxyCodeLine{00579\ }
-\DoxyCodeLine{00580\ \ \ \textcolor{keywordtype}{int}\ srcSubBlockInWidth\ =\ subBlockInWidth;}
-\DoxyCodeLine{00581\ \ \ subBlockInWidth\ >>=\ 1;}
-\DoxyCodeLine{00582\ \ \ subBlockInHeight\ >>=\ 1;}
-\DoxyCodeLine{00583\ \ \ length\ =\ 4\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
-\DoxyCodeLine{00584\ }
-\DoxyCodeLine{00585\ \ \ \textcolor{keywordtype}{int}\ srcIdx\ =\ 1;}
-\DoxyCodeLine{00586\ \ \ \textcolor{keywordtype}{int}\ dstIdx\ =\ 0;}
-\DoxyCodeLine{00587\ }
-\DoxyCodeLine{00588\ \ \ \textcolor{comment}{//4x4\ subblock\ hash\ values\ to\ current\ block\ hash\ values}}
-\DoxyCodeLine{00589\ \ \ \textcolor{keywordtype}{int}\ minSize\ =\ std::min(height,\ width);}
-\DoxyCodeLine{00590\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ subWidth\ =\ 4;\ subWidth\ <=\ minSize;\ subWidth\ *=\ 2)}
-\DoxyCodeLine{00591\ \ \ \{}
-\DoxyCodeLine{00592\ \ \ \ \ srcIdx\ =\ 1\ -\/\ srcIdx;}
-\DoxyCodeLine{00593\ \ \ \ \ dstIdx\ =\ 1\ -\/\ dstIdx;}
-\DoxyCodeLine{00594\ }
-\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keywordtype}{int}\ dstPos\ =\ 0;}
-\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ subBlockInHeight;\ yPos++)}
-\DoxyCodeLine{00597\ \ \ \ \ \{}
-\DoxyCodeLine{00598\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ subBlockInWidth;\ xPos++)}
-\DoxyCodeLine{00599\ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ srcPos\ =\ (yPos\ <<\ 1)*srcSubBlockInWidth\ +\ (xPos\ <<\ 1);}
-\DoxyCodeLine{00601\ }
-\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][srcPos];}
-\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ 1];}
-\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ toHash[2]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ srcSubBlockInWidth];}
-\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ toHash[3]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ srcSubBlockInWidth\ +\ 1];}
-\DoxyCodeLine{00606\ }
-\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][dstPos]\ =\ TComHash::getCRCValue1((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00608\ }
-\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][srcPos];}
-\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ 1];}
-\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ toHash[2]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ srcSubBlockInWidth];}
-\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ toHash[3]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ srcSubBlockInWidth\ +\ 1];}
-\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][dstPos]\ =\ TComHash::getCRCValue2((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00614\ }
-\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ dstPos++;}
-\DoxyCodeLine{00616\ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00617\ \ \ \ \ \}}
-\DoxyCodeLine{00618\ }
-\DoxyCodeLine{00619\ \ \ \ \ srcSubBlockInWidth\ =\ subBlockInWidth;}
-\DoxyCodeLine{00620\ \ \ \ \ subBlockInWidth\ >>=\ 1;}
-\DoxyCodeLine{00621\ \ \ \ \ subBlockInHeight\ >>=\ 1;}
-\DoxyCodeLine{00622\ \ \ \}}
-\DoxyCodeLine{00623\ }
-\DoxyCodeLine{00624\ \ \ \textcolor{keywordflow}{if}\ (width\ !=\ height)\textcolor{comment}{//currently\ support\ 1:2\ or\ 2:1\ block\ size}}
-\DoxyCodeLine{00625\ \ \ \{}
-\DoxyCodeLine{00626\ \ \ \ \ CHECK(width\ !=\ (height\ <<\ 1)\ \&\&\ (width\ <<\ 1)\ !=\ height,\ \textcolor{stringliteral}{"{}Wrong"{}})}
-\DoxyCodeLine{00627\ \ \ \ \ \textcolor{keywordtype}{bool}\ isHorizontal\ =\ width\ ==\ (height\ <<\ 1)\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00628\ \ \ \ \ length\ =\ 2\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
-\DoxyCodeLine{00629\ \ \ \ \ srcIdx\ =\ 1\ -\/\ srcIdx;}
-\DoxyCodeLine{00630\ \ \ \ \ dstIdx\ =\ 1\ -\/\ dstIdx;}
-\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordflow}{if}\ (isHorizontal)}
-\DoxyCodeLine{00632\ \ \ \ \ \{}
-\DoxyCodeLine{00633\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][0];}
-\DoxyCodeLine{00634\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][1];}
-\DoxyCodeLine{00635\ }
-\DoxyCodeLine{00636\ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][0]\ =\ TComHash::getCRCValue1((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00637\ }
-\DoxyCodeLine{00638\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][0];}
-\DoxyCodeLine{00639\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][1];}
-\DoxyCodeLine{00640\ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][0]\ =\ TComHash::getCRCValue2((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00641\ \ \ \ \ \}}
-\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00643\ \ \ \ \ \{}
-\DoxyCodeLine{00644\ \ \ \ \ \ \ CHECK(srcSubBlockInWidth\ !=\ 1,\ \textcolor{stringliteral}{"{}Wrong"{}})}
-\DoxyCodeLine{00645\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][0];}
-\DoxyCodeLine{00646\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][srcSubBlockInWidth];}
-\DoxyCodeLine{00647\ }
-\DoxyCodeLine{00648\ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][0]\ =\ TComHash::getCRCValue1((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00649\ }
-\DoxyCodeLine{00650\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][0];}
-\DoxyCodeLine{00651\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][srcSubBlockInWidth];}
-\DoxyCodeLine{00652\ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][0]\ =\ TComHash::getCRCValue2((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
-\DoxyCodeLine{00653\ \ \ \ \ \}}
-\DoxyCodeLine{00654\ \ \ \}}
-\DoxyCodeLine{00655\ }
-\DoxyCodeLine{00656\ \ \ hashValue1\ =\ (hashValueBuffer[0][dstIdx][0]\ \&\ crcMask)\ +\ addValue;}
-\DoxyCodeLine{00657\ \ \ hashValue2\ =\ hashValueBuffer[1][dstIdx][0];}
-\DoxyCodeLine{00658\ }
-\DoxyCodeLine{00659\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
-\DoxyCodeLine{00660\ \ \ \{}
-\DoxyCodeLine{00661\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
-\DoxyCodeLine{00662\ \ \ \ \ \{}
-\DoxyCodeLine{00663\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ hashValueBuffer[i][j];}
-\DoxyCodeLine{00664\ \ \ \ \ \}}
-\DoxyCodeLine{00665\ \ \ \}}
-\DoxyCodeLine{00666\ }
-\DoxyCodeLine{00667\ \ \ \textcolor{keyword}{delete}[]\ p;}
-\DoxyCodeLine{00668\ }
-\DoxyCodeLine{00669\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00670\ \}}
-\DoxyCodeLine{00671\ }
-\DoxyCodeLine{00672\ \textcolor{keywordtype}{void}\ TComHash::initBlockSizeToIndex()}
-\DoxyCodeLine{00673\ \{}
-\DoxyCodeLine{00674\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 65;\ i++)}
-\DoxyCodeLine{00675\ \ \ \{}
-\DoxyCodeLine{00676\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 65;\ j++)}
-\DoxyCodeLine{00677\ \ \ \ \ \{}
-\DoxyCodeLine{00678\ \ \ \ \ \ \ m\_blockSizeToIndex[i][j]\ =\ -\/1;}
-\DoxyCodeLine{00679\ \ \ \ \ \}}
-\DoxyCodeLine{00680\ \ \ \}}
-\DoxyCodeLine{00681\ }
-\DoxyCodeLine{00682\ \ \ m\_blockSizeToIndex[8][8]\ =\ 0;}
-\DoxyCodeLine{00683\ \ \ m\_blockSizeToIndex[16][16]\ =\ 1;}
-\DoxyCodeLine{00684\ \ \ m\_blockSizeToIndex[32][32]\ =\ 2;}
-\DoxyCodeLine{00685\ \ \ m\_blockSizeToIndex[64][64]\ =\ 3;}
-\DoxyCodeLine{00686\ \ \ m\_blockSizeToIndex[4][4]\ =\ 4;}
-\DoxyCodeLine{00687\ \}}
-\DoxyCodeLine{00688\ }
-\DoxyCodeLine{00689\ uint32\_t\ TComHash::getCRCValue1(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{int}\ length)}
-\DoxyCodeLine{00690\ \{}
-\DoxyCodeLine{00691\ \ \ m\_crcCalculator1.reset();}
-\DoxyCodeLine{00692\ \ \ m\_crcCalculator1.processData(p,\ length);}
-\DoxyCodeLine{00693\ \ \ \textcolor{keywordflow}{return}\ m\_crcCalculator1.getCRC();}
-\DoxyCodeLine{00694\ \}}
-\DoxyCodeLine{00695\ }
-\DoxyCodeLine{00696\ uint32\_t\ TComHash::getCRCValue2(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{int}\ length)}
-\DoxyCodeLine{00697\ \{}
-\DoxyCodeLine{00698\ \ \ m\_crcCalculator2.reset();}
-\DoxyCodeLine{00699\ \ \ m\_crcCalculator2.processData(p,\ length);}
-\DoxyCodeLine{00700\ \ \ \textcolor{keywordflow}{return}\ m\_crcCalculator2.getCRC();}
-\DoxyCodeLine{00701\ \}}
-\DoxyCodeLine{00703\ }
-\DoxyCodeLine{00704\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00001}00001\ \textcolor{comment}{/*\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00002}00002\ \textcolor{comment}{\ *\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00003}00003\ \textcolor{comment}{\ *\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00004}00004\ \textcolor{comment}{\ *\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00005}00005\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00006}00006\ \textcolor{comment}{\ *\ Copyright\ (c)\ 2010-\/2020,\ ITU/ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00007}00007\ \textcolor{comment}{\ *\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00008}00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00009}00009\ \textcolor{comment}{\ *\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00010}00010\ \textcolor{comment}{\ *\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00011}00011\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00012}00012\ \textcolor{comment}{\ *\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00013}00013\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00014}00014\ \textcolor{comment}{\ *\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00015}00015\ \textcolor{comment}{\ *\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00016}00016\ \textcolor{comment}{\ *\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00017}00017\ \textcolor{comment}{\ *\ \ *\ Neither\ the\ name\ of\ the\ ITU/ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00018}00018\ \textcolor{comment}{\ *\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00019}00019\ \textcolor{comment}{\ *\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00020}00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00021}00021\ \textcolor{comment}{\ *\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00022}00022\ \textcolor{comment}{\ *\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00023}00023\ \textcolor{comment}{\ *\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00024}00024\ \textcolor{comment}{\ *\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00025}00025\ \textcolor{comment}{\ *\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00026}00026\ \textcolor{comment}{\ *\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00027}00027\ \textcolor{comment}{\ *\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00028}00028\ \textcolor{comment}{\ *\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00029}00029\ \textcolor{comment}{\ *\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00030}00030\ \textcolor{comment}{\ *\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00031}00031\ \textcolor{comment}{\ *\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00032}00032\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00037}00037\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{dtrace__codingstruct_8h}{CommonLib/dtrace\_codingstruct.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00038}00038\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Picture_8h}{CommonLib/Picture.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00039}00039\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{UnitTools_8h}{CommonLib/UnitTools.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Hash_8h}{Hash.h}}"{}}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00042}00042\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacevtm}{vtm}}\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00044}00044\ \ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00045}00045\ \ \textcolor{comment}{//\ Constructor\ /\ destructor\ /\ create\ /\ destroy}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00046}00046\ \ \textcolor{comment}{//\ ====================================================================================================================}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00048}00048\ \textcolor{keywordtype}{int}\ TComHash::m\_blockSizeToIndex[65][65];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00049}00049\ TCRCCalculatorLight\ TComHash::m\_crcCalculator1(24,\ 0x5D6DCB);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00050}00050\ TCRCCalculatorLight\ TComHash::m\_crcCalculator2(24,\ 0x864CFB);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00052}\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a8b012172a67f971a5162a794e65e8993}{00052}}\ \mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a8b012172a67f971a5162a794e65e8993}{TCRCCalculatorLight::TCRCCalculatorLight}}(uint32\_t\ bits,\ uint32\_t\ truncPoly)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00053}00053\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00054}00054\ \ \ m\_remainder\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00055}00055\ \ \ m\_bits\ =\ bits;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00056}00056\ \ \ m\_truncPoly\ =\ truncPoly;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00057}00057\ \ \ m\_finalResultMask\ =\ (1\ <<\ bits)\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00059}00059\ \ \ xInitTable();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00060}00060\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00062}\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_aad29ee55ee886d605b2750cad1e2994d}{00062}}\ \mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_aad29ee55ee886d605b2750cad1e2994d}{TCRCCalculatorLight::\string~TCRCCalculatorLight}}()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00063}00063\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00065}00065\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00067}00067\ \textcolor{keywordtype}{void}\ TCRCCalculatorLight::xInitTable()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00068}00068\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00069}00069\ \ \ \textcolor{keyword}{const}\ uint32\_t\ highBit\ =\ 1\ <<\ (m\_bits\ -\/\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00070}00070\ \ \ \textcolor{keyword}{const}\ uint32\_t\ byteHighBit\ =\ 1\ <<\ (8\ -\/\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00072}00072\ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ value\ =\ 0;\ value\ <\ 256;\ value++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00073}00073\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00074}00074\ \ \ \ \ uint32\_t\ remainder\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00075}00075\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ mask\ =\ byteHighBit;\ mask\ !=\ 0;\ mask\ >>=\ 1)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00076}00076\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00077}00077\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\ \&\ mask)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00078}00078\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00079}00079\ \ \ \ \ \ \ \ \ remainder\ \string^=\ highBit;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00080}00080\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00082}00082\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (remainder\ \&\ highBit)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00083}00083\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00084}00084\ \ \ \ \ \ \ \ \ remainder\ <<=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ remainder\ \string^=\ m\_truncPoly;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00086}00086\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00087}00087\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00088}00088\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ remainder\ <<=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00090}00090\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00091}00091\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00093}00093\ \ \ \ \ m\_table[\mbox{\hyperlink{namespacecxxopts_a6b58e451713ebbf12866c1cd8e0a66ab}{value}}]\ =\ remainder;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00094}00094\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00095}00095\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00097}\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_ae796535f09d5c6261c6ade805f995451}{00097}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_ae796535f09d5c6261c6ade805f995451}{TCRCCalculatorLight::processData}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ curData,\ uint32\_t\ dataLength)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00098}00098\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00099}00099\ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ i\ <\ dataLength;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00100}00100\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00101}00101\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ index\ =\ (m\_remainder\ >>\ (m\_bits\ -\/\ 8))\ \string^\ curData[i];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00102}00102\ \ \ \ \ m\_remainder\ <<=\ 8;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00103}00103\ \ \ \ \ m\_remainder\ \string^=\ m\_table[index];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00104}00104\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00105}00105\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00106}00106\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00108}\mbox{\hyperlink{structvtm_1_1TComHash_a84ee2a9deda5660005b475fa0e73402b}{00108}}\ \mbox{\hyperlink{structvtm_1_1TComHash_a84ee2a9deda5660005b475fa0e73402b}{TComHash::TComHash}}()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00109}00109\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00110}00110\ \ \ m\_lookupTable\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00111}00111\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00112}00112\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 5;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00113}00113\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00114}00114\ \ \ \ \ hashPic[i]\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00115}00115\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00116}00116\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00118}\mbox{\hyperlink{structvtm_1_1TComHash_aa0584d29c0ab0d89469ea8eb99b1ff8f}{00118}}\ \mbox{\hyperlink{structvtm_1_1TComHash_aa0584d29c0ab0d89469ea8eb99b1ff8f}{TComHash::\string~TComHash}}()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00119}00119\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00120}00120\ \ \ \mbox{\hyperlink{structvtm_1_1TComHash_a7ee47b2dff18a474269ef4e1ead35130}{clearAll}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00121}00121\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable\ !=\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00122}00122\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00123}00123\ \ \ \ \ \textcolor{keyword}{delete}[]\ m\_lookupTable;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00124}00124\ \ \ \ \ m\_lookupTable\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00125}00125\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00126}00126\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00127}\mbox{\hyperlink{structvtm_1_1TComHash_aaec310f89355968819881a631aa9e71d}{00127}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_aaec310f89355968819881a631aa9e71d}{TComHash::create}}(\textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00128}00128\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00129}00129\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00130}00130\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00131}00131\ \ \ \ \ \mbox{\hyperlink{structvtm_1_1TComHash_a7ee47b2dff18a474269ef4e1ead35130}{clearAll}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00132}00132\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00133}00133\ \ \ \textcolor{keywordflow}{if}\ (!hashPic[0])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00134}00134\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00135}00135\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00136}00136\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00137}00137\ \ \ \ \ \ \ hashPic[k]\ =\ \textcolor{keyword}{new}\ uint16\_t[picWidth*picHeight];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00138}00138\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00139}00139\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00140}00140\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00141}00141\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00142}00142\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00143}00143\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00144}00144\ \ \ \textcolor{keywordtype}{int}\ maxAddr\ =\ 1\ <<\ (m\_CRCBits\ +\ m\_blockSizeBits);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00145}00145\ \ \ m\_lookupTable\ =\ \textcolor{keyword}{new}\ std::vector<BlockHash>*[maxAddr];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00146}00146\ \ \ memset(m\_lookupTable,\ 0,\ \textcolor{keyword}{sizeof}(std::vector<BlockHash>*)\ *\ maxAddr);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00147}00147\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00148}00148\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00150}\mbox{\hyperlink{structvtm_1_1TComHash_a7ee47b2dff18a474269ef4e1ead35130}{00150}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_a7ee47b2dff18a474269ef4e1ead35130}{TComHash::clearAll}}()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00151}00151\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00152}00152\ \ \ \textcolor{keywordflow}{if}\ (hashPic[0])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00153}00153\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00154}00154\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 5;\ k++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00155}00155\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00156}00156\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ hashPic[k];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00157}00157\ \ \ \ \ \ \ hashPic[k]\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00158}00158\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00159}00159\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00160}00160\ \ \ tableHasContent\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00161}00161\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00162}00162\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00163}00163\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00164}00164\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00165}00165\ \ \ \textcolor{keywordtype}{int}\ maxAddr\ =\ 1\ <<\ (m\_CRCBits\ +\ m\_blockSizeBits);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00166}00166\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ maxAddr;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00167}00167\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00168}00168\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[i]\ !=\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00169}00169\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00170}00170\ \ \ \ \ \ \ \textcolor{keyword}{delete}\ m\_lookupTable[i];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00171}00171\ \ \ \ \ \ \ m\_lookupTable[i]\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00172}00172\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00173}00173\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00174}00174\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00176}\mbox{\hyperlink{structvtm_1_1TComHash_a0402d9fcde70d56f041ac61c383afc74}{00176}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_a0402d9fcde70d56f041ac61c383afc74}{TComHash::addToTable}}(uint32\_t\ hashValue,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1BlockHash}{BlockHash}}\&\ blockHash)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00177}00177\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00178}00178\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00179}00179\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00180}00180\ \ \ \ \ m\_lookupTable[hashValue]\ =\ \textcolor{keyword}{new}\ std::vector<BlockHash>;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00181}00181\ \ \ \ \ m\_lookupTable[hashValue]-\/>push\_back(blockHash);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00182}00182\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00183}00183\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00184}00184\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00185}00185\ \ \ \ \ m\_lookupTable[hashValue]-\/>push\_back(blockHash);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00186}00186\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00187}00187\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00188}00188\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00189}\mbox{\hyperlink{structvtm_1_1TComHash_a8c32e10c970e26b3ace9f3480c1a4dac}{00189}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structvtm_1_1TComHash_a8c32e10c970e26b3ace9f3480c1a4dac}{TComHash::count}}(uint32\_t\ hashValue)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00190}00190\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00191}00191\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00192}00192\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00193}00193\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00194}00194\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00195}00195\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00196}00196\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00197}00197\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(m\_lookupTable[hashValue]-\/>size());}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00198}00198\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00199}00199\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00200}00200\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00201}\mbox{\hyperlink{structvtm_1_1TComHash_ae55c03922741329352fa2296e676badf}{00201}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structvtm_1_1TComHash_a8c32e10c970e26b3ace9f3480c1a4dac}{TComHash::count}}(uint32\_t\ hashValue)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00202}00202\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00203}00203\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue]\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00204}00204\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00205}00205\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00206}00206\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00207}00207\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00208}00208\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00209}00209\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(m\_lookupTable[hashValue]-\/>size());}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00210}00210\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00211}00211\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00213}\mbox{\hyperlink{structvtm_1_1TComHash_a4af9c07f6e0b67f144821dd69641671c}{00213}}\ \mbox{\hyperlink{namespacevtm_a7c0e820ddb173e2a463c0938ab82995b}{MapIterator}}\ \mbox{\hyperlink{structvtm_1_1TComHash_a4af9c07f6e0b67f144821dd69641671c}{TComHash::getFirstIterator}}(uint32\_t\ hashValue)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00214}00214\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00215}00215\ \ \ \textcolor{keywordflow}{return}\ m\_lookupTable[hashValue]-\/>begin();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00216}00216\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00217}00217\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00218}\mbox{\hyperlink{structvtm_1_1TComHash_a75a0118da28340814c3e67a1130090ef}{00218}}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_a7c0e820ddb173e2a463c0938ab82995b}{MapIterator}}\ \mbox{\hyperlink{structvtm_1_1TComHash_a4af9c07f6e0b67f144821dd69641671c}{TComHash::getFirstIterator}}(uint32\_t\ hashValue)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00219}00219\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00220}00220\ \ \ \textcolor{keywordflow}{return}\ m\_lookupTable[hashValue]-\/>begin();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00221}00221\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00223}\mbox{\hyperlink{structvtm_1_1TComHash_a0107108d4bdbf307ba52a0b86e6f27c0}{00223}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_a0107108d4bdbf307ba52a0b86e6f27c0}{TComHash::hasExactMatch}}(uint32\_t\ hashValue1,\ uint32\_t\ hashValue2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00224}00224\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00225}00225\ \ \ \textcolor{keywordflow}{if}\ (m\_lookupTable[hashValue1]\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00226}00226\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00227}00227\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00228}00228\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00229}00229\ \ \ std::vector<BlockHash>::iterator\ it;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00230}00230\ \ \ \textcolor{keywordflow}{for}\ (it\ =\ m\_lookupTable[hashValue1]-\/>begin();\ it\ !=\ m\_lookupTable[hashValue1]-\/>end();\ it++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00231}00231\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00232}00232\ \ \ \ \ \textcolor{keywordflow}{if}\ ((*it).hashValue2\ ==\ hashValue2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00233}00233\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00234}00234\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00235}00235\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00236}00236\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00237}00237\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00238}00238\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00240}\mbox{\hyperlink{structvtm_1_1TComHash_a3c4c7d20d822b92e3240021e136daede}{00240}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_a3c4c7d20d822b92e3240021e136daede}{TComHash::generateBlock2x2HashValue}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \&curPicBuf,\ \textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1BitDepths}{BitDepths}}\ bitDepths,\ uint32\_t*\ picBlockHash[2],\ \textcolor{keywordtype}{bool}*\ picBlockSameInfo[3])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00241}00241\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00242}00242\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ width\ =\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00243}00243\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ height\ =\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00244}00244\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00245}00245\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00246}00246\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00247}00247\ \ \ \textcolor{keywordtype}{int}\ length\ =\ width\ *\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00248}00248\ \ \ \textcolor{keywordtype}{bool}\ includeChroma\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00249}00249\ \ \ \textcolor{keywordflow}{if}\ ((curPicBuf).chromaFormat\ ==\ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6a0c855a977fb87ee6e2948b27d8a0abe4}{CHROMA\_444}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00250}00250\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00251}00251\ \ \ \ \ length\ *=\ 3;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00252}00252\ \ \ \ \ includeChroma\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00253}00253\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00254}00254\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}[length];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00255}00255\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00256}00256\ \ \ \textcolor{keywordtype}{int}\ pos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00257}00257\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00258}00258\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00259}00259\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00260}00260\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00261}00261\ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1TComHash_a628546bf67b34f9050877650e7328ac5}{TComHash::getPixelsIn1DCharArrayByBlock2x2}}(curPicBuf,\ p,\ xPos,\ yPos,\ bitDepths,\ includeChroma);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00262}00262\ \ \ \ \ \ \ picBlockSameInfo[0][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a43823ecc9b679e45db2f21dfcf70075e}{isBlock2x2RowSameValue}}(p,\ includeChroma);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00263}00263\ \ \ \ \ \ \ picBlockSameInfo[1][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_ac68a1d890b6c8448f63faeb3d2e7e806}{isBlock2x2ColSameValue}}(p,\ includeChroma);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00264}00264\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00265}00265\ \ \ \ \ \ \ picBlockHash[0][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00266}00266\ \ \ \ \ \ \ picBlockHash[1][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00268}00268\ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00269}00269\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00270}00270\ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00271}00271\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00272}00272\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00273}00273\ \ \ \textcolor{keyword}{delete}[]\ p;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00274}00274\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00275}00275\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00276}\mbox{\hyperlink{structvtm_1_1TComHash_ac1e13a061e420597181a8306cb0f3b5b}{00276}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_ac1e13a061e420597181a8306cb0f3b5b}{TComHash::generateBlockHashValue}}(\textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ uint32\_t*\ srcPicBlockHash[2],\ uint32\_t*\ dstPicBlockHash[2],\ \textcolor{keywordtype}{bool}*\ srcPicBlockSameInfo[3],\ \textcolor{keywordtype}{bool}*\ dstPicBlockSameInfo[3])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00277}00277\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00278}00278\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00279}00279\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00281}00281\ \ \ \textcolor{keywordtype}{int}\ srcWidth\ =\ width\ >>\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00282}00282\ \ \ \textcolor{keywordtype}{int}\ quadWidth\ =\ width\ >>\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00283}00283\ \ \ \textcolor{keywordtype}{int}\ srcHeight\ =\ height\ >>\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00284}00284\ \ \ \textcolor{keywordtype}{int}\ quadHeight\ =\ height\ >>\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00285}00285\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00286}00286\ \ \ \textcolor{keywordtype}{int}\ length\ =\ 4\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00287}00287\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00288}00288\ \ \ uint32\_t\ p[4];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00289}00289\ \ \ \textcolor{keywordtype}{int}\ pos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00290}00290\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00291}00291\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00292}00292\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00293}00293\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00294}00294\ \ \ \ \ \ \ p[0]\ =\ srcPicBlockHash[0][pos];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00295}00295\ \ \ \ \ \ \ p[1]\ =\ srcPicBlockHash[0][pos\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00296}00296\ \ \ \ \ \ \ p[2]\ =\ srcPicBlockHash[0][pos\ +\ srcHeight\ *\ picWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00297}00297\ \ \ \ \ \ \ p[3]\ =\ srcPicBlockHash[0][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00298}00298\ \ \ \ \ \ \ dstPicBlockHash[0][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)p,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00299}00299\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00300}00300\ \ \ \ \ \ \ p[0]\ =\ srcPicBlockHash[1][pos];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00301}00301\ \ \ \ \ \ \ p[1]\ =\ srcPicBlockHash[1][pos\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00302}00302\ \ \ \ \ \ \ p[2]\ =\ srcPicBlockHash[1][pos\ +\ srcHeight\ *\ picWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00303}00303\ \ \ \ \ \ \ p[3]\ =\ srcPicBlockHash[1][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00304}00304\ \ \ \ \ \ \ dstPicBlockHash[1][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)p,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00305}00305\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00306}00306\ \ \ \ \ \ \ dstPicBlockSameInfo[0][pos]\ =\ srcPicBlockSameInfo[0][pos]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ quadWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcWidth]}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth\ +\ quadWidth]\ \&\&\ srcPicBlockSameInfo[0][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00308}00308\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00309}00309\ \ \ \ \ \ \ dstPicBlockSameInfo[1][pos]\ =\ srcPicBlockSameInfo[1][pos]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ quadHeight\ *\ picWidth]}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \&\&\ srcPicBlockSameInfo[1][pos\ +\ quadHeight\ *\ picWidth\ +\ srcWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcHeight\ *\ picWidth]\ \&\&\ srcPicBlockSameInfo[1][pos\ +\ srcHeight\ *\ picWidth\ +\ srcWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00311}00311\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00312}00312\ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00313}00313\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00314}00314\ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00315}00315\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00316}00316\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00317}00317\ \ \ \textcolor{keywordflow}{if}\ (width\ >=\ 4)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00318}00318\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00319}00319\ \ \ \ \ pos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00320}00320\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00321}00321\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00322}00322\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00323}00323\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00324}00324\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00325}00325\ \ \ \ \ \ \ \ \ dstPicBlockSameInfo[2][pos]\ =\ (!dstPicBlockSameInfo[0][pos]\ \&\&\ !dstPicBlockSameInfo[1][pos]);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00326}00326\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00327}00327\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00328}00328\ \ \ \ \ \ \ pos\ +=\ width\ -\/\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00329}00329\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00330}00330\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00331}00331\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00332}00332\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00333}\mbox{\hyperlink{structvtm_1_1TComHash_a94bf699883ae25b715853249cd22c735}{00333}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_a94bf699883ae25b715853249cd22c735}{TComHash::addToHashMapByRowWithPrecalData}}(uint32\_t*\ picHash[2],\ \textcolor{keywordtype}{bool}*\ picIsSame,\ \textcolor{keywordtype}{int}\ picWidth,\ \textcolor{keywordtype}{int}\ picHeight,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00334}00334\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00335}00335\ \ \ \textcolor{keywordtype}{int}\ xEnd\ =\ picWidth\ -\/\ width\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00336}00336\ \ \ \textcolor{keywordtype}{int}\ yEnd\ =\ picHeight\ -\/\ height\ +\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00337}00337\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00338}00338\ \ \ \textcolor{keywordtype}{bool}*\ srcIsAdded\ =\ picIsSame;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00339}00339\ \ \ uint32\_t*\ srcHash[2]\ =\ \{\ picHash[0],\ picHash[1]\ \};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00340}00340\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00341}00341\ \ \ \textcolor{keywordtype}{int}\ addValue\ =\ m\_blockSizeToIndex[width][height];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00342}00342\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(addValue\ <\ 0,\ \textcolor{stringliteral}{"{}Wrong"{}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00343}00343\ \ \ addValue\ <<=\ m\_CRCBits;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00344}00344\ \ \ \textcolor{keywordtype}{int}\ crcMask\ =\ 1\ <<\ m\_CRCBits;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00345}00345\ \ \ crcMask\ -\/=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00346}00346\ \ \ \textcolor{keywordtype}{int}\ blockIdx\ =\ floorLog2(width)\ -\/\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00347}00347\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00348}00348\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ xEnd;\ xPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00349}00349\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00350}00350\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ yEnd;\ yPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00351}00351\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00352}00352\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pos\ =\ yPos\ *\ picWidth\ +\ xPos;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00353}00353\ \ \ \ \ \ \ hashPic[blockIdx][pos]\ =\ (uint16\_t)(srcHash[1][pos]\ \&\ crcMask);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00354}00354\ \ \ \ \ \ \ \textcolor{comment}{//valid\ data}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00355}00355\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcIsAdded[pos])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00356}00356\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1BlockHash}{BlockHash}}\ blockHash;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00358}00358\ \ \ \ \ \ \ \ \ blockHash.\mbox{\hyperlink{structvtm_1_1BlockHash_a58ed701c694fcb8b848a651be15214ca}{x}}\ =\ xPos;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00359}00359\ \ \ \ \ \ \ \ \ blockHash.\mbox{\hyperlink{structvtm_1_1BlockHash_afface7d35029738818cd021b1421bf27}{y}}\ =\ yPos;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00360}00360\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00361}00361\ \ \ \ \ \ \ \ \ uint32\_t\ hashValue1\ =\ (srcHash[0][pos]\ \&\ crcMask)\ +\ addValue;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00362}00362\ \ \ \ \ \ \ \ \ blockHash.\mbox{\hyperlink{structvtm_1_1BlockHash_af5f4d0f611e108c074e052bd43cab1f1}{hashValue2}}\ =\ srcHash[1][pos];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00363}00363\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00364}00364\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1TComHash_a0402d9fcde70d56f041ac61c383afc74}{addToTable}}(hashValue1,\ blockHash);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00365}00365\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00366}00366\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00367}00367\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00368}00368\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00369}00369\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00370}\mbox{\hyperlink{structvtm_1_1TComHash_a628546bf67b34f9050877650e7328ac5}{00370}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_a628546bf67b34f9050877650e7328ac5}{TComHash::getPixelsIn1DCharArrayByBlock2x2}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \&curPicBuf,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ pixelsIn1D,\ \textcolor{keywordtype}{int}\ xStart,\ \textcolor{keywordtype}{int}\ yStart,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1BitDepths}{BitDepths}}\&\ bitDepths,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00371}00371\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00372}00372\ \ \ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6}{ChromaFormat}}\ fmt\ =\ (curPicBuf).chromaFormat;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00373}00373\ \ \ \textcolor{keywordflow}{if}\ (fmt\ !=\ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6a0c855a977fb87ee6e2948b27d8a0abe4}{CHROMA\_444}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00374}00374\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00375}00375\ \ \ \ \ includeAllComponent\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00376}00376\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00377}00377\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00378}00378\ \ \ \textcolor{keywordflow}{if}\ (bitDepths.\mbox{\hyperlink{structvtm_1_1BitDepths_acf139738f4e7df2494c9ab764cf33289}{recon}}[\mbox{\hyperlink{namespacevtm_ae55eb169b1f87620662a35628ecf373ba2deb7c59851b873a9e995a857660f219}{CHANNEL\_TYPE\_LUMA}}]\ ==\ 8\ \&\&\ bitDepths.\mbox{\hyperlink{structvtm_1_1BitDepths_acf139738f4e7df2494c9ab764cf33289}{recon}}[\mbox{\hyperlink{namespacevtm_ae55eb169b1f87620662a35628ecf373ba3b2601474b83fa8aa3112d2ee74c3cf7}{CHANNEL\_TYPE\_CHROMA}}]\ ==\ 8)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00379}00379\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00380}00380\ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ curPel[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]=\{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00381}00381\ \ \ \ \ \textcolor{keywordtype}{int}\ stride[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]=\{0\};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00382}00382\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxComponent=includeAllComponent?\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}:1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00383}00383\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00384}00384\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0;\ \textcolor{keywordtype}{id}\ <\ maxComponent;\ \textcolor{keywordtype}{id}++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00385}00385\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00386}00386\ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compID\ =\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(\textcolor{keywordtype}{id});}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00387}00387\ \ \ \ \ \ \ stride[id]\ =\ (curPicBuf).get(compID).stride;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00388}00388\ \ \ \ \ \ \ curPel[id]\ =\ (curPicBuf).get(compID).buf;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00389}00389\ \ \ \ \ \ \ curPel[id]\ +=\ (yStart\ >>\ getComponentScaleY(compID,\ fmt))\ *\ stride[\textcolor{keywordtype}{id}]\ +\ (xStart\ >>\ getComponentScaleX(compID,\ fmt));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00390}00390\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00391}00391\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00392}00392\ \ \ \ \ \textcolor{keywordtype}{int}\ index\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00393}00393\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00394}00394\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00395}00395\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00396}00396\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00397}00397\ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[0][j]);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00398}00398\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00399}00399\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00400}00400\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[1][j]);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00401}00401\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[2][j]);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00402}00402\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00403}00403\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00404}00404\ \ \ \ \ \ \ curPel[0]\ +=\ stride[0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00405}00405\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00406}00406\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00407}00407\ \ \ \ \ \ \ \ \ curPel[1]\ +=\ stride[1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00408}00408\ \ \ \ \ \ \ \ \ curPel[2]\ +=\ stride[2];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00409}00409\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00410}00410\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00411}00411\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00412}00412\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00413}00413\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00414}00414\ \ \ \ \ \textcolor{keywordtype}{int}\ shift\ =\ bitDepths.\mbox{\hyperlink{structvtm_1_1BitDepths_acf139738f4e7df2494c9ab764cf33289}{recon}}[\mbox{\hyperlink{namespacevtm_ae55eb169b1f87620662a35628ecf373ba2deb7c59851b873a9e995a857660f219}{CHANNEL\_TYPE\_LUMA}}]\ -\/\ 8;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00415}00415\ \ \ \ \ \textcolor{keywordtype}{int}\ shiftc\ =\ includeAllComponent\ ?\ (bitDepths.\mbox{\hyperlink{structvtm_1_1BitDepths_acf139738f4e7df2494c9ab764cf33289}{recon}}[\mbox{\hyperlink{namespacevtm_ae55eb169b1f87620662a35628ecf373ba3b2601474b83fa8aa3112d2ee74c3cf7}{CHANNEL\_TYPE\_CHROMA}}]\ -\/\ 8)\ :\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00416}00416\ \ \ \ \ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ curPel[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]=\{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00417}00417\ \ \ \ \ \textcolor{keywordtype}{int}\ stride[\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}]=\{0\};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00418}00418\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ maxComponent=includeAllComponent?\mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658da78177149afd99180499ce762d0cbe443}{MAX\_NUM\_COMPONENT}}:1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00419}00419\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00420}00420\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ 0;\ \textcolor{keywordtype}{id}\ <\ maxComponent;\ \textcolor{keywordtype}{id}++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00421}00421\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00422}00422\ \ \ \ \ \ \ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}\ compID\ =\ \mbox{\hyperlink{namespacevtm_aba9b748715e5ebce1f0b519ca08a658d}{ComponentID}}(\textcolor{keywordtype}{id});}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00423}00423\ \ \ \ \ \ \ stride[id]\ =\ (curPicBuf).get(compID).stride;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00424}00424\ \ \ \ \ \ \ curPel[id]\ =\ (curPicBuf).get(compID).buf;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00425}00425\ \ \ \ \ \ \ curPel[id]\ +=\ (yStart\ >>\ getComponentScaleY(compID,\ fmt))\ *\ stride[\textcolor{keywordtype}{id}]\ +\ (xStart\ >>\ getComponentScaleX(compID,\ fmt));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00426}00426\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00427}00427\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00428}00428\ \ \ \ \ \textcolor{keywordtype}{int}\ index\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00429}00429\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00430}00430\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00431}00431\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00432}00432\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00433}00433\ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[0][j]\ >>\ shift);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00434}00434\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00435}00435\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00436}00436\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[1][j]\ >>\ shiftc);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00437}00437\ \ \ \ \ \ \ \ \ \ \ pixelsIn1D[index++]\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\textcolor{keyword}{>}(curPel[2][j]\ >>\ shiftc);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00438}00438\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00439}00439\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00440}00440\ \ \ \ \ \ \ curPel[0]\ +=\ stride[0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00441}00441\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00442}00442\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00443}00443\ \ \ \ \ \ \ \ \ curPel[1]\ +=\ stride[1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00444}00444\ \ \ \ \ \ \ \ \ curPel[2]\ +=\ stride[2];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00445}00445\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00446}00446\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00447}00447\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00448}00448\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00449}00449\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00450}\mbox{\hyperlink{structvtm_1_1TComHash_a43823ecc9b679e45db2f21dfcf70075e}{00450}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_a43823ecc9b679e45db2f21dfcf70075e}{TComHash::isBlock2x2RowSameValue}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00451}00451\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00452}00452\ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00453}00453\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00454}00454\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[3]\ ||\ p[6]\ !=\ p[9])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00455}00455\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00456}00456\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00457}00457\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00458}00458\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[1]\ !=\ p[4]\ ||\ p[7]\ !=\ p[10])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00459}00459\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00460}00460\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00461}00461\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00462}00462\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[2]\ !=\ p[5]\ ||\ p[8]\ !=\ p[11])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00463}00463\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00464}00464\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00465}00465\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00466}00466\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00467}00467\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00468}00468\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00469}00469\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[1]\ ||\ p[2]\ !=\ p[3])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00470}00470\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00471}00471\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00472}00472\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00473}00473\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00474}00474\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00475}00475\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00476}00476\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00477}00477\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00478}\mbox{\hyperlink{structvtm_1_1TComHash_ac68a1d890b6c8448f63faeb3d2e7e806}{00478}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_ac68a1d890b6c8448f63faeb3d2e7e806}{TComHash::isBlock2x2ColSameValue}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{bool}\ includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00479}00479\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00480}00480\ \ \ \textcolor{keywordflow}{if}\ (includeAllComponent)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00481}00481\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00482}00482\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[0]\ !=\ p[6]\ ||\ p[3]\ !=\ p[9])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00483}00483\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00484}00484\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00485}00485\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00486}00486\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[1]\ !=\ p[7]\ ||\ p[4]\ !=\ p[10])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00487}00487\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00488}00488\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00489}00489\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00490}00490\ \ \ \ \ \textcolor{keywordflow}{if}\ (p[2]\ !=\ p[8]\ ||\ p[5]\ !=\ p[11])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00491}00491\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00492}00492\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00493}00493\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00494}00494\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00495}00495\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00496}00496\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00497}00497\ \ \ \ \ \textcolor{keywordflow}{if}\ ((p[0]\ !=\ p[2])\ ||\ (p[1]\ !=\ p[3]))}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00498}00498\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00499}00499\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00500}00500\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00501}00501\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00502}00502\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00503}00503\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00504}00504\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00505}\mbox{\hyperlink{structvtm_1_1TComHash_a9567db8f994f6879769053f90b91da95}{00505}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_a9567db8f994f6879769053f90b91da95}{TComHash::isHorizontalPerfectLuma}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ srcPel,\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00506}00506\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00507}00507\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ height;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00508}00508\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00509}00509\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ width;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00510}00510\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00511}00511\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcPel[j]\ !=\ srcPel[0])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00512}00512\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00513}00513\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00514}00514\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00515}00515\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00516}00516\ \ \ \ \ srcPel\ +=\ stride;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00517}00517\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00518}00518\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00519}00519\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00520}00520\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00521}\mbox{\hyperlink{structvtm_1_1TComHash_a1a71615b4ae8fafd005bd15d78d19b06}{00521}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_a1a71615b4ae8fafd005bd15d78d19b06}{TComHash::isVerticalPerfectLuma}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacevtm_aa83e063f35f1d6bbe3854056411619c9}{Pel}}*\ srcPel,\ \textcolor{keywordtype}{int}\ stride,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00522}00522\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00523}00523\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ width;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00524}00524\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00525}00525\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 1;\ j\ <\ height;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00526}00526\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00527}00527\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (srcPel[j*stride\ +\ i]\ !=\ srcPel[i])}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00528}00528\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00529}00529\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00530}00530\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00531}00531\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00532}00532\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00533}00533\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00534}00534\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00535}\mbox{\hyperlink{structvtm_1_1TComHash_a31d923569583c9c8c522ba65b8e89a5d}{00535}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structvtm_1_1TComHash_a31d923569583c9c8c522ba65b8e89a5d}{TComHash::getBlockHashValue}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1UnitBuf}{PelUnitBuf}}\ \&curPicBuf,\ \textcolor{keywordtype}{int}\ width,\ \textcolor{keywordtype}{int}\ height,\ \textcolor{keywordtype}{int}\ xStart,\ \textcolor{keywordtype}{int}\ yStart,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structvtm_1_1BitDepths}{BitDepths}}\ bitDepths,\ uint32\_t\&\ hashValue1,\ uint32\_t\&\ hashValue2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00536}00536\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00537}00537\ \ \ \textcolor{keywordtype}{int}\ addValue\ =\ m\_blockSizeToIndex[width][height];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00538}00538\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00539}00539\ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(addValue\ <\ 0,\ \textcolor{stringliteral}{"{}Wrong"{}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00540}00540\ \ \ addValue\ <<=\ m\_CRCBits;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00541}00541\ \ \ \textcolor{keywordtype}{int}\ crcMask\ =\ 1\ <<\ m\_CRCBits;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00542}00542\ \ \ crcMask\ -\/=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00543}00543\ \ \ \textcolor{keywordtype}{int}\ length\ =\ 4;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00544}00544\ \ \ \textcolor{keywordtype}{bool}\ includeChroma\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00545}00545\ \ \ \textcolor{keywordflow}{if}\ ((curPicBuf).chromaFormat\ ==\ \mbox{\hyperlink{namespacevtm_a39730bd08e7405af203ac6de4b2511d6a0c855a977fb87ee6e2948b27d8a0abe4}{CHROMA\_444}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00546}00546\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00547}00547\ \ \ \ \ length\ *=\ 3;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00548}00548\ \ \ \ \ includeChroma\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00549}00549\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00550}00550\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00551}00551\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}[length];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00552}00552\ \ \ uint32\_t\ toHash[4];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00553}00553\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00554}00554\ \ \ \textcolor{keywordtype}{int}\ block2x2Num\ =\ (width*height)\ >>\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00555}00555\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00556}00556\ \ \ uint32\_t*\ hashValueBuffer[2][2];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00557}00557\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00558}00558\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00559}00559\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00560}00560\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00561}00561\ \ \ \ \ \ \ hashValueBuffer[i][j]\ =\ \textcolor{keyword}{new}\ uint32\_t[block2x2Num];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00562}00562\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00563}00563\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00564}00564\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00565}00565\ \ \ \textcolor{comment}{//2x2\ subblock\ hash\ values\ in\ current\ CU}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00566}00566\ \ \ \textcolor{keywordtype}{int}\ subBlockInWidth\ =\ (width\ >>\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00567}00567\ \ \ \textcolor{keywordtype}{int}\ subBlockInHeight\ =\ (height\ >>\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00568}00568\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ height;\ yPos\ +=\ 2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00569}00569\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00570}00570\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ width;\ xPos\ +=\ 2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00571}00571\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00572}00572\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ pos\ =\ (yPos\ >>\ 1)*subBlockInWidth\ +\ (xPos\ >>\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00573}00573\ \ \ \ \ \ \ \mbox{\hyperlink{structvtm_1_1TComHash_a628546bf67b34f9050877650e7328ac5}{TComHash::getPixelsIn1DCharArrayByBlock2x2}}(curPicBuf,\ p,\ xStart\ +\ xPos,\ yStart\ +\ yPos,\ bitDepths,\ includeChroma);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00574}00574\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00575}00575\ \ \ \ \ \ \ hashValueBuffer[0][0][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00576}00576\ \ \ \ \ \ \ hashValueBuffer[1][0][pos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}(p,\ length\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}));}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00577}00577\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00578}00578\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00579}00579\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00580}00580\ \ \ \textcolor{keywordtype}{int}\ srcSubBlockInWidth\ =\ subBlockInWidth;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00581}00581\ \ \ subBlockInWidth\ >>=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00582}00582\ \ \ subBlockInHeight\ >>=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00583}00583\ \ \ length\ =\ 4\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00584}00584\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00585}00585\ \ \ \textcolor{keywordtype}{int}\ srcIdx\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00586}00586\ \ \ \textcolor{keywordtype}{int}\ dstIdx\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00587}00587\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00588}00588\ \ \ \textcolor{comment}{//4x4\ subblock\ hash\ values\ to\ current\ block\ hash\ values}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00589}00589\ \ \ \textcolor{keywordtype}{int}\ minSize\ =\ std::min(height,\ width);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00590}00590\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ subWidth\ =\ 4;\ subWidth\ <=\ minSize;\ subWidth\ *=\ 2)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00591}00591\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00592}00592\ \ \ \ \ srcIdx\ =\ 1\ -\/\ srcIdx;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00593}00593\ \ \ \ \ dstIdx\ =\ 1\ -\/\ dstIdx;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00594}00594\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00595}00595\ \ \ \ \ \textcolor{keywordtype}{int}\ dstPos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00596}00596\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ yPos\ =\ 0;\ yPos\ <\ subBlockInHeight;\ yPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00597}00597\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00598}00598\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ xPos\ =\ 0;\ xPos\ <\ subBlockInWidth;\ xPos++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00599}00599\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00600}00600\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ srcPos\ =\ (yPos\ <<\ 1)*srcSubBlockInWidth\ +\ (xPos\ <<\ 1);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00601}00601\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00602}00602\ \ \ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][srcPos];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00603}00603\ \ \ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ 1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00604}00604\ \ \ \ \ \ \ \ \ toHash[2]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ srcSubBlockInWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00605}00605\ \ \ \ \ \ \ \ \ toHash[3]\ =\ hashValueBuffer[0][srcIdx][srcPos\ +\ srcSubBlockInWidth\ +\ 1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00606}00606\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00607}00607\ \ \ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][dstPos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00608}00608\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00609}00609\ \ \ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][srcPos];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00610}00610\ \ \ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ 1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00611}00611\ \ \ \ \ \ \ \ \ toHash[2]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ srcSubBlockInWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00612}00612\ \ \ \ \ \ \ \ \ toHash[3]\ =\ hashValueBuffer[1][srcIdx][srcPos\ +\ srcSubBlockInWidth\ +\ 1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00613}00613\ \ \ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][dstPos]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00614}00614\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00615}00615\ \ \ \ \ \ \ \ \ dstPos++;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00616}00616\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00617}00617\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00618}00618\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00619}00619\ \ \ \ \ srcSubBlockInWidth\ =\ subBlockInWidth;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00620}00620\ \ \ \ \ subBlockInWidth\ >>=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00621}00621\ \ \ \ \ subBlockInHeight\ >>=\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00622}00622\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00623}00623\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00624}00624\ \ \ \textcolor{keywordflow}{if}\ (width\ !=\ height)\textcolor{comment}{//currently\ support\ 1:2\ or\ 2:1\ block\ size}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00625}00625\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00626}00626\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(width\ !=\ (height\ <<\ 1)\ \&\&\ (width\ <<\ 1)\ !=\ height,\ \textcolor{stringliteral}{"{}Wrong"{}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00627}00627\ \ \ \ \ \textcolor{keywordtype}{bool}\ isHorizontal\ =\ width\ ==\ (height\ <<\ 1)\ ?\ \textcolor{keyword}{true}\ :\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00628}00628\ \ \ \ \ length\ =\ 2\ *\ \textcolor{keyword}{sizeof}(uint32\_t);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00629}00629\ \ \ \ \ srcIdx\ =\ 1\ -\/\ srcIdx;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00630}00630\ \ \ \ \ dstIdx\ =\ 1\ -\/\ dstIdx;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00631}00631\ \ \ \ \ \textcolor{keywordflow}{if}\ (isHorizontal)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00632}00632\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00633}00633\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00634}00634\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00635}00635\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00636}00636\ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][0]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00637}00637\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00638}00638\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00639}00639\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][1];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00640}00640\ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][0]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00641}00641\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00642}00642\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00643}00643\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00644}00644\ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(srcSubBlockInWidth\ !=\ 1,\ \textcolor{stringliteral}{"{}Wrong"{}})}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00645}00645\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[0][srcIdx][0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00646}00646\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[0][srcIdx][srcSubBlockInWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00647}00647\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00648}00648\ \ \ \ \ \ \ hashValueBuffer[0][dstIdx][0]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00649}00649\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00650}00650\ \ \ \ \ \ \ toHash[0]\ =\ hashValueBuffer[1][srcIdx][0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00651}00651\ \ \ \ \ \ \ toHash[1]\ =\ hashValueBuffer[1][srcIdx][srcSubBlockInWidth];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00652}00652\ \ \ \ \ \ \ hashValueBuffer[1][dstIdx][0]\ =\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)toHash,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00653}00653\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00654}00654\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00655}00655\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00656}00656\ \ \ hashValue1\ =\ (hashValueBuffer[0][dstIdx][0]\ \&\ crcMask)\ +\ addValue;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00657}00657\ \ \ hashValue2\ =\ hashValueBuffer[1][dstIdx][0];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00658}00658\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00659}00659\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 2;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00660}00660\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00661}00661\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 2;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00662}00662\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00663}00663\ \ \ \ \ \ \ \textcolor{keyword}{delete}[]\ hashValueBuffer[i][j];}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00664}00664\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00665}00665\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00666}00666\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00667}00667\ \ \ \textcolor{keyword}{delete}[]\ p;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00668}00668\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00669}00669\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00670}00670\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00671}00671\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00672}\mbox{\hyperlink{structvtm_1_1TComHash_af04cfeaa7887720e6852a59b8bab02bc}{00672}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structvtm_1_1TComHash_af04cfeaa7887720e6852a59b8bab02bc}{TComHash::initBlockSizeToIndex}}()}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00673}00673\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00674}00674\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ 65;\ i++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00675}00675\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00676}00676\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ 65;\ j++)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00677}00677\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00678}00678\ \ \ \ \ \ \ m\_blockSizeToIndex[i][j]\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00679}00679\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00680}00680\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00681}00681\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00682}00682\ \ \ m\_blockSizeToIndex[8][8]\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00683}00683\ \ \ m\_blockSizeToIndex[16][16]\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00684}00684\ \ \ m\_blockSizeToIndex[32][32]\ =\ 2;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00685}00685\ \ \ m\_blockSizeToIndex[64][64]\ =\ 3;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00686}00686\ \ \ m\_blockSizeToIndex[4][4]\ =\ 4;}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00687}00687\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00688}00688\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00689}\mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{00689}}\ uint32\_t\ \mbox{\hyperlink{structvtm_1_1TComHash_a085a2bce334c1559516c617286c531e1}{TComHash::getCRCValue1}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{int}\ length)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00690}00690\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00691}00691\ \ \ m\_crcCalculator1.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a100adb3d12bf6036c2f8eff767882058}{reset}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00692}00692\ \ \ m\_crcCalculator1.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_ae796535f09d5c6261c6ade805f995451}{processData}}(p,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00693}00693\ \ \ \textcolor{keywordflow}{return}\ m\_crcCalculator1.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a35b6ff6ada3c9a7b50d76116a886143c}{getCRC}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00694}00694\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00695}00695\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00696}\mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{00696}}\ uint32\_t\ \mbox{\hyperlink{structvtm_1_1TComHash_a7db8bab2875d80725c48538b4c5618e4}{TComHash::getCRCValue2}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{int}\ length)}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00697}00697\ \{}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00698}00698\ \ \ m\_crcCalculator2.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a100adb3d12bf6036c2f8eff767882058}{reset}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00699}00699\ \ \ m\_crcCalculator2.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_ae796535f09d5c6261c6ade805f995451}{processData}}(p,\ length);}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00700}00700\ \ \ \textcolor{keywordflow}{return}\ m\_crcCalculator2.\mbox{\hyperlink{structvtm_1_1TCRCCalculatorLight_a35b6ff6ada3c9a7b50d76116a886143c}{getCRC}}();}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00701}00701\ \}}
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00703}00703\ }
+\DoxyCodeLine{\Hypertarget{Hash_8cpp_source_l00704}00704\ \}\ \textcolor{comment}{//\ namespace\ vtm}}
 
 \end{DoxyCode}

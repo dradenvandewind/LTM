@@ -1,320 +1,320 @@
 \doxysection{Temporal\+Encode.\+cpp}
-\label{TemporalEncode_8cpp_source}\index{encoder/src/TemporalEncode.cpp@{encoder/src/TemporalEncode.cpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{TemporalEncode_8cpp_source}{}\label{TemporalEncode_8cpp_source}\index{/media/erwan/T7/formation/Video/LTM/encoder/src/TemporalEncode.cpp@{/media/erwan/T7/formation/Video/LTM/encoder/src/TemporalEncode.cpp}}
+\mbox{\hyperlink{TemporalEncode_8cpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//\ TemporalRefresh.cpp}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//\ Processes\ used\ to\ generate\ the\ various\ temporal\ refresh\ signals\ (per\ frame,\ per\ tile,\ per\ block)}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//}}
-\DoxyCodeLine{00039\ }
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ "{}TemporalEncode.hpp"{}}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ "{}Misc.hpp"{}}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ "{}TemporalDecode.hpp"{}}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <algorithm>}}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }lctm\ \{}
-\DoxyCodeLine{00048\ }
-\DoxyCodeLine{00049\ \textcolor{comment}{//\ Generate\ cost\ for\ each\ block}}
-\DoxyCodeLine{00050\ \textcolor{comment}{//}}
-\DoxyCodeLine{00051\ Surface\ TemporalCost\_2x2::process(\textcolor{keyword}{const}\ Surface\ \&sour\_plane,\ \textcolor{keyword}{const}\ Surface\ \&reco\_plane,\ \textcolor{keyword}{const}\ Surface\ *symb\_plane,}
-\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{unsigned}\ scale,\ \textcolor{keywordtype}{bool}\ intra)\ \{}
-\DoxyCodeLine{00053\ }
-\DoxyCodeLine{00054\ \ \ \ \ CHECK(sour\_plane.width()\ ==\ reco\_plane.width()\ \&\&\ sour\_plane.height()\ ==\ reco\_plane.height());}
-\DoxyCodeLine{00055\ \ \ \ \ CHECK(sour\_plane.width()\ ==\ symb\_plane[0].width()\ *\ transform\_block\_size\ \&\&}
-\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ sour\_plane.height()\ ==\ symb\_plane[0].height()\ *\ transform\_block\_size);}
-\DoxyCodeLine{00057\ }
-\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb00\ =\ symb\_plane[0].view\_as<int16\_t>();}
-\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb01\ =\ symb\_plane[1].view\_as<int16\_t>();}
-\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb02\ =\ symb\_plane[2].view\_as<int16\_t>();}
-\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb03\ =\ symb\_plane[3].view\_as<int16\_t>();}
-\DoxyCodeLine{00064\ }
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ src.width()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ src.height()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \ \ \ lambda\ \ \ \ \ =\ ((float)(scale)\ *0.6f);}
-\DoxyCodeLine{00068\ }
-\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00079\ }
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non\ zero\ coefficients\ term}}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t1\ =\ 0;}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t1\ =\ (symb00.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (intra\ ?\ 1\ :\ (symb01.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0))\ +}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb02.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb03.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{00084\ }
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Intra\ signalling\ term}}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t2\ =\ 0;}
-\DoxyCodeLine{00087\ }
-\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fCost\ =\ (float)(t0\ +\ (lambda\ \ *\ (t1\ +\ t2)));}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (fCost\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)fCost\ :\ ((1\ <<\ 15)\ -\/\ 1));}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00093\ \}}
-\DoxyCodeLine{00094\ }
-\DoxyCodeLine{00095\ Surface\ TemporalCost\_4x4::process(\textcolor{keyword}{const}\ Surface\ \&sour\_plane,\ \textcolor{keyword}{const}\ Surface\ \&reco\_plane,\ \textcolor{keyword}{const}\ Surface\ *symb\_plane,}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{unsigned}\ scale,\ \textcolor{keywordtype}{bool}\ intra)\ \{}
-\DoxyCodeLine{00097\ }
-\DoxyCodeLine{00098\ \ \ \ \ CHECK(sour\_plane.width()\ ==\ reco\_plane.width()\ \&\&\ sour\_plane.height()\ ==\ reco\_plane.height());}
-\DoxyCodeLine{00099\ \ \ \ \ CHECK(sour\_plane.width()\ ==\ symb\_plane[0].width()\ *\ transform\_block\_size\ \&\&}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ sour\_plane.height()\ ==\ symb\_plane[0].height()\ *\ transform\_block\_size);}
-\DoxyCodeLine{00101\ }
-\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb00\ =\ symb\_plane[0].view\_as<int16\_t>();}
-\DoxyCodeLine{00105\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb01\ =\ symb\_plane[1].view\_as<int16\_t>();}
-\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb02\ =\ symb\_plane[2].view\_as<int16\_t>();}
-\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb03\ =\ symb\_plane[3].view\_as<int16\_t>();}
-\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb04\ =\ symb\_plane[4].view\_as<int16\_t>();}
-\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb05\ =\ symb\_plane[5].view\_as<int16\_t>();}
-\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb06\ =\ symb\_plane[6].view\_as<int16\_t>();}
-\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb07\ =\ symb\_plane[7].view\_as<int16\_t>();}
-\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb08\ =\ symb\_plane[8].view\_as<int16\_t>();}
-\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb09\ =\ symb\_plane[9].view\_as<int16\_t>();}
-\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb10\ =\ symb\_plane[10].view\_as<int16\_t>();}
-\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb11\ =\ symb\_plane[11].view\_as<int16\_t>();}
-\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb12\ =\ symb\_plane[12].view\_as<int16\_t>();}
-\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb13\ =\ symb\_plane[13].view\_as<int16\_t>();}
-\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb14\ =\ symb\_plane[14].view\_as<int16\_t>();}
-\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb15\ =\ symb\_plane[15].view\_as<int16\_t>();}
-\DoxyCodeLine{00120\ }
-\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ src.width()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ src.height()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00123\ }
-\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
-\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
-\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00134\ }
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non\ zero\ residuals\ term}}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t1\ =\ 0;}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t1\ =\ (symb00.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb01.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb02.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb03.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb04.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (intra\ ?\ 1\ :\ (symb05.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0))\ +}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb06.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb07.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb08.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb09.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb10.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb11.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb12.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb13.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb14.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb15.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{00145\ }
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Intra\ signalling\ term}}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t2\ =\ 0;}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fCost\ =\ (float)(t0\ +\ scale\ *\ (t1\ +\ t2));}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (fCost\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)fCost\ :\ ((1\ <<\ 15)\ -\/\ 1));}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00154\ \}}
-\DoxyCodeLine{00155\ }
-\DoxyCodeLine{00156\ \textcolor{comment}{//\ Calculate\ temporal\ cost\ solely\ based\ on\ SAD,\ used\ for\ no\_enhancement\ part}}
-\DoxyCodeLine{00157\ Surface\ TemporalCost\_SAD::process(\textcolor{keyword}{const}\ Surface\ \&sour\_plane,\ \textcolor{keyword}{const}\ Surface\ \&reco\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
-\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ sour\_plane.width()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ sour\_plane.height()\ /\ transform\_block\_size;}
-\DoxyCodeLine{00160\ }
-\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{if}\ (!reco\_plane.empty())\ \{}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD}}
-\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ CHECK(sour\_plane.width()\ ==\ reco\_plane.width()\ \&\&\ sour\_plane.height()\ ==\ reco\_plane.height());}
-\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00180\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sour\_plane.bpp()\ ==\ 1)\ \{}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sum\ of\ absolute\ values\ (uint8\_t)}}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.view\_as<uint8\_t>();}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
-\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y));}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00197\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sum\ of\ absolute\ values\ (uint16\_t)}}
-\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.view\_as<uint16\_t>();}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
-\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y));}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
-\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00214\ \ \ \ \ \}}
-\DoxyCodeLine{00215\ \}}
-\DoxyCodeLine{00216\ }
-\DoxyCodeLine{00217\ \textcolor{comment}{//\ Given\ the\ new\ temporal\ buffer,\ the\ previous\ temporal\ buffer\ and\ the\ signalling\ mask\ -\/\ generate\ the\ transmitted\ residuals}}
-\DoxyCodeLine{00218\ \textcolor{comment}{//}}
-\DoxyCodeLine{00219\ Surface\ TemporalSelect::process(\textcolor{keyword}{const}\ Surface\ \&inter\_plane,\ \textcolor{keyword}{const}\ Surface\ \&intra\_plane,\ \textcolor{keyword}{const}\ Surface\ \&mask\_plane)\ \{}
-\DoxyCodeLine{00220\ }
-\DoxyCodeLine{00221\ \ \ \ \ CHECK(inter\_plane.width()\ ==\ intra\_plane.width()\ \&\&\ inter\_plane.height()\ ==\ intra\_plane.height());}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ mask\ to\ cover\ source\ images}}
-\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(mask\_plane.width(),\ inter\_plane.width());}
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(mask\_plane.height(),\ inter\_plane.height());}
-\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_w\ =\ log2(block\_w);}
-\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_h\ =\ log2(block\_h);}
-\DoxyCodeLine{00228\ }
-\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_inter\ =\ inter\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_intra\ =\ intra\_plane.view\_as<int16\_t>();}
-\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_mask\ =\ mask\_plane.view\_as<uint8\_t>();}
-\DoxyCodeLine{00232\ }
-\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ .generate(src\_inter.width(),\ src\_inter.height(),}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (src\_mask.read(x\ >>\ shift\_w,\ y\ >>\ shift\_h)\ ==\ TemporalType::TEMPORAL\_PRED)\ \{}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_inter.read(x,\ y);}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_intra.read(x,\ y);}
-\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00243\ \}}
-\DoxyCodeLine{00244\ }
-\DoxyCodeLine{00245\ \textcolor{comment}{//\ Insert\ the\ single-\/bit-\/per-\/transform\ signalling\ as\ a\ mask}}
-\DoxyCodeLine{00246\ \textcolor{comment}{//}}
-\DoxyCodeLine{00247\ Surface\ TemporalInsertMask::process(\textcolor{keyword}{const}\ Surface\ \&symbols,\ \textcolor{keyword}{const}\ Surface\ \&mask,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ refresh)\ \{}
-\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_symbols\ =\ symbols.view\_as<int16\_t>();}
-\DoxyCodeLine{00249\ }
-\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{if}\ (!mask.empty()\ \&\&\ !refresh)\ \{}
-\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ CHECK(symbols.width()\ ==\ mask.width()\ \&\&\ symbols.height()\ ==\ mask.height());}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_mask\ =\ mask.view\_as<uint8\_t>();}
-\DoxyCodeLine{00253\ }
-\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ (src\_symbols.read(x,\ y)\ *\ 2)\ |\ (src\_mask.read(x,\ y)\ ==\ TemporalType::TEMPORAL\_INTR\ ?\ 1\ :\ 0);}
-\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00260\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
-\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{\ return\ (src\_symbols.read(x,\ y)\ *\ 2);\ \})}
-\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00265\ \ \ \ \ \}}
-\DoxyCodeLine{00266\ \}}
-\DoxyCodeLine{00267\ }
-\DoxyCodeLine{00268\ \textcolor{comment}{//\ Insert\ the\ user\_data}}
-\DoxyCodeLine{00269\ \textcolor{comment}{//}}
-\DoxyCodeLine{00270\ Surface\ UserDataInsert::process(\textcolor{keyword}{const}\ Surface\ \&symbols,\ UserDataMethod\ method,\ UserDataMode\ user\_data,\ FILE*\ file)\ \{}
-\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ size;}
-\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{switch}\ (user\_data)\ \{}
-\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{case}\ UserData\_2bits:}
-\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ size\ =\ 2;}
-\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordflow}{case}\ UserData\_6bits:}
-\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ size\ =\ 6;}
-\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keywordflow}{default}:}
-\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ CHECK(0);}
-\DoxyCodeLine{00281\ \ \ \ \ \}}
-\DoxyCodeLine{00282\ }
-\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_symbols\ =\ symbols.view\_as<int16\_t>();}
-\DoxyCodeLine{00284\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
-\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
-\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
-\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ value\ =\ src\_symbols.read(x,\ y);}
-\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ bool\ sign\ =\ value\ <\ 0;}
-\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ value\_abs\ =\ std::min((uint16\_t)abs(value),\ (uint16\_t)(((uint16\_t)0x1fff)\ >>\ (size\ +\ 1)));}
-\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unsigned\ char\ data;}
-\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ switch\ (method)\ \{}
-\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Zeros:}
-\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ 0x00;}
-\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
-\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Ones:}
-\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ 0xff;}
-\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
-\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_FixedRandom:}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Random:}
-\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ Random().rand();}
-\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
-\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ default:}
-\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
-\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ \&=\ (size\ ==\ 6\ ?\ 0x3f\ :\ 0x03);}
-\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#if\ USER\_DATA\_EXTRACTION}}
-\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fwrite(\&data,\ 1,\ 1,\ file);}
-\DoxyCodeLine{00308\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(((value\_abs\ <<\ (size\ +\ 1))\ |\ data)\ |\ (sign\ <<\ size));}
-\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
-\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ .finish();}
-\DoxyCodeLine{00312\ \}}
-\DoxyCodeLine{00313\ }
-\DoxyCodeLine{00314\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00033}00033\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00035}00035\ \textcolor{comment}{//\ TemporalRefresh.cpp}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00036}00036\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00037}00037\ \textcolor{comment}{//\ Processes\ used\ to\ generate\ the\ various\ temporal\ refresh\ signals\ (per\ frame,\ per\ tile,\ per\ block)}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00038}00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00040}00040\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{TemporalEncode_8hpp}{TemporalEncode.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Misc_8hpp}{Misc.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{TemporalDecode_8hpp}{TemporalDecode.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00047}00047\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacelctm}{lctm}}\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00049}00049\ \textcolor{comment}{//\ Generate\ cost\ for\ each\ block}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00050}00050\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00051}\mbox{\hyperlink{classlctm_1_1TemporalCost__2x2_a75b9235322f5b990cd625b430d555727}{00051}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1TemporalCost__2x2_a75b9235322f5b990cd625b430d555727}{TemporalCost\_2x2::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&sour\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&reco\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ *symb\_plane,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{unsigned}\ scale,\ \textcolor{keywordtype}{bool}\ intra)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00054}00054\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ \&\&\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00055}00055\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ *\ transform\_block\_size\ \&\&}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ *\ transform\_block\_size);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00058}00058\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00059}00059\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00060}00060\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb00\ =\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb01\ =\ symb\_plane[1].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00062}00062\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb02\ =\ symb\_plane[2].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00063}00063\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb03\ =\ symb\_plane[3].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00065}00065\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ src.width()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00066}00066\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ src.height()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00067}00067\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \ \ \ lambda\ \ \ \ \ =\ ((float)(scale)\ *0.6f);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00069}00069\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00070}00070\ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non\ zero\ coefficients\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t1\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t1\ =\ (symb00.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (intra\ ?\ 1\ :\ (symb01.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0))\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb02.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb03.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00084}00084\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Intra\ signalling\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t2\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00087}00087\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fCost\ =\ (float)(t0\ +\ (lambda\ \ *\ (t1\ +\ t2)));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (fCost\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)fCost\ :\ ((1\ <<\ 15)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00092}00092\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00093}00093\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00095}\mbox{\hyperlink{classlctm_1_1TemporalCost__4x4_a7db2ea2881cc47e484b55a49ffe9bdfa}{00095}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1TemporalCost__4x4_a7db2ea2881cc47e484b55a49ffe9bdfa}{TemporalCost\_4x4::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&sour\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&reco\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ *symb\_plane,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ transform\_block\_size,\ \textcolor{keywordtype}{unsigned}\ scale,\ \textcolor{keywordtype}{bool}\ intra)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00098}00098\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ \&\&\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00099}00099\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ *\ transform\_block\_size\ \&\&}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \ \ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ *\ transform\_block\_size);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00102}00102\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00103}00103\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00104}00104\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb00\ =\ symb\_plane[0].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00105}00105\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb01\ =\ symb\_plane[1].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00106}00106\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb02\ =\ symb\_plane[2].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00107}00107\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb03\ =\ symb\_plane[3].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00108}00108\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb04\ =\ symb\_plane[4].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00109}00109\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb05\ =\ symb\_plane[5].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb06\ =\ symb\_plane[6].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb07\ =\ symb\_plane[7].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00112}00112\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb08\ =\ symb\_plane[8].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00113}00113\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb09\ =\ symb\_plane[9].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00114}00114\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb10\ =\ symb\_plane[10].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00115}00115\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb11\ =\ symb\_plane[11].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00116}00116\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb12\ =\ symb\_plane[12].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00117}00117\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb13\ =\ symb\_plane[13].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00118}00118\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb14\ =\ symb\_plane[14].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00119}00119\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ symb15\ =\ symb\_plane[15].\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00120}00120\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00121}00121\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ src.width()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00122}00122\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ src.height()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00123}00123\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00124}00124\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00125}00125\ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00134}00134\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non\ zero\ residuals\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t1\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t1\ =\ (symb00.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb01.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb02.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb03.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb04.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (intra\ ?\ 1\ :\ (symb05.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0))\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb06.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb07.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb08.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb09.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb10.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb11.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb12.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb13.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (symb14.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0)\ +\ (symb15.read(block\_x,\ block\_y)\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00145}00145\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Intra\ signalling\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t2\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00149}00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ fCost\ =\ (float)(t0\ +\ scale\ *\ (t1\ +\ t2));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (fCost\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)fCost\ :\ ((1\ <<\ 15)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00151}00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00153}00153\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00154}00154\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00155}00155\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00156}00156\ \textcolor{comment}{//\ Calculate\ temporal\ cost\ solely\ based\ on\ SAD,\ used\ for\ no\_enhancement\ part}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00157}\mbox{\hyperlink{classlctm_1_1TemporalCost__SAD_a606a45249c96bef16d6d0ab20155dbe7}{00157}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1TemporalCost__SAD_a606a45249c96bef16d6d0ab20155dbe7}{TemporalCost\_SAD::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&sour\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&reco\_plane,\ \textcolor{keywordtype}{unsigned}\ transform\_block\_size)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00158}00158\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_width\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00159}00159\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ dst\_height\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ /\ transform\_block\_size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00161}00161\ \ \ \ \ \textcolor{keywordflow}{if}\ (!reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a9afc80fa192192573268d937cc564c3f}{empty}}())\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ \&\&\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ recon\ =\ reco\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y)\ -\/\ recon.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00180}00180\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_ab049729a6cae757063a46fa11e5efb7e}{bpp}}()\ ==\ 1)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sum\ of\ absolute\ values\ (uint8\_t)}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00197}00197\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sum\ of\ absolute\ values\ (uint16\_t)}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\ =\ sour\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(dst\_width,\ dst\_height,}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ block\_x,\ \textcolor{keywordtype}{unsigned}\ block\_y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ SAD\ term}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ t0\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ x\ =\ (block\_x)*transform\_block\_size;\ x\ <\ (block\_x\ +\ 1)\ *\ transform\_block\_size;\ ++x)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ y\ =\ (block\_y)*transform\_block\_size;\ y\ <\ (block\_y\ +\ 1)\ *\ transform\_block\_size;\ ++y)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ t0\ +=\ abs(src.read(x,\ y));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int32\_t\ iCost\ =\ (t0\ <\ ((1\ <<\ 15)\ -\/\ 1)\ ?\ (int)t0\ :\ ((1\ <<\ 15)\ -\/\ 1));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(iCost);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00214}00214\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00215}00215\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00216}00216\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00217}00217\ \textcolor{comment}{//\ Given\ the\ new\ temporal\ buffer,\ the\ previous\ temporal\ buffer\ and\ the\ signalling\ mask\ -\/\ generate\ the\ transmitted\ residuals}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00218}00218\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00219}\mbox{\hyperlink{classlctm_1_1TemporalSelect_a905ad5e0e9c40ed5449cc4ebfb3c0862}{00219}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \mbox{\hyperlink{classlctm_1_1TemporalSelect_a905ad5e0e9c40ed5449cc4ebfb3c0862}{TemporalSelect::process}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&inter\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&intra\_plane,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&mask\_plane)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00220}00220\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00221}00221\ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(inter\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ intra\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ \&\&\ inter\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ intra\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00223}00223\ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ mask\ to\ cover\ source\ images}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00224}00224\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_w\ =\ tile\_size(mask\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}(),\ inter\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00225}00225\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ block\_h\ =\ tile\_size(mask\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}(),\ inter\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00226}00226\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_w\ =\ log2(block\_w);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00227}00227\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ shift\_h\ =\ log2(block\_h);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00228}00228\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00229}00229\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_inter\ =\ inter\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00230}00230\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_intra\ =\ intra\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00231}00231\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_mask\ =\ mask\_plane.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00232}00232\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00233}00233\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classlctm_1_1Surface_a3c24cd7ff5af69deff945a3261d391ec}{Surface::build\_from<int16\_t>}}()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00234}00234\ \ \ \ \ \ \ \ \ .generate(src\_inter.width(),\ src\_inter.height(),}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ (src\_mask.read(x\ >>\ shift\_w,\ y\ >>\ shift\_h)\ ==\ TemporalType::TEMPORAL\_PRED)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_inter.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ src\_intra.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00242}00242\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00243}00243\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00244}00244\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00245}00245\ \textcolor{comment}{//\ Insert\ the\ single-\/bit-\/per-\/transform\ signalling\ as\ a\ mask}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00246}00246\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00247}\mbox{\hyperlink{classlctm_1_1TemporalInsertMask_a6f8040f2bc9197a2129243f65864416e}{00247}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ TemporalInsertMask::process(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&symbols,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&mask,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ refresh)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00248}00248\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_symbols\ =\ symbols.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00249}00249\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00250}00250\ \ \ \ \ \textcolor{keywordflow}{if}\ (!mask.\mbox{\hyperlink{classlctm_1_1Surface_a9afc80fa192192573268d937cc564c3f}{empty}}()\ \&\&\ !refresh)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(symbols.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ ==\ mask.\mbox{\hyperlink{classlctm_1_1Surface_a26238abd8d94d29f2e6ac1a206dbdb5b}{width}}()\ \&\&\ symbols.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}()\ ==\ mask.\mbox{\hyperlink{classlctm_1_1Surface_a1cadecc25efbd02e5f741c4e09bc0be8}{height}}());}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_mask\ =\ mask.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<uint8\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00253}00253\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00254}00254\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00256}00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return\ (src\_symbols.read(x,\ y)\ *\ 2)\ |\ (src\_mask.read(x,\ y)\ ==\ TemporalType::TEMPORAL\_INTR\ ?\ 1\ :\ 0);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00258}00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00259}00259\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00260}00260\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00263}00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{\ return\ (src\_symbols.read(x,\ y)\ *\ 2);\ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00264}00264\ \ \ \ \ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00265}00265\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00266}00266\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00268}00268\ \textcolor{comment}{//\ Insert\ the\ user\_data}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00269}00269\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00270}\mbox{\hyperlink{classlctm_1_1UserDataInsert_a7cec5adc722371d0d7e4bf4d4af9a54d}{00270}}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ UserDataInsert::process(\textcolor{keyword}{const}\ \mbox{\hyperlink{classlctm_1_1Surface}{Surface}}\ \&symbols,\ \mbox{\hyperlink{namespacelctm_ae98a46efa5c760355b710f47c5f4338d}{UserDataMethod}}\ method,\ \mbox{\hyperlink{namespacelctm_a96b4abe2502e04371b0c0a0de94934a4}{UserDataMode}}\ user\_data,\ FILE*\ file)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00271}00271\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ size;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00272}00272\ \ \ \ \ \textcolor{keywordflow}{switch}\ (user\_data)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00273}00273\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacelctm_a96b4abe2502e04371b0c0a0de94934a4a187856a95ce1811869509eebbcd75bcc}{UserData\_2bits}}:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00274}00274\ \ \ \ \ \ \ \ \ size\ =\ 2;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00275}00275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00276}00276\ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{namespacelctm_a96b4abe2502e04371b0c0a0de94934a4a2dba296607ba8befca6d94277ce90e78}{UserData\_6bits}}:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00277}00277\ \ \ \ \ \ \ \ \ size\ =\ 6;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00278}00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00279}00279\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00280}00280\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{TypeDef_8h_a87a0b8601d301b04efad305d35b8ba20}{CHECK}}(0);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00281}00281\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00282}00282\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00283}00283\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ src\_symbols\ =\ symbols.\mbox{\hyperlink{classlctm_1_1Surface_a79a7ed15612c84571aa3c2c8a2966212}{view\_as}}<int16\_t>();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00284}00284\ \ \ \ \ \textcolor{keywordflow}{return}\ Surface::build\_from<int16\_t>()}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00285}00285\ \ \ \ \ \ \ \ \ .generate(src\_symbols.width(),\ src\_symbols.height(),}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keywordtype}{unsigned}\ x,\ \textcolor{keywordtype}{unsigned}\ y)\ -\/>\ int16\_t\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00287}00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int16\_t\ value\ =\ src\_symbols.read(x,\ y);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00288}00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ bool\ sign\ =\ value\ <\ 0;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uint16\_t\ value\_abs\ =\ std::min((uint16\_t)abs(value),\ (uint16\_t)(((uint16\_t)0x1fff)\ >>\ (size\ +\ 1)));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00290}00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unsigned\ char\ data;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ switch\ (method)\ \{}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Zeros:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ 0x00;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Ones:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00296}00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ 0xff;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00297}00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00298}00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_FixedRandom:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ case\ UserDataMethod\_Random:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ =\ Random().rand();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ break;}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ default:}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00303}00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CHECK(0);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00304}00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00305}00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ data\ \&=\ (size\ ==\ 6\ ?\ 0x3f\ :\ 0x03);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00306}00306\ \textcolor{preprocessor}{\#if\ USER\_DATA\_EXTRACTION}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fwrite(\&data,\ 1,\ 1,\ file);}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00308}00308\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (int16\_t)(((value\_abs\ <<\ (size\ +\ 1))\ |\ data)\ |\ (sign\ <<\ size));}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00311}00311\ \ \ \ \ \ \ \ \ .finish();}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00312}00312\ \}}
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00313}00313\ }
+\DoxyCodeLine{\Hypertarget{TemporalEncode_8cpp_source_l00314}00314\ \}\ \textcolor{comment}{//\ namespace\ lctm}}
 
 \end{DoxyCode}

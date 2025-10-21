@@ -1,251 +1,251 @@
 \doxysection{Ring\+Buffer.\+hpp}
-\label{RingBuffer_8hpp_source}\index{util/include/RingBuffer.hpp@{util/include/RingBuffer.hpp}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{RingBuffer_8hpp_source}{}\label{RingBuffer_8hpp_source}\index{/media/erwan/T7/formation/Video/LTM/util/include/RingBuffer.hpp@{/media/erwan/T7/formation/Video/LTM/util/include/RingBuffer.hpp}}
+\mbox{\hyperlink{RingBuffer_8hpp}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
-\DoxyCodeLine{00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
-\DoxyCodeLine{00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
-\DoxyCodeLine{00005\ \textcolor{comment}{//}}
-\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
-\DoxyCodeLine{00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
-\DoxyCodeLine{00008\ \textcolor{comment}{//}}
-\DoxyCodeLine{00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
-\DoxyCodeLine{00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
-\DoxyCodeLine{00011\ \textcolor{comment}{//}}
-\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
-\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
-\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
-\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
-\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
-\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
-\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
-\DoxyCodeLine{00020\ \textcolor{comment}{//}}
-\DoxyCodeLine{00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
-\DoxyCodeLine{00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
-\DoxyCodeLine{00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
-\DoxyCodeLine{00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
-\DoxyCodeLine{00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
-\DoxyCodeLine{00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
-\DoxyCodeLine{00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
-\DoxyCodeLine{00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
-\DoxyCodeLine{00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
-\DoxyCodeLine{00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
-\DoxyCodeLine{00032\ \textcolor{comment}{//}}
-\DoxyCodeLine{00033\ \textcolor{comment}{//}}
-\DoxyCodeLine{00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
-\DoxyCodeLine{00035\ \textcolor{comment}{//}}
-\DoxyCodeLine{00036\ \textcolor{comment}{//\ RingBuffer.hpp}}
-\DoxyCodeLine{00037\ \textcolor{comment}{//}}
-\DoxyCodeLine{00038\ \textcolor{comment}{//\ Fixed\ size\ thread\ safe\ ring\ buffer}}
-\DoxyCodeLine{00039\ \textcolor{comment}{//}}
-\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#pragma\ once}}
-\DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
-\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
-\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#include\ <mutex>}}
-\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }RingBuffer\ \{}
-\DoxyCodeLine{00048\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{typedef}\ T\ value\_type;}
-\DoxyCodeLine{00050\ }
-\DoxyCodeLine{00051\ \ \ \ \ RingBuffer(\textcolor{keywordtype}{int}\ capacity)\ :\ capacity\_(capacity),\ ring\_(capacity)\ \{\}}
-\DoxyCodeLine{00052\ }
-\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ Push\ new\ datum\ into\ ring,\ blocking\ if\ buffer\ is\ full}}
-\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordtype}{void}\ push(T\ \textcolor{keyword}{const}\ \&v)\ \{}
-\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_full())}
-\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ not\_full\_.wait(lock);}
-\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ ring\_push\_back(v);}
-\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ not\_empty\_.notify\_all();\ \textcolor{comment}{//\ So\ that\ all\ 'pop\_if's\ get\ a\ chance}}
-\DoxyCodeLine{00061\ \ \ \ \ \}}
-\DoxyCodeLine{00062\ }
-\DoxyCodeLine{00063\ \ \ \ \ \textcolor{comment}{//\ Push\ new\ datum\ into\ ring,\ popping\ from\ front\ if\ buffer\ is\ still\ full\ after\ timeout}}
-\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{//\ Takes\ a\ destination\ for\ any\ lost\ element,\ so\ that\ it\ may\ be\ destroyed\ safely\ by\ client}}
-\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ return\ true\ if\ there\ was\ space}}
-\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordtype}{bool}\ push\_timeout(T\ \textcolor{keyword}{const}\ \&v,\ T\ \&overflow,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
-\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ r\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_full())\ \{}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_full\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)\ \{}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ overflow\ =\ ring\_front();}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ ring\_push\_back(v);}
-\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ not\_empty\_.notify\_all();\ \textcolor{comment}{//\ So\ that\ all\ 'pop\_if's\ get\ a\ chance}}
-\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
-\DoxyCodeLine{00081\ \ \ \ \ \}}
-\DoxyCodeLine{00082\ }
-\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ Retrieve\ a\ datum\ from\ ring\ -\/\ block\ until\ one\ is\ available}}
-\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordtype}{void}\ pop(T\ \&v)\ \{}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
-\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
-\DoxyCodeLine{00088\ }
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
-\DoxyCodeLine{00093\ \ \ \ \ \}}
-\DoxyCodeLine{00094\ }
-\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ Pop\ -\/\ waiting\ for\ given\ timeout\ (in\ microseconds).}}
-\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ A\ timeout\ of\ 0\ will\ return\ immediately}}
-\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ there\ was\ one}}
-\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{bool}\ pop\_timeout(T\ \&v,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
-\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_empty\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)}
-\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00105\ }
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
-\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00111\ \ \ \ \ \}}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//\ Retrieve\ a\ datum\ from\ ring\ ,\ and\ predicate\ is\ true.\ -\/\ block\ until\ one\ is\ available}}
-\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P>\ \textcolor{keywordtype}{void}\ pop\_if(T\ \&v,\ \textcolor{keyword}{const}\ P\ \&p)\ \{}
-\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty()\ ||\ !p(ring\_front()))}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
-\DoxyCodeLine{00118\ }
-\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
-\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
-\DoxyCodeLine{00123\ \ \ \ \ \}}
-\DoxyCodeLine{00124\ }
-\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ Pop\ front\ if\ predicate\ return\ true\ \ -\/\ waitimg\ for\ given\ timeout\ (in\ microseconds).}}
-\DoxyCodeLine{00126\ \ \ \ \ \textcolor{comment}{//\ A\ timeout\ of\ 0\ will\ return\ immediately}}
-\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00128\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ there\ was\ one}}
-\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P>\ \textcolor{keywordtype}{bool}\ pop\_if\_timeout(T\ \&v,\ \textcolor{keyword}{const}\ P\ \&pr,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty()\ ||\ !pr(ring\_front()))}
-\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_empty\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)}
-\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00135\ }
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ lock.unlock();}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00141\ \ \ \ \ \}}
-\DoxyCodeLine{00142\ }
-\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ Look\ at\ top\ element}}
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordtype}{void}\ peek(T\ \&v)\ \{}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
-\DoxyCodeLine{00148\ }
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
-\DoxyCodeLine{00150\ \ \ \ \ \}}
-\DoxyCodeLine{00151\ }
-\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ Destroy\ contents\ of\ ring}}
-\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordtype}{void}\ clear()\ \{}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ ring\_clear();}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ not\_full\_.notify\_all();}
-\DoxyCodeLine{00157\ \ \ \ \ \}}
-\DoxyCodeLine{00158\ }
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{//\ Test\ if\ ring\ is\ empty}}
-\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{bool}\ empty()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_empty();}
-\DoxyCodeLine{00163\ \ \ \ \ \}}
-\DoxyCodeLine{00164\ }
-\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ Test\ if\ ring\ is\ full}}
-\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{bool}\ full()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_full();}
-\DoxyCodeLine{00169\ \ \ \ \ \}}
-\DoxyCodeLine{00170\ }
-\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Return\ amount\ of\ space\ remaining\ in\ buffer}}
-\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ space()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(capacity\_\ -\/\ ring\_size());}
-\DoxyCodeLine{00175\ \ \ \ \ \}}
-\DoxyCodeLine{00176\ }
-\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ Return\ number\ of\ entries\ in\ buffer}}
-\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ size()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(ring\_size());}
-\DoxyCodeLine{00181\ \ \ \ \ \}}
-\DoxyCodeLine{00182\ }
-\DoxyCodeLine{00183\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00185\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_pop\_front()\ \{}
-\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ assert(size\_\ >\ 0);}
-\DoxyCodeLine{00188\ }
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Clear\ slot}}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ T\ t;}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ std::swap(ring\_[front\_],\ t);}
-\DoxyCodeLine{00192\ }
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ indices\ on}}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ size\_-\/-\/;}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ front\_++;}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (front\_\ ==\ capacity\_)}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ front\_\ =\ 0;}
-\DoxyCodeLine{00198\ \ \ \ \ \}}
-\DoxyCodeLine{00199\ }
-\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_push\_back(\textcolor{keyword}{const}\ T\ \&v)\ \{}
-\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ assert(size\_\ <=\ capacity\_);}
-\DoxyCodeLine{00202\ }
-\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ back\ slot}}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ b\ =\ front\_\ +\ size\_;}
-\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ >=\ capacity\_)}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ b\ -\/=\ capacity\_;}
-\DoxyCodeLine{00207\ }
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Store}}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ ring\_[b]\ =\ v;}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ size\_++;}
-\DoxyCodeLine{00211\ \ \ \ \ \}}
-\DoxyCodeLine{00212\ }
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_clear()\ \{}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (size\_\ >\ 0)}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ ring\_pop\_front();}
-\DoxyCodeLine{00216\ \ \ \ \ \}}
-\DoxyCodeLine{00217\ }
-\DoxyCodeLine{00218\ \ \ \ \ T\ ring\_front()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ assert(size\_\ >\ 0);}
-\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_[front\_];}
-\DoxyCodeLine{00221\ \ \ \ \ \}}
-\DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ ring\_size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_;\ \}}
-\DoxyCodeLine{00224\ }
-\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordtype}{bool}\ ring\_full()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_\ ==\ capacity\_;\ \}}
-\DoxyCodeLine{00226\ }
-\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordtype}{bool}\ ring\_empty()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_\ ==\ 0;\ \}}
-\DoxyCodeLine{00228\ }
-\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//}}
-\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ Fixed\ capacity\ of\ ring\ buffer}}
-\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ capacity\_;}
-\DoxyCodeLine{00233\ }
-\DoxyCodeLine{00234\ \ \ \ \ \textcolor{comment}{//\ The\ ring}}
-\DoxyCodeLine{00235\ \ \ \ \ std::vector<T>\ ring\_;}
-\DoxyCodeLine{00236\ }
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{//\ Index\ to\ front\ of\ ring}}
-\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ front\_\ =\ 0;}
-\DoxyCodeLine{00239\ }
-\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{//\ Current\ size}}
-\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ size\_\ =\ 0;}
-\DoxyCodeLine{00242\ }
-\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ Threading}}
-\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ mutex\_;}
-\DoxyCodeLine{00245\ \ \ \ \ std::condition\_variable\ not\_empty\_;}
-\DoxyCodeLine{00246\ \ \ \ \ std::condition\_variable\ not\_full\_;}
-\DoxyCodeLine{00247\ \};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00001}00001\ \textcolor{comment}{//\ The\ copyright\ in\ this\ software\ is\ being\ made\ available\ under\ the\ BSD}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00002}00002\ \textcolor{comment}{//\ License,\ included\ below.\ This\ software\ may\ be\ subject\ to\ other\ third\ party}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00003}00003\ \textcolor{comment}{//\ and\ contributor\ rights,\ including\ patent\ rights,\ and\ no\ such\ rights\ are}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00004}00004\ \textcolor{comment}{//\ granted\ under\ this\ license.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00006}00006\ \textcolor{comment}{//\ Copyright\ (c)\ 2022,\ ISO/IEC}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00007}00007\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00008}00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00009}00009\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00010}00010\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00011}00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00012}00012\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00013}00013\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00014}00014\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00015}00015\ \textcolor{comment}{//\ \ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00016}00016\ \textcolor{comment}{//\ \ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00017}00017\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ the\ ISO/IEC\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00018}00018\ \textcolor{comment}{//\ \ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00019}00019\ \textcolor{comment}{//\ \ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00020}00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00021}00021\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00022}00022\ \textcolor{comment}{//\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00023}00023\ \textcolor{comment}{//\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00024}00024\ \textcolor{comment}{//\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ HOLDER\ OR\ CONTRIBUTORS}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00025}00025\ \textcolor{comment}{//\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00026}00026\ \textcolor{comment}{//\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00027}00027\ \textcolor{comment}{//\ SUBSTITUTE\ GOODS\ OR\ SERVICES;\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00028}00028\ \textcolor{comment}{//\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00029}00029\ \textcolor{comment}{//\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00030}00030\ \textcolor{comment}{//\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00031}00031\ \textcolor{comment}{//\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00032}00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00033}00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00034}00034\ \textcolor{comment}{//\ Contributors:\ Sam\ Littlewood\ (sam.littlewood@v-\/nova.com)}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00035}00035\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00036}00036\ \textcolor{comment}{//\ RingBuffer.hpp}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00037}00037\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00038}00038\ \textcolor{comment}{//\ Fixed\ size\ thread\ safe\ ring\ buffer}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00039}00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00040}00040\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00042}00042\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00043}00043\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00044}00044\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00045}00045\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00047}\mbox{\hyperlink{classRingBuffer}{00047}}\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classRingBuffer}{RingBuffer}}\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00048}00048\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00049}\mbox{\hyperlink{classRingBuffer_a886effc7fc0e8e6754c1accd5987979c}{00049}}\ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \mbox{\hyperlink{classRingBuffer_a886effc7fc0e8e6754c1accd5987979c}{value\_type}};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00051}\mbox{\hyperlink{classRingBuffer_a085b38762bbe1525f1d9bb249454d57e}{00051}}\ \ \ \ \ \mbox{\hyperlink{classRingBuffer_a085b38762bbe1525f1d9bb249454d57e}{RingBuffer}}(\textcolor{keywordtype}{int}\ capacity)\ :\ capacity\_(capacity),\ ring\_(capacity)\ \{\}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00052}00052\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{comment}{//\ Push\ new\ datum\ into\ ring,\ blocking\ if\ buffer\ is\ full}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00054}\mbox{\hyperlink{classRingBuffer_a0617f299bd97acf8f88392070bd5877b}{00054}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classRingBuffer_a0617f299bd97acf8f88392070bd5877b}{push}}(T\ \textcolor{keyword}{const}\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_full())}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ not\_full\_.wait(lock);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ ring\_push\_back(v);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ not\_empty\_.notify\_all();\ \textcolor{comment}{//\ So\ that\ all\ 'pop\_if's\ get\ a\ chance}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00061}00061\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00063}00063\ \ \ \ \ \textcolor{comment}{//\ Push\ new\ datum\ into\ ring,\ popping\ from\ front\ if\ buffer\ is\ still\ full\ after\ timeout}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00064}00064\ \ \ \ \ \textcolor{comment}{//\ Takes\ a\ destination\ for\ any\ lost\ element,\ so\ that\ it\ may\ be\ destroyed\ safely\ by\ client}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00065}00065\ \ \ \ \ \textcolor{comment}{//\ return\ true\ if\ there\ was\ space}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00066}\mbox{\hyperlink{classRingBuffer_a599ff182b8b06ceb80410c38a2719d64}{00066}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classRingBuffer_a599ff182b8b06ceb80410c38a2719d64}{push\_timeout}}(T\ \textcolor{keyword}{const}\ \&v,\ T\ \&overflow,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ r\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_full())\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_full\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ overflow\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ ring\_push\_back(v);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ not\_empty\_.notify\_all();\ \textcolor{comment}{//\ So\ that\ all\ 'pop\_if's\ get\ a\ chance}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00081}00081\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{comment}{//\ Retrieve\ a\ datum\ from\ ring\ -\/\ block\ until\ one\ is\ available}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00084}\mbox{\hyperlink{classRingBuffer_a598c5cfce60f33812e6a0a513b090dcc}{00084}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classRingBuffer_a598c5cfce60f33812e6a0a513b090dcc}{pop}}(T\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00093}00093\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00095}00095\ \ \ \ \ \textcolor{comment}{//\ Pop\ -\/\ waiting\ for\ given\ timeout\ (in\ microseconds).}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{comment}{//\ A\ timeout\ of\ 0\ will\ return\ immediately}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00097}00097\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00098}00098\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ there\ was\ one}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00099}00099\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00100}\mbox{\hyperlink{classRingBuffer_a5af2d4dfee0f6543de1fd13b615b27b1}{00100}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classRingBuffer_a5af2d4dfee0f6543de1fd13b615b27b1}{pop\_timeout}}(T\ \&v,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_empty\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00109}00109\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00111}00111\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00113}00113\ \ \ \ \ \textcolor{comment}{//\ Retrieve\ a\ datum\ from\ ring\ ,\ and\ predicate\ is\ true.\ -\/\ block\ until\ one\ is\ available}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00114}\mbox{\hyperlink{classRingBuffer_a07d384a29a0c013b70284078b3e42cb3}{00114}}\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P>\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classRingBuffer_a07d384a29a0c013b70284078b3e42cb3}{pop\_if}}(T\ \&v,\ \textcolor{keyword}{const}\ P\ \&p)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty()\ ||\ !p(ring\_front()))}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00121}00121\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00123}00123\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00125}00125\ \ \ \ \ \textcolor{comment}{//\ Pop\ front\ if\ predicate\ return\ true\ \ -\/\ waitimg\ for\ given\ timeout\ (in\ microseconds).}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00126}00126\ \ \ \ \ \textcolor{comment}{//\ A\ timeout\ of\ 0\ will\ return\ immediately}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00127}00127\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00128}00128\ \ \ \ \ \textcolor{comment}{//\ Return\ true\ if\ there\ was\ one}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00129}00129\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00130}\mbox{\hyperlink{classRingBuffer_addb4069fd2ef9310bb3118fe5f0f90ed}{00130}}\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P>\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classRingBuffer_addb4069fd2ef9310bb3118fe5f0f90ed}{pop\_if\_timeout}}(T\ \&v,\ \textcolor{keyword}{const}\ P\ \&pr,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ usec\ =\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty()\ ||\ !pr(ring\_front()))}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (usec\ ==\ 0\ ||\ not\_empty\_.wait\_for(lock,\ std::chrono::microseconds(usec))\ ==\ std::cv\_status::timeout)}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00135}00135\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00136}00136\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ lock.unlock();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ not\_full\_.notify\_one();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00141}00141\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00142}00142\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00143}00143\ \ \ \ \ \textcolor{comment}{//\ Look\ at\ top\ element}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00144}\mbox{\hyperlink{classRingBuffer_ab7d9285bc8f9a11ca32a2ce5f432e146}{00144}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classRingBuffer_ab7d9285bc8f9a11ca32a2ce5f432e146}{peek}}(T\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ring\_empty())}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \ \ \ \ not\_empty\_.wait(lock);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00149}00149\ \ \ \ \ \ \ \ \ v\ =\ ring\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00150}00150\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00151}00151\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00152}00152\ \ \ \ \ \textcolor{comment}{//\ Destroy\ contents\ of\ ring}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00153}\mbox{\hyperlink{classRingBuffer_aa4dcd702213d91e2d2c8bf74b89d29ce}{00153}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classRingBuffer_aa4dcd702213d91e2d2c8bf74b89d29ce}{clear}}()\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00154}00154\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00155}00155\ \ \ \ \ \ \ \ \ ring\_clear();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00156}00156\ \ \ \ \ \ \ \ \ not\_full\_.notify\_all();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00157}00157\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00158}00158\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{comment}{//\ Test\ if\ ring\ is\ empty}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00160}\mbox{\hyperlink{classRingBuffer_a52afab7b0858f5b6ba523882f1402ab8}{00160}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classRingBuffer_a52afab7b0858f5b6ba523882f1402ab8}{empty}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00161}00161\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_empty();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00163}00163\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00164}00164\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00165}00165\ \ \ \ \ \textcolor{comment}{//\ Test\ if\ ring\ is\ full}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00166}\mbox{\hyperlink{classRingBuffer_ab529bc194133a8e11f88f975ee632307}{00166}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classRingBuffer_ab529bc194133a8e11f88f975ee632307}{full}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00167}00167\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_full();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00169}00169\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00170}00170\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00171}00171\ \ \ \ \ \textcolor{comment}{//\ Return\ amount\ of\ space\ remaining\ in\ buffer}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00172}\mbox{\hyperlink{classRingBuffer_ad4dc303688283a2195f16e6ea7b70ac0}{00172}}\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classRingBuffer_ad4dc303688283a2195f16e6ea7b70ac0}{space}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(capacity\_\ -\/\ ring\_size());}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00175}00175\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00176}00176\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00177}00177\ \ \ \ \ \textcolor{comment}{//\ Return\ number\ of\ entries\ in\ buffer}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00178}\mbox{\hyperlink{classRingBuffer_a76b1de1c3307fd0c8087e3cb50742d12}{00178}}\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classRingBuffer_a76b1de1c3307fd0c8087e3cb50742d12}{size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00179}00179\ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(mutex\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(ring\_size());}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00181}00181\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00182}00182\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00183}00183\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00185}00185\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00186}00186\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_pop\_front()\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00187}00187\ \ \ \ \ \ \ \ \ assert(size\_\ >\ 0);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00188}00188\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Clear\ slot}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ T\ t;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ std::swap(ring\_[front\_],\ t);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00192}00192\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ indices\ on}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ size\_-\/-\/;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ front\_++;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (front\_\ ==\ capacity\_)}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \ \ \ \ front\_\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00198}00198\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00199}00199\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00200}00200\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_push\_back(\textcolor{keyword}{const}\ T\ \&v)\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ assert(size\_\ <=\ capacity\_);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00202}00202\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ back\ slot}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ b\ =\ front\_\ +\ size\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (b\ >=\ capacity\_)}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ b\ -\/=\ capacity\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00207}00207\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Store}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ ring\_[b]\ =\ v;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ size\_++;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00211}00211\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00212}00212\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00213}00213\ \ \ \ \ \textcolor{keywordtype}{void}\ ring\_clear()\ \{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (size\_\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ ring\_pop\_front();}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00216}00216\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00217}00217\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00218}00218\ \ \ \ \ T\ ring\_front()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ assert(size\_\ >\ 0);}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ring\_[front\_];}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00221}00221\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00223}00223\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ ring\_size()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_;\ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00224}00224\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00225}00225\ \ \ \ \ \textcolor{keywordtype}{bool}\ ring\_full()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_\ ==\ capacity\_;\ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00226}00226\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00227}00227\ \ \ \ \ \textcolor{keywordtype}{bool}\ ring\_empty()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ size\_\ ==\ 0;\ \}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00228}00228\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00230}00230\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00231}00231\ \ \ \ \ \textcolor{comment}{//\ Fixed\ capacity\ of\ ring\ buffer}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00232}00232\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ capacity\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00234}00234\ \ \ \ \ \textcolor{comment}{//\ The\ ring}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00235}00235\ \ \ \ \ std::vector<T>\ ring\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00236}00236\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00237}00237\ \ \ \ \ \textcolor{comment}{//\ Index\ to\ front\ of\ ring}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00238}00238\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ front\_\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00240}00240\ \ \ \ \ \textcolor{comment}{//\ Current\ size}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00241}00241\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ size\_\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00242}00242\ }
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00243}00243\ \ \ \ \ \textcolor{comment}{//\ Threading}}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00244}00244\ \ \ \ \ \textcolor{keyword}{mutable}\ std::mutex\ mutex\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00245}00245\ \ \ \ \ std::condition\_variable\ not\_empty\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00246}00246\ \ \ \ \ std::condition\_variable\ not\_full\_;}
+\DoxyCodeLine{\Hypertarget{RingBuffer_8hpp_source_l00247}00247\ \};}
 
 \end{DoxyCode}

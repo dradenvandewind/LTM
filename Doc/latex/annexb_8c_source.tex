@@ -1,270 +1,270 @@
 \doxysection{annexb.\+c}
-\label{annexb_8c_source}\index{deps/base\_avc/src/annexb.c@{deps/base\_avc/src/annexb.c}}
-\textbf{ Go to the documentation of this file.}
+\hypertarget{annexb_8c_source}{}\label{annexb_8c_source}\index{/media/erwan/T7/formation/Video/LTM/deps/base\_avc/src/annexb.c@{/media/erwan/T7/formation/Video/LTM/deps/base\_avc/src/annexb.c}}
+\mbox{\hyperlink{annexb_8c}{Go to the documentation of this file.}}
 \begin{DoxyCode}{0}
-\DoxyCodeLine{00001\ \textcolor{comment}{//\ LCEVC\ replacement\ implementation\ to\ feed\ bitstresm\ directly\ into\ base\ layer\ via\ an\ in-\/memory\ buffer}}
-\DoxyCodeLine{00002\ \textcolor{comment}{//}}
-\DoxyCodeLine{00003\ }
-\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}global.h"{}}}
-\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}annexb.h"{}}}
-\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}memalloc.h"{}}}
-\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}fast\_memory.h"{}}}
-\DoxyCodeLine{00021\ }
-\DoxyCodeLine{00022\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{byte}\ *injected\_annex\_b\_data\ =\ 0;}
-\DoxyCodeLine{00023\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ injected\_annex\_b\_size\ =\ 0;}
-\DoxyCodeLine{00024\ }
-\DoxyCodeLine{00025\ \textcolor{comment}{//\ External\ hook\ from\ LCEVC}}
-\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ inject\_annex\_b\_bitstream(\textcolor{keywordtype}{byte}\ *data,\ \textcolor{keywordtype}{unsigned}\ size)}
-\DoxyCodeLine{00027\ \{}
-\DoxyCodeLine{00028\ \ \ \ \ injected\_annex\_b\_data\ =\ data;}
-\DoxyCodeLine{00029\ \ \ \ \ injected\_annex\_b\_size\ =\ size;}
-\DoxyCodeLine{00030\ \}}
-\DoxyCodeLine{00031\ }
-\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ malloc\_annex\_b(VideoParameters\ *p\_Vid,\ ANNEXB\_t\ **p\_annex\_b)}
-\DoxyCodeLine{00033\ \{}
-\DoxyCodeLine{00034\ \ \ \textcolor{keywordflow}{if}\ (\ ((*p\_annex\_b)\ =\ (ANNEXB\_t\ *)\ calloc(1,\ \textcolor{keyword}{sizeof}(ANNEXB\_t)))\ ==\ NULL)}
-\DoxyCodeLine{00035\ \ \ \{}
-\DoxyCodeLine{00036\ \ \ \ \ snprintf(errortext,\ ET\_SIZE,\ \textcolor{stringliteral}{"{}Memory\ allocation\ for\ Annex\_B\ file\ failed"{}});}
-\DoxyCodeLine{00037\ \ \ \ \ error(errortext,100);}
-\DoxyCodeLine{00038\ \ \ \}}
-\DoxyCodeLine{00039\ \ \ \textcolor{keywordflow}{if}\ (((*p\_annex\_b)-\/>Buf\ =\ (\textcolor{keywordtype}{byte}*)\ malloc(p\_Vid-\/>nalu-\/>max\_size))\ ==\ NULL)}
-\DoxyCodeLine{00040\ \ \ \{}
-\DoxyCodeLine{00041\ \ \ \ \ error(\textcolor{stringliteral}{"{}malloc\_annex\_b:\ Buf"{}},\ 101);}
-\DoxyCodeLine{00042\ \ \ \}}
-\DoxyCodeLine{00043\ \}}
-\DoxyCodeLine{00044\ }
-\DoxyCodeLine{00045\ }
-\DoxyCodeLine{00046\ \textcolor{keywordtype}{void}\ init\_annex\_b(ANNEXB\_t\ *annex\_b)}
-\DoxyCodeLine{00047\ \{}
-\DoxyCodeLine{00048\ \ \ annex\_b-\/>iobuffer\ =\ NULL;}
-\DoxyCodeLine{00049\ \ \ annex\_b-\/>iobufferread\ =\ NULL;}
-\DoxyCodeLine{00050\ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
-\DoxyCodeLine{00051\ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
-\DoxyCodeLine{00052\ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 1;}
-\DoxyCodeLine{00053\ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
-\DoxyCodeLine{00054\ \}}
-\DoxyCodeLine{00055\ }
-\DoxyCodeLine{00056\ \textcolor{keywordtype}{void}\ free\_annex\_b(ANNEXB\_t\ **p\_annex\_b)}
-\DoxyCodeLine{00057\ \{}
-\DoxyCodeLine{00058\ \ \ free((*p\_annex\_b)-\/>Buf);}
-\DoxyCodeLine{00059\ \ \ (*p\_annex\_b)-\/>Buf\ =\ NULL;}
-\DoxyCodeLine{00060\ \ \ free(*p\_annex\_b);}
-\DoxyCodeLine{00061\ \ \ *p\_annex\_b\ =\ NULL;}
-\DoxyCodeLine{00062\ \}}
-\DoxyCodeLine{00063\ }
-\DoxyCodeLine{00064\ }
-\DoxyCodeLine{00071\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{byte}\ getfbyte(ANNEXB\_t\ *annex\_b)\ \{}
-\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>bytesinbuffer\ ==\ 0)\ \{}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ annex\_b-\/>is\_eof\ =\ TRUE;}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00075\ \ \ \ \ \}}
-\DoxyCodeLine{00076\ }
-\DoxyCodeLine{00077\ \ \ \ \ annex\_b-\/>bytesinbuffer-\/-\/;}
-\DoxyCodeLine{00078\ }
-\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keywordflow}{return}\ (*annex\_b-\/>iobufferread++);}
-\DoxyCodeLine{00080\ \}}
-\DoxyCodeLine{00081\ }
-\DoxyCodeLine{00098\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ FindStartCode\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *Buf,\ \textcolor{keywordtype}{int}\ zeros\_in\_startcode)}
-\DoxyCodeLine{00099\ \{}
-\DoxyCodeLine{00100\ \ \ \textcolor{keywordtype}{int}\ i;}
-\DoxyCodeLine{00101\ }
-\DoxyCodeLine{00102\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ zeros\_in\_startcode;\ i++)}
-\DoxyCodeLine{00103\ \ \ \{}
-\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{if}(*(Buf++)\ !=\ 0)}
-\DoxyCodeLine{00105\ \ \ \ \ \{}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00107\ \ \ \ \ \}}
-\DoxyCodeLine{00108\ \ \ \}}
-\DoxyCodeLine{00109\ }
-\DoxyCodeLine{00110\ \ \ \textcolor{keywordflow}{if}(*Buf\ !=\ 1)}
-\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{return}\ 1;}
-\DoxyCodeLine{00114\ \}}
-\DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ }
-\DoxyCodeLine{00136\ \textcolor{keywordtype}{int}\ get\_annex\_b\_NALU\ (VideoParameters\ *p\_Vid,\ NALU\_t\ *nalu,\ ANNEXB\_t\ *annex\_b)}
-\DoxyCodeLine{00137\ \{}
-\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{int}\ i;}
-\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{int}\ info2\ =\ 0,\ info3\ =\ 0,\ pos\ =\ 0;}
-\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordtype}{int}\ StartCodeFound\ =\ 0;}
-\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{int}\ LeadingZero8BitsCount\ =\ 0;}
-\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordtype}{byte}\ *pBuf\ =\ annex\_b-\/>Buf;}
-\DoxyCodeLine{00143\ }
-\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>nextstartcodebytes\ !=\ 0)}
-\DoxyCodeLine{00145\ \ \ \ \ \{}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<annex\_b-\/>nextstartcodebytes-\/1;\ i++)}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 0;}
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 1;}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00153\ \ \ \ \ \}}
-\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00155\ \ \ \ \ \{}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!annex\_b-\/>is\_eof)}
-\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*(pBuf++)=\ getfbyte(annex\_b))!=\ 0)}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00162\ \ \ \ \ \}}
-\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}(annex\_b-\/>is\_eof\ ==\ TRUE)}
-\DoxyCodeLine{00164\ \ \ \ \ \{}
-\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pos==0)}
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}get\_annex\_b\_NALU\ can't\ read\ start\ code\(\backslash\)n"{}});}
-\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
-\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00174\ \ \ \ \ \}}
-\DoxyCodeLine{00175\ }
-\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{if}(*(pBuf\ -\/\ 1)\ !=\ 1\ ||\ pos\ <\ 3)}
-\DoxyCodeLine{00177\ \ \ \ \ \{}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ no\ Start\ Code\ at\ the\ beginning\ of\ the\ NALU,\ return\ -\/1\(\backslash\)n"{}});}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
-\DoxyCodeLine{00180\ \ \ \ \ \}}
-\DoxyCodeLine{00181\ }
-\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ ==\ 3)}
-\DoxyCodeLine{00183\ \ \ \ \ \{}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 3;}
-\DoxyCodeLine{00185\ \ \ \ \ \}}
-\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00187\ \ \ \ \ \{}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ LeadingZero8BitsCount\ =\ pos\ -\/\ 4;}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 4;}
-\DoxyCodeLine{00190\ \ \ \ \ \}}
-\DoxyCodeLine{00191\ }
-\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//the\ 1st\ byte\ stream\ NAL\ unit\ can\ has\ leading\_zero\_8bits,\ but\ subsequent\ ones\ are\ not}}
-\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//allowed\ to\ contain\ it\ since\ these\ zeros(if\ any)\ are\ considered\ trailing\_zero\_8bits}}
-\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//of\ the\ previous\ byte\ stream\ NAL\ unit.}}
-\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{if}(!annex\_b-\/>IsFirstByteStreamNALU\ \&\&\ LeadingZero8BitsCount\ >\ 0)}
-\DoxyCodeLine{00196\ \ \ \ \ \{}
-\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ The\ leading\_zero\_8bits\ syntax\ can\ only\ be\ present\ in\ the\ first\ byte\ stream\ NAL\ unit,\ return\ -\/1\(\backslash\)n"{}});}
-\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
-\DoxyCodeLine{00199\ \ \ \ \ \}}
-\DoxyCodeLine{00200\ }
-\DoxyCodeLine{00201\ \ \ \ \ LeadingZero8BitsCount\ =\ pos;}
-\DoxyCodeLine{00202\ \ \ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 0;}
-\DoxyCodeLine{00203\ }
-\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{while}\ (!StartCodeFound)}
-\DoxyCodeLine{00205\ \ \ \ \ \{}
-\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>is\_eof\ ==\ TRUE)}
-\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 2;}
-\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)==0)}
-\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
-\DoxyCodeLine{00211\ }
-\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>len\ =\ (pos\ -\/\ 1)\ -\/\ LeadingZero8BitsCount;}
-\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
-\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
-\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
-\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
-\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
-\DoxyCodeLine{00218\ }
-\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ printf\ ("{}get\_annex\_b\_NALU,\ eof\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
-\DoxyCodeLine{00220\ }
-\DoxyCodeLine{00221\ \textcolor{preprocessor}{\#if\ TRACE}}
-\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nLast\ NALU\ in\ File\(\backslash\)n\(\backslash\)n"{}});}
-\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}Annex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
-\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
-\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ fflush\ (p\_Dec-\/>p\_trace);}
-\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pos\ -\/\ 1);}
-\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00229\ }
-\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ pos++;}
-\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ *(pBuf\ ++)\ \ =\ getfbyte(annex\_b);\ \ \ \ }
-\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ info3\ =\ FindStartCode(pBuf\ -\/\ 4,\ 3);}
-\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(info3\ !=\ 1)}
-\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ info2\ =\ FindStartCode(pBuf\ -\/\ 3,\ 2);}
-\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ info2\ \&\ 0x01;}
-\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ 1;}
-\DoxyCodeLine{00240\ \ \ \ \ \}}
-\DoxyCodeLine{00241\ }
-\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ have\ found\ another\ start\ code\ (and\ read\ length\ of\ startcode\ bytes\ more\ than\ we\ should}}
-\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ have.\ \ Hence,\ go\ back\ in\ the\ file}}
-\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{if}(info3\ ==\ 1)\ \ \textcolor{comment}{//if\ the\ detected\ start\ code\ is\ 00\ 00\ 01,\ trailing\_zero\_8bits\ is\ sure\ not\ to\ be\ present}}
-\DoxyCodeLine{00245\ \ \ \ \ \{}
-\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 5;}
-\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)\ ==\ 0)}
-\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
-\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 4;}
-\DoxyCodeLine{00250\ \ \ \ \ \}}
-\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (info2\ ==\ 1)}
-\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 3;}
-\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{00254\ \ \ \ \ \{}
-\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ Panic:\ Error\ in\ next\ start\ code\ search\ \(\backslash\)n"{}});}
-\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
-\DoxyCodeLine{00257\ \ \ \ \ \}}
-\DoxyCodeLine{00258\ }
-\DoxyCodeLine{00259\ \ \ \ \ pos\ -\/=\ annex\_b-\/>nextstartcodebytes;}
-\DoxyCodeLine{00260\ }
-\DoxyCodeLine{00261\ \ \ \ \ \textcolor{comment}{//\ Here\ the\ leading\ zeros(if\ any),\ Start\ code,\ the\ complete\ NALU,\ trailing\ zeros(if\ any)}}
-\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ and\ the\ next\ start\ code\ is\ in\ the\ Buf.}}
-\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ Buf\ is\ pos\ -\/\ rewind,\ pos\ are\ the\ number\ of\ bytes\ excluding\ the\ next}}
-\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ start\ code,\ and\ (pos)\ -\/\ LeadingZero8BitsCount}}
-\DoxyCodeLine{00265\ \ \ \ \ \textcolor{comment}{//\ is\ the\ size\ of\ the\ NALU.}}
-\DoxyCodeLine{00266\ }
-\DoxyCodeLine{00267\ \ \ \ \ nalu-\/>len\ =\ pos\ -\/\ LeadingZero8BitsCount;}
-\DoxyCodeLine{00268\ \ \ \ \ fast\_memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
-\DoxyCodeLine{00269\ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
-\DoxyCodeLine{00270\ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
-\DoxyCodeLine{00271\ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
-\DoxyCodeLine{00272\ \ \ \ \ nalu-\/>lost\_packets\ =\ 0;}
-\DoxyCodeLine{00273\ }
-\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//printf\ ("{}get\_annex\_b\_NALU,\ regular\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
-\DoxyCodeLine{00275\ \textcolor{preprocessor}{\#if\ TRACE}}
-\DoxyCodeLine{00276\ \ \ \ \ fprintf\ (p\_Dec-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nAnnex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
-\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
-\DoxyCodeLine{00278\ \ \ \ \ fflush\ (p\_Dec-\/>p\_trace);}
-\DoxyCodeLine{00279\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{00280\ }
-\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keywordflow}{return}\ (pos);}
-\DoxyCodeLine{00282\ }
-\DoxyCodeLine{00283\ \}}
-\DoxyCodeLine{00284\ }
-\DoxyCodeLine{00285\ }
-\DoxyCodeLine{00286\ }
-\DoxyCodeLine{00295\ \textcolor{keywordtype}{void}\ open\_annex\_b\ (\textcolor{keywordtype}{char}\ *fn,\ ANNEXB\_t\ *annex\_b)}
-\DoxyCodeLine{00296\ \{}
-\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{if}\ (NULL\ !=\ annex\_b-\/>iobuffer)}
-\DoxyCodeLine{00298\ \ \ \ \ \{}
-\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ tried\ to\ open\ Annex\ B\ file\ twice"{}},500);}
-\DoxyCodeLine{00300\ \ \ \ \ \}}
-\DoxyCodeLine{00301\ }
-\DoxyCodeLine{00302\ \ \ \ \ annex\_b-\/>iobuffer\ =\ injected\_annex\_b\_data;}
-\DoxyCodeLine{00303\ }
-\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{if}\ (NULL\ ==\ annex\_b-\/>iobuffer)}
-\DoxyCodeLine{00305\ \ \ \ \ \{}
-\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ no\ injected\ data"{}},500);}
-\DoxyCodeLine{00307\ \ \ \ \ \}}
-\DoxyCodeLine{00308\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
-\DoxyCodeLine{00309\ }
-\DoxyCodeLine{00310\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ injected\_annex\_b\_size;}
-\DoxyCodeLine{00311\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
-\DoxyCodeLine{00312\ \}}
-\DoxyCodeLine{00313\ }
-\DoxyCodeLine{00314\ }
-\DoxyCodeLine{00321\ \textcolor{keywordtype}{void}\ close\_annex\_b(ANNEXB\_t\ *annex\_b)}
-\DoxyCodeLine{00322\ \{}
-\DoxyCodeLine{00323\ \ \ \ \ annex\_b-\/>iobuffer\ =\ NULL;}
-\DoxyCodeLine{00324\ \}}
-\DoxyCodeLine{00325\ }
-\DoxyCodeLine{00326\ }
-\DoxyCodeLine{00327\ \textcolor{keywordtype}{void}\ reset\_annex\_b(ANNEXB\_t\ *annex\_b)}
-\DoxyCodeLine{00328\ \{}
-\DoxyCodeLine{00329\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
-\DoxyCodeLine{00330\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
-\DoxyCodeLine{00331\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
-\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00001}00001\ \textcolor{comment}{//\ LCEVC\ replacement\ implementation\ to\ feed\ bitstresm\ directly\ into\ base\ layer\ via\ an\ in-\/memory\ buffer}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00002}00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00017}00017\ \textcolor{preprocessor}{\#include\ "{}global.h"{}}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00018}00018\ \textcolor{preprocessor}{\#include\ "{}annexb.h"{}}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00019}00019\ \textcolor{preprocessor}{\#include\ "{}memalloc.h"{}}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00020}00020\ \textcolor{preprocessor}{\#include\ "{}fast\_memory.h"{}}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00022}00022\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{byte}\ *injected\_annex\_b\_data\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00023}00023\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ injected\_annex\_b\_size\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00024}00024\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00025}00025\ \textcolor{comment}{//\ External\ hook\ from\ LCEVC}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00026}\mbox{\hyperlink{inject__annexb_8h_ad78c37e6d9fa7a3fee5180616b716826}{00026}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_ad78c37e6d9fa7a3fee5180616b716826}{inject\_annex\_b\_bitstream}}(\textcolor{keywordtype}{byte}\ *data,\ \textcolor{keywordtype}{unsigned}\ size)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00027}00027\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00028}00028\ \ \ \ \ injected\_annex\_b\_data\ =\ data;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00029}00029\ \ \ \ \ injected\_annex\_b\_size\ =\ size;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00030}00030\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00032}\mbox{\hyperlink{annexb_8c_a62ce58e0c4ba56d0ed3fe64a007427b8}{00032}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_a62ce58e0c4ba56d0ed3fe64a007427b8}{malloc\_annex\_b}}(VideoParameters\ *p\_Vid,\ ANNEXB\_t\ **p\_annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00033}00033\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00034}00034\ \ \ \textcolor{keywordflow}{if}\ (\ ((*p\_annex\_b)\ =\ (ANNEXB\_t\ *)\ calloc(1,\ \textcolor{keyword}{sizeof}(ANNEXB\_t)))\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00035}00035\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00036}00036\ \ \ \ \ snprintf(errortext,\ ET\_SIZE,\ \textcolor{stringliteral}{"{}Memory\ allocation\ for\ Annex\_B\ file\ failed"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00037}00037\ \ \ \ \ error(errortext,100);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00038}00038\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00039}00039\ \ \ \textcolor{keywordflow}{if}\ (((*p\_annex\_b)-\/>Buf\ =\ (\textcolor{keywordtype}{byte}*)\ malloc(p\_Vid-\/>nalu-\/>max\_size))\ ==\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00040}00040\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00041}00041\ \ \ \ \ error(\textcolor{stringliteral}{"{}malloc\_annex\_b:\ Buf"{}},\ 101);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00042}00042\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00043}00043\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00046}\mbox{\hyperlink{annexb_8c_a3c0878cc40bf0ebd3afa244e9ad0ad50}{00046}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_a3c0878cc40bf0ebd3afa244e9ad0ad50}{init\_annex\_b}}(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00047}00047\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00048}00048\ \ \ annex\_b-\/>iobuffer\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00049}00049\ \ \ annex\_b-\/>iobufferread\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00050}00050\ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00051}00051\ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00052}00052\ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00053}00053\ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00054}00054\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00056}\mbox{\hyperlink{annexb_8c_a055f53ecaaa31acb33e03addf26edd9b}{00056}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_a055f53ecaaa31acb33e03addf26edd9b}{free\_annex\_b}}(ANNEXB\_t\ **p\_annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00057}00057\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00058}00058\ \ \ free((*p\_annex\_b)-\/>Buf);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00059}00059\ \ \ (*p\_annex\_b)-\/>Buf\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00060}00060\ \ \ free(*p\_annex\_b);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00061}00061\ \ \ *p\_annex\_b\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00062}00062\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00071}00071\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{byte}\ getfbyte(ANNEXB\_t\ *annex\_b)\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00072}00072\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>bytesinbuffer\ ==\ 0)\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00073}00073\ \ \ \ \ \ \ \ \ annex\_b-\/>is\_eof\ =\ TRUE;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00075}00075\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00077}00077\ \ \ \ \ annex\_b-\/>bytesinbuffer-\/-\/;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00079}00079\ \ \ \ \ \textcolor{keywordflow}{return}\ (*annex\_b-\/>iobufferread++);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00080}00080\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00098}00098\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ FindStartCode\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *Buf,\ \textcolor{keywordtype}{int}\ zeros\_in\_startcode)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00099}00099\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00100}00100\ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00102}00102\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ zeros\_in\_startcode;\ i++)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00103}00103\ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00104}00104\ \ \ \ \ \textcolor{keywordflow}{if}(*(Buf++)\ !=\ 0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00105}00105\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00106}00106\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00107}00107\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00108}00108\ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00110}00110\ \ \ \textcolor{keywordflow}{if}(*Buf\ !=\ 1)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00111}00111\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00113}00113\ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00114}00114\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00116}00116\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00136}\mbox{\hyperlink{annexb_8c_a56cc1acb3afd2d19c6363e299df4d4c1}{00136}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{annexb_8c_a56cc1acb3afd2d19c6363e299df4d4c1}{get\_annex\_b\_NALU}}\ (VideoParameters\ *p\_Vid,\ NALU\_t\ *nalu,\ ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00137}00137\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00138}00138\ \ \ \ \ \textcolor{keywordtype}{int}\ i;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00139}00139\ \ \ \ \ \textcolor{keywordtype}{int}\ info2\ =\ 0,\ info3\ =\ 0,\ pos\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00140}00140\ \ \ \ \ \textcolor{keywordtype}{int}\ StartCodeFound\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00141}00141\ \ \ \ \ \textcolor{keywordtype}{int}\ LeadingZero8BitsCount\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00142}00142\ \ \ \ \ \textcolor{keywordtype}{byte}\ *pBuf\ =\ annex\_b-\/>Buf;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00143}00143\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00144}00144\ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>nextstartcodebytes\ !=\ 0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00145}00145\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i=0;\ i<annex\_b-\/>nextstartcodebytes-\/1;\ i++)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00147}00147\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00148}00148\ \ \ \ \ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00149}00149\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00150}00150\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00151}00151\ \ \ \ \ \ \ \ \ (*pBuf++)\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00152}00152\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00153}00153\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00154}00154\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00155}00155\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00156}00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(!annex\_b-\/>is\_eof)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00157}00157\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((*(pBuf++)=\ getfbyte(annex\_b))!=\ 0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00161}00161\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00162}00162\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00163}00163\ \ \ \ \ \textcolor{keywordflow}{if}(annex\_b-\/>is\_eof\ ==\ TRUE)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00164}00164\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00165}00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pos==0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00166}00166\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00168}00168\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00169}00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00170}00170\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ printf(\ \textcolor{stringliteral}{"{}get\_annex\_b\_NALU\ can't\ read\ start\ code\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00173}00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00174}00174\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00176}00176\ \ \ \ \ \textcolor{keywordflow}{if}(*(pBuf\ -\/\ 1)\ !=\ 1\ ||\ pos\ <\ 3)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00177}00177\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00178}00178\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ no\ Start\ Code\ at\ the\ beginning\ of\ the\ NALU,\ return\ -\/1\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00179}00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00180}00180\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00181}00181\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00182}00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (pos\ ==\ 3)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00183}00183\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00184}00184\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 3;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00185}00185\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00186}00186\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00187}00187\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00188}00188\ \ \ \ \ \ \ \ \ LeadingZero8BitsCount\ =\ pos\ -\/\ 4;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00189}00189\ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ =\ 4;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00190}00190\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00191}00191\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00192}00192\ \ \ \ \ \textcolor{comment}{//the\ 1st\ byte\ stream\ NAL\ unit\ can\ has\ leading\_zero\_8bits,\ but\ subsequent\ ones\ are\ not}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00193}00193\ \ \ \ \ \textcolor{comment}{//allowed\ to\ contain\ it\ since\ these\ zeros(if\ any)\ are\ considered\ trailing\_zero\_8bits}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00194}00194\ \ \ \ \ \textcolor{comment}{//of\ the\ previous\ byte\ stream\ NAL\ unit.}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00195}00195\ \ \ \ \ \textcolor{keywordflow}{if}(!annex\_b-\/>IsFirstByteStreamNALU\ \&\&\ LeadingZero8BitsCount\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00196}00196\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00197}00197\ \ \ \ \ \ \ \ \ printf\ (\textcolor{stringliteral}{"{}get\_annex\_b\_NALU:\ The\ leading\_zero\_8bits\ syntax\ can\ only\ be\ present\ in\ the\ first\ byte\ stream\ NAL\ unit,\ return\ -\/1\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00199}00199\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00200}00200\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00201}00201\ \ \ \ \ LeadingZero8BitsCount\ =\ pos;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00202}00202\ \ \ \ \ annex\_b-\/>IsFirstByteStreamNALU\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00204}00204\ \ \ \ \ \textcolor{keywordflow}{while}\ (!StartCodeFound)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00205}00205\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00206}00206\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (annex\_b-\/>is\_eof\ ==\ TRUE)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00207}00207\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00208}00208\ \ \ \ \ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 2;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00209}00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)==0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00211}00211\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>len\ =\ (pos\ -\/\ 1)\ -\/\ LeadingZero8BitsCount;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00218}00218\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ printf\ ("{}get\_annex\_b\_NALU,\ eof\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00220}00220\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00221}00221\ \textcolor{preprocessor}{\#if\ TRACE}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nLast\ NALU\ in\ File\(\backslash\)n\(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ fprintf\ (\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_trace,\ \textcolor{stringliteral}{"{}Annex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ fflush\ (\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_trace);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00226}00226\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pos\ -\/\ 1);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00228}00228\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00229}00229\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00230}00230\ \ \ \ \ \ \ \ \ pos++;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00231}00231\ \ \ \ \ \ \ \ \ *(pBuf\ ++)\ \ =\ getfbyte(annex\_b);\ \ \ \ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00232}00232\ \ \ \ \ \ \ \ \ info3\ =\ FindStartCode(pBuf\ -\/\ 4,\ 3);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00233}00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(info3\ !=\ 1)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00234}00234\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ info2\ =\ FindStartCode(pBuf\ -\/\ 3,\ 2);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ info2\ \&\ 0x01;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00237}00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00238}00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ StartCodeFound\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00240}00240\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00242}00242\ \ \ \ \ \textcolor{comment}{//\ Here,\ we\ have\ found\ another\ start\ code\ (and\ read\ length\ of\ startcode\ bytes\ more\ than\ we\ should}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00243}00243\ \ \ \ \ \textcolor{comment}{//\ have.\ \ Hence,\ go\ back\ in\ the\ file}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00244}00244\ \ \ \ \ \textcolor{keywordflow}{if}(info3\ ==\ 1)\ \ \textcolor{comment}{//if\ the\ detected\ start\ code\ is\ 00\ 00\ 01,\ trailing\_zero\_8bits\ is\ sure\ not\ to\ be\ present}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00245}00245\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00246}00246\ \ \ \ \ \ \ \ \ pBuf\ -\/=\ 5;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00247}00247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(*(pBuf-\/-\/)\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00248}00248\ \ \ \ \ \ \ \ \ \ \ \ \ pos-\/-\/;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00249}00249\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 4;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00250}00250\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00251}00251\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (info2\ ==\ 1)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00252}00252\ \ \ \ \ \ \ \ \ annex\_b-\/>nextstartcodebytes\ =\ 3;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00253}00253\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00254}00254\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00255}00255\ \ \ \ \ \ \ \ \ printf(\textcolor{stringliteral}{"{}\ Panic:\ Error\ in\ next\ start\ code\ search\ \(\backslash\)n"{}});}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00256}00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00257}00257\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00258}00258\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00259}00259\ \ \ \ \ pos\ -\/=\ annex\_b-\/>nextstartcodebytes;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00260}00260\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00261}00261\ \ \ \ \ \textcolor{comment}{//\ Here\ the\ leading\ zeros(if\ any),\ Start\ code,\ the\ complete\ NALU,\ trailing\ zeros(if\ any)}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00262}00262\ \ \ \ \ \textcolor{comment}{//\ and\ the\ next\ start\ code\ is\ in\ the\ Buf.}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00263}00263\ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ Buf\ is\ pos\ -\/\ rewind,\ pos\ are\ the\ number\ of\ bytes\ excluding\ the\ next}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00264}00264\ \ \ \ \ \textcolor{comment}{//\ start\ code,\ and\ (pos)\ -\/\ LeadingZero8BitsCount}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00265}00265\ \ \ \ \ \textcolor{comment}{//\ is\ the\ size\ of\ the\ NALU.}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00266}00266\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00267}00267\ \ \ \ \ nalu-\/>len\ =\ pos\ -\/\ LeadingZero8BitsCount;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00268}00268\ \ \ \ \ fast\_memcpy\ (nalu-\/>buf,\ annex\_b-\/>Buf\ +\ LeadingZero8BitsCount,\ nalu-\/>len);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00269}00269\ \ \ \ \ nalu-\/>forbidden\_bit\ \ \ \ \ =\ (*(nalu-\/>buf)\ >>\ 7)\ \&\ 1;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00270}00270\ \ \ \ \ nalu-\/>nal\_reference\_idc\ =\ (NalRefIdc)\ ((*(nalu-\/>buf)\ >>\ 5)\ \&\ 3);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00271}00271\ \ \ \ \ nalu-\/>nal\_unit\_type\ \ \ \ \ =\ (NaluType)\ ((*(nalu-\/>buf))\ \&\ 0x1f);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00272}00272\ \ \ \ \ nalu-\/>lost\_packets\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00273}00273\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00274}00274\ \ \ \ \ \textcolor{comment}{//printf\ ("{}get\_annex\_b\_NALU,\ regular\ case:\ pos\ \%d\ nalu-\/>len\ \%d,\ nalu-\/>reference\_idc\ \%d,\ nal\_unit\_type\ \%d\ \(\backslash\)n"{},\ pos,\ nalu-\/>len,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00275}00275\ \textcolor{preprocessor}{\#if\ TRACE}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00276}00276\ \ \ \ \ fprintf\ (\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_trace,\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nAnnex\ B\ NALU\ w/\ \%s\ startcode,\ len\ \%d,\ forbidden\_bit\ \%d,\ nal\_reference\_idc\ \%d,\ nal\_unit\_type\ \%d\(\backslash\)n\(\backslash\)n"{}},}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00277}00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ nalu-\/>startcodeprefix\_len\ ==\ 4?\textcolor{stringliteral}{"{}long"{}}:\textcolor{stringliteral}{"{}short"{}},\ nalu-\/>len,\ nalu-\/>forbidden\_bit,\ nalu-\/>nal\_reference\_idc,\ nalu-\/>nal\_unit\_type);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00278}00278\ \ \ \ \ fflush\ (\mbox{\hyperlink{BaseVideoDecoderJM_8cpp_a631eb222a287a3b6f1c512cc6a41f326}{p\_Dec}}-\/>p\_trace);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00279}00279\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00281}00281\ \ \ \ \ \textcolor{keywordflow}{return}\ (pos);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00282}00282\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00283}00283\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00284}00284\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00285}00285\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00286}00286\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00295}\mbox{\hyperlink{annexb_8c_a8248a9f1f4e93090c6c39e4f4a6db789}{00295}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_a8248a9f1f4e93090c6c39e4f4a6db789}{open\_annex\_b}}\ (\textcolor{keywordtype}{char}\ *fn,\ ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00296}00296\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00297}00297\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ !=\ annex\_b-\/>iobuffer)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00298}00298\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00299}00299\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ tried\ to\ open\ Annex\ B\ file\ twice"{}},500);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00300}00300\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00301}00301\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00302}00302\ \ \ \ \ annex\_b-\/>iobuffer\ =\ injected\_annex\_b\_data;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00303}00303\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00304}00304\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ==\ annex\_b-\/>iobuffer)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00305}00305\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00306}00306\ \ \ \ \ \ \ \ \ error\ (\textcolor{stringliteral}{"{}open\_annex\_b:\ no\ injected\ data"{}},500);}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00307}00307\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00308}00308\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00309}00309\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00310}00310\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ injected\_annex\_b\_size;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00311}00311\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00312}00312\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00313}00313\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00314}00314\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00321}\mbox{\hyperlink{annexb_8c_accb7a7752b37dbc328c88ae22d3a1b93}{00321}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_accb7a7752b37dbc328c88ae22d3a1b93}{close\_annex\_b}}(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00322}00322\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00323}00323\ \ \ \ \ annex\_b-\/>iobuffer\ =\ \mbox{\hyperlink{CommonDef_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00324}00324\ \}}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00325}00325\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00326}00326\ }
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00327}\mbox{\hyperlink{annexb_8c_a683b26181d8dc4453344635fd738f951}{00327}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{annexb_8c_a683b26181d8dc4453344635fd738f951}{reset\_annex\_b}}(ANNEXB\_t\ *annex\_b)}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00328}00328\ \{}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00329}00329\ \ \ \ \ annex\_b-\/>is\_eof\ =\ FALSE;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00330}00330\ \ \ \ \ annex\_b-\/>bytesinbuffer\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00331}00331\ \ \ \ \ annex\_b-\/>iobufferread\ =\ annex\_b-\/>iobuffer;}
+\DoxyCodeLine{\Hypertarget{annexb_8c_source_l00332}00332\ \}}
 
 \end{DoxyCode}
