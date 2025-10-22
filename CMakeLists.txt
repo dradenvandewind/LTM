@@ -228,8 +228,6 @@ set_property(SOURCE
   APPEND PROPERTY COMPILE_FLAGS
   "-I${DEPS_DIR}/base_hevc/HM/source/Lib" )
 
-set_property(SOURCE  ${SRC_DIR}/src/uBaseDecoderVVC.cpp  APPEND PROPERTY COMPILE_FLAGS
-  "-I${DEPS_DIR}/base_vvc/minimum_VTM/source/Lib" )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   message("Foo")
@@ -252,7 +250,7 @@ set(CXXOPTS_DIR "${DEPS_DIR}/cxxopts")
 set(JSON_DIR "${DEPS_DIR}/json")
 
 # VVC Parser
-add_subdirectory (deps/base_vvc/minimum_VTM)
+#add_subdirectory (deps/base_vvc/minimum_VTM)
 
 # -----------------------------------------------
 # ModelDecoder and ModelEncoder:
@@ -336,12 +334,6 @@ if(LTM_ENABLE_CODECAPI_HEVC)
 endif(LTM_ENABLE_CODECAPI_HEVC)
 
 # VVC base decoder as shared library
-if(LTM_ENABLE_CODECAPI_VVC)
-  target_compile_definitions(ModelDecoder PRIVATE "LTM_ENABLE_CODECAPI_VVC")
-  add_subdirectory (deps/base_vvc)
-  target_link_libraries(ModelDecoder base_vvc)
-  ltm_set_codec_output(base_vvc)
-endif(LTM_ENABLE_CODECAPI_VVC)
 
 # EVC base decoder as shared library
 if(LTM_ENABLE_CODECAPI_EVC)
@@ -357,7 +349,7 @@ if(LTM_BUILD_EXTERNAL_CODECS)
   add_subdirectory (deps/base_avc/JM)
   #add_subdirectory (deps/base_hevc/HM)
   #add_subdirectory (deps/base_evc/ETM)
-  add_subdirectory (deps/base_vvc/VTM)
+  #add_subdirectory (deps/base_vvc/VTM)
   
 endif(LTM_BUILD_EXTERNAL_CODECS)
 
