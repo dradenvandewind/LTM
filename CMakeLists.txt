@@ -214,11 +214,6 @@ list(APPEND TEST_SRCS
   ${SRC_DIR}/decoder/src/Convert.cpp )
 
 # Specify include path for the base codec shims - adding them all causes name clashes
-set_property(SOURCE
-  ${SRC_DIR}/src/uBaseDecoderAVC.cpp
-  ${SRC_DIR}/decoder/src/BaseVideoDecoderJM.cpp
-  APPEND PROPERTY COMPILE_FLAGS
-	"-I${DEPS_DIR}/base_avc/JM/source/app/ldecod -I${DEPS_DIR}/base_avc/JM/source/lib/lcommon" )
 
 set_property(SOURCE
   ${SRC_DIR}/src/uBaseDecoderHEVC.cpp
@@ -316,12 +311,6 @@ function(ltm_set_codec_output TGT)
   endif()
 endfunction()
 
-if(LTM_ENABLE_CODECAPI_AVC)
-  target_compile_definitions(ModelDecoder PRIVATE  "LTM_ENABLE_CODECAPI_AVC")
-  add_subdirectory (deps/base_avc)
-  target_link_libraries(ModelDecoder base_avc)
-  ltm_set_codec_output(base_avc)
-endif(LTM_ENABLE_CODECAPI_AVC)
 
 # HEVC base decoder as shared library
 if(LTM_ENABLE_CODECAPI_HEVC)
@@ -338,8 +327,8 @@ endif(LTM_ENABLE_CODECAPI_HEVC)
 # Base Encoders as executables
 #
 if(LTM_BUILD_EXTERNAL_CODECS)
-  add_subdirectory (deps/base_avc/JM)
-  #add_subdirectory (deps/base_hevc/HM)
+  #add_subdirectory (deps/base_avc/JM)
+  add_subdirectory (deps/base_hevc/HM)
   #add_subdirectory (deps/base_evc/ETM)
   #add_subdirectory (deps/base_vvc/VTM)
   
