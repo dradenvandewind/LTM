@@ -216,10 +216,6 @@ std::unique_ptr<BaseDecoder> CreateBaseDecoder(BaseDecoder::Codec base_codec) {
 		return std::unique_ptr<BaseDecoder>(CHECK(CreateBaseDecoderAVC()));
 	case BaseDecoder::HEVC:
 		return std::unique_ptr<BaseDecoder>(CHECK(CreateBaseDecoderHEVC()));
-	case BaseDecoder::VVC:
-		return std::unique_ptr<BaseDecoder>(CHECK(CreateBaseDecoderVVC()));
-	case BaseDecoder::EVC:
-		return std::unique_ptr<BaseDecoder>(CHECK(CreateBaseDecoderEVC()));
 	case BaseDecoder::None:
 		return std::unique_ptr<BaseDecoder>(CHECK(CreateBaseDecoderYUV()));
 	default:

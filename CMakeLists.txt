@@ -248,7 +248,7 @@ set(CXXOPTS_DIR "${DEPS_DIR}/cxxopts")
 set(JSON_DIR "${DEPS_DIR}/json")
 
 # VVC Parser
-#add_subdirectory (deps/base_vvc/minimum_VTM)
+add_subdirectory (deps/base_vvc/minimum_VTM)
 
 # -----------------------------------------------
 # ModelDecoder and ModelEncoder:
@@ -277,7 +277,7 @@ foreach(TARGET ${LCEVC_TARGETS})
 	"${CMAKE_BINARY_DIR}")
 
   # External libraries to link to
-  target_link_libraries(${TARGET} ${LCEVC_EXTERNAL_LINK_LIBS} BaseVvcMinimumVTM )
+  target_link_libraries(${TARGET} ${LCEVC_EXTERNAL_LINK_LIBS} )
 
   # Compilation definitions
   target_compile_definitions(${TARGET} PRIVATE BITSTREAM_DEBUG=${LCEVC_BITSTREAM_DEBUG} USE_SEI_NALU=${LCEVC_USE_SEI_NALU})
