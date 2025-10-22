@@ -111,7 +111,6 @@ list(APPEND DECODER_SRCS
   ${SRC_DIR}/src/uBaseDecoderAVC.cpp
   ${SRC_DIR}/src/uBaseDecoderEVC.cpp
   ${SRC_DIR}/src/uBaseDecoderHEVC.cpp
-  ${SRC_DIR}/src/uBaseDecoderVVC.cpp
   ${SRC_DIR}/src/uBaseDecoderYUV.cpp
   ${SRC_DIR}/src/uESFile.cpp
   ${SRC_DIR}/src/uYUVDesc.cpp
@@ -180,7 +179,6 @@ list(APPEND ENCODER_SRCS
   ${SRC_DIR}/src/uBaseDecoderAVC.cpp
   ${SRC_DIR}/src/uBaseDecoderEVC.cpp
   ${SRC_DIR}/src/uBaseDecoderHEVC.cpp
-  ${SRC_DIR}/src/uBaseDecoderVVC.cpp
   ${SRC_DIR}/src/uBaseDecoderYUV.cpp
   ${SRC_DIR}/src/uESFile.cpp  )
 
