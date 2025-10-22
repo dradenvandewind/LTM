@@ -12,17 +12,17 @@ It's a fork of the original project that didn't compile in my environment.
 git clone https://github.com/dradenvandewind/LTM.git && \
 cd LTM && \ 
 rm -rf deps/base_avc/JM && \
-rm -rf deps/base_hevc/HM && \
-rm -rf deps/base_vvc/VTM && \
+rm -rf deps/base_hevc/HM && cd deps/base_hevc && rm -rf HM && git clone https://gitlab.com/v-nova-public/HM.git && cd ../.. &&\
+rm -rf deps/base_vvc/VTM && cd deps/base_vvc && rm -rf VTM && git clone https://gitlab.com/v-nova-public/VTM.git && cd ../.. && \
 rm -rf deps/base_avc/ETM && \
 git submodule update --init --recursive &&
 cd deps/base_avc/JM && \
 git apply ../../../source_patch/JM/patch_to_buid.patch && \
 cd ../../.. && \
 cd deps/base_vvc/VTM && \
-git apply ../../../source_patch/VTM/patch_to_buid.patch && \
+git apply ../../../../source_patch/VTM/patch_to_buid.patch && \
 cd ../../.. && \
- git apply ~/source_patch/VTM/patch_to_build_2_.patch
+git apply ../source_patch/VTM/patch_to_build_2_.patch
 
 
 
