@@ -334,12 +334,6 @@ endif(LTM_ENABLE_CODECAPI_HEVC)
 # VVC base decoder as shared library
 
 # EVC base decoder as shared library
-if(LTM_ENABLE_CODECAPI_EVC)
-  target_compile_definitions(ModelDecoder PRIVATE "LTM_ENABLE_CODECAPI_EVC")
-  add_subdirectory (deps/base_evc)
-  target_link_libraries(ModelDecoder base_evc)
-  ltm_set_codec_output(base_evc)
-endif(LTM_ENABLE_CODECAPI_EVC)
 
 # Base Encoders as executables
 #
